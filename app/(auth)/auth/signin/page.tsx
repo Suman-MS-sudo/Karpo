@@ -48,6 +48,12 @@ function SignInContent() {
       setIsNewUser(data.isNewUser)
       setStep("otp")
       setResendIn(60)
+      if (data.devOtp) {
+        const digits = String(data.devOtp).split("")
+        setOtp(digits)
+        setTimeout(() => handleVerifyOTP(data.devOtp), 300)
+        return
+      }
       setTimeout(() => otpRefs.current[0]?.focus(), 50)
     } finally {
       setLoading(false)

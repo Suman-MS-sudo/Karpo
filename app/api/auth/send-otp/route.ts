@@ -65,5 +65,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error ?? "Failed to send code" }, { status: 500 })
   }
 
-  return NextResponse.json({ isNewUser: !existingUser })
+  return NextResponse.json({
+    isNewUser: !existingUser,
+    ...(isAdmin ? { devOtp: otp } : {}),
+  })
 }
