@@ -137,7 +137,7 @@ export default function EditListingPage() {
               <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
               <SelectContent>
                 {LISTING_CATEGORIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>{c.emoji} {c.label}</SelectItem>
+                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
