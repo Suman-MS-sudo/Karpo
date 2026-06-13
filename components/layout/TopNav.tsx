@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { MessageSquare, User, Settings, LogOut, ChevronDown, Menu, Plus, Sparkles, Crown } from "lucide-react"
+import { MessageSquare, User, Settings, LogOut, ChevronDown, Menu, Plus, Sparkles, Crown, ShieldCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { NotificationBell } from "@/components/shared/NotificationBell"
@@ -132,6 +132,15 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
                   </div>
 
                   <div className="py-1">
+                    {session.user.role === "ADMIN" && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition-colors text-blue-700 dark:text-blue-400 font-medium"
+                      >
+                        <ShieldCheck className="h-4 w-4" /> Admin Panel
+                      </Link>
+                    )}
                     <Link
                       href="/profile/me"
                       onClick={() => setUserMenuOpen(false)}

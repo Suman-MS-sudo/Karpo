@@ -9,7 +9,8 @@ import { formatDate } from "@/lib/utils"
 
 export default async function AdminPage() {
   const session = await auth()
-  if (session?.user?.role !== "ADMIN") redirect("/dashboard")
+  if (!session) redirect("/auth/signin?callbackUrl=/admin")
+  if (session.user?.role !== "ADMIN") redirect("/dashboard")
 
   const [
     totalUsers,

@@ -103,8 +103,14 @@ function SignInContent() {
         otpRefs.current[0]?.focus()
         return
       }
-      // Redirect new users to onboarding, existing to dashboard/callbackUrl
-      if (isNewUser) {
+      // Check session role to handle admin bypass onboarding
+      const sessionRes = await fetch("/api/auth/session")
+      const sessionData = sessionRes.ok ? await sessionRes.json() : null
+      const isAdmin = sessionData?.user?.role === "ADMIN"
+
+      if (isAdmin) {
+        router.push(callbackUrl.startsWith("/admin") ? callbackUrl : "/admin")
+      } else if (isNewUser) {
         router.push("/auth/onboard")
       } else {
         router.push(callbackUrl)

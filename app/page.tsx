@@ -265,6 +265,7 @@ export default function LandingPage() {
                 <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
                 <li><Link href="#"        className="hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link href="#"        className="hover:text-white transition-colors">Terms of Service</Link></li>
+                <li><Link href="/auth/signin?callbackUrl=/admin" className="hover:text-white transition-colors opacity-50 hover:opacity-100 text-xs">Admin Login</Link></li>
               </ul>
             </div>
           </div>
