@@ -16,6 +16,10 @@ export async function POST(req: Request) {
   // ── Admin bypass — whitelisted email skips corporate domain check ──────────
   const isAdmin = normalized === process.env.ADMIN_EMAIL
 
+  // ── Dev/test emails — get auto-OTP returned in response ──────────────────
+  const devEmails = (process.env.DEV_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
+  const isDevEmail = isAdmin || devEmails.includes(normalized)
+
   // ── Domain validation ──────────────────────────────────────────────────────
   const { blocked, reason } = isAdmin ? { blocked: false, reason: undefined } : isDomainBlocked(normalized)
   if (blocked) {
@@ -67,6 +71,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     isNewUser: !existingUser,
-    ...(isAdmin ? { devOtp: otp } : {}),
+    ...(isDevEmail ? { devOtp: otp } : {}),
   })
 }
