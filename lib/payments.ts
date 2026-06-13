@@ -1,10 +1,12 @@
 import Razorpay from "razorpay"
 import crypto from "crypto"
 
-export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
+function getRazorpay() {
+  return new Razorpay({
+    key_id:     process.env.RAZORPAY_KEY_ID!,
+    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  })
+}
 
 export const PREMIUM_PLAN_PRICE = 9900 // ₹99 in paise
 
@@ -19,7 +21,7 @@ export async function createOrder(
   receipt: string,
   notes?: Record<string, string>
 ) {
-  return razorpay.orders.create({
+  return getRazorpay().orders.create({
     amount,
     currency: "INR",
     receipt,
