@@ -226,9 +226,9 @@ export default async function CarpoolPage({
       {/* Boosted label */}
       {!isFiltered && boostedCount > 0 && (
         <div className="flex items-center gap-2 mb-3">
-          <Crown className="h-4 w-4 text-amber-500" />
+          <Zap className="h-4 w-4 text-amber-500" />
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-            Premium Routes — shown first
+            Boosted routes — shown first
           </span>
         </div>
       )}
