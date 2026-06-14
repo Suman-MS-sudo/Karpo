@@ -231,7 +231,7 @@ export default function SettingsPage() {
         </div>
         <div className="p-6">
           <p className="text-xs text-muted-foreground mb-4">
-            Choose how Karpo looks to you. The toggle in the top nav also cycles through themes.
+            Choose how Korpo looks to you. The toggle in the top nav also cycles through themes.
           </p>
           <div className="flex gap-3 flex-wrap">
             {([

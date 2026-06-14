@@ -23,14 +23,14 @@ const values = [
   {
     icon: Users,
     title: "Community Driven",
-    desc: "Karpo exists because of the people who use it. We build features our members ask for, and we measure success by their satisfaction.",
+    desc: "Korpo exists because of the people who use it. We build features our members ask for, and we measure success by their satisfaction.",
     color: "text-violet-600",
     bg: "bg-violet-50",
   },
   {
     icon: Zap,
     title: "Radically Simple",
-    desc: "Complex problems deserve simple solutions. Whether you're buying a phone or finding a flatmate, Karpo makes it feel effortless.",
+    desc: "Complex problems deserve simple solutions. Whether you're buying a phone or finding a flatmate, Korpo makes it feel effortless.",
     color: "text-amber-600",
     bg: "bg-amber-50",
   },
@@ -66,7 +66,7 @@ const milestones = [
 
 export const metadata = {
   title: "About Us",
-  description: "Learn about Karpo — India's first verified corporate employee marketplace built on trust.",
+  description: "Learn about Korpo — India's first verified corporate employee marketplace built on trust.",
 }
 
 export default function AboutPage() {
@@ -87,7 +87,7 @@ export default function AboutPage() {
             <span className="text-[#7DD3F8]">with a badge every day.</span>
           </h1>
           <p className="mt-6 text-lg sm:text-xl text-blue-100 max-w-2xl mx-auto">
-            Karpo started with a simple question: why should you trust a stranger online when you already trust your colleague sitting two floors above you?
+            Korpo started with a simple question: why should you trust a stranger online when you already trust your colleague sitting two floors above you?
           </p>
         </div>
       </section>
@@ -122,7 +122,7 @@ export default function AboutPage() {
                   The existing solutions had no way to distinguish a verified Infosys engineer from an anonymous fraudster. Trust was luck, not structure.
                 </p>
                 <p>
-                  <span className="font-semibold text-[#1E3A5F]">Karpo changes that.</span> Your corporate email is your identity. Your badge is your reputation. Everyone on Karpo is who they say they are — because they&apos;ve already proved it to their employer.
+                  <span className="font-semibold text-[#1E3A5F]">Korpo changes that.</span> Your corporate email is your identity. Your badge is your reputation. Everyone on Korpo is who they say they are — because they&apos;ve already proved it to their employer.
                 </p>
               </div>
               <div className="mt-8 space-y-3">
@@ -145,7 +145,7 @@ export default function AboutPage() {
                 <div className="w-72 h-72 rounded-3xl bg-gradient-to-br from-[#1E3A5F] to-[#2E86AB] flex items-center justify-center shadow-2xl">
                   <Image
                     src="/logo.png"
-                    alt="Karpo"
+                    alt="Korpo"
                     width={180}
                     height={180}
                     className="object-contain drop-shadow-xl"

@@ -8,8 +8,8 @@ export function PublicHeader() {
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="Karpo" width={32} height={32} className="rounded-lg object-contain" />
-          <span className="font-bold text-xl text-[#1E3A5F]">Karpo</span>
+          <Image src="/logo.png" alt="Korpo" width={32} height={32} className="rounded-lg object-contain" />
+          <span className="font-bold text-xl text-[#1E3A5F]">Korpo</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
           <Link href="/#services"     className="hover:text-[#1E3A5F] transition-colors">Services</Link>

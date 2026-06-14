@@ -9,8 +9,8 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <Image src="/logo.png" alt="Karpo" width={28} height={28} className="rounded-lg object-contain" />
-              <span className="font-bold text-lg">Karpo</span>
+              <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
+              <span className="font-bold text-lg">Korpo</span>
             </div>
             <p className="text-blue-200 text-sm leading-relaxed">
               India&apos;s first verified corporate employee marketplace.
@@ -51,7 +51,7 @@ export function PublicFooter() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-blue-300 text-sm">
-          <p>© 2025 Karpo. All rights reserved.</p>
+          <p>© 2025 Korpo. All rights reserved.</p>
           <p>Made with ❤️ for India&apos;s corporate community.</p>
         </div>
       </div>

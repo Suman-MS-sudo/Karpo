@@ -5,7 +5,7 @@ import { Mail, MessageSquare, Clock, MapPin, ChevronDown } from "lucide-react"
 
 const faqs = [
   {
-    q: "How do I get my company added to Karpo?",
+    q: "How do I get my company added to Korpo?",
     a: "If your company isn't on our approved list yet, you can request it from the sign-in page. We review company domain requests within 1–2 business days. All we need is a valid corporate domain (e.g., yourcompany.com).",
   },
   {
@@ -14,15 +14,15 @@ const faqs = [
   },
   {
     q: "Can I use a personal Gmail or Yahoo account?",
-    a: "No — and that's intentional. Karpo is exclusively for verified corporate emails. Gmail, Yahoo, Outlook personal, Hotmail and all free email providers are blocked by design.",
+    a: "No — and that's intentional. Korpo is exclusively for verified corporate emails. Gmail, Yahoo, Outlook personal, Hotmail and all free email providers are blocked by design.",
   },
   {
     q: "How do I report a listing or a user?",
-    a: "Every listing has a 'Report' button visible to signed-in users. Reports are reviewed within 24 hours. For urgent safety issues, email us at safety@karpo.in.",
+    a: "Every listing has a 'Report' button visible to signed-in users. Reports are reviewed within 24 hours. For urgent safety issues, email us at safety@korpo.in.",
   },
   {
     q: "Is there an app available?",
-    a: "Karpo is currently a progressive web app (PWA) — you can add it to your home screen from Chrome or Safari. Dedicated iOS and Android apps are on our roadmap for 2025.",
+    a: "Korpo is currently a progressive web app (PWA) — you can add it to your home screen from Chrome or Safari. Dedicated iOS and Android apps are on our roadmap for 2025.",
   },
   {
     q: "How does Premium billing work?",
@@ -35,7 +35,7 @@ const contactMethods = [
     icon: Mail,
     title: "Email us",
     desc: "For general enquiries and partnership requests",
-    value: "hello@karpo.in",
+    value: "hello@korpo.in",
     color: "text-blue-600",
     bg: "bg-blue-50",
   },
@@ -43,7 +43,7 @@ const contactMethods = [
     icon: MessageSquare,
     title: "Support",
     desc: "For account issues and technical help",
-    value: "support@karpo.in",
+    value: "support@korpo.in",
     color: "text-violet-600",
     bg: "bg-violet-50",
   },
@@ -58,7 +58,7 @@ const contactMethods = [
   {
     icon: MapPin,
     title: "Based in",
-    desc: "Karpo is built and operated from",
+    desc: "Korpo is built and operated from",
     value: "Bangalore, India",
     color: "text-rose-600",
     bg: "bg-rose-50",
@@ -67,7 +67,7 @@ const contactMethods = [
 
 export const metadata = {
   title: "Contact Us",
-  description: "Get in touch with the Karpo team. We respond within 24 business hours.",
+  description: "Get in touch with the Korpo team. We respond within 24 business hours.",
 }
 
 export default function ContactPage() {

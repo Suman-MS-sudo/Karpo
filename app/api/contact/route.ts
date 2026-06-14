@@ -13,8 +13,8 @@ export async function POST(req: Request) {
 
     // TODO: send via Resend when API key is configured
     // await resend.emails.send({
-    //   from: "Karpo Contact <noreply@karpo.in>",
-    //   to: "hello@karpo.in",
+    //   from: "Korpo Contact <noreply@korpo.in>",
+    //   to: "hello@korpo.in",
     //   replyTo: email,
     //   subject: `[Contact] ${subject} — ${name}`,
     //   text: `From: ${name} <${email}>\nSubject: ${subject}\n\n${message}`,
