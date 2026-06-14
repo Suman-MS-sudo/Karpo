@@ -343,8 +343,8 @@ export default async function RentalsPage({ searchParams }: PageProps) {
       {/* Premium listings label */}
       {rentals.some((r) => r.isBoosted) && (
         <div className="flex items-center gap-2">
-          <Crown className="h-4 w-4 text-amber-500" />
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Premium Listings — shown first</span>
+          <Zap className="h-4 w-4 text-amber-500" />
+          <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Boosted listings — shown first</span>
         </div>
       )}
 
