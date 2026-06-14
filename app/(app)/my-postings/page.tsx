@@ -366,12 +366,12 @@ function OverviewSection({
   listings: any[]; rentals: any[]; referrals: any[]; carpools: any[]; services: any[]; events: any[]
 }) {
   const serviceCards = [
-    { key: "marketplace", tab: TABS[1], count: counts.marketplace, items: listings,  hasItems: listings.length > 0  },
-    { key: "rentals",     tab: TABS[2], count: counts.rentals,     items: rentals,   hasItems: rentals.length > 0   },
-    { key: "referrals",   tab: TABS[3], count: counts.referrals,   items: referrals, hasItems: referrals.length > 0 },
-    { key: "carpool",     tab: TABS[4], count: counts.carpool,     items: carpools,  hasItems: carpools.length > 0  },
-    { key: "services",    tab: TABS[5], count: counts.services,    items: services,  hasItems: services.length > 0  },
-    { key: "events",      tab: TABS[6], count: counts.events,      items: events,    hasItems: events.length > 0    },
+    { key: "marketplace", tab: TABS[1], count: counts.marketplace, items: listings,  href: "/my-listings"   },
+    { key: "rentals",     tab: TABS[2], count: counts.rentals,     items: rentals,   href: "/my-rentals"    },
+    { key: "referrals",   tab: TABS[3], count: counts.referrals,   items: referrals, href: "/my-referrals"  },
+    { key: "carpool",     tab: TABS[4], count: counts.carpool,     items: carpools,  href: "/my-carpool"    },
+    { key: "services",    tab: TABS[5], count: counts.services,    items: services,  href: "/my-services"   },
+    { key: "events",      tab: TABS[6], count: counts.events,      items: events,    href: "/my-events"     },
   ]
 
   const total = Object.values(counts).reduce((s, v) => s + v, 0)
@@ -393,12 +393,12 @@ function OverviewSection({
 
           {/* Service summary grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {serviceCards.map(({ key, tab, count }) => {
+            {serviceCards.map(({ key, tab, count, href }) => {
               const Icon = tab.icon
               return (
                 <Link
                   key={key}
-                  href={`/my-postings?tab=${key}`}
+                  href={href}
                   className="group bg-card border border-border rounded-2xl p-4 hover:border-border/60 hover:shadow-sm transition-all flex flex-col gap-2"
                 >
                   <div className="flex items-center justify-between">

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import { X } from "lucide-react"
 import { Sidebar } from "./Sidebar"
+import { ServiceRail } from "./ServiceRail"
+import { ServiceSidebar } from "./ServiceSidebar"
 import { TopNav } from "./TopNav"
 import { MobileNav } from "./MobileNav"
 
@@ -10,23 +12,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const pathname = usePathname()
 
-  // Close drawer on navigation
   useEffect(() => { setDrawerOpen(false) }, [pathname])
 
   return (
     <div className="fixed inset-0 flex overflow-hidden">
-      {/* Desktop sidebar */}
-      <Sidebar className="hidden lg:flex shrink-0" />
+
+      {/* ── Desktop 3-column layout ─────────────────────────────── */}
+      {/* Icon rail — always visible on desktop */}
+      <ServiceRail />
+
+      {/* Context sidebar — always visible on desktop */}
+      <ServiceSidebar />
 
       {/* Mobile sidebar drawer */}
       {drawerOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
             onClick={() => setDrawerOpen(false)}
           />
-          {/* Drawer panel */}
           <div className="fixed inset-y-0 left-0 z-50 w-72 lg:hidden animate-in slide-in-from-left duration-200">
             <div className="relative h-full">
               <Sidebar className="flex h-full" />
@@ -41,6 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </>
       )}
 
+      {/* Main content column */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopNav onMenuClick={() => setDrawerOpen((o) => !o)} />
         <main

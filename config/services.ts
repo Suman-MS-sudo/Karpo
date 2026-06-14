@@ -90,9 +90,8 @@ export const SERVICES: ServiceConfig[] = [
     borderColor: "border-rose-200 dark:border-rose-800",
     route: "/deals",
     model: "Deal",
-    isPremium: true,
+    isPremium: false,
     isActive: true,
-    badge: "Premium",
   },
   {
     id: "events",
@@ -117,9 +116,8 @@ export const SERVICES: ServiceConfig[] = [
     borderColor: "border-indigo-200 dark:border-indigo-800",
     route: "/learning",
     model: "Course",
-    isPremium: true,
+    isPremium: false,
     isActive: true,
-    badge: "Premium",
   },
   {
     id: "concierge",
@@ -131,7 +129,7 @@ export const SERVICES: ServiceConfig[] = [
     borderColor: "border-sky-200 dark:border-sky-800",
     route: "/concierge",
     model: "ConciergeLead",
-    isPremium: true,
+    isPremium: false,
     isActive: true,
   },
   {
@@ -144,7 +142,7 @@ export const SERVICES: ServiceConfig[] = [
     borderColor: "border-pink-200 dark:border-pink-800",
     route: "/benefits",
     model: "BenefitProduct",
-    isPremium: true,
+    isPremium: false,
     isActive: true,
   },
 ]

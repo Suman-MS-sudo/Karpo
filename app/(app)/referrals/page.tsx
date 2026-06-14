@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
-import { Plus, Building2, Clock, Crown, Briefcase, MapPin, MonitorSmartphone } from "lucide-react"
+import { Plus, Building2, Clock, Briefcase, MapPin, MonitorSmartphone, Zap } from "lucide-react"
+import { FREE_LIMITS } from "@/lib/limits"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
@@ -22,13 +24,17 @@ const JOB_TYPE_LABELS: Record<string, string> = {
 
 interface Props {
   searchParams: {
-    q?:      string
-    dept?:   string
-    mode?:   string
-    type?:   string
-    bonus?:  string
-    minExp?: string
-    maxExp?: string
+    q?:       string
+    company?: string
+    dept?:    string
+    city?:    string
+    mode?:    string
+    type?:    string
+    bonus?:   string
+    minExp?:  string
+    maxExp?:  string
+    minSal?:  string
+    maxSal?:  string
   }
 }
 
@@ -41,29 +47,46 @@ function SearchBarWrapper() {
 }
 
 export default async function ReferralsPage({ searchParams }: Props) {
-  const session = await auth()
-  const myId    = session?.user?.id
+  const session   = await auth()
+  const myId      = session?.user?.id
+  const isPremium = session?.user?.membershipPlan === "PREMIUM"
+  const myReferralsCount = myId && !isPremium
+    ? await prisma.jobReferral.count({ where: { userId: myId, status: "OPEN" } })
+    : 0
 
   // Build Prisma filters
-  const deptFilter  = searchParams.dept  ? searchParams.dept.split(",").filter(Boolean)  : []
-  const modeFilter  = searchParams.mode  ? searchParams.mode.split(",").filter(Boolean)  : []
-  const typeFilter  = searchParams.type  ? searchParams.type.split(",").filter(Boolean)  : []
-  const hasBonus    = searchParams.bonus === "1"
-  const minExp      = searchParams.minExp ? Number(searchParams.minExp) : undefined
-  const maxExp      = searchParams.maxExp ? Number(searchParams.maxExp) : undefined
-  const query       = searchParams.q?.trim()
+  const deptFilter     = searchParams.dept    ? searchParams.dept.split(",").filter(Boolean)    : []
+  const cityFilter     = searchParams.city    ? searchParams.city.split(",").filter(Boolean)    : []
+  const modeFilter     = searchParams.mode    ? searchParams.mode.split(",").filter(Boolean)    : []
+  const typeFilter     = searchParams.type    ? searchParams.type.split(",").filter(Boolean)    : []
+  const companyQuery   = searchParams.company?.trim()
+  const hasBonus       = searchParams.bonus === "1"
+  const minExp         = searchParams.minExp ? Number(searchParams.minExp) : undefined
+  const maxExp         = searchParams.maxExp ? Number(searchParams.maxExp) : undefined
+  const minSal         = searchParams.minSal ? Number(searchParams.minSal) : undefined
+  const maxSal         = searchParams.maxSal ? Number(searchParams.maxSal) : undefined
+  const query          = searchParams.q?.trim()
 
-  const hasFilters  = !!(query || deptFilter.length || modeFilter.length || typeFilter.length || hasBonus || minExp !== undefined || maxExp !== undefined)
+  const hasFilters = !!(
+    query || companyQuery || deptFilter.length || cityFilter.length ||
+    modeFilter.length || typeFilter.length || hasBonus ||
+    minExp !== undefined || maxExp !== undefined ||
+    minSal !== undefined || maxSal !== undefined
+  )
 
   const referrals = await prisma.jobReferral.findMany({
     where: {
       status: "OPEN",
-      ...(deptFilter.length  ? { department: { in: deptFilter } }         : {}),
-      ...(modeFilter.length  ? { workMode:   { in: modeFilter } }         : {}),
-      ...(typeFilter.length  ? { jobType:    { in: typeFilter } }         : {}),
-      ...(hasBonus           ? { referralBonus: { gt: 0 } }               : {}),
-      ...(minExp !== undefined ? { experienceMax: { gte: minExp } }       : {}),
-      ...(maxExp !== undefined ? { experienceMin: { lte: maxExp } }       : {}),
+      ...(deptFilter.length    ? { department: { in: deptFilter } }                           : {}),
+      ...(modeFilter.length    ? { workMode:   { in: modeFilter } }                           : {}),
+      ...(typeFilter.length    ? { jobType:    { in: typeFilter } }                           : {}),
+      ...(cityFilter.length    ? { location:   { in: cityFilter, mode: "insensitive" } }      : {}),
+      ...(companyQuery         ? { company:    { name: { contains: companyQuery, mode: "insensitive" } } } : {}),
+      ...(hasBonus             ? { referralBonus: { gt: 0 } }                                 : {}),
+      ...(minExp !== undefined ? { experienceMax: { gte: minExp } }                           : {}),
+      ...(maxExp !== undefined ? { experienceMin: { lte: maxExp } }                           : {}),
+      ...(minSal !== undefined ? { salaryMax: { gte: minSal } }                               : {}),
+      ...(maxSal !== undefined ? { salaryMin: { lte: maxSal } }                               : {}),
       ...(query ? {
         OR: [
           { title:       { contains: query, mode: "insensitive" } },
@@ -86,13 +109,17 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
   // Build active filter summary
   const filterParts: string[] = []
-  if (query)             filterParts.push(`"${query}"`)
-  if (deptFilter.length) filterParts.push(deptFilter.join(", "))
-  if (modeFilter.length) filterParts.push(modeFilter.map((m) => WORK_MODE_LABELS[m] ?? m).join(", "))
-  if (typeFilter.length) filterParts.push(typeFilter.map((t) => JOB_TYPE_LABELS[t] ?? t).join(", "))
-  if (hasBonus)          filterParts.push("Has bonus")
+  if (query)              filterParts.push(`"${query}"`)
+  if (companyQuery)       filterParts.push(companyQuery)
+  if (cityFilter.length)  filterParts.push(cityFilter.join(", "))
+  if (deptFilter.length)  filterParts.push(deptFilter.join(", "))
+  if (modeFilter.length)  filterParts.push(modeFilter.map((m) => WORK_MODE_LABELS[m] ?? m).join(", "))
+  if (typeFilter.length)  filterParts.push(typeFilter.map((t) => JOB_TYPE_LABELS[t] ?? t).join(", "))
+  if (hasBonus)           filterParts.push("Has bonus")
   if (minExp !== undefined || maxExp !== undefined)
     filterParts.push(`${minExp ?? 0}–${maxExp ?? "∞"} yrs exp`)
+  if (minSal !== undefined || maxSal !== undefined)
+    filterParts.push(`${minSal ?? 0}–${maxSal ?? "∞"} LPA`)
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -101,7 +128,15 @@ export default async function ReferralsPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold">Job Referrals</h1>
           <p className="text-muted-foreground text-sm mt-1">Get referrals from verified colleagues</p>
         </div>
-        <Button asChild><Link href="/referrals/new"><Plus className="h-4 w-4" /> Post Referral</Link></Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isPremium && myId && (
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">{myReferralsCount}/{FREE_LIMITS.referrals} posted</span>
+              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+            </div>
+          )}
+          <Button asChild><Link href="/referrals/new"><Plus className="h-4 w-4" /> Post Referral</Link></Button>
+        </div>
       </div>
 
       <SearchBarWrapper />
@@ -115,9 +150,9 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
       {!hasFilters && boostedCount > 0 && (
         <div className="flex items-center gap-2 mb-3">
-          <Crown className="h-4 w-4 text-amber-500" />
+          <Zap className="h-4 w-4 text-amber-500" />
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
-            Premium Referrals — shown first
+            Boosted referrals — shown first
           </span>
         </div>
       )}
@@ -200,14 +235,19 @@ export default async function ReferralsPage({ searchParams }: Props) {
                           <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{ref.description}</p>
                         </div>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
                         <Badge variant="success">Open</Badge>
                         {ref._count.applications > 0 && (
-                          <p className="text-xs text-muted-foreground mt-1">{ref._count.applications} applicant{ref._count.applications !== 1 ? "s" : ""}</p>
+                          <p className="text-xs text-muted-foreground">{ref._count.applications} applicant{ref._count.applications !== 1 ? "s" : ""}</p>
                         )}
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 justify-end">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
                           <Clock className="h-3 w-3" /> {formatRelativeTime(ref.createdAt)}
                         </p>
+                        <SocialShare
+                          title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
+                          path={`/referrals/${ref.id}`}
+                          variant="icon"
+                        />
                       </div>
                     </div>
                     <div className="mt-4 pt-4 border-t border-border">

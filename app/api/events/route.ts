@@ -35,9 +35,13 @@ export async function POST(req: Request) {
       category: body.category,
       date: new Date(body.date),
       location: body.location,
-      maxParticipants: body.maxParticipants,
+      maxParticipants: body.maxParticipants ? parseInt(body.maxParticipants) : undefined,
       fee: body.fee ?? 0,
       images: body.images ?? [],
+      agenda: body.agenda ?? undefined,
+      onlineLink: body.onlineLink,
+      tags: body.tags ?? [],
+      requiresApproval: body.requiresApproval ?? false,
     },
   })
   return NextResponse.json(event, { status: 201 })

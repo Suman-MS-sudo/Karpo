@@ -24,7 +24,6 @@ export function ServiceGrid({ variant = "home", isPremium = false, activeId, onS
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         {SERVICES.filter((s) => s.isActive).map((service) => {
           const Icon = iconMap[service.icon] ?? ShoppingBag
-          const locked = service.isPremium && !isPremium
 
           return (
             <Link
@@ -32,14 +31,8 @@ export function ServiceGrid({ variant = "home", isPremium = false, activeId, onS
               href={service.route}
               className="group"
             >
-              <div className={cn(
-                "relative flex flex-col gap-3 p-4 rounded-2xl border bg-card",
-                "transition-all duration-200 hover:shadow-md hover:-translate-y-0.5",
-                service.isPremium
-                  ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
-                  : "border-border hover:border-foreground/20"
-              )}>
-                {/* Top row: icon + badge/lock */}
+              <div className="relative flex flex-col gap-3 p-4 rounded-2xl border bg-card border-border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-foreground/20">
+                {/* Top row: icon + badge */}
                 <div className="flex items-start justify-between">
                   <div className={cn(
                     "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
@@ -47,16 +40,11 @@ export function ServiceGrid({ variant = "home", isPremium = false, activeId, onS
                   )}>
                     <Icon className={cn("h-5 w-5", service.color)} />
                   </div>
-
-                  {service.badge === "Popular" ? (
+                  {service.badge === "Popular" && (
                     <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
                       Hot
                     </span>
-                  ) : service.badge === "Premium" ? (
-                    <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                      Pro
-                    </span>
-                  ) : null}
+                  )}
                 </div>
 
                 {/* Name + description */}
@@ -86,21 +74,12 @@ export function ServiceGrid({ variant = "home", isPremium = false, activeId, onS
             <button
               key={service.id}
               onClick={() => onSelect?.(service)}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-xl border text-left",
-                "hover:bg-muted transition-all",
-                service.isPremium
-                  ? "border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
-                  : "border-border hover:border-foreground/20"
-              )}
+              className="flex items-center gap-3 p-3 rounded-xl border border-border text-left hover:bg-muted hover:border-foreground/20 transition-all"
             >
               <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center shrink-0", service.bgColor)}>
                 <Icon className={cn("h-4 w-4", service.color)} />
               </div>
               <span className="text-sm font-medium text-foreground leading-tight flex-1">{service.name}</span>
-              {service.isPremium && (
-                <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700 px-1.5 py-0.5 rounded-full shrink-0">Pro</span>
-              )}
             </button>
           )
         })}

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Star, Users, Globe, MapPin, BadgeCheck, Repeat2, Crown } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
+import { SocialShare } from "@/components/shared/SocialShare"
 
 interface Package { name: string; price: number; durationHrs: number; features: string[] }
 
@@ -163,15 +164,22 @@ export function SkillCard({ listing }: Props) {
             </div>
           </div>
 
-          {/* Price */}
-          {startPrice != null && (
-            <div className="text-right">
-              <p className="text-[10px] text-muted-foreground">{listing.pricingModel === "HOURLY" ? "per hour" : "starting at"}</p>
-              <p className={`font-bold text-base ${listing.isFeatured ? "text-amber-600 dark:text-amber-400" : "text-primary-600 dark:text-primary-400"}`}>
-                {formatCurrency(startPrice)}
-              </p>
-            </div>
-          )}
+          {/* Price + Share */}
+          <div className="flex flex-col items-end gap-1">
+            {startPrice != null && (
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground">{listing.pricingModel === "HOURLY" ? "per hour" : "starting at"}</p>
+                <p className={`font-bold text-base ${listing.isFeatured ? "text-amber-600 dark:text-amber-400" : "text-primary-600 dark:text-primary-400"}`}>
+                  {formatCurrency(startPrice)}
+                </p>
+              </div>
+            )}
+            <SocialShare
+              title={`${listing.title} — Skill on Korpo`}
+              path={`/skills/${listing.id}`}
+              variant="icon"
+            />
+          </div>
         </div>
       </div>
     </Link>

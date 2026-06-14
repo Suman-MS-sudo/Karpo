@@ -10,6 +10,7 @@ import {
   Droplets, Flame, Wifi, Home, PencilLine, Compass,
   SquareArrowOutUpRight, Info, ShieldCheck,
 } from "lucide-react"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -167,6 +168,11 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
             </>
           )}
           {!isOwner && !isFilled && <RentalReportButton rentalId={params.id} />}
+          <SocialShare
+            title={`${rental.title} — Rental on Korpo`}
+            path={`/rentals/${params.id}`}
+            variant="icon"
+          />
         </div>
       </div>
 

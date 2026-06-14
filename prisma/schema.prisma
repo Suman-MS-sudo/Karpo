@@ -77,6 +77,10 @@ model User {
   isVerified      Boolean   @default(false)
   role            String    @default("USER")
   hiddenServices  String[]  @default([])
+  socialLinks     Json?
+  skills          String[]  @default([])
+  yearsOfExp      Int?
+  username        String?   @unique
   companyId       String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -107,10 +111,11 @@ model User {
   carpoolRoutes        CarpoolRoute[]
   carpoolRequests      CarpoolRequest[]      @relation("RiderRequests")
   servicePosts     ServicePost[]
-  events           Event[]
-  eventRsvps       EventRsvp[]
-  courses          Course[]
-  conciergeLeads   ConciergeLead[]
+  events            Event[]
+  eventRsvps        EventRsvp[]
+  courses           Course[]
+  courseEnrollments CourseEnrollment[]
+  conciergeLeads    ConciergeLead[]
 }
 
 model Membership {
@@ -545,8 +550,18 @@ model Deal {
   category    String
   images      String[]
   isActive    Boolean  @default(true)
+  // Enterprise fields
+  merchantName    String  @default("")
+  merchantUrl     String?
+  terms           String?
+  redemptionSteps String?
+  website         String?
+  usageLimit      Int?
+  usedCount       Int     @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  redemptions DealRedemption[]
 
   @@index([isActive, validUntil])
 }
@@ -563,6 +578,12 @@ model Event {
   fee             Int      @default(0)
   images          String[]
   isActive        Boolean  @default(true)
+  // Enterprise fields
+  agenda          Json?    // [{time: string, title: string, speaker: string?}]
+  onlineLink      String?
+  tags            String[] @default([])
+  isBoosted       Boolean  @default(false)
+  requiresApproval Boolean @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -596,10 +617,19 @@ model Course {
   schedule     String
   images       String[]
   isActive     Boolean  @default(true)
+  // Enterprise fields
+  level        String   @default("BEGINNER")    // BEGINNER | INTERMEDIATE | ADVANCED
+  tags         String[] @default([])
+  prerequisites String?
+  maxStudents  Int?
+  curriculum   Json?    // [{module: string, topics: string[], durationMins: int}]
+  certificate  Boolean  @default(false)
+  language     String   @default("English")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  instructor User @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  instructor  User               @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  enrollments CourseEnrollment[]
 
   @@index([isActive, category])
 }
@@ -609,15 +639,22 @@ model ConciergeLead {
   userId        String
   serviceType   String
   description   String
-  status        String   @default("PENDING")
+  status        String   @default("PENDING")  // PENDING | IN_REVIEW | IN_PROGRESS | COMPLETED | CANCELLED
   assignedProId String?
   notes         String?
+  // Enterprise fields
+  budget          Int?
+  urgency         String  @default("NORMAL")  // URGENT | NORMAL | LOW
+  timeline        String?
+  phone           String?
+  preferredContact String @default("EMAIL")   // EMAIL | PHONE | WHATSAPP
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, serviceType])
+  @@index([userId])
 }
 
 // ─── Skill Marketplace ───────────────────────────────────────────────────────
@@ -788,10 +825,46 @@ model BenefitProduct {
   maxAmount   Int?
   contactUrl  String
   isActive    Boolean  @default(true)
+  // Enterprise fields
+  features         String[] @default([])
+  eligibility      String?
+  interestRate     String?
+  tenure           String?
+  applicationSteps String[] @default([])
+  processingTime   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   provider Company @relation(fields: [providerId], references: [id])
 
   @@index([type, isActive])
+}
+
+model CourseEnrollment {
+  id          String   @id @default(cuid())
+  courseId    String
+  userId      String
+  status      String   @default("ENROLLED")  // ENROLLED | COMPLETED | DROPPED
+  enrolledAt  DateTime @default(now())
+  completedAt DateTime?
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@index([courseId])
+  @@index([userId])
+}
+
+model DealRedemption {
+  id         String   @id @default(cuid())
+  dealId     String
+  userId     String
+  redeemedAt DateTime @default(now())
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, userId])
+  @@index([dealId])
+  @@index([userId])
 }

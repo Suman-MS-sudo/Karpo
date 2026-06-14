@@ -1,12 +1,15 @@
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
-import { Plus, ArrowRight, Crown, Search } from "lucide-react"
+import { Plus, ArrowRight, Search, Zap } from "lucide-react"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { CarpoolSearchBar } from "@/components/carpool/CarpoolSearchBar"
 import { formatCurrency } from "@/lib/utils"
+import { FREE_LIMITS } from "@/lib/limits"
 
 export const dynamic = "force-dynamic"
 
@@ -152,6 +155,12 @@ export default async function CarpoolPage({
     .filter((r) => !isSearching || routeMatchesSearch(r, pickupLat!, pickupLng!, dropoffLat!, dropoffLng!))
     .slice(0, 40)
 
+  const session = await auth()
+  const isPremium = session?.user?.membershipPlan === "PREMIUM"
+  const myCarpoolCount = session?.user?.id && !isPremium
+    ? await prisma.carpoolRoute.count({ where: { userId: session.user.id, isActive: true } })
+    : 0
+
   const boostedCount = routes.filter((r) => r.isBoosted).length
 
   // Build a human-readable description of active filters
@@ -169,7 +178,15 @@ export default async function CarpoolPage({
           <h1 className="text-2xl font-bold">Corporate Carpool</h1>
           <p className="text-muted-foreground text-sm mt-1">Share your commute with verified colleagues</p>
         </div>
-        <Button asChild><Link href="/carpool/new"><Plus className="h-4 w-4" /> Offer Ride</Link></Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isPremium && session?.user?.id && (
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">{myCarpoolCount}/{FREE_LIMITS.carpool} route posted</span>
+              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+            </div>
+          )}
+          <Button asChild><Link href="/carpool/new"><Plus className="h-4 w-4" /> Offer Ride</Link></Button>
+        </div>
       </div>
 
       {/* Search + filter bar */}
@@ -224,54 +241,58 @@ export default async function CarpoolPage({
           <Button asChild><Link href="/carpool/new">Offer First Ride</Link></Button>
         </div>
       ) : routes.length === 0 && isFiltered ? null : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {routes.map((route) => {
             const isBoosted = route.isBoosted
             return (
               <Link key={route.id} href={`/carpool/${route.id}`} className="block group">
                 <div className={`bg-card border rounded-xl overflow-hidden hover:shadow-md transition-all ${
                   isBoosted
-                    ? "border-amber-300 dark:border-amber-700 shadow-sm shadow-amber-100 dark:shadow-amber-900/20"
+                    ? "border-amber-300 dark:border-amber-700"
                     : "border-border border-l-4 border-l-orange-400"
                 }`}>
                   {isBoosted && <PremiumStrip />}
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Route */}
                       <div className="flex-1 min-w-0">
-                        {isBoosted && (
-                          <div className="mb-1.5"><PremiumBadge variant="boosted" /></div>
-                        )}
-                        <div className="flex items-center gap-2 flex-wrap text-base font-semibold">
-                          <span className="truncate max-w-[160px]">{route.fromLocation}</span>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                          <span className="truncate max-w-[160px]">{route.toLocation}</span>
+                        {isBoosted && <div className="mb-1.5"><PremiumBadge variant="boosted" /></div>}
+                        <div className="flex items-center gap-1.5 text-sm font-semibold flex-wrap">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="truncate max-w-[140px]">{route.fromLocation}</span>
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+                          <span className="truncate max-w-[140px]">{route.toLocation}</span>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${FREQ_COLORS[route.frequency] ?? "border-border bg-muted text-muted-foreground"}`}>
+                        {/* Pills row */}
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${FREQ_COLORS[route.frequency] ?? "border-border bg-muted text-muted-foreground"}`}>
                             {FREQ_LABEL[route.frequency] ?? route.frequency}
                           </span>
-                          <span className="text-sm text-muted-foreground">Departs {route.departureTime}</span>
-                          <span className="text-sm text-muted-foreground">· {route.seatsAvailable} seat{route.seatsAvailable !== 1 ? "s" : ""}</span>
-                          <span className="text-sm text-muted-foreground">· {route.vehicleType}</span>
-                          {route.acAvailable && <span className="text-xs px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">AC</span>}
+                          <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.departureTime}</span>
+                          <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.vehicleType}</span>
+                          {route.acAvailable && (
+                            <span className="text-[11px] bg-sky-100 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded-full">AC</span>
+                          )}
                         </div>
-                        {route.landmarks && (
-                          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">Via: {route.landmarks}</p>
-                        )}
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className={`text-xl font-bold ${isBoosted ? "text-amber-600 dark:text-amber-400" : "text-primary-600"}`}>
+                      {/* Price + seats + share */}
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                        <p className={`text-lg font-bold ${isBoosted ? "text-amber-600 dark:text-amber-400" : "text-primary-600"}`}>
                           {formatCurrency(route.pricePerSeat)}
                         </p>
-                        <p className="text-xs text-muted-foreground">per seat</p>
-                        {route.monthlyPassAvailable && route.monthlyPassPrice && (
-                          <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-                            {formatCurrency(route.monthlyPassPrice)}/mo pass
-                          </p>
-                        )}
+                        <p className="text-[11px] text-muted-foreground">per seat</p>
+                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                          {route.seatsAvailable} seat{route.seatsAvailable !== 1 ? "s" : ""}
+                        </p>
+                        <SocialShare
+                          title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
+                          path={`/carpool/${route.id}`}
+                          variant="icon"
+                        />
                       </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-border">
+                    <div className="mt-3 pt-3 border-t border-border">
                       <UserCard user={route.user} size="sm" clickable={false} />
                     </div>
                   </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, X } from "lucide-react"
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, X, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -10,10 +10,10 @@ const DEPARTMENTS = [
   "Engineering", "Product", "Design", "Data & Analytics", "Sales",
   "Marketing", "Finance", "HR", "Operations", "Legal", "Consulting", "Other",
 ]
-const WORK_MODES  = [
-  { value: "REMOTE",  label: "Remote"  },
-  { value: "HYBRID",  label: "Hybrid"  },
-  { value: "ONSITE",  label: "On-site" },
+const WORK_MODES = [
+  { value: "REMOTE",  label: "Remote"   },
+  { value: "HYBRID",  label: "Hybrid"   },
+  { value: "ONSITE",  label: "On-site"  },
 ]
 const JOB_TYPES = [
   { value: "FULL_TIME",  label: "Full-time"  },
@@ -21,6 +21,7 @@ const JOB_TYPES = [
   { value: "CONTRACT",   label: "Contract"   },
   { value: "INTERNSHIP", label: "Internship" },
 ]
+const CITIES = ["Hyderabad", "Bangalore", "Pune", "Chennai", "Mumbai", "Delhi NCR", "Kolkata"]
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -39,56 +40,64 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
 }
 
 export function ReferralSearchBar() {
-  const router      = useRouter()
-  const params      = useSearchParams()
+  const router = useRouter()
+  const params = useSearchParams()
 
-  const [query,    setQuery]    = useState(params.get("q")       ?? "")
-  const [depts,    setDepts]    = useState<string[]>(params.get("dept")  ? params.get("dept")!.split(",") : [])
-  const [modes,    setModes]    = useState<string[]>(params.get("mode")  ? params.get("mode")!.split(",") : [])
-  const [types,    setTypes]    = useState<string[]>(params.get("type")  ? params.get("type")!.split(",") : [])
-  const [hasBonus, setHasBonus] = useState(params.get("bonus") === "1")
-  const [minExp,   setMinExp]   = useState(params.get("minExp") ?? "")
-  const [maxExp,   setMaxExp]   = useState(params.get("maxExp") ?? "")
-  const [open,     setOpen]     = useState(false)
+  const [query,     setQuery]     = useState(params.get("q")        ?? "")
+  const [company,   setCompany]   = useState(params.get("company")  ?? "")
+  const [depts,     setDepts]     = useState<string[]>(params.get("dept")  ? params.get("dept")!.split(",")  : [])
+  const [cities,    setCities]    = useState<string[]>(params.get("city")  ? params.get("city")!.split(",")  : [])
+  const [modes,     setModes]     = useState<string[]>(params.get("mode")  ? params.get("mode")!.split(",")  : [])
+  const [types,     setTypes]     = useState<string[]>(params.get("type")  ? params.get("type")!.split(",")  : [])
+  const [hasBonus,  setHasBonus]  = useState(params.get("bonus")  === "1")
+  const [minExp,    setMinExp]    = useState(params.get("minExp")   ?? "")
+  const [maxExp,    setMaxExp]    = useState(params.get("maxExp")   ?? "")
+  const [minSalary, setMinSalary] = useState(params.get("minSal")  ?? "")
+  const [maxSalary, setMaxSalary] = useState(params.get("maxSal")  ?? "")
+  const [open,      setOpen]      = useState(false)
 
   const activeFilterCount =
-    depts.length + modes.length + types.length +
+    depts.length + cities.length + modes.length + types.length +
+    (company.trim() ? 1 : 0) +
     (hasBonus ? 1 : 0) +
-    (minExp ? 1 : 0) +
-    (maxExp ? 1 : 0)
+    (minExp ? 1 : 0) + (maxExp ? 1 : 0) +
+    (minSalary ? 1 : 0) + (maxSalary ? 1 : 0)
 
-  // Auto-open if URL already has filters
   useEffect(() => {
     if (activeFilterCount > 0) setOpen(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggle = (list: string[], setList: (v: string[]) => void, value: string) => {
+  const toggle = (list: string[], setList: (v: string[]) => void, value: string) =>
     setList(list.includes(value) ? list.filter((x) => x !== value) : [...list, value])
-  }
 
   const handleSearch = useCallback(() => {
     const p = new URLSearchParams()
-    if (query.trim())      p.set("q",      query.trim())
-    if (depts.length)      p.set("dept",   depts.join(","))
-    if (modes.length)      p.set("mode",   modes.join(","))
-    if (types.length)      p.set("type",   types.join(","))
-    if (hasBonus)          p.set("bonus",  "1")
-    if (minExp)            p.set("minExp", minExp)
-    if (maxExp)            p.set("maxExp", maxExp)
+    if (query.trim())        p.set("q",       query.trim())
+    if (company.trim())      p.set("company", company.trim())
+    if (depts.length)        p.set("dept",    depts.join(","))
+    if (cities.length)       p.set("city",    cities.join(","))
+    if (modes.length)        p.set("mode",    modes.join(","))
+    if (types.length)        p.set("type",    types.join(","))
+    if (hasBonus)            p.set("bonus",   "1")
+    if (minExp)              p.set("minExp",  minExp)
+    if (maxExp)              p.set("maxExp",  maxExp)
+    if (minSalary)           p.set("minSal",  minSalary)
+    if (maxSalary)           p.set("maxSal",  maxSalary)
     router.push(`/referrals?${p.toString()}`)
-  }, [query, depts, modes, types, hasBonus, minExp, maxExp, router])
+  }, [query, company, depts, cities, modes, types, hasBonus, minExp, maxExp, minSalary, maxSalary, router])
 
   const handleClear = () => {
-    setQuery(""); setDepts([]); setModes([]); setTypes([])
-    setHasBonus(false); setMinExp(""); setMaxExp("")
+    setQuery(""); setCompany(""); setDepts([]); setCities([])
+    setModes([]); setTypes([]); setHasBonus(false)
+    setMinExp(""); setMaxExp(""); setMinSalary(""); setMaxSalary("")
     router.push("/referrals")
   }
 
-  const hasAny = !!query.trim() || activeFilterCount > 0
+  const hasAny = !!query.trim() || !!company.trim() || activeFilterCount > 0
 
   return (
     <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
-      {/* Search row */}
+      {/* Search + company row */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -96,7 +105,17 @@ export function ReferralSearchBar() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search by title, company, department…"
+            placeholder="Search by title, department, skills…"
+            className="pl-9"
+          />
+        </div>
+        <div className="relative w-44 shrink-0">
+          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Company…"
             className="pl-9"
           />
         </div>
@@ -120,6 +139,17 @@ export function ReferralSearchBar() {
       {/* Filter panel */}
       {open && (
         <div className="pt-3 border-t border-border space-y-4">
+
+          {/* Location */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Location / City</p>
+            <div className="flex flex-wrap gap-1.5">
+              {CITIES.map((c) => (
+                <Chip key={c} label={c} active={cities.includes(c)} onClick={() => toggle(cities, setCities, c)} />
+              ))}
+            </div>
+          </div>
+
           {/* Department */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Department</p>
@@ -150,24 +180,34 @@ export function ReferralSearchBar() {
             </div>
           </div>
 
-          {/* Experience range + bonus toggle */}
-          <div className="flex flex-wrap items-end gap-4">
+          {/* Experience + Salary ranges */}
+          <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Experience (years)</p>
               <div className="flex items-center gap-2">
-                <Input
-                  type="number" min={0} max={30} placeholder="Min"
-                  value={minExp} onChange={(e) => setMinExp(e.target.value)}
-                  className="w-20 h-8 text-sm"
-                />
+                <Input type="number" min={0} max={30} placeholder="Min"
+                  value={minExp} onChange={(e) => setMinExp(e.target.value)} className="w-20 h-8 text-sm" />
                 <span className="text-muted-foreground text-sm">–</span>
-                <Input
-                  type="number" min={0} max={30} placeholder="Max"
-                  value={maxExp} onChange={(e) => setMaxExp(e.target.value)}
-                  className="w-20 h-8 text-sm"
-                />
+                <Input type="number" min={0} max={30} placeholder="Max"
+                  value={maxExp} onChange={(e) => setMaxExp(e.target.value)} className="w-20 h-8 text-sm" />
+                <span className="text-xs text-muted-foreground">yrs</span>
               </div>
             </div>
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Salary (LPA)</p>
+              <div className="flex items-center gap-2">
+                <Input type="number" min={0} placeholder="Min"
+                  value={minSalary} onChange={(e) => setMinSalary(e.target.value)} className="w-20 h-8 text-sm" />
+                <span className="text-muted-foreground text-sm">–</span>
+                <Input type="number" min={0} placeholder="Max"
+                  value={maxSalary} onChange={(e) => setMaxSalary(e.target.value)} className="w-20 h-8 text-sm" />
+                <span className="text-xs text-muted-foreground">L</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bonus toggle */}
+          <div className="flex flex-wrap gap-3 items-center">
             <button
               type="button"
               onClick={() => setHasBonus((v) => !v)}

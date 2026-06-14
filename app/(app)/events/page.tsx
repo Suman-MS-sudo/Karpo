@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
-import { Plus, Calendar, MapPin, Users } from "lucide-react"
+import { Plus, Calendar, MapPin, Users, Zap } from "lucide-react"
+import { FREE_LIMITS } from "@/lib/limits"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
@@ -10,6 +13,12 @@ import { formatDate, formatCurrency } from "@/lib/utils"
 const TABS = ["All", "TREK", "SPORTS", "NETWORKING", "HOBBY", "OTHER"]
 
 export default async function EventsPage({ searchParams }: { searchParams: { category?: string } }) {
+  const session   = await auth()
+  const isPremium = session?.user?.membershipPlan === "PREMIUM"
+  const myEventsCount = session?.user?.id && !isPremium
+    ? await prisma.event.count({ where: { organizerId: session.user.id, isActive: true } })
+    : 0
+
   const events = await prisma.event.findMany({
     where: {
       isActive: true,
@@ -31,7 +40,15 @@ export default async function EventsPage({ searchParams }: { searchParams: { cat
           <h1 className="text-2xl font-bold">Events &amp; Communities</h1>
           <p className="text-muted-foreground text-sm mt-1">Treks, sports, networking and more with verified colleagues</p>
         </div>
-        <Button asChild><Link href="/events/new"><Plus className="h-4 w-4" /> Create Event</Link></Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isPremium && session?.user?.id && (
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">{myEventsCount}/{FREE_LIMITS.events} created</span>
+              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+            </div>
+          )}
+          <Button asChild><Link href="/events/new"><Plus className="h-4 w-4" /> Create Event</Link></Button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -84,7 +101,14 @@ export default async function EventsPage({ searchParams }: { searchParams: { cat
                       <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Users className="h-3.5 w-3.5" /> {event._count.rsvps} going
                       </span>
-                      <span className="font-semibold text-sm">{event.fee === 0 ? "Free" : formatCurrency(event.fee)}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{event.fee === 0 ? "Free" : formatCurrency(event.fee)}</span>
+                        <SocialShare
+                          title={`${event.title} — Event on Korpo`}
+                          path={`/events/${event.id}`}
+                          variant="icon"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-border">

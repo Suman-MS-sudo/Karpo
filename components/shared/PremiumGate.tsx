@@ -1,49 +1,53 @@
 "use client"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import { Lock, Sparkles } from "lucide-react"
+import { Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface PremiumGateProps {
   children: React.ReactNode
-  blur?: boolean
+  feature?: string   // e.g. "unlimited boosts"
   className?: string
 }
 
-export function PremiumGate({ children, blur = true, className }: PremiumGateProps) {
+// No longer blocks access — just wraps content and optionally shows an
+// upgrade nudge for free users. Pass `feature` to get a contextual message.
+export function PremiumGate({ children, feature, className }: PremiumGateProps) {
   const { data: session } = useSession()
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
 
-  if (isPremium) return <>{children}</>
-
   return (
-    <div className={cn("relative", className)}>
-      {blur && (
-        <div className="pointer-events-none select-none opacity-40 blur-sm">
-          {children}
+    <div className={cn("space-y-3", className)}>
+      {children}
+      {!isPremium && feature && (
+        <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm">
+          <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+          <span className="text-amber-700 dark:text-amber-300 flex-1">
+            Upgrade to Premium for {feature}
+          </span>
+          <Button variant="outline" size="sm" asChild className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shrink-0">
+            <Link href="/membership">₹99/mo</Link>
+          </Button>
         </div>
       )}
-      <div className={cn(
-        "flex flex-col items-center justify-center gap-4 text-center p-8 rounded-xl",
-        blur ? "absolute inset-0 bg-card/80 backdrop-blur-none" : "bg-gradient-to-br from-amber-50 dark:from-amber-950/40 to-yellow-50 dark:to-yellow-950/40 border border-amber-200 dark:border-amber-700"
-      )}>
-        <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-          <Lock className="h-6 w-6 text-amber-600" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-foreground">Premium Feature</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Upgrade to Premium to unlock this feature
-          </p>
-        </div>
-        <Button variant="premium" asChild>
-          <Link href="/membership">
-            <Sparkles className="h-4 w-4" />
-            Upgrade for ₹99/month
-          </Link>
-        </Button>
-      </div>
+    </div>
+  )
+}
+
+// Standalone upsell banner — use when you want just the nudge without wrapping content
+export function PremiumNudge({ feature, className }: { feature: string; className?: string }) {
+  const { data: session } = useSession()
+  if (session?.user?.membershipPlan === "PREMIUM") return null
+  return (
+    <div className={cn("flex items-center gap-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm", className)}>
+      <Zap className="h-4 w-4 text-amber-500 shrink-0" />
+      <span className="text-amber-700 dark:text-amber-300 flex-1">
+        Free plan limit reached for {feature}. Premium removes all limits.
+      </span>
+      <Button variant="outline" size="sm" asChild className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shrink-0">
+        <Link href="/membership">Upgrade ₹99/mo</Link>
+      </Button>
     </div>
   )
 }

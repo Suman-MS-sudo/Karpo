@@ -35,6 +35,13 @@ export async function POST(req: Request) {
       mode: body.mode,
       schedule: body.schedule,
       images: body.images ?? [],
+      level: body.level ?? "BEGINNER",
+      tags: body.tags ?? [],
+      prerequisites: body.prerequisites,
+      maxStudents: body.maxStudents ? parseInt(body.maxStudents) : undefined,
+      curriculum: body.curriculum ?? undefined,
+      certificate: body.certificate ?? false,
+      language: body.language ?? "English",
     },
   })
   return NextResponse.json(course, { status: 201 })

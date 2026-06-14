@@ -12,6 +12,7 @@ import {
   Info, Truck, Users, ChevronRight, ExternalLink,
   Clock, Award, Zap, AlertTriangle,
 } from "lucide-react"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -297,14 +298,20 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 )}
               </div>
             </div>
-            <div className="text-right shrink-0">
+            <div className="text-right shrink-0 flex flex-col items-end gap-2">
               <p className="text-3xl font-bold text-primary-600">{formatCurrency(listing.price)}</p>
               {isSold && acceptedDeal && (
-                <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-0.5">Sold for {formatCurrency(acceptedDeal.amount)}</p>
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">Sold for {formatCurrency(acceptedDeal.amount)}</p>
               )}
               {listing.isNegotiable && !isSold && (
-                <p className="text-xs text-muted-foreground mt-1">Price is negotiable</p>
+                <p className="text-xs text-muted-foreground">Price is negotiable</p>
               )}
+              <SocialShare
+                title={`${listing.title} — ₹${listing.price.toLocaleString()} on Korpo`}
+                description={listing.description ?? undefined}
+                path={`/marketplace/${params.id}`}
+                variant="icon"
+              />
             </div>
           </div>
 

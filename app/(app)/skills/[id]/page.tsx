@@ -8,6 +8,7 @@ import {
   TrendingUp, Repeat2, Package, ChevronRight, MessageSquare,
   AlertCircle,
 } from "lucide-react"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
@@ -123,8 +124,17 @@ export default async function SkillDetailPage({ params }: { params: { id: string
               {listing.isVerified && <Badge variant="outline" className="text-blue-600 border-blue-300 flex items-center gap-1"><BadgeCheck className="h-3 w-3" />Verified</Badge>}
             </div>
 
-            <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
-            {listing.tagline && <p className="text-muted-foreground">{listing.tagline}</p>}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
+                {listing.tagline && <p className="text-muted-foreground mt-1">{listing.tagline}</p>}
+              </div>
+              <SocialShare
+                title={`${listing.title} — Skill on Korpo`}
+                path={`/skills/${params.id}`}
+                variant="icon"
+              />
+            </div>
 
             {/* Stats bar */}
             <div className="flex flex-wrap gap-4 py-3 border-y border-border text-sm">

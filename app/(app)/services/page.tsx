@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, Zap } from "lucide-react"
+import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ListingCard } from "@/components/shared/ListingCard"
@@ -17,6 +19,12 @@ const CATS = [
 ]
 
 export default async function ServicesPage({ searchParams }: { searchParams: { category?: string } }) {
+  const session   = await auth()
+  const isPremium = session?.user?.membershipPlan === "PREMIUM"
+  const myServicesCount = session?.user?.id && !isPremium
+    ? await prisma.servicePost.count({ where: { userId: session.user.id, isActive: true } })
+    : 0
+
   const posts = await prisma.servicePost.findMany({
     where: {
       isActive: true,
@@ -34,7 +42,15 @@ export default async function ServicesPage({ searchParams }: { searchParams: { c
           <h1 className="text-2xl font-bold">Skill Marketplace</h1>
           <p className="text-muted-foreground text-sm mt-1">Hire verified professionals from your network</p>
         </div>
-        <Button asChild><Link href="/services/new"><Plus className="h-4 w-4" /> Offer Service</Link></Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isPremium && session?.user?.id && (
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">{myServicesCount}/{FREE_LIMITS.skills} listed</span>
+              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+            </div>
+          )}
+          <Button asChild><Link href="/skills/new"><Plus className="h-4 w-4" /> Offer Service</Link></Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">

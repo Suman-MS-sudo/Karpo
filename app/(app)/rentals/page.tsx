@@ -5,11 +5,13 @@ import Image from "next/image"
 import {
   Plus, MapPin, Calendar, ChevronLeft, ChevronRight,
   Wifi, Car, Dumbbell, Shield, Utensils, Zap, Home,
-  BedDouble, Bath, SlidersHorizontal, Crown,
+  BedDouble, Bath, SlidersHorizontal,
 } from "lucide-react"
+import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { CITIES } from "@/config/services"
 
@@ -95,8 +97,12 @@ function Pill({
 
 export default async function RentalsPage({ searchParams }: PageProps) {
   const session = await auth()
+  const isPremium = session?.user?.membershipPlan === "PREMIUM"
   const userCity = session?.user?.city
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10))
+  const myRentalsCount = session?.user?.id && !isPremium
+    ? await prisma.rentalPost.count({ where: { userId: session.user.id, status: "ACTIVE" } })
+    : 0
 
   // budget param maps to minRent/maxRent
   const [budgetMin, budgetMax] = (() => {
@@ -165,9 +171,17 @@ export default async function RentalsPage({ searchParams }: PageProps) {
             {searchParams.city ? ` in ${searchParams.city}` : " across all cities"}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/rentals/new"><Plus className="h-4 w-4 mr-1" />Post Listing</Link>
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isPremium && session?.user?.id && (
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">{myRentalsCount}/{FREE_LIMITS.rentals} posted</span>
+              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+            </div>
+          )}
+          <Button asChild>
+            <Link href="/rentals/new"><Plus className="h-4 w-4 mr-1" />Post Listing</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Filter panel */}
@@ -386,9 +400,14 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                         {isBoosted && <PremiumBadge variant="boosted" className="mb-1" />}
                         <h3 className="font-semibold text-sm leading-tight line-clamp-2">{rental.title}</h3>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="flex flex-col items-end gap-1 shrink-0">
                         <p className={`font-bold text-sm ${isBoosted ? "text-amber-600 dark:text-amber-400" : "text-primary-600"}`}>{formatCurrency(rental.rent)}<span className="text-[10px] font-normal text-muted-foreground">/mo</span></p>
                         {rental.deposit && <p className="text-[10px] text-muted-foreground">+{formatCurrency(rental.deposit)} dep</p>}
+                        <SocialShare
+                          title={`${rental.title} — Rental on Korpo`}
+                          path={`/rentals/${rental.id}`}
+                          variant="icon"
+                        />
                       </div>
                     </div>
 

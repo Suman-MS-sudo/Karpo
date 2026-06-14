@@ -8,6 +8,7 @@ import { PremiumStrip } from "./PremiumBadge"
 import { formatCurrency, formatRelativeTime, truncate, getInitials } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { Lock, Eye, Handshake, Pencil, Crown } from "lucide-react"
+import { SocialShare } from "./SocialShare"
 import { LISTING_CONDITIONS } from "@/config/services"
 
 interface ListingAuthor {
@@ -159,11 +160,33 @@ export function ListingCard({
           )}
 
           {/* Condition badge — top right */}
-          {condMeta && (
+          {condMeta ? (
             <div className="absolute top-2 right-2">
               <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border", condMeta.badge)}>
                 {condMeta.label}
               </span>
+            </div>
+          ) : (
+            /* Share icon — appears on hover when no condition badge */
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <SocialShare
+                title={title}
+                path={href}
+                variant="icon"
+                className="shadow-sm"
+              />
+            </div>
+          )}
+
+          {/* Share icon alongside condition badge */}
+          {condMeta && (
+            <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <SocialShare
+                title={title}
+                path={href}
+                variant="icon"
+                className="shadow-sm"
+              />
             </div>
           )}
         </div>

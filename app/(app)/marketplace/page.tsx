@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
-import { Plus, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap } from "lucide-react"
+import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { MarketplaceFilters } from "@/components/marketplace/MarketplaceFilters"
@@ -101,6 +102,9 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const totalPages  = Math.ceil(gridTotal / PAGE_SIZE)
   const totalCount  = featuredListings.length + gridTotal
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
+  const myListingsCount = session?.user?.id && !isPremium
+    ? await prisma.listing.count({ where: { userId: session.user.id, status: "ACTIVE" } })
+    : 0
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -114,11 +118,12 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
               : "Verified sellers from your corporate network"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {!isPremium && (
-            <Button variant="outline" size="sm" asChild className="hidden sm:flex">
-              <Link href="/membership">⭐ Unlimited listings</Link>
-            </Button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isPremium && session?.user?.id && (
+            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">{myListingsCount}/{FREE_LIMITS.marketplace} listed</span>
+              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+            </div>
           )}
           <Button asChild>
             <Link href="/marketplace/new"><Plus className="h-4 w-4" /> Post Item</Link>

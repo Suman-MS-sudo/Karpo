@@ -1,9 +1,9 @@
 "use client"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { MessageSquare, User, Settings, LogOut, ChevronDown, Menu, Plus, Sparkles, Crown, ShieldCheck } from "lucide-react"
+import { MessageSquare, User, Settings, LogOut, ChevronDown, Menu, Plus, Sparkles, Crown, ShieldCheck, Search } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { NotificationBell } from "@/components/shared/NotificationBell"
@@ -18,6 +18,8 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   const router = useRouter()
   const [userMenuOpen,  setUserMenuOpen]  = useState(false)
   const [quickPostOpen, setQuickPostOpen] = useState(false)
+  const [searchQuery,   setSearchQuery]   = useState("")
+  const searchRef = useRef<HTMLInputElement>(null)
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
 
   const handleServiceSelect = (service: ServiceConfig) => {
@@ -25,8 +27,14 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
     router.push(`${service.route}/new`)
   }
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = searchQuery.trim()
+    if (q) router.push(`/search?q=${encodeURIComponent(q)}`)
+  }
+
   return (
-    <header className="sticky top-0 z-50 h-16 bg-card/95 backdrop-blur-md border-b border-border flex items-center px-4 gap-2 shrink-0">
+    <header className="sticky top-0 z-50 h-14 bg-card/95 backdrop-blur-md border-b border-border flex items-center px-4 gap-2 shrink-0">
       {/* Mobile menu toggle */}
       <button
         onClick={onMenuClick}
@@ -35,13 +43,34 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Brand — mobile only (desktop shows in sidebar) */}
+      {/* Brand — mobile only (desktop rail shows logo) */}
       <Link href="/dashboard" className="flex items-center gap-2 mr-2 lg:hidden">
-        <Image src="/logo.png" alt="Karpo" width={28} height={28} className="rounded-lg object-contain" />
-        <span className="font-bold text-foreground">Karpo</span>
+        <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
+        <span className="font-bold text-foreground">Korpo</span>
       </Link>
 
-      <div className="flex-1" />
+      {/* Global search — desktop centered, mobile full width */}
+      <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-auto hidden sm:block">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            ref={searchRef}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search listings, jobs, rentals, events…"
+            className="w-full h-9 pl-9 pr-4 text-sm bg-muted/60 hover:bg-muted focus:bg-background border border-transparent focus:border-border rounded-xl outline-none transition-all placeholder:text-muted-foreground/60"
+          />
+        </div>
+      </form>
+
+      {/* Mobile: search icon button */}
+      <button
+        onClick={() => router.push("/search")}
+        className="sm:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors ml-auto"
+      >
+        <Search className="h-5 w-5" />
+      </button>
 
       {/* Right actions */}
       <div className="flex items-center gap-1">

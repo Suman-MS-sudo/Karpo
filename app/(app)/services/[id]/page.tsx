@@ -4,6 +4,7 @@ import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft } from "lucide-react"
+import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
@@ -46,7 +47,7 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
                   {post.city && <span className="text-sm text-muted-foreground">{post.city}</span>}
                 </div>
               </div>
-              <div className="text-right shrink-0">
+              <div className="text-right shrink-0 flex flex-col items-end gap-2">
                 {post.priceType === "NEGOTIABLE" ? (
                   <Badge variant="outline">Negotiable</Badge>
                 ) : (
@@ -55,6 +56,12 @@ export default async function ServiceDetailPage({ params }: { params: { id: stri
                     {post.priceType === "HOURLY" && <span className="text-sm font-normal text-muted-foreground">/hr</span>}
                   </p>
                 )}
+                <SocialShare
+                  title={`${post.title} — Skill on Korpo`}
+                  description={post.description ?? undefined}
+                  path={`/services/${params.id}`}
+                  variant="icon"
+                />
               </div>
             </div>
 
