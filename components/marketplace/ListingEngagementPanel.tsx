@@ -99,7 +99,6 @@ function EngagementCard({ engagement, listingId }: { engagement: Engagement; lis
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {buyer.jobTitle ?? buyer.department ?? ""}
-              {buyer.company ? ` · ${buyer.company.name}` : ""}
             </p>
           </div>
         </div>

@@ -117,7 +117,7 @@ export function OwnerOffersPanel({ listingId, initialCount }: Props) {
                 {/* Buyer info */}
                 <p className="text-xs text-muted-foreground">
                   {offer.buyer.name ?? offer.buyer.email?.split("@")[0] ?? "Anonymous"}
-                  {offer.buyer.company ? ` · ${offer.buyer.company.name}` : ""}
+                  {offer.buyer.jobTitle ? ` · ${offer.buyer.jobTitle}` : ""}
                   <span className="ml-2 opacity-60">· {formatRelativeTime(new Date(offer.createdAt))}</span>
                 </p>
 

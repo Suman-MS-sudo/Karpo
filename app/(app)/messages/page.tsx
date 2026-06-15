@@ -63,7 +63,7 @@ export default async function MessagesPage() {
                       <span className={`font-medium ${isUnread ? "text-foreground" : "text-foreground"}`}>{partner.name}</span>
                       {partner.isVerified && <VerifiedBadge size="sm" />}
                     </div>
-                    {partner.company && <p className="text-xs text-muted-foreground">{partner.company.name}</p>}
+                    {partner.jobTitle && <p className="text-xs text-muted-foreground">{partner.jobTitle}</p>}
                     <p className={`text-sm mt-0.5 truncate ${isUnread ? "font-medium text-foreground" : "text-muted-foreground"}`}>
                       {lastMsg.senderId === userId ? "You: " : ""}{lastMsg.content}
                     </p>

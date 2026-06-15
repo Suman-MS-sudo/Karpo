@@ -263,8 +263,8 @@ export function ListingCard({
                     {author.isVerified && <VerifiedBadge size="sm" />}
                     {isBoosted && <Crown className="h-3 w-3 text-amber-500 shrink-0" />}
                   </div>
-                  {author.company && (
-                    <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-none">{author.company.name}</p>
+                  {(author.jobTitle || author.department) && (
+                    <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-none">{author.jobTitle ?? author.department}</p>
                   )}
                 </div>
                 <div className="text-right shrink-0 space-y-0.5">

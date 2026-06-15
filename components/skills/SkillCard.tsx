@@ -107,7 +107,7 @@ export function SkillCard({ listing }: Props) {
               {listing.user.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
               {listing.isFeatured && <Crown className="h-3 w-3 text-amber-500 shrink-0" />}
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">{listing.user.jobTitle ?? listing.user.company?.name}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{listing.user.jobTitle ?? listing.user.department}</p>
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0">
             {listing.isFeatured && <PremiumBadge variant="boosted" />}

@@ -533,7 +533,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                         </Avatar>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold truncate">{dealBuyer.name ?? "Anonymous"}</p>
-                          {dealBuyer.company && <p className="text-xs text-muted-foreground truncate">{dealBuyer.company.name}</p>}
                           {dealBuyer.jobTitle && <p className="text-xs text-muted-foreground truncate">{dealBuyer.jobTitle}</p>}
                         </div>
                       </div>
@@ -628,7 +627,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   </Avatar>
                   <div>
                     <p className="text-sm font-semibold">{listing.user.name}</p>
-                    {listing.user.company && <p className="text-xs text-muted-foreground">{listing.user.company.name}</p>}
+                    {listing.user.jobTitle && <p className="text-xs text-muted-foreground">{listing.user.jobTitle}</p>}
                     {listing.user.isVerified && (
                       <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
                         <CheckCircle2 className="h-3 w-3" /> Verified
@@ -670,7 +669,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 </Avatar>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm leading-tight">{listing.user.name}</p>
-                  {listing.user.company && <p className="text-xs text-muted-foreground truncate">{listing.user.company.name}</p>}
                   {listing.user.jobTitle && <p className="text-xs text-muted-foreground truncate">{listing.user.jobTitle}</p>}
                   <div className="flex items-center gap-2 mt-0.5">
                     {listing.user.isVerified && (

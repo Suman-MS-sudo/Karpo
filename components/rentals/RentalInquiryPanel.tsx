@@ -99,7 +99,7 @@ function InquiryCard({
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm leading-tight">{inquiry.user.name}</p>
-          <p className="text-xs text-muted-foreground">{[inquiry.user.jobTitle ?? inquiry.user.department, inquiry.user.company?.name].filter(Boolean).join(" · ")}</p>
+          <p className="text-xs text-muted-foreground">{inquiry.user.jobTitle ?? inquiry.user.department}</p>
 
           {/* Visit date */}
           {inquiry.type === "VISIT" && inquiry.visitDate && (

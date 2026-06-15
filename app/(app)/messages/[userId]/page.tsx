@@ -24,7 +24,7 @@ interface Partner {
   image: string | null
   avatarUrl: string | null
   isVerified: boolean
-  company: { name: string } | null
+  jobTitle: string | null
 }
 
 export default function MessageThreadPage() {
@@ -102,7 +102,7 @@ export default function MessageThreadPage() {
                 <Link href={`/profile/${partner.id}`} className="font-medium hover:underline">{partner.name}</Link>
                 {partner.isVerified && <VerifiedBadge size="sm" />}
               </div>
-              {partner.company && <p className="text-xs text-muted-foreground">{partner.company.name}</p>}
+              {partner.jobTitle && <p className="text-xs text-muted-foreground">{partner.jobTitle}</p>}
             </div>
           </>
         )}

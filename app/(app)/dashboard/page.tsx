@@ -137,9 +137,6 @@ export default async function DashboardPage() {
                 Good day, {session?.user?.name?.split(" ")[0] ?? "there"}!
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                {session?.user?.company && (
-                  <span className="text-white/80 text-sm">{session.user.company.name}</span>
-                )}
                 {session?.user?.isVerified && (
                   <VerifiedBadge size="sm" className="border-white/30 bg-white/10 text-white" />
                 )}

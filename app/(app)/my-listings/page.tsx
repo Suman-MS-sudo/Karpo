@@ -205,7 +205,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
                     {isSold && acceptedOffer?.buyer && (
                       <span className="text-xs text-muted-foreground">
                         buyer: {acceptedOffer.buyer.name ?? "—"}
-                        {acceptedOffer.buyer.company && ` · ${acceptedOffer.buyer.company.name}`}
+                        {acceptedOffer.buyer.jobTitle && ` · ${acceptedOffer.buyer.jobTitle}`}
                       </span>
                     )}
                   </div>

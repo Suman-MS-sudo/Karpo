@@ -124,7 +124,6 @@ function ApplicationCard({ app, referralId }: { app: Application; referralId: st
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {user.jobTitle ?? user.department ?? ""}
-              {user.company ? ` · ${user.company.name}` : ""}
             </p>
             {user.email && <p className="text-[11px] text-muted-foreground/70">{user.email}</p>}
           </div>

@@ -209,9 +209,6 @@ export default function EditProfilePage() {
                 <AtSign className="h-3 w-3" />{form.username}
               </p>
             )}
-            {session?.user?.company && (
-              <p className="text-xs text-muted-foreground mt-0.5">{session.user.company.name}</p>
-            )}
             <p className="text-xs text-muted-foreground">{session?.user?.email}</p>
 
             {/* Completion bar */}

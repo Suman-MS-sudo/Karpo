@@ -462,7 +462,6 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
               </Avatar>
               <div className="min-w-0">
                 <p className="font-semibold text-sm">{rental.user.name}</p>
-                {rental.user.company && <p className="text-xs text-muted-foreground">{rental.user.company.name}</p>}
                 {rental.user.jobTitle && <p className="text-xs text-muted-foreground">{rental.user.jobTitle}</p>}
                 {rental.user.isVerified && (
                   <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">

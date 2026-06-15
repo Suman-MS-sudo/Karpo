@@ -102,7 +102,6 @@ function RiderCard({ request, routeId }: { request: CarpoolRequest; routeId: str
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {rider.jobTitle ?? rider.department ?? ""}
-              {rider.company ? ` · ${rider.company.name}` : ""}
             </p>
           </div>
         </div>

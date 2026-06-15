@@ -112,7 +112,7 @@ export default async function EventsPage({ searchParams }: { searchParams: { cat
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-border">
-                    <UserCard user={event.organizer} size="sm" showCompany={false} clickable={false} />
+                    <UserCard user={event.organizer} size="sm" clickable={false} />
                   </div>
                 </div>
               </div>

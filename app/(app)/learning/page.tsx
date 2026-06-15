@@ -142,7 +142,7 @@ export default async function LearningPage({ searchParams }: { searchParams: { c
 
                   <div className="mt-3 pt-3 border-t border-border">
                     <div className="flex items-center justify-between">
-                      <UserCard user={course.instructor} size="sm" showCompany={false} clickable={false} />
+                      <UserCard user={course.instructor} size="sm" clickable={false} />
                       <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
                         <p className="font-bold text-primary-600 text-sm">{course.price === 0 ? "Free" : formatCurrency(course.price)}</p>
                         <SocialShare title={`${course.title} — Course on Korpo`} path={`/learning/${course.id}`} variant="icon" />

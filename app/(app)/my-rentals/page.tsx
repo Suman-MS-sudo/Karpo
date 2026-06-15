@@ -209,7 +209,7 @@ export default async function MyRentalsPage({ searchParams }: PageProps) {
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
                       Filled by {accepted.user.name ?? "—"}
-                      {accepted.user.company && ` · ${accepted.user.company.name}`}
+                      {accepted.user.jobTitle && ` · ${accepted.user.jobTitle}`}
                     </p>
                   )}
 

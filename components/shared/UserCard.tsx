@@ -1,5 +1,4 @@
 import Link from "next/link"
-import Image from "next/image"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { VerifiedBadge } from "./VerifiedBadge"
 import { getInitials } from "@/lib/utils"
@@ -17,11 +16,10 @@ interface UserCardUser {
 interface UserCardProps {
   user: UserCardUser
   size?: "sm" | "md" | "lg"
-  showCompany?: boolean
   clickable?: boolean
 }
 
-export function UserCard({ user, size = "md", showCompany = true, clickable = true }: UserCardProps) {
+export function UserCard({ user, size = "md", clickable = true }: UserCardProps) {
   const avatarSize = size === "sm" ? "h-8 w-8" : size === "md" ? "h-10 w-10" : "h-12 w-12"
   const nameSize = size === "sm" ? "text-sm" : size === "md" ? "text-sm" : "text-base"
   const subSize = "text-xs text-muted-foreground"
@@ -37,22 +35,8 @@ export function UserCard({ user, size = "md", showCompany = true, clickable = tr
           <span className={`${nameSize} font-medium text-foreground truncate`}>{user.name ?? "Anonymous"}</span>
           {user.isVerified && <VerifiedBadge size="sm" />}
         </div>
-        {showCompany && user.company && (
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {user.company.logo && (
-              <Image
-                src={user.company.logo}
-                alt={user.company.name}
-                width={14}
-                height={14}
-                className="rounded-sm object-contain"
-              />
-            )}
-            <span className={subSize}>{user.company.name}</span>
-            {(user.jobTitle || user.department) && (
-              <span className={subSize}>· {user.jobTitle ?? user.department}</span>
-            )}
-          </div>
+        {(user.jobTitle || user.department) && (
+          <p className={`${subSize} mt-0.5`}>{user.jobTitle ?? user.department}</p>
         )}
       </div>
     </div>

@@ -128,11 +128,6 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-xs font-semibold leading-none">{session.user.name?.split(" ")[0]}</p>
-                {session.user.company && (
-                  <p className="text-[10px] text-muted-foreground leading-none mt-0.5 truncate max-w-[80px]">
-                    {session.user.company.name}
-                  </p>
-                )}
               </div>
               <ChevronDown className="h-3 w-3 text-muted-foreground hidden md:block" />
             </button>
