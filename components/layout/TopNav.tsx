@@ -3,10 +3,11 @@ import { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { MessageSquare, User, Settings, LogOut, ChevronDown, Menu, Plus, Sparkles, Crown, ShieldCheck, Search } from "lucide-react"
+import { User, Settings, LogOut, ChevronDown, Menu, Plus, Sparkles, Crown, ShieldCheck, Search } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { NotificationBell } from "@/components/shared/NotificationBell"
+import { MessageIcon } from "@/components/shared/MessageIcon"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { ServiceGrid } from "@/components/shared/ServiceGrid"
 import { getInitials } from "@/lib/utils"
@@ -93,12 +94,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
         </div>
 
         {/* Messages */}
-        <Link
-          href="/messages"
-          className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <MessageSquare className="h-4.5 w-4.5 h-[18px] w-[18px]" />
-        </Link>
+        <MessageIcon />
 
         {/* Notifications */}
         <NotificationBell />
