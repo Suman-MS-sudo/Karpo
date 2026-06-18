@@ -86,6 +86,7 @@ export default function NewListingPage() {
     subcategory:  "",
     condition:    "USED",
     city:         session?.user?.city ?? "",
+    area:         "",
     isNegotiable: true,
     brand:        "",
     purchaseYear: "",
@@ -132,7 +133,7 @@ export default function NewListingPage() {
           images,
           latitude:  location?.lat ?? null,
           longitude: location?.lng ?? null,
-          area:      location?.area ?? null,
+          area:      location?.area ?? form.area ?? null,
         }),
       })
       const data = await res.json()
@@ -304,14 +305,14 @@ export default function NewListingPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Purchase Year</Label>
-              <Input
-                type="number"
-                placeholder={String(new Date().getFullYear())}
-                min={1990}
-                max={new Date().getFullYear()}
-                value={form.purchaseYear}
-                onChange={(e) => set("purchaseYear", e.target.value)}
-              />
+              <Select value={form.purchaseYear} onValueChange={(v) => set("purchaseYear", v)}>
+                <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+                <SelectContent className="max-h-56">
+                  {Array.from({ length: new Date().getFullYear() - 1989 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Warranty</Label>
@@ -350,6 +351,17 @@ export default function NewListingPage() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Area / Locality</Label>
+            <Input
+              placeholder="e.g. Banjara Hills, HSR Layout, Koramangala…"
+              value={form.area}
+              onChange={(e) => set("area", e.target.value)}
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground">Helps buyers find you — neighbourhood or landmark is enough</p>
           </div>
 
           <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-surface">

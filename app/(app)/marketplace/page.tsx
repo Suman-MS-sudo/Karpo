@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -66,7 +68,18 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     },
     orderBy: { boostExpiresAt: "desc" },
     take: 4,
-    include: { user: { include: { company: { select: { name: true, logo: true, domain: true } }, membership: { select: { plan: true } } } } },
+    select: {
+      id: true, title: true, description: true, price: true, images: true,
+      category: true, condition: true, isNegotiable: true, boostLevel: true,
+      boostExpiresAt: true, viewCount: true, city: true, createdAt: true, userId: true,
+      user: {
+        select: {
+          id: true, name: true, image: true, avatarUrl: true,
+          isVerified: true, jobTitle: true, department: true,
+          membership: { select: { plan: true } },
+        },
+      },
+    },
   })
 
   const featuredIds = featuredListings.map((l) => l.id)
@@ -94,7 +107,18 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       orderBy,
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { user: { include: { company: { select: { name: true, logo: true, domain: true } }, membership: { select: { plan: true } } } } },
+      select: {
+        id: true, title: true, description: true, price: true, images: true,
+        category: true, condition: true, isNegotiable: true, boostLevel: true,
+        viewCount: true, city: true, createdAt: true, userId: true,
+        user: {
+          select: {
+            id: true, name: true, image: true, avatarUrl: true,
+            isVerified: true, jobTitle: true, department: true,
+            membership: { select: { plan: true } },
+          },
+        },
+      },
     }),
     prisma.listing.count({ where: gridWhere }),
   ])

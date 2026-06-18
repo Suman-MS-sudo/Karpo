@@ -6,7 +6,7 @@ import Link from "next/link"
 import loadDynamic from "next/dynamic"
 import {
   ArrowLeft, MapPin, Calendar, CheckCircle2, BedDouble, Bath,
-  Layers, Users, Eye, Phone, Mail, MessageSquare, Car, Zap,
+  Layers, Users, Eye, Phone, MessageSquare, Car, Zap,
   Droplets, Flame, Wifi, Home, PencilLine, Compass,
   SquareArrowOutUpRight, Info, ShieldCheck,
 } from "lucide-react"
@@ -518,11 +518,6 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
               {rental.user.phone && rental.user.phone !== rental.phone && (
                 <a href={`tel:${rental.user.phone}`} className="flex items-center gap-2 text-sm hover:text-primary-600 transition-colors">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />{rental.user.phone}
-                </a>
-              )}
-              {rental.user.email && (
-                <a href={`mailto:${rental.user.email}`} className="flex items-center gap-2 text-sm hover:text-primary-600 transition-colors">
-                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />{rental.user.email}
                 </a>
               )}
               <Button size="sm" variant="outline" className="w-full gap-2 mt-1" asChild>

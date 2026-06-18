@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Star, Calendar, MessageSquare, Loader2, CheckCircle2,
@@ -55,6 +55,14 @@ export function ListingEngagePanel({ listingId, myEngagement, sellerName, isNego
   const [mode, setMode]       = useState<"options" | "visit">("options")
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState("")
+
+  // Poll for status changes when seller may be acting on the engagement
+  useEffect(() => {
+    const pollable = myEngagement && ["PENDING", "CONFIRMED", "DONE"].includes(myEngagement.status)
+    if (!pollable) return
+    const id = setInterval(() => router.refresh(), 12000)
+    return () => clearInterval(id)
+  }, [myEngagement?.status, router])
 
   // Visit form state
   const [visitDate, setVisitDate] = useState("")

@@ -13,14 +13,12 @@ import { formatRelativeTime, getInitials } from "@/lib/utils"
 interface Buyer {
   id:         string
   name:       string | null
-  email:      string | null
   phone:      string | null
   avatarUrl:  string | null
   image:      string | null
   isVerified: boolean
   jobTitle:   string | null
   department: string | null
-  company:    { name: string } | null
 }
 
 interface Engagement {

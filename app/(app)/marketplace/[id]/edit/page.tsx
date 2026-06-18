@@ -21,7 +21,8 @@ export default function EditListingPage() {
   const [images, setImages]       = useState<string[]>([])
   const [form, setForm] = useState({
     title: "", description: "", price: "",
-    category: "", condition: "USED", city: "", isNegotiable: true,
+    category: "", condition: "USED", city: "", area: "", isNegotiable: true,
+    purchaseYear: "",
   })
 
   // Load existing listing
@@ -31,13 +32,15 @@ export default function EditListingPage() {
       .then((r) => r.json())
       .then((data) => {
         setForm({
-          title:        data.title       ?? "",
-          description:  data.description ?? "",
+          title:        data.title        ?? "",
+          description:  data.description  ?? "",
           price:        String(data.price ?? ""),
-          category:     data.category    ?? "",
-          condition:    data.condition   ?? "USED",
-          city:         data.city        ?? "",
-          isNegotiable: data.isNegotiable ?? true,
+          category:     data.category     ?? "",
+          condition:    data.condition    ?? "USED",
+          city:         data.city         ?? "",
+          area:         data.area         ?? "",
+          isNegotiable: data.isNegotiable  ?? true,
+          purchaseYear: data.purchaseYear ? String(data.purchaseYear) : "",
         })
         setImages(Array.isArray(data.images) ? data.images : [])
       })
@@ -67,7 +70,12 @@ export default function EditListingPage() {
       const res = await fetch(`/api/listings/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, price: parseInt(form.price), images }),
+        body: JSON.stringify({
+          ...form,
+          price:        parseInt(form.price),
+          purchaseYear: form.purchaseYear ? parseInt(form.purchaseYear) : null,
+          images,
+        }),
       })
       if (res.ok) router.push(`/marketplace/${id}`)
       else {
@@ -175,6 +183,31 @@ export default function EditListingPage() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        {/* Area / Locality */}
+        <div className="space-y-1.5">
+          <Label>Area / Locality</Label>
+          <Input
+            placeholder="e.g. Banjara Hills, HSR Layout, Koramangala…"
+            value={form.area}
+            onChange={(e) => setForm((f) => ({ ...f, area: e.target.value }))}
+            maxLength={100}
+          />
+          <p className="text-xs text-muted-foreground">Neighbourhood or landmark — helps buyers find you</p>
+        </div>
+
+        {/* Purchase Year */}
+        <div className="space-y-1.5">
+          <Label>Purchase Year</Label>
+          <Select value={form.purchaseYear} onValueChange={(v) => setForm((f) => ({ ...f, purchaseYear: v }))}>
+            <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+            <SelectContent className="max-h-56">
+              {Array.from({ length: new Date().getFullYear() - 1989 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Negotiable */}

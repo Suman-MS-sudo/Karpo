@@ -17,9 +17,11 @@ interface Notif {
 export function NotificationBell() {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [open, setOpen] = useState(false)
+  // Snapshot of notifications shown when the bell was opened (includes what was unread at that moment)
+  const [snapshot, setSnapshot] = useState<Notif[]>([])
 
   useEffect(() => {
-    fetch("/api/notifications?limit=10")
+    fetch("/api/notifications?limit=20")
       .then((r) => r.json())
       .then((d) => setNotifs(d.data ?? []))
       .catch(() => {})
@@ -32,10 +34,20 @@ export function NotificationBell() {
     setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })))
   }
 
+  const handleOpen = () => {
+    if (!open) {
+      // Capture what's currently unread to show in dropdown, then mark all read
+      const unreadNow = notifs.filter((n) => !n.isRead)
+      setSnapshot(unreadNow)
+      if (unreadNow.length > 0) markAllRead()
+    }
+    setOpen((o) => !o)
+  }
+
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleOpen}
         className="relative h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors"
       >
         <Bell className="h-5 w-5 text-muted-foreground" />
@@ -51,28 +63,20 @@ export function NotificationBell() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-11 z-50 w-80 bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <span className="font-semibold text-sm">Notifications</span>
-              {unread > 0 && (
-                <button onClick={markAllRead} className="text-xs text-accent-400 hover:underline">
-                  Mark all read
-                </button>
-              )}
+              <span className="font-semibold text-sm">New Notifications</span>
             </div>
             <div className="max-h-80 overflow-y-auto">
-              {notifs.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No notifications yet</p>
+              {snapshot.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No new notifications</p>
               ) : (
-                notifs.map((n) => (
+                snapshot.map((n) => (
                   <Link
                     key={n.id}
                     href={n.link ?? "/notifications"}
                     onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-0",
-                      !n.isRead && "bg-accent-50 dark:bg-accent-900/30"
-                    )}
+                    className="flex gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border last:border-0 bg-accent-50 dark:bg-accent-900/30"
                   >
-                    <div className={cn("h-2 w-2 rounded-full mt-1.5 shrink-0", n.isRead ? "bg-transparent" : "bg-accent-400")} />
+                    <div className="h-2 w-2 rounded-full mt-1.5 shrink-0 bg-accent-400" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium line-clamp-1">{n.title}</p>
                       <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.body}</p>

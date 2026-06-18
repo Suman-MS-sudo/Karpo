@@ -83,10 +83,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     include: {
       user: {
         select: {
-          id: true, name: true, email: true, phone: true,
+          id: true, name: true, phone: true,
           avatarUrl: true, image: true, isVerified: true,
           jobTitle: true, department: true,
-          company: { select: { name: true } },
         },
       },
     },

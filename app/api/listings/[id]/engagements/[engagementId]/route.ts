@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       listing: {
         select: {
           userId: true, title: true, id: true, price: true,
-          user: { select: { phone: true, email: true, name: true } },
+          user: { select: { phone: true, name: true } },
         },
       },
       user: { select: { name: true } },
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         data: {
           senderId:    session.user.id,
           receiverId:  engagement.userId,
-          content:     `Hi ${buyerName}! I've accepted your interest in "${listingTitle}". Here's how to reach me:\n\n📞 Phone: ${engagement.listing.user.phone ?? "Not provided"}\n📧 Email: ${engagement.listing.user.email ?? "Not provided"}\n\nFeel free to arrange a visit or pick-up!`,
+          content:     `Hi ${buyerName}! I've accepted your interest in "${listingTitle}". Feel free to message me here to arrange a visit or pick-up!\n\n📞 Phone: ${engagement.listing.user.phone ?? "Not provided"}`,
           listingId:   engagement.listing.id,
           listingType: "listing",
         },
@@ -108,7 +108,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         data: {
           senderId:    session.user.id,
           receiverId:  engagement.userId,
-          content:     `Hi ${buyerName}! Your visit to see "${listingTitle}" is confirmed for ${visitInfo}.\n\nMy contact:\n📞 ${engagement.listing.user.phone ?? "Not provided"}\n📧 ${engagement.listing.user.email ?? "Not provided"}\n\nLooking forward to meeting you!`,
+          content:     `Hi ${buyerName}! Your visit to see "${listingTitle}" is confirmed for ${visitInfo}.\n\nMy contact:\n📞 ${engagement.listing.user.phone ?? "Not provided"}\n\nLooking forward to meeting you!`,
           listingId:   engagement.listing.id,
           listingType: "listing",
         },
@@ -142,7 +142,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         data: {
           senderId:    session.user.id,
           receiverId:  engagement.userId,
-          content:     `Hi ${buyerName}! Great meeting you. I'm happy to confirm the deal for "${listingTitle}". 🎉\n\nPlease reach out to coordinate the handover.\n\n📞 ${engagement.listing.user.phone ?? "Not provided"}\n📧 ${engagement.listing.user.email ?? "Not provided"}`,
+          content:     `Hi ${buyerName}! Great meeting you. I'm happy to confirm the deal for "${listingTitle}". 🎉\n\nPlease reach out to coordinate the handover.\n\n📞 ${engagement.listing.user.phone ?? "Not provided"}`,
           listingId:   engagement.listing.id,
           listingType: "listing",
         },
