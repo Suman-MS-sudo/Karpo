@@ -48,6 +48,8 @@ export function useDeals(initialDeals: Deal[], filters: DealFilters): UseDealsFe
 
   // Stable ref to track the timestamp of the last successful fetch.
   const lastFetchRef = useRef<Date>(new Date())
+  // Skip the first filter-effect run — SSR already delivered the default data.
+  const isFirstRender = useRef(true)
 
   const buildUrl = useCallback((since?: string) => {
     const p = new URLSearchParams()
@@ -86,8 +88,13 @@ export function useDeals(initialDeals: Deal[], filters: DealFilters): UseDealsFe
     }
   }, [buildUrl])
 
-  // Re-fetch when filters change (full refresh, no delta detection).
+  // Re-fetch when filters change. Skip the very first run — SSR already
+  // populated the deals list with default filters, so no round-trip needed.
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     fetchDeals({ showLoading: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.category, filters.minDiscount, filters.sortBy])
