@@ -5,6 +5,7 @@ import { sendOTPEmail } from "@/lib/email"
 import { randomInt } from "crypto"
 
 export async function POST(req: Request) {
+  try {
   const { email } = await req.json()
 
   if (!email || typeof email !== "string") {
@@ -73,4 +74,8 @@ export async function POST(req: Request) {
     isNewUser: !existingUser,
     ...(isDevEmail ? { devOtp: otp } : {}),
   })
+  } catch (err) {
+    console.error("[send-otp]", err)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
 }

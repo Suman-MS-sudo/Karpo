@@ -62,8 +62,14 @@ function serializeInput(model: string | undefined, data: unknown): void {
 }
 
 function createPrismaClient() {
+  // Fallback to local dev.db so the app never crashes on a missing env var
+  const url = process.env.TURSO_DATABASE_URL ?? "file:./prisma/dev.db"
+  if (!process.env.TURSO_DATABASE_URL) {
+    console.warn("[prisma] TURSO_DATABASE_URL not set — falling back to file:./prisma/dev.db")
+  }
+
   const libsql = createClient({
-    url:       process.env.TURSO_DATABASE_URL!,
+    url,
     authToken: process.env.TURSO_AUTH_TOKEN,
   })
   const adapter = new PrismaLibSQL(libsql)
