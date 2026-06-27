@@ -53,7 +53,7 @@ export default async function MyRentalsPage({ searchParams }: PageProps) {
         _count:   { select: { inquiries: true } },
         inquiries: {
           where:   { status: { in: ["ACCEPTED", "PENDING"] } },
-          include: { user: { select: { name: true, company: { select: { name: true } } } } },
+          include: { user: { select: { name: true, jobTitle: true, company: { select: { name: true } } } } },
           orderBy: { createdAt: "desc" },
         },
       },
