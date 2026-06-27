@@ -13,6 +13,7 @@ interface Offer {
   buyer: {
     name: string | null
     email: string | null
+    jobTitle: string | null
     company: { name: string } | null
   }
 }

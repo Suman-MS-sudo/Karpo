@@ -68,6 +68,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
         select: {
           name: true,
           email: true,
+          jobTitle: true,
           company: { select: { name: true } },
         },
       },
