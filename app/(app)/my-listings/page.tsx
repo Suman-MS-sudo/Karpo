@@ -39,7 +39,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
       include: {
         offers: {
           where:   { status: "ACCEPTED" },
-          select:  { amount: true, buyer: { select: { name: true, company: { select: { name: true } } } } },
+          select:  { amount: true, buyer: { select: { name: true, jobTitle: true, company: { select: { name: true } } } } },
           take: 1,
         },
       },
