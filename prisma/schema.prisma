@@ -1,9 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -76,9 +77,9 @@ model User {
   reputationScore Int       @default(0)
   isVerified      Boolean   @default(false)
   role            String    @default("USER")
-  hiddenServices  String[]  @default([])
-  socialLinks     Json?
-  skills          String[]  @default([])
+  hiddenServices  String    @default("[]")
+  socialLinks     String?
+  skills          String    @default("[]")
   yearsOfExp      Int?
   username        String?   @unique
   companyId       String?
@@ -215,7 +216,7 @@ model Listing {
   subcategory    String?
   condition      String    @default("USED")
   isNegotiable   Boolean   @default(true)
-  images         String[]
+  images         String    @default("[]")
   status         String    @default("ACTIVE")
   city           String
   isBoosted      Boolean   @default(false)
@@ -307,8 +308,8 @@ model RentalPost {
   deposit       Int?
   city          String
   area          String
-  amenities     String[]
-  images        String[]
+  amenities     String    @default("[]")
+  images        String    @default("[]")
   availableFrom DateTime
   status        String   @default("ACTIVE") // ACTIVE, FILLED, EXPIRED
   description   String?
@@ -359,7 +360,7 @@ model RentalPost {
   visitorsAllowed  Boolean  @default(true)
   nonVegAllowed    Boolean  @default(true)
   // Furnishing items list
-  furnishingItems  String[] @default([])
+  furnishingItems  String   @default("[]")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -402,12 +403,12 @@ model JobReferral {
   experienceMax    Int
   salaryMin        Int?
   salaryMax        Int?
-  skills           String[]
+  skills           String    @default("[]")
   jobType          String?
   workMode         String?
   location         String?
   openings         Int       @default(1)
-  perks            String[]
+  perks            String    @default("[]")
   interviewProcess String?
   internalCode     String?
   referralBonus    Int?
@@ -459,7 +460,7 @@ model CarpoolRoute {
   toLocation           String
   toLat                Float?
   toLng                Float?
-  stopCoords           Json?
+  stopCoords           String?
   departureTime        String
   returnTrip           Boolean  @default(false)
   returnTime           String?
@@ -471,7 +472,7 @@ model CarpoolRoute {
   vehicleType          String
   vehicleNumber        String?
   acAvailable          Boolean  @default(true)
-  pickupPoints         String[]
+  pickupPoints         String    @default("[]")
   landmarks            String?
   allowedGender        String?
   musicPolicy          String?
@@ -528,7 +529,7 @@ model ServicePost {
   description String
   priceType   String
   price       Int?
-  portfolio   String[]
+  portfolio   String    @default("[]")
   city        String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -548,7 +549,7 @@ model Deal {
   code        String?
   validUntil  DateTime
   category    String
-  images      String[]
+  images      String   @default("[]")
   isActive    Boolean  @default(true)
   // Enterprise fields
   merchantName    String  @default("")
@@ -576,12 +577,12 @@ model Event {
   location        String
   maxParticipants Int?
   fee             Int      @default(0)
-  images          String[]
+  images          String   @default("[]")
   isActive        Boolean  @default(true)
   // Enterprise fields
-  agenda          Json?    // [{time: string, title: string, speaker: string?}]
+  agenda          String?
   onlineLink      String?
-  tags            String[] @default([])
+  tags            String   @default("[]")
   isBoosted       Boolean  @default(false)
   requiresApproval Boolean @default(false)
   createdAt       DateTime @default(now())
@@ -615,14 +616,14 @@ model Course {
   duration     String
   mode         String
   schedule     String
-  images       String[]
+  images       String   @default("[]")
   isActive     Boolean  @default(true)
   // Enterprise fields
   level        String   @default("BEGINNER")    // BEGINNER | INTERMEDIATE | ADVANCED
-  tags         String[] @default([])
+  tags         String   @default("[]")
   prerequisites String?
   maxStudents  Int?
-  curriculum   Json?    // [{module: string, topics: string[], durationMins: int}]
+  curriculum   String?
   certificate  Boolean  @default(false)
   language     String   @default("English")
   createdAt    DateTime @default(now())
@@ -668,27 +669,27 @@ model SkillListing {
   tagline      String?
   category     String   // TECH | DESIGN | BUSINESS | LANGUAGE | LEGAL | FINANCE | WELLNESS | COACHING | CREATIVE | ENGINEERING | DATA | MARKETING
   subcategory  String?
-  skills       String[]
+  skills       String   @default("[]")
   description  String
-  deliverables String[]
+  deliverables String   @default("[]")
   requirements String?
-  faqs         Json?    // [{q: string, a: string}]
+  faqs         String?
 
   // Pricing
   pricingModel String   @default("PACKAGE") // PACKAGE | HOURLY | FIXED
   hourlyRate   Int?
-  packages     Json?    // [{name, price, durationHrs, description, features: string[]}]
+  packages     String?
 
   // Format & availability
   format       String   @default("ONLINE")  // ONLINE | IN_PERSON | BOTH
   location     String?
   timezone     String?  @default("Asia/Kolkata")
-  availability Json?    // {days: string[], slots: string[], bufferMins: int}
+  availability String?
   maxClientsPerMonth Int?
 
   // Credentials
   yearsExp        Int?
-  certifications  String[]
+  certifications  String   @default("[]")
   portfolioUrl    String?
   linkedIn        String?
 
@@ -734,7 +735,7 @@ model SkillOrder {
 
   // Buyer requirements
   requirements String?
-  attachments  String[]
+  attachments  String    @default("[]")
   buyerNote    String?
 
   // Negotiation
@@ -752,7 +753,7 @@ model SkillOrder {
 
   // Delivery
   deliveryNote  String?
-  deliverables  String[]
+  deliverables  String    @default("[]")
   deliveredAt   DateTime?
 
   // Completion / cancellation
@@ -826,11 +827,11 @@ model BenefitProduct {
   contactUrl  String
   isActive    Boolean  @default(true)
   // Enterprise fields
-  features         String[] @default([])
+  features         String   @default("[]")
   eligibility      String?
   interestRate     String?
   tenure           String?
-  applicationSteps String[] @default([])
+  applicationSteps String   @default("[]")
   processingTime   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
