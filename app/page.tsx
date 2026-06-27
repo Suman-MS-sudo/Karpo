@@ -51,9 +51,14 @@ export default function LandingPage() {
             <Link href="/about"        className="hover:text-[#1E3A5F] transition-colors">About</Link>
             <Link href="/contact"      className="hover:text-[#1E3A5F] transition-colors">Contact</Link>
           </nav>
-          <Button asChild size="sm">
-            <Link href="/auth/signin">Join with work email <ArrowRight className="h-4 w-4" /></Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/auth/signin?callbackUrl=/admin" className="text-xs text-gray-400 hover:text-gray-600 transition-colors px-2 py-1">
+              Admin
+            </Link>
+            <Button asChild size="sm">
+              <Link href="/auth/signin">Join with work email <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          </div>
         </div>
       </header>
 
