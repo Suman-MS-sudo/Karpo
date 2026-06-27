@@ -6,6 +6,7 @@ import {
   LayoutDashboard, MessageSquare, Bell, User, Settings, Package, Plus,
   Search, Car, Wrench, Shield, Gift, GraduationCap, Tag, Users,
   ShoppingBag, Home, Briefcase, Crown, Zap, Rocket,
+  Building2, FileWarning,
 } from "lucide-react"
 import { SERVICES } from "@/config/services"
 import { cn } from "@/lib/utils"
@@ -168,6 +169,18 @@ const SERVICE_NAV: Record<string, NavSection[]> = {
   ],
 }
 
+// Admin context — shown when inside /admin
+const ADMIN_NAV: NavSection[] = [
+  { title: "Admin", items: [
+    { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
+    { href: "/admin/users",     label: "Users",      icon: Users           },
+    { href: "/admin/companies", label: "Companies",  icon: Building2       },
+    { href: "/admin/deals",     label: "Deals",      icon: Tag             },
+    { href: "/admin/concierge", label: "Concierge",  icon: Shield          },
+    { href: "/admin/reports",   label: "Reports",    icon: FileWarning     },
+  ]},
+]
+
 // Home context — shown when not inside any service
 const HOME_NAV: NavSection[] = [
   { items: [
@@ -199,11 +212,14 @@ export function ServiceSidebar({ className }: { className?: string }) {
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
 
   const cleanPath = pathname.split("?")[0]
-  const activeService =
+  const isAdmin = pathname.startsWith("/admin")
+  const activeService = isAdmin ? null :
     SERVICES.find((s) => pathname.startsWith(s.route)) ??
     SERVICES.find((s) => s.id === MY_ROUTE_MAP[cleanPath])
 
-  const sections = activeService ? (SERVICE_NAV[activeService.id] ?? []) : HOME_NAV
+  const sections = isAdmin
+    ? ADMIN_NAV
+    : activeService ? (SERVICE_NAV[activeService.id] ?? []) : HOME_NAV
 
   return (
     <aside className={cn(
@@ -227,6 +243,11 @@ export function ServiceSidebar({ className }: { className?: string }) {
             <div>
               <p className="text-sm font-semibold leading-none">{activeService.name}</p>
               </div>
+          </div>
+        ) : isAdmin ? (
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-primary-600" />
+            <span className="text-sm font-bold">Admin Panel</span>
           </div>
         ) : (
           <div className="flex items-center gap-2">
