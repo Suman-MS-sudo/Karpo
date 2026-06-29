@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { UserActions } from "./UserActions"
@@ -14,8 +13,6 @@ interface Props {
 
 export default async function AdminUsersPage({ searchParams }: Props) {
   const session = await auth()
-  if (!session) redirect("/auth/signin?callbackUrl=/admin/users")
-  if (session.user?.role !== "ADMIN") redirect("/dashboard")
 
   const q       = searchParams.q?.trim() ?? ""
   const filter  = searchParams.filter ?? "all"
@@ -157,7 +154,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                       userId={user.id}
                       isVerified={user.isVerified}
                       role={user.role}
-                      currentAdminId={session.user.id}
+                      currentAdminId={session?.user?.id ?? ""}
                     />
                   </td>
                 </tr>

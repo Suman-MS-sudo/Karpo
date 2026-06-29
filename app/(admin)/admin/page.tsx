@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
@@ -15,8 +14,6 @@ export const dynamic = "force-dynamic"
 
 export default async function AdminPage() {
   const session = await auth()
-  if (!session) redirect("/auth/signin?callbackUrl=/admin")
-  if (session.user?.role !== "ADMIN") redirect("/dashboard")
 
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)

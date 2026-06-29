@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
@@ -10,8 +9,6 @@ export const dynamic = "force-dynamic"
 
 export default async function AdminCompaniesPage() {
   const session = await auth()
-  if (!session) redirect("/auth/signin")
-  if (session.user?.role !== "ADMIN") redirect("/dashboard")
 
   const [pendingRequests, companies] = await Promise.all([
     prisma.companyRequest.findMany({ orderBy: { createdAt: "desc" } }),

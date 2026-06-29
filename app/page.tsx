@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -39,9 +40,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-[#1E3A5F] rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm">K</span>
-            </div>
+            <Image src="/logo.png" alt="Korpo" width={32} height={32} className="rounded-lg object-contain" />
             <span className="font-bold text-xl text-[#1E3A5F]">Korpo</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
@@ -66,6 +65,17 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-[#1E3A5F] via-[#1E3A5F] to-[#2E86AB] text-white">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+          {/* Large logo on the right */}
+          <div className="absolute right-4 lg:right-12 top-1/2 -translate-y-1/2 hidden lg:flex items-center justify-center w-[420px] h-[420px] pointer-events-none select-none">
+            <div className="absolute inset-0 rounded-full bg-blue-400/10 blur-3xl scale-110" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.png"
+              alt=""
+              aria-hidden="true"
+              style={{ opacity: 0.85, width: 380, height: 380, objectFit: "contain", borderRadius: "1.5rem", filter: "drop-shadow(0 0 40px rgba(0,0,0,0.3))" }}
+            />
+          </div>
           <div className="max-w-3xl">
             <Badge className="bg-white/10 text-white border-white/20 mb-6 text-sm px-3 py-1">
               🇮🇳 India&apos;s First Verified Corporate Marketplace

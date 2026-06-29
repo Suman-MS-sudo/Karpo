@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
@@ -11,8 +10,6 @@ export const dynamic = "force-dynamic"
 
 export default async function AdminReportsPage() {
   const session = await auth()
-  if (!session) redirect("/auth/signin")
-  if (session.user?.role !== "ADMIN") redirect("/dashboard")
 
   const reports = await prisma.listingReport.findMany({
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],

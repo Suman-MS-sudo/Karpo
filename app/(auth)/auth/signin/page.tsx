@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ShieldCheck, ArrowLeft, Loader2, Mail, RefreshCw } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -133,9 +134,7 @@ function SignInContent() {
       {/* Header */}
       <div className="text-center mb-8">
         <Link href="/" className="inline-flex items-center gap-2 mb-6">
-          <div className="h-10 w-10 bg-primary-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">K</span>
-          </div>
+          <Image src="/logo.png" alt="Korpo" width={40} height={40} className="rounded-xl object-contain" />
           <span className="font-bold text-2xl text-primary-600">Korpo</span>
         </Link>
         {step === "email" ? (

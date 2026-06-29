@@ -61,17 +61,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         })
 
-        // Dev user always gets PREMIUM
-        if (email === "dev@testcorp.com") {
-          await prisma.company.upsert({
-            where: { domain: "testcorp.com" },
+        // Dev/test users get auto-provisioned company + PREMIUM membership
+        const devDomains: Record<string, string> = {
+          "testcorp.com": "Test Corp",
+          "korpo.com": "Korpo",
+        }
+        const userDomain = email.split("@")[1]
+        if (email === "dev@testcorp.com" || userDomain in devDomains) {
+          const companyName = devDomains[userDomain] ?? "Test Corp"
+          const devCompany = await prisma.company.upsert({
+            where: { domain: userDomain },
             update: {},
-            create: { name: "Test Corp", domain: "testcorp.com", isApproved: true },
+            create: { name: companyName, domain: userDomain, isApproved: true },
           })
           await prisma.membership.upsert({
             where: { userId: dbUser.id },
             update: { plan: "PREMIUM" },
             create: { userId: dbUser.id, plan: "PREMIUM" },
+          })
+          // Ensure user has city + company so they skip onboarding
+          await prisma.user.update({
+            where: { id: dbUser.id },
+            data: {
+              companyId: devCompany.id,
+              city: dbUser.city ?? "Bengaluru",
+              name: dbUser.name ?? email.split("@")[0],
+              isVerified: true,
+            },
           })
         }
 

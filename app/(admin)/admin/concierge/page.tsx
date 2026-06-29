@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { ConciergeManager } from "./ConciergeManager"
@@ -9,8 +8,6 @@ interface Props { searchParams: { status?: string } }
 
 export default async function AdminConciergePage({ searchParams }: Props) {
   const session = await auth()
-  if (!session) redirect("/auth/signin")
-  if (session.user?.role !== "ADMIN") redirect("/dashboard")
 
   const statusFilter = searchParams.status
 
