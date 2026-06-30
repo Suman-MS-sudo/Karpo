@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import {
   Star, Calendar, ChevronDown, ChevronUp, Loader2,
   CheckCircle2, XCircle, User, Clock, Package, Handshake, ThumbsDown,
@@ -56,9 +55,13 @@ const TIME_LABELS: Record<string, string> = {
   EVENING:   "Evening (5pm–8pm)",
 }
 
-function EngagementCard({ engagement, listingId }: { engagement: Engagement; listingId: string }) {
-  const router    = useRouter()
+function EngagementCard({ engagement, listingId, onRefresh }: {
+  engagement: Engagement
+  listingId: string
+  onRefresh: () => void
+}) {
   const [loading, setLoading] = useState<string | null>(null)
+  const [flash, setFlash]     = useState<string | null>(null)
   const meta      = TYPE_META[engagement.type]
   const Icon      = meta.icon
   const buyer     = engagement.user
@@ -67,13 +70,21 @@ function EngagementCard({ engagement, listingId }: { engagement: Engagement; lis
 
   async function act(action: string) {
     setLoading(action)
+    setFlash(null)
     try {
-      await fetch(`/api/listings/${listingId}/engagements/${engagement.id}`, {
+      const res = await fetch(`/api/listings/${listingId}/engagements/${engagement.id}`, {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ action }),
       })
-      router.refresh()
+      if (res.ok) {
+        const labels: Record<string, string> = {
+          ACCEPT: "Interest accepted", DECLINE: "Declined", CONFIRM: "Visit confirmed",
+          DONE: "Visit marked done", CLOSE_DEAL: "Deal agreed!",
+        }
+        setFlash(labels[action] ?? "Done")
+        onRefresh()
+      }
     } finally {
       setLoading(null)
     }
@@ -130,6 +141,12 @@ function EngagementCard({ engagement, listingId }: { engagement: Engagement; lis
       <p className="text-[10px] text-muted-foreground flex items-center gap-1">
         <Clock className="h-3 w-3" /> {formatRelativeTime(engagement.createdAt)}
       </p>
+
+      {flash && (
+        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2 flex items-center gap-1.5">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> {flash}
+        </p>
+      )}
 
       {/* Actions */}
       {isPending && engagement.type === "INTEREST" && (
@@ -222,22 +239,26 @@ export function ListingEngagementPanel({ listingId, initialCount }: Props) {
   const [loadingPanel, setLoadingPanel]     = useState(false)
   const [count, setCount]                   = useState(initialCount)
 
-  async function loadEngagements() {
-    if (engagements.length > 0) { setOpen(true); return }
+  async function fetchEngagements() {
     setLoadingPanel(true)
     try {
       const res  = await fetch(`/api/listings/${listingId}/engagements`)
       const data = await res.json()
       setEngagements(data.engagements ?? [])
       setCount((data.engagements ?? []).length)
-      setOpen(true)
     } finally {
       setLoadingPanel(false)
     }
   }
 
-  const interests   = engagements.filter((e) => e.type === "INTEREST")
-  const visits      = engagements.filter((e) => e.type === "VISIT")
+  async function loadEngagements() {
+    if (engagements.length > 0) { setOpen(true); return }
+    await fetchEngagements()
+    setOpen(true)
+  }
+
+  const interests    = engagements.filter((e) => e.type === "INTEREST")
+  const visits       = engagements.filter((e) => e.type === "VISIT")
   const pendingCount = engagements.filter((e) => ["PENDING", "CONFIRMED", "DONE"].includes(e.status)).length
 
   return (
@@ -277,10 +298,14 @@ export function ListingEngagementPanel({ listingId, initialCount }: Props) {
           ) : (
             <>
               <Section title="Interested Buyers" icon={Star} iconClass="text-amber-500" count={interests.length}>
-                {interests.map((e) => <EngagementCard key={e.id} engagement={e} listingId={listingId} />)}
+                {interests.map((e) => (
+                  <EngagementCard key={e.id} engagement={e} listingId={listingId} onRefresh={fetchEngagements} />
+                ))}
               </Section>
               <Section title="Visit Requests" icon={Calendar} iconClass="text-emerald-500" count={visits.length}>
-                {visits.map((e) => <EngagementCard key={e.id} engagement={e} listingId={listingId} />)}
+                {visits.map((e) => (
+                  <EngagementCard key={e.id} engagement={e} listingId={listingId} onRefresh={fetchEngagements} />
+                ))}
               </Section>
             </>
           )}

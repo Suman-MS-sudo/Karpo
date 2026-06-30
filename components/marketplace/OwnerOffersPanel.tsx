@@ -1,7 +1,6 @@
 "use client"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 interface Offer {
@@ -21,14 +20,15 @@ interface Offer {
 interface Props {
   listingId: string
   initialCount: number
+  isListingActive: boolean
 }
 
-export function OwnerOffersPanel({ listingId, initialCount }: Props) {
-  const router = useRouter()
+export function OwnerOffersPanel({ listingId, initialCount, isListingActive }: Props) {
   const [open, setOpen]       = useState(false)
   const [offers, setOffers]   = useState<Offer[]>([])
   const [loading, setLoading] = useState(false)
-  const [acting, setActing]   = useState<string | null>(null) // offerId being acted on
+  const [acting, setActing]   = useState<string | null>(null)
+  const [flash, setFlash]     = useState<Record<string, string>>({})
 
   if (initialCount === 0) return null
 
@@ -45,8 +45,9 @@ export function OwnerOffersPanel({ listingId, initialCount }: Props) {
     }
   }
 
-  const respond = async (offerId: string, action: "ACCEPT" | "DECLINE") => {
+  const respond = async (offerId: string, action: "ACCEPT" | "DECLINE" | "REVOKE") => {
     setActing(offerId)
+    setFlash((prev) => { const n = { ...prev }; delete n[offerId]; return n })
     try {
       const res = await fetch(`/api/listings/${listingId}/offers/${offerId}`, {
         method: "PATCH",
@@ -55,19 +56,21 @@ export function OwnerOffersPanel({ listingId, initialCount }: Props) {
       })
       if (!res.ok) {
         const data = await res.json()
-        alert(data.error ?? "Something went wrong")
+        setFlash((prev) => ({ ...prev, [offerId]: `Error: ${data.error ?? "Something went wrong"}` }))
         return
       }
-      // Optimistically update local state
       setOffers((prev) =>
         prev.map((o) => {
-          if (o.id === offerId)    return { ...o, status: action === "ACCEPT" ? "ACCEPTED" : "DECLINED" }
+          if (o.id === offerId) {
+            const nextStatus = action === "ACCEPT" ? "ACCEPTED" : action === "DECLINE" ? "DECLINED" : "PENDING"
+            return { ...o, status: nextStatus }
+          }
           if (action === "ACCEPT") return { ...o, status: o.status === "PENDING" ? "DECLINED" : o.status }
           return o
         })
       )
-      // Refresh server state (listing becomes SOLD on accept)
-      router.refresh()
+      const labels: Record<string, string> = { ACCEPT: "Offer accepted", DECLINE: "Offer declined", REVOKE: "Reverted to pending" }
+      setFlash((prev) => ({ ...prev, [offerId]: labels[action] }))
     } finally {
       setActing(null)
     }
@@ -99,8 +102,9 @@ export function OwnerOffersPanel({ listingId, initialCount }: Props) {
       {open && (
         <div className="border-t border-amber-200 dark:border-amber-700 divide-y divide-amber-100 dark:divide-amber-800">
           {offers.map((offer) => {
-            const isPending = offer.status === "PENDING"
-            const isActing  = acting === offer.id
+            const isPending  = offer.status === "PENDING"
+            const isActing   = acting === offer.id
+            const offerFlash = flash[offer.id]
             return (
               <div key={offer.id} className="px-4 py-3 space-y-2">
                 {/* Header row */}
@@ -128,7 +132,18 @@ export function OwnerOffersPanel({ listingId, initialCount }: Props) {
                   </p>
                 )}
 
-                {/* Action buttons — only for pending offers */}
+                {/* Inline feedback */}
+                {offerFlash && (
+                  <p className={`text-xs font-semibold rounded-lg px-2.5 py-2 flex items-center gap-1.5 ${
+                    offerFlash.startsWith("Error")
+                      ? "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
+                      : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                  }`}>
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> {offerFlash}
+                  </p>
+                )}
+
+                {/* Pending actions */}
                 {isPending && (
                   <div className="flex gap-2 pt-1">
                     <button
@@ -148,6 +163,18 @@ export function OwnerOffersPanel({ listingId, initialCount }: Props) {
                       Decline
                     </button>
                   </div>
+                )}
+
+                {/* Revoke option for accepted/declined (only while listing is active) */}
+                {!isPending && isListingActive && (
+                  <button
+                    disabled={isActing}
+                    onClick={() => respond(offer.id, "REVOKE")}
+                    className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors disabled:opacity-50"
+                  >
+                    {isActing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
+                    Revoke decision
+                  </button>
                 )}
               </div>
             )

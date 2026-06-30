@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Star, Calendar, MessageSquare, Loader2, CheckCircle2,
-  XCircle, Clock, ArrowUpRight, Handshake,
+  XCircle, Clock, ArrowUpRight, Handshake, Undo2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -60,13 +60,29 @@ export function ListingEngagePanel({ listingId, myEngagement, sellerName, isNego
   useEffect(() => {
     const pollable = myEngagement && ["PENDING", "CONFIRMED", "DONE"].includes(myEngagement.status)
     if (!pollable) return
-    const id = setInterval(() => router.refresh(), 12000)
+    const id = setInterval(() => router.refresh(), 6000)
     return () => clearInterval(id)
   }, [myEngagement?.status, router])
 
   // Visit form state
   const [visitDate, setVisitDate] = useState("")
   const [visitTime, setVisitTime] = useState("AFTERNOON")
+
+  async function revoke() {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/listings/${listingId}/engagements`, { method: "DELETE" })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error ?? "Could not revoke interest")
+        return
+      }
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function post(type: string, extra?: object) {
     setLoading(true)
@@ -163,6 +179,19 @@ export function ListingEngagePanel({ listingId, myEngagement, sellerName, isNego
               <Calendar className="h-4 w-4" /> Schedule a Site Visit
             </Button>
           </div>
+        )}
+
+        {myEngagement.type === "INTEREST" && myEngagement.status === "PENDING" && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2 text-muted-foreground hover:text-red-600 hover:border-red-300 dark:hover:border-red-700"
+            disabled={loading}
+            onClick={revoke}
+          >
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Undo2 className="h-3.5 w-3.5" />}
+            Revoke Interest
+          </Button>
         )}
 
         {myEngagement.type === "VISIT" && myEngagement.status === "DONE" && (

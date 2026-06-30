@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { BoostButton }             from "@/components/marketplace/BoostButton"
 import { OfferButton }             from "@/components/marketplace/OfferButton"
 import { OwnerOffersPanel }        from "@/components/marketplace/OwnerOffersPanel"
+import { MarkSoldButton }          from "@/components/marketplace/MarkSoldButton"
 import { DistanceText }            from "@/components/marketplace/DistanceText"
 import { ReportButton }            from "@/components/marketplace/ReportButton"
 import { ListingEngagePanel }      from "@/components/marketplace/ListingEngagePanel"
@@ -109,7 +110,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 id: true, name: true, email: true, phone: true,
                 avatarUrl: true, image: true, isVerified: true,
                 jobTitle: true, department: true,
-                company: { select: { name: true, logo: true, domain: true } },
               },
             },
           },
@@ -151,7 +151,6 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 id: true, name: true, email: true, phone: true,
                 avatarUrl: true, image: true, isVerified: true,
                 jobTitle: true, department: true,
-                company: { select: { name: true } },
               },
             },
           },
@@ -169,7 +168,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       select: {
         id: true, title: true, price: true, condition: true,
         images: true, city: true, area: true, createdAt: true,
-        user: { select: { name: true, company: { select: { name: true } } } },
+        user: { select: { name: true } },
       },
     }),
   ])
@@ -563,12 +562,10 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/marketplace/${listing.id}/edit`}>✏️ Edit</Link>
                     </Button>
-                    <form action={`/api/listings/${listing.id}/close`} method="POST">
-                      <Button variant="secondary" size="sm" className="w-full" type="submit">✅ Mark Sold</Button>
-                    </form>
+                    <MarkSoldButton listingId={listing.id} />
                   </div>
                   <ListingEngagementPanel listingId={listing.id} initialCount={engagementCount as number} />
-                  <OwnerOffersPanel listingId={listing.id} initialCount={offerCount as number} />
+                  <OwnerOffersPanel listingId={listing.id} initialCount={offerCount as number} isListingActive={!isSold} />
                   <div className="pt-1 border-t border-border">
                     <BoostButton listingId={listing.id} boostLevel={listing.boostLevel} boostExpiresAt={listing.boostExpiresAt} />
                   </div>

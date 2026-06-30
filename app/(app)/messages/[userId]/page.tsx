@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Send } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -30,7 +30,13 @@ interface Partner {
 export default function MessageThreadPage() {
   const { data: session } = useSession()
   const params = useParams()
+  const searchParams = useSearchParams()
   const partnerId = params.userId as string
+  const contextListingId = searchParams.get("context")
+  const contextType = searchParams.get("type")
+  const backHref = contextListingId && contextType === "listing"
+    ? `/marketplace/${contextListingId}`
+    : "/messages"
   const [messages, setMessages] = useState<Message[]>([])
   const [partner, setPartner] = useState<Partner | null>(null)
   const [input, setInput] = useState("")
@@ -88,7 +94,7 @@ export default function MessageThreadPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href="/messages" className="text-muted-foreground hover:text-foreground">
+        <Link href={backHref} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         {partner && (

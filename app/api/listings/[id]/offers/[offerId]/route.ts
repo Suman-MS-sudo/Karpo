@@ -13,8 +13,8 @@ export async function PATCH(
   if (error) return error
 
   const { action } = await req.json()
-  if (action !== "ACCEPT" && action !== "DECLINE") {
-    return NextResponse.json({ error: "action must be ACCEPT or DECLINE" }, { status: 400 })
+  if (!["ACCEPT", "DECLINE", "REVOKE"].includes(action)) {
+    return NextResponse.json({ error: "action must be ACCEPT, DECLINE, or REVOKE" }, { status: 400 })
   }
 
   // Verify listing ownership
@@ -38,12 +38,18 @@ export async function PATCH(
   if (!offer || offer.listingId !== params.id) {
     return NextResponse.json({ error: "Offer not found" }, { status: 404 })
   }
+
+  if (action === "REVOKE") {
+    await prisma.listingOffer.update({ where: { id: params.offerId }, data: { status: "PENDING" } })
+    return NextResponse.json({ ok: true, action })
+  }
+
   if (offer.status !== "PENDING") {
     return NextResponse.json({ error: "Offer has already been responded to" }, { status: 400 })
   }
 
   if (action === "ACCEPT") {
-    // Update accepted offer, decline all others, and mark listing as SOLD atomically
+    // Accept offer and decline all other pending offers — listing stays ACTIVE until owner marks it sold
     await prisma.$transaction([
       prisma.listingOffer.update({
         where: { id: params.offerId },
@@ -52,10 +58,6 @@ export async function PATCH(
       prisma.listingOffer.updateMany({
         where: { listingId: params.id, id: { not: params.offerId }, status: "PENDING" },
         data: { status: "DECLINED" },
-      }),
-      prisma.listing.update({
-        where: { id: params.id },
-        data: { status: "SOLD" },
       }),
       // Notify the buyer their offer was accepted
       prisma.notification.create({

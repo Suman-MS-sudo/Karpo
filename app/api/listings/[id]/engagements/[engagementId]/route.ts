@@ -120,14 +120,11 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       data:  { status: newStatus },
     })
   } else if (action === "CLOSE_DEAL") {
+    // Marks the deal as agreed — listing stays ACTIVE until owner explicitly clicks "Mark Sold"
     await prisma.$transaction([
       prisma.listingEngagement.update({
         where: { id: params.engagementId },
         data:  { status: "ACCEPTED" },
-      }),
-      prisma.listing.update({
-        where: { id: params.id },
-        data:  { status: "SOLD" },
       }),
       prisma.notification.create({
         data: {

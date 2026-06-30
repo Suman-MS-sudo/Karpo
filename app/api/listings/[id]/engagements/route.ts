@@ -65,6 +65,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ engagement })
 }
 
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const { session, error } = await requireAuth()
+  if (error) return error
+
+  const engagement = await prisma.listingEngagement.findUnique({
+    where: { listingId_userId: { listingId: params.id, userId: session.user.id } },
+  })
+
+  if (!engagement) return NextResponse.json({ error: "No engagement found" }, { status: 404 })
+  if (engagement.type !== "INTEREST" || engagement.status !== "PENDING") {
+    return NextResponse.json({ error: "Only pending interests can be revoked" }, { status: 400 })
+  }
+
+  await prisma.listingEngagement.delete({ where: { id: engagement.id } })
+  return NextResponse.json({ ok: true })
+}
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
   if (error) return error
