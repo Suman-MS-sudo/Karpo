@@ -182,7 +182,7 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
 
           {/* Map */}
           {hasMapData && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden" style={{ isolation: "isolate", zIndex: 0 }}>
               <CarpoolRouteMap
                 fromLat={route.fromLat!}
                 fromLng={route.fromLng!}

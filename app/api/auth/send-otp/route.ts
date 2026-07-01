@@ -15,7 +15,8 @@ export async function POST(req: Request) {
   const normalized = email.trim().toLowerCase()
 
   // ── Admin bypass — whitelisted email skips corporate domain check ──────────
-  const isAdmin = normalized === process.env.ADMIN_EMAIL
+  const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())
+  const isAdmin = adminEmails.includes(normalized)
 
   // ── Dev/test emails — get auto-OTP returned in response ──────────────────
   const devEmails = (process.env.DEV_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)

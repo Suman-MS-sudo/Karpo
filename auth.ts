@@ -19,7 +19,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!email || !otp) return null
 
-        const isAdmin = email === process.env.ADMIN_EMAIL
+        const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())
+        const isAdmin = adminEmails.includes(email)
 
         // Domain guard (defence-in-depth — send-otp also validates); admin bypasses
         if (!isAdmin && isDomainBlocked(email).blocked) return null

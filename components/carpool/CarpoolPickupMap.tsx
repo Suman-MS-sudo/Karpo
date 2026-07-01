@@ -17,6 +17,7 @@ interface Props {
   pickupLng?:       number
   dropoffLat?:      number
   dropoffLng?:      number
+  height?:          number
 }
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
@@ -58,6 +59,7 @@ export function CarpoolPickupMap({
   fromLat, fromLng, toLat, toLng, stops = [],
   onPickupChange, onDropoffChange,
   pickupLat, pickupLng, dropoffLat, dropoffLng,
+  height = 420,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<any>(null)
@@ -136,6 +138,9 @@ export function CarpoolPickupMap({
 
       map._L   = L
       mapRef.current = map
+
+      // Ensure Leaflet recalculates size after modal/container paint
+      setTimeout(() => { if (map) map.invalidateSize() }, 100)
 
       map.on("click", async (e: any) => {
         const { lat, lng } = e.latlng
@@ -242,7 +247,7 @@ export function CarpoolPickupMap({
       )}
 
       {/* Map */}
-      <div className="rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: 420 }}>
+      <div className="rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height }}>
         <div ref={containerRef} className="w-full h-full" />
       </div>
 
