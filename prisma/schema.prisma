@@ -571,6 +571,12 @@ model Deal {
   lastUpdated DateTime  @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  // Affiliate
+  affiliateUrl     String?
+  affiliateNetwork String?  // AMAZON | FLIPKART | MYNTRA | MEESHO | etc.
+  externalId       String?  // platform product/deal ID for upsert dedup
+  originalPrice    Float?   // MRP / list price in INR
+  salePrice        Float?   // current sale price in INR
 
   redemptions DealRedemption[]
 
@@ -578,6 +584,7 @@ model Deal {
   @@index([featured, isActive])
   @@index([trending, isActive])
   @@index([category, isActive])
+  @@index([externalId])
 }
 
 model Event {

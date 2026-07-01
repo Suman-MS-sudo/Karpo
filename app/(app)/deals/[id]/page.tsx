@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Calendar, ExternalLink, Tag, Copy, CheckCircle, Globe, AlertCircle } from "lucide-react"
+import { ArrowLeft, Calendar, ExternalLink, Tag, Copy, CheckCircle, Globe, AlertCircle, ShoppingCart, IndianRupee } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -117,6 +117,18 @@ export default async function DealDetailPage({ params }: { params: { id: string 
               <p className="text-muted-foreground text-sm">discount</p>
             </div>
 
+            {/* Price comparison for affiliate deals */}
+            {(deal as any).originalPrice && (deal as any).salePrice ? (
+              <div className="flex items-baseline justify-center gap-2 mb-4">
+                <span className="text-2xl font-black text-foreground flex items-center gap-0.5">
+                  <IndianRupee className="h-5 w-5" />{((deal as any).salePrice).toLocaleString("en-IN")}
+                </span>
+                <span className="text-sm text-muted-foreground line-through">
+                  ₹{((deal as any).originalPrice).toLocaleString("en-IN")}
+                </span>
+              </div>
+            ) : null}
+
             {deal.code ? (
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground text-center">Use code at checkout</p>
@@ -131,16 +143,32 @@ export default async function DealDetailPage({ params }: { params: { id: string 
               </p>
             )}
 
-            {/* Redeem action */}
-            {!isExpired && !isLimitReached && deal.website && (
+            {/* Redeem / Buy Now action */}
+            {!isExpired && !isLimitReached && ((deal as any).affiliateUrl || deal.website) && (
               <div className="mt-4 space-y-2">
-                {hasRedeemed ? (
+                {/* Affiliate "Buy Now" CTA */}
+                {(deal as any).affiliateUrl ? (
+                  <a
+                    href={(deal as any).affiliateUrl}
+                    target="_blank"
+                    rel="noopener noreferrer sponsored"
+                    onClick={async () => {
+                      await fetch(`/api/deals/${params.id}`, { method: "POST" }).catch(() => {})
+                    }}
+                  >
+                    <Button className="w-full gap-2 bg-[#FF9900] hover:bg-[#e68a00] text-black font-bold" size="lg">
+                      <ShoppingCart className="h-4 w-4" />
+                      Buy on {(deal as any).affiliateNetwork === "AMAZON" ? "Amazon" : (deal as any).affiliateNetwork === "FLIPKART" ? "Flipkart" : deal.merchantName}
+                      <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+                    </Button>
+                  </a>
+                ) : hasRedeemed ? (
                   <div className="flex items-center justify-center gap-1.5 text-sm text-green-600 dark:text-green-400">
                     <CheckCircle className="h-4 w-4" /> Redeemed
                   </div>
                 ) : (
                   <form action={`/api/deals/${params.id}`} method="POST">
-                    <a href={deal.website} target="_blank" rel="noopener noreferrer">
+                    <a href={deal.website!} target="_blank" rel="noopener noreferrer">
                       <Button className="w-full" disabled={isExpired || isLimitReached}>
                         <Globe className="h-4 w-4 mr-1.5" /> Redeem on {deal.merchantName || "Merchant Site"}
                       </Button>

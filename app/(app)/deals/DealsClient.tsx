@@ -248,6 +248,25 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
           </div>
         )}
 
+        {/* Price row for affiliate deals */}
+        {deal.salePrice ? (
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-bold text-foreground">
+              ₹{(deal.salePrice as number).toLocaleString("en-IN")}
+            </span>
+            {deal.originalPrice && deal.originalPrice !== deal.salePrice && (
+              <span className="text-xs text-muted-foreground line-through">
+                ₹{(deal.originalPrice as number).toLocaleString("en-IN")}
+              </span>
+            )}
+            {deal.affiliateNetwork && (
+              <span className="ml-auto text-[10px] text-muted-foreground font-medium uppercase tracking-wide">
+                {deal.affiliateNetwork}
+              </span>
+            )}
+          </div>
+        ) : null}
+
         {/* CTA buttons */}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Link href={`/deals/${deal.id}`}>
@@ -255,7 +274,13 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
               <Tag className="h-3 w-3" /> Details
             </Button>
           </Link>
-          {(deal.merchantUrl || deal.website) ? (
+          {deal.affiliateUrl ? (
+            <a href={deal.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored">
+              <Button size="sm" className="w-full text-xs h-8 gap-1 bg-[#FF9900] hover:bg-[#e68a00] text-black font-bold">
+                <ShoppingBag className="h-3 w-3" /> Buy Now
+              </Button>
+            </a>
+          ) : (deal.merchantUrl || deal.website) ? (
             <a href={(deal.merchantUrl || deal.website)!} target="_blank" rel="noopener noreferrer">
               <Button size="sm" className="w-full text-xs h-8 gap-1 bg-rose-600 hover:bg-rose-700 text-white">
                 <Globe className="h-3 w-3" /> Visit Site

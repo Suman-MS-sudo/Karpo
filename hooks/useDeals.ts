@@ -23,10 +23,16 @@ export interface Deal {
   featured:       boolean
   trending:       boolean
   badge:          string | null   // "NEW" | "TRENDING" | "LIMITED_TIME" | "EXCLUSIVE"
-  source:         string
-  lastUpdated:    string
-  createdAt:      string
-  updatedAt:      string
+  source:          string
+  lastUpdated:     string
+  createdAt:       string
+  updatedAt:       string
+  // Affiliate fields
+  affiliateUrl:     string | null
+  affiliateNetwork: string | null
+  originalPrice:    number | null
+  salePrice:        number | null
+  externalId:       string | null
 }
 
 // ── Filter type ───────────────────────────────────────────────────────────────
