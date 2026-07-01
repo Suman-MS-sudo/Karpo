@@ -6,53 +6,84 @@ import type { Deal } from "@/hooks/useDeals"
 
 export const dynamic = "force-dynamic"
 
+function serializeDeal(d: any): Deal {
+  return {
+    id:           d.id,
+    title:        d.title,
+    description:  d.description,
+    discount:     d.discount,
+    code:         d.code         ?? null,
+    validFrom:    d.validFrom    ? new Date(d.validFrom).toISOString()    : null,
+    validUntil:   new Date(d.validUntil).toISOString(),
+    category:     d.category,
+    images:       Array.isArray(d.images) ? d.images : (typeof d.images === "string" ? JSON.parse(d.images || "[]") : []),
+    merchantName: d.merchantName ?? "",
+    merchantUrl:  d.merchantUrl  ?? null,
+    companyLogo:  d.companyLogo  ?? null,
+    website:      d.website      ?? null,
+    usageLimit:   d.usageLimit   ?? null,
+    usedCount:    d.usedCount    ?? 0,
+    viewCount:    d.viewCount    ?? 0,
+    featured:     !!d.featured,
+    trending:     !!d.trending,
+    badge:        d.badge        ?? null,
+    source:       d.source       ?? "MANUAL",
+    lastUpdated:  d.lastUpdated  ? new Date(d.lastUpdated).toISOString() : new Date(d.updatedAt).toISOString(),
+    createdAt:    new Date(d.createdAt).toISOString(),
+    updatedAt:    new Date(d.updatedAt).toISOString(),
+  }
+}
+
 export default async function DealsPage() {
   const session   = await auth()
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
 
-  // Monthly redemption count for free-tier users.
-  let redemptionCount = 0
-  if (session?.user?.id && !isPremium && (prisma as any).dealRedemption) {
-    const monthStart = new Date()
-    monthStart.setDate(1)
-    monthStart.setHours(0, 0, 0, 0)
-    redemptionCount = await (prisma as any).dealRedemption.count({
-      where: { userId: session.user.id, redeemedAt: { gte: monthStart } },
-    })
-  }
+  const now       = new Date()
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
 
-  // Initial SSR fetch — default sort (highest discount) with no filters applied.
-  const rawDeals = await prisma.deal.findMany({
-    where: {
-      isActive: true,
-      validUntil: { gte: new Date() },
-    },
-    orderBy: [{ discount: "desc" }, { createdAt: "desc" }],
-    take: 60,
-  })
+  const activeWhere = { isActive: true, validUntil: { gte: now } }
 
-  // Serialize to plain objects so Next.js can pass them to the client component.
-  const initialDeals: Deal[] = rawDeals.map((d) => ({
-    id:             d.id,
-    title:          d.title,
-    description:    d.description,
-    discount:       d.discount,
-    code:           d.code,
-    validUntil:     d.validUntil.toISOString(),
-    category:       d.category,
-    images:         d.images,
-    merchantName:   d.merchantName,
-    merchantUrl:    d.merchantUrl ?? null,
-    website:        d.website ?? null,
-    usageLimit:     d.usageLimit ?? null,
-    usedCount:      d.usedCount,
-    createdAt:      d.createdAt.toISOString(),
-    updatedAt:      d.updatedAt.toISOString(),
-  }))
+  const [rawDeals, rawFeatured, rawTrending, rawExpiringSoon, redemptionCount] = await Promise.all([
+    // All active deals — default sort: highest discount
+    prisma.deal.findMany({
+      where:   activeWhere,
+      orderBy: [{ discount: "desc" }, { createdAt: "desc" }],
+      take:    100,
+    }),
+    // Featured deals
+    prisma.deal.findMany({
+      where:   { ...activeWhere, featured: true },
+      orderBy: { discount: "desc" },
+      take:    8,
+    }),
+    // Trending deals
+    prisma.deal.findMany({
+      where:   { ...activeWhere, trending: true },
+      orderBy: [{ viewCount: "desc" }, { usedCount: "desc" }],
+      take:    6,
+    }),
+    // Expiring within 3 days
+    prisma.deal.findMany({
+      where:   { ...activeWhere, validUntil: { lte: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000) } },
+      orderBy: { validUntil: "asc" },
+      take:    6,
+    }),
+    // Monthly redemptions for free users
+    session?.user?.id && !isPremium
+      ? prisma.dealRedemption.count({
+          where: { userId: session.user.id, redeemedAt: { gte: monthStart } },
+        })
+      : Promise.resolve(0),
+  ])
 
   return (
     <DealsClient
-      initialDeals={initialDeals}
+      initialDeals={rawDeals.map(serializeDeal)}
+      featuredDeals={rawFeatured.map(serializeDeal)}
+      trendingDeals={rawTrending.map(serializeDeal)}
+      expiringSoon={rawExpiringSoon.map(serializeDeal)}
       redemptionCount={redemptionCount}
       isPremium={isPremium}
     />

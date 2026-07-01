@@ -166,7 +166,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
 
           {/* Meta row */}
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2 text-sm text-muted-foreground">
-            {user.company && (
+            {isOwn && user.company && (
               <span className="flex items-center gap-1.5">
                 <Building2 className="h-4 w-4 shrink-0" />
                 {user.company.logo && (

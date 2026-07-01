@@ -10,26 +10,37 @@ export async function GET(req: NextRequest) {
   const category    = searchParams.get("category") ?? ""
   const minDiscount = parseInt(searchParams.get("minDiscount") ?? "0")
   const sortBy      = searchParams.get("sortBy") ?? "discount"
-  const since       = searchParams.get("since") // ISO timestamp — for new-deal detection
+  const search      = searchParams.get("search")?.trim() ?? ""
+  const since       = searchParams.get("since")
+  const featuredOnly = searchParams.get("featured") === "1"
+  const trendingOnly = searchParams.get("trending") === "1"
 
-  const baseWhere = {
-    isActive: true,
+  const baseWhere: Record<string, unknown> = {
+    isActive:  true,
     validUntil: { gte: new Date() },
-    ...(category    ? { category }                      : {}),
-    ...(minDiscount ? { discount: { gte: minDiscount } } : {}),
+  }
+  if (category)    baseWhere.category = category
+  if (minDiscount) baseWhere.discount = { gte: minDiscount }
+  if (featuredOnly) baseWhere.featured = true
+  if (trendingOnly) baseWhere.trending = true
+  if (search) {
+    baseWhere.OR = [
+      { title:        { contains: search } },
+      { description:  { contains: search } },
+      { merchantName: { contains: search } },
+    ]
   }
 
   const orderBy =
-    sortBy === "newest"   ? [{ createdAt: "desc" as const }] :
-    sortBy === "expiring" ? [{ validUntil: "asc"  as const }] :
-                            [{ discount: "desc" as const }, { createdAt: "desc" as const }]
+    sortBy === "newest"   ? [{ createdAt: "desc"    as const }] :
+    sortBy === "expiring" ? [{ validUntil: "asc"    as const }] :
+    sortBy === "popular"  ? [{ viewCount:  "desc"   as const }, { usedCount: "desc" as const }] :
+                            [{ discount:   "desc"   as const }, { createdAt: "desc" as const }]
 
   const [deals, newCount] = await Promise.all([
-    prisma.deal.findMany({ where: baseWhere, orderBy, take: 60 }),
+    prisma.deal.findMany({ where: baseWhere as any, orderBy, take: 100 }),
     since
-      ? prisma.deal.count({
-          where: { ...baseWhere, createdAt: { gt: new Date(since) } },
-        })
+      ? prisma.deal.count({ where: { ...(baseWhere as any), createdAt: { gt: new Date(since) } } })
       : Promise.resolve(0),
   ])
 

@@ -2,15 +2,16 @@
 import { useRouter, usePathname } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  Search, SlidersHorizontal, X, ChevronDown,
+  Search, SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight,
   LayoutGrid, Cpu, Car, Armchair, Tv, BookOpen,
   Dumbbell, Shirt, UtensilsCrossed, Briefcase,
   Bike, Activity, Palette, Ticket, Package,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { cn } from "@/lib/utils"
-import { LISTING_CATEGORIES, LISTING_CONDITIONS, CITIES } from "@/config/services"
+import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "":           LayoutGrid,
@@ -54,13 +55,43 @@ const SORT_OPTIONS = [
 ]
 
 export function MarketplaceFilters({ current }: Props) {
-  const router = useRouter()
+  const router   = useRouter()
   const pathname = usePathname()
-  const debounceRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pillsRef      = useRef<HTMLDivElement>(null)
-  const scrollRafRef  = useRef<number | null>(null)
+  const pillsRef     = useRef<HTMLDivElement>(null)
+  const scrollRafRef = useRef<number | null>(null)
+
+  // Committed (URL-level) search input
   const [searchValue, setSearchValue] = useState(current.q ?? "")
+
+  // Pending (draft) filter state — only applied when Search is clicked
+  const [pending, setPending] = useState<{
+    condition: string
+    minPrice:  string
+    maxPrice:  string
+    city:      string
+    negotiable: boolean
+  }>({
+    condition:  current.condition  ?? "",
+    minPrice:   current.minPrice   ?? "",
+    maxPrice:   current.maxPrice   ?? "",
+    city:       current.city       ?? "",
+    negotiable: !!current.negotiable,
+  })
+
   const [showAdvanced, setShowAdvanced] = useState(false)
+
+  // Sync pending state if URL changes externally (e.g. browser back)
+  useEffect(() => {
+    setPending({
+      condition:  current.condition  ?? "",
+      minPrice:   current.minPrice   ?? "",
+      maxPrice:   current.maxPrice   ?? "",
+      city:       current.city       ?? "",
+      negotiable: !!current.negotiable,
+    })
+    setSearchValue(current.q ?? "")
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current.condition, current.minPrice, current.maxPrice, current.city, current.negotiable, current.q])
 
   const startScroll = (dir: -1 | 1) => {
     const el = pillsRef.current
@@ -75,7 +106,16 @@ export function MarketplaceFilters({ current }: Props) {
     if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current)
   }
 
-  // Count active filters (excluding sort and q since they have dedicated UI)
+  // Count pending filter changes relative to URL
+  const pendingFilterCount = [
+    pending.condition,
+    pending.minPrice,
+    pending.maxPrice,
+    pending.city,
+    pending.negotiable ? "1" : "",
+  ].filter(Boolean).length
+
+  // Count active committed filters (shown as chips)
   const activeFilterCount = [
     current.condition, current.minPrice, current.maxPrice,
     current.city, current.negotiable,
@@ -93,24 +133,34 @@ export function MarketplaceFilters({ current }: Props) {
 
   const push = useCallback((overrides: Filters) => router.push(buildUrl(overrides)), [buildUrl, router])
 
-  // Debounced search
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      if (searchValue !== (current.q ?? "")) {
-        push({ q: searchValue || undefined, category: current.category })
-      }
-    }, 350)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchValue])
+  // Apply all pending filters + current search on Search click
+  const applyFilters = () => {
+    const params = new URLSearchParams()
+    if (searchValue)         params.set("q",         searchValue)
+    if (current.category)    params.set("category",   current.category)
+    if (current.sort && current.sort !== "newest") params.set("sort", current.sort)
+    if (pending.condition)   params.set("condition",  pending.condition)
+    if (pending.minPrice)    params.set("minPrice",   pending.minPrice)
+    if (pending.maxPrice)    params.set("maxPrice",   pending.maxPrice)
+    if (pending.city)        params.set("city",       pending.city)
+    if (pending.negotiable)  params.set("negotiable", "1")
+    router.push(`${pathname}?${params.toString()}`)
+    setShowAdvanced(false)
+  }
 
   const clearAll = () => {
     setSearchValue("")
+    setPending({ condition: "", minPrice: "", maxPrice: "", city: "", negotiable: false })
     router.push(pathname)
   }
 
   const hasAnyFilter = Object.values(current).some(Boolean)
+  const hasPendingChange =
+    pending.condition  !== (current.condition  ?? "") ||
+    pending.minPrice   !== (current.minPrice   ?? "") ||
+    pending.maxPrice   !== (current.maxPrice   ?? "") ||
+    pending.city       !== (current.city       ?? "") ||
+    pending.negotiable !== !!current.negotiable
 
   return (
     <div className="space-y-3 mb-6">
@@ -122,16 +172,26 @@ export function MarketplaceFilters({ current }: Props) {
             placeholder="Search listings — iPhone, sofa, bike…"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            className="pl-9 h-10"
+            onKeyDown={(e) => { if (e.key === "Enter") applyFilters() }}
+            className="pl-9 pr-24 h-10"
           />
-          {searchValue && (
-            <button
-              onClick={() => { setSearchValue(""); push({ q: undefined }) }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {searchValue && (
+              <button
+                onClick={() => { setSearchValue(""); push({ q: undefined }) }}
+                className="text-muted-foreground hover:text-foreground p-1"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+            <Button
+              size="sm"
+              className="h-8 px-3 text-xs"
+              onClick={applyFilters}
             >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+              Search
+            </Button>
+          </div>
         </div>
 
         {/* Sort */}
@@ -157,7 +217,7 @@ export function MarketplaceFilters({ current }: Props) {
         >
           <SlidersHorizontal className="h-4 w-4" />
           Filters
-          {activeFilterCount > 0 && (
+          {(activeFilterCount > 0 || hasPendingChange) && (
             <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
               {activeFilterCount}
             </span>
@@ -171,24 +231,21 @@ export function MarketplaceFilters({ current }: Props) {
         )}
       </div>
 
-      {/* Category chips — horizontal scroll with edge-hover auto-scroll */}
-      <div className="relative">
-        {/* Left scroll zone */}
-        <div
-          className="absolute left-0 top-0 bottom-0.5 w-10 z-10 pointer-events-auto"
-          style={{ background: "linear-gradient(to right, hsl(var(--background)) 40%, transparent)" }}
-          onMouseEnter={() => startScroll(-1)}
+      {/* Category chips — horizontal scroll with arrow buttons */}
+      <div className="relative flex items-center gap-1">
+        <button
+          type="button"
+          aria-label="Scroll categories left"
+          onMouseDown={() => startScroll(-1)}
+          onMouseUp={stopScroll}
           onMouseLeave={stopScroll}
-        />
-        {/* Right scroll zone */}
-        <div
-          className="absolute right-0 top-0 bottom-0.5 w-10 z-10 pointer-events-auto"
-          style={{ background: "linear-gradient(to left, hsl(var(--background)) 40%, transparent)" }}
-          onMouseEnter={() => startScroll(1)}
-          onMouseLeave={stopScroll}
-        />
+          onClick={() => { const el = pillsRef.current; if (el) el.scrollBy({ left: -200, behavior: "smooth" }) }}
+          className="shrink-0 h-7 w-7 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors shadow-sm"
+        >
+          <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
 
-        <div ref={pillsRef} className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+        <div ref={pillsRef} className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide flex-1">
           {[{ value: "", label: "All" }, ...LISTING_CATEGORIES].map((cat) => {
             const isActive = (current.category ?? "") === cat.value
             const Icon = CATEGORY_ICONS[cat.value] ?? Package
@@ -209,100 +266,122 @@ export function MarketplaceFilters({ current }: Props) {
             )
           })}
         </div>
+
+        <button
+          type="button"
+          aria-label="Scroll categories right"
+          onMouseDown={() => startScroll(1)}
+          onMouseUp={stopScroll}
+          onMouseLeave={stopScroll}
+          onClick={() => { const el = pillsRef.current; if (el) el.scrollBy({ left: 200, behavior: "smooth" }) }}
+          className="shrink-0 h-7 w-7 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors shadow-sm"
+        >
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
       </div>
 
       {/* Advanced filter panel */}
       {showAdvanced && (
-        <div className="bg-muted/40 border border-border rounded-xl p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Condition */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Condition</p>
-            <div className="space-y-1.5">
-              {LISTING_CONDITIONS.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => push({ condition: current.condition === c.value ? undefined : c.value })}
-                  className={cn(
-                    "w-full text-left text-sm px-2.5 py-1.5 rounded-lg border transition-all",
-                    current.condition === c.value ? c.badge + " font-semibold" : "border-transparent hover:bg-muted"
-                  )}
-                >
-                  {c.label}
-                </button>
-              ))}
+        <div className="bg-muted/40 border border-border rounded-xl p-4 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* Condition */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Condition</p>
+              <div className="space-y-1.5">
+                {LISTING_CONDITIONS.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => setPending((p) => ({ ...p, condition: p.condition === c.value ? "" : c.value }))}
+                    className={cn(
+                      "w-full text-left text-sm px-2.5 py-1.5 rounded-lg border transition-all",
+                      pending.condition === c.value ? c.badge + " font-semibold" : "border-transparent hover:bg-muted"
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Price range */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Price Range</p>
-            <div className="space-y-2">
-              <Input
-                type="number"
-                placeholder="Min ₹"
-                value={current.minPrice ?? ""}
-                onChange={(e) => push({ minPrice: e.target.value || undefined })}
-                className="h-8 text-sm"
+            {/* Price range */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Price Range</p>
+              <div className="space-y-2">
+                <Input
+                  type="number"
+                  placeholder="Min ₹"
+                  value={pending.minPrice}
+                  onChange={(e) => setPending((p) => ({ ...p, minPrice: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+                <Input
+                  type="number"
+                  placeholder="Max ₹"
+                  value={pending.maxPrice}
+                  onChange={(e) => setPending((p) => ({ ...p, maxPrice: e.target.value }))}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {[["Under 5k", "", "5000"], ["5k-25k", "5000", "25000"], ["25k+", "25000", ""]].map(([l, mn, mx]) => (
+                  <button
+                    key={l}
+                    onClick={() => setPending((p) => ({ ...p, minPrice: mn, maxPrice: mx }))}
+                    className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* City — autocomplete */}
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">City</p>
+              <CityAutocomplete
+                value={pending.city}
+                onChange={(city) => setPending((p) => ({ ...p, city }))}
+                placeholder="Search city…"
               />
-              <Input
-                type="number"
-                placeholder="Max ₹"
-                value={current.maxPrice ?? ""}
-                onChange={(e) => push({ maxPrice: e.target.value || undefined })}
-                className="h-8 text-sm"
-              />
             </div>
-            {/* Quick ranges */}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {[["Under 5k", "", "5000"], ["5k-25k", "5000", "25000"], ["25k+", "25000", ""]].map(([l, mn, mx]) => (
-                <button
-                  key={l}
-                  onClick={() => push({ minPrice: mn || undefined, maxPrice: mx || undefined })}
-                  className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
-                >
-                  {l}
-                </button>
-              ))}
+
+            {/* Negotiable + extras */}
+            <div className="sm:col-span-2 lg:col-span-2">
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">More options</p>
+              <button
+                onClick={() => setPending((p) => ({ ...p, negotiable: !p.negotiable }))}
+                className={cn(
+                  "flex items-center gap-2 w-full px-3 py-2 rounded-lg border text-sm transition-all",
+                  pending.negotiable
+                    ? "bg-success/10 border-success/30 text-success font-medium"
+                    : "border-border hover:bg-muted"
+                )}
+              >
+                <span className="text-base">🤝</span>
+                Negotiable price only
+                {pending.negotiable && <span className="ml-auto text-success">✓</span>}
+              </button>
             </div>
           </div>
 
-          {/* City */}
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">City</p>
-            <div className="space-y-1.5">
-              {CITIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => push({ city: current.city === c ? undefined : c })}
-                  className={cn(
-                    "w-full text-left text-sm px-2.5 py-1.5 rounded-lg border transition-all",
-                    current.city === c
-                      ? "bg-primary/10 border-primary/30 text-primary font-medium"
-                      : "border-transparent hover:bg-muted"
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Negotiable + extras */}
-          <div className="sm:col-span-2 lg:col-span-2">
-            <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">More options</p>
-            <button
-              onClick={() => push({ negotiable: current.negotiable ? undefined : "1" })}
-              className={cn(
-                "flex items-center gap-2 w-full px-3 py-2 rounded-lg border text-sm transition-all",
-                current.negotiable
-                  ? "bg-success/10 border-success/30 text-success font-medium"
-                  : "border-border hover:bg-muted"
-              )}
+          {/* Action row */}
+          <div className="flex items-center gap-2 pt-1 border-t border-border">
+            <Button
+              className="flex-1 sm:flex-none gap-2"
+              onClick={applyFilters}
             >
-              <span className="text-base">🤝</span>
-              Negotiable price only
-              {current.negotiable && <span className="ml-auto text-success">✓</span>}
-            </button>
+              <Search className="h-4 w-4" />
+              Search
+              {hasPendingChange && <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/70" />}
+            </Button>
+            {(hasAnyFilter || hasPendingChange) && (
+              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={clearAll}>
+                <X className="h-3.5 w-3.5 mr-1" /> Clear all
+              </Button>
+            )}
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setShowAdvanced(false)}>
+              Close
+            </Button>
           </div>
         </div>
       )}
@@ -330,7 +409,8 @@ export function MarketplaceFilters({ current }: Props) {
   )
 }
 
-function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+function Chip({ label, onRemove }: { label: string | undefined; onRemove: () => void }) {
+  if (!label) return null
   return (
     <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
       {label}

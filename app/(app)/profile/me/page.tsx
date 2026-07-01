@@ -1,20 +1,20 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { toast } from "sonner"
 import {
   Camera, Loader2, CheckCircle2, Plus, X, ExternalLink, AtSign,
-  User, Link as LinkIcon, Sparkles, AlertCircle,
+  User, Link as LinkIcon, Sparkles, AlertCircle, Building2,
 } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CITIES } from "@/config/services"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { getInitials, cn } from "@/lib/utils"
 import { PROFILE_SOCIAL_PLATFORMS } from "@/components/shared/SocialShare"
-import Link from "next/link"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -73,6 +73,7 @@ export default function EditProfilePage() {
   const [avatarUrl,  setAvatarUrl]  = useState("")
   const [skillInput, setSkillInput] = useState("")
   const [form,       setForm]       = useState<ProfileForm>(EMPTY_FORM)
+  const [company,    setCompany]    = useState<{ name: string; logo?: string | null } | null>(null)
 
   // Load profile
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function EditProfilePage() {
       .then((d) => {
         if (!d) return
         setAvatarUrl(d.avatarUrl || d.image || "")
+        if (d.company) setCompany(d.company)
         setForm({
           name:        d.name        ?? "",
           bio:         d.bio         ?? "",
@@ -145,20 +147,24 @@ export default function EditProfilePage() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? "Failed to save"); return }
+      if (!res.ok) {
+        setError(data.error ?? "Failed to save")
+        toast.error(data.error ?? "Failed to save profile")
+        return
+      }
       await update()
       setSaved(true)
+      toast.success("Profile updated successfully!")
       setTimeout(() => setSaved(false), 3000)
     } catch {
       setError("Network error — please try again.")
+      toast.error("Network error — please try again")
     } finally {
       setLoading(false)
     }
   }
 
   const completion = calcCompletion(form, !!avatarUrl)
-  const profileUrl = session?.user?.id ? `/profile/${session.user.id}` : "#"
-
   // Completion color
   const completionColor =
     completion >= 80 ? "from-green-500 to-emerald-400" :
@@ -169,17 +175,9 @@ export default function EditProfilePage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
 
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Edit Profile</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">How colleagues see you across Korpo</p>
-        </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={profileUrl}>
-            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-            View Public Profile
-          </Link>
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Edit Profile</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">How colleagues see you across Korpo</p>
       </div>
 
       {/* Profile card */}
@@ -322,15 +320,32 @@ export default function EditProfilePage() {
               </div>
             </div>
 
+            {/* Company — read-only, derived from work email domain */}
+            {company && (
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" /> Company
+                </Label>
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40 cursor-not-allowed opacity-70">
+                  {company.logo ? (
+                    <Image src={company.logo} alt={company.name} width={18} height={18} className="rounded-sm shrink-0" />
+                  ) : (
+                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="text-sm">{company.name}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Linked to your work email — cannot be changed here.</p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>City</Label>
-                <Select value={form.city} onValueChange={(v) => setForm((f) => ({ ...f, city: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-                  <SelectContent>
-                    {CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CityAutocomplete
+                  value={form.city}
+                  onChange={(city) => setForm((f) => ({ ...f, city }))}
+                  placeholder="Type a city name…"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Phone</Label>

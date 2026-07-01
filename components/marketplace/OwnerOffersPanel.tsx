@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle, RotateCcw } from "lucide-react"
+import { ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle, RotateCcw, Send } from "lucide-react"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 interface Offer {
@@ -10,6 +10,7 @@ interface Offer {
   status: string
   createdAt: string
   buyer: {
+    id: string
     name: string | null
     email: string | null
     jobTitle: string | null
@@ -29,6 +30,8 @@ export function OwnerOffersPanel({ listingId, initialCount, isListingActive }: P
   const [loading, setLoading] = useState(false)
   const [acting, setActing]   = useState<string | null>(null)
   const [flash, setFlash]     = useState<Record<string, string>>({})
+  const [counterInputs, setCounterInputs] = useState<Record<string, string>>({})
+  const [sendingCounter, setSendingCounter] = useState<string | null>(null)
 
   if (initialCount === 0) return null
 
@@ -73,6 +76,25 @@ export function OwnerOffersPanel({ listingId, initialCount, isListingActive }: P
       setFlash((prev) => ({ ...prev, [offerId]: labels[action] }))
     } finally {
       setActing(null)
+    }
+  }
+
+  const sendCounterOffer = async (offerId: string, buyerId: string) => {
+    const price = counterInputs[offerId]?.trim()
+    if (!price) return
+    setSendingCounter(offerId)
+    try {
+      const res = await fetch(`/api/messages/${buyerId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: `Thank you for your offer. I'd like to counter with ₹${price}. Let me know if you're interested!` }),
+      })
+      if (res.ok) {
+        setFlash((prev) => ({ ...prev, [offerId]: `Counter price ₹${price} sent to buyer` }))
+        setCounterInputs((prev) => { const n = { ...prev }; delete n[offerId]; return n })
+      }
+    } finally {
+      setSendingCounter(null)
     }
   }
 
@@ -175,6 +197,36 @@ export function OwnerOffersPanel({ listingId, initialCount, isListingActive }: P
                     {isActing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
                     Revoke decision
                   </button>
+                )}
+
+                {/* Counter-price input after decline */}
+                {offer.status === "DECLINED" && isListingActive && (
+                  <div className="mt-1 space-y-1.5">
+                    <p className="text-[11px] text-muted-foreground font-medium">Send a counter price to the buyer:</p>
+                    <div className="flex gap-1.5">
+                      <div className="relative flex-1">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₹</span>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Enter amount"
+                          value={counterInputs[offer.id] ?? ""}
+                          onChange={(e) => setCounterInputs((prev) => ({ ...prev, [offer.id]: e.target.value }))}
+                          className="w-full h-8 pl-6 pr-2 rounded-lg border border-border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/40"
+                        />
+                      </div>
+                      <button
+                        disabled={!counterInputs[offer.id]?.trim() || sendingCounter === offer.id}
+                        onClick={() => sendCounterOffer(offer.id, offer.buyer.id)}
+                        className="h-8 px-2.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold flex items-center gap-1 disabled:opacity-50 transition-colors shrink-0"
+                      >
+                        {sendingCounter === offer.id
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : <Send className="h-3 w-3" />}
+                        Send
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             )

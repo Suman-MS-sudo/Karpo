@@ -66,6 +66,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     include: {
       buyer: {
         select: {
+          id: true,
           name: true,
           email: true,
           jobTitle: true,

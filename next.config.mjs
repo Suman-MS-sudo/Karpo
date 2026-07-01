@@ -13,6 +13,12 @@ const nextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "logo.clearbit.com" },
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      { protocol: "https", hostname: "logos-world.net" },
+      { protocol: "https", hostname: "b.zmtcdn.com" },
+      { protocol: "https", hostname: "imgak.mmtcdn.com" },
+      { protocol: "https", hostname: "*.amazonaws.com" },
+      { protocol: "https", hostname: "**.googleusercontent.com" },
     ],
   },
   experimental: {

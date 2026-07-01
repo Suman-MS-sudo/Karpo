@@ -147,7 +147,7 @@ export const SERVICES: ServiceConfig[] = [
   },
 ]
 
-export const CITIES = ["Hyderabad", "Bangalore", "Pune", "Chennai", "Mumbai", "Delhi NCR", "Kolkata"]
+export { INDIAN_CITIES as CITIES } from "@/data/indian-cities"
 
 export const FREE_SERVICES = SERVICES.filter((s) => !s.isPremium)
 export const PREMIUM_SERVICES = SERVICES.filter((s) => s.isPremium)

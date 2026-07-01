@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -16,14 +17,16 @@ export function MarkSoldButton({ listingId }: { listingId: string }) {
     try {
       const res = await fetch(`/api/listings/${listingId}/close`, { method: "POST" })
       if (res.ok || res.redirected) {
+        toast.success("Listing marked as sold!")
         router.push("/marketplace")
-        router.refresh()
       } else {
         const data = await res.json().catch(() => ({}))
         setError(data.error ?? "Something went wrong")
+        toast.error(data.error ?? "Something went wrong")
       }
     } catch {
       setError("Network error, please try again")
+      toast.error("Network error — please try again")
     } finally {
       setLoading(false)
     }

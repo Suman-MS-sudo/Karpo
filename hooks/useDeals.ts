@@ -1,54 +1,68 @@
 "use client"
 import { useState, useEffect, useCallback, useRef } from "react"
 
+// ── Deal type ─────────────────────────────────────────────────────────────────
+
 export interface Deal {
-  id: string
-  title: string
-  description: string
-  discount: number
-  code: string | null
-  validUntil: string
-  category: string
-  images: string[]
-  merchantName: string
-  merchantUrl: string | null
-  website: string | null
-  usageLimit: number | null
-  usedCount: number
-  createdAt: string
-  updatedAt: string
+  id:             string
+  title:          string
+  description:    string
+  discount:       number
+  code:           string | null
+  validFrom:      string | null
+  validUntil:     string
+  category:       string
+  images:         string[]
+  merchantName:   string
+  merchantUrl:    string | null
+  companyLogo:    string | null
+  website:        string | null
+  usageLimit:     number | null
+  usedCount:      number
+  viewCount:      number
+  featured:       boolean
+  trending:       boolean
+  badge:          string | null   // "NEW" | "TRENDING" | "LIMITED_TIME" | "EXCLUSIVE"
+  source:         string
+  lastUpdated:    string
+  createdAt:      string
+  updatedAt:      string
 }
+
+// ── Filter type ───────────────────────────────────────────────────────────────
+
+export type DealSortBy = "discount" | "newest" | "expiring" | "popular"
 
 export interface DealFilters {
-  category: string
+  category:    string
   minDiscount: number
-  sortBy: "discount" | "newest" | "expiring"
+  sortBy:      DealSortBy
+  search:      string
 }
 
-// Refresh at most once every 5 minutes; skip if last fetch was < 2 minutes ago.
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000
-const STALE_THRESHOLD_MS  = 2 * 60 * 1000
+// ── Hook config ───────────────────────────────────────────────────────────────
+
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000   // 5 min background poll
+const STALE_THRESHOLD_MS  = 2 * 60 * 1000   // skip if fetched < 2 min ago
 
 interface UseDealsFeedResult {
-  deals: Deal[]
-  loading: boolean
-  newDealsCount: number
-  lastFetchedAt: Date | null
+  deals:               Deal[]
+  loading:             boolean
+  newDealsCount:       number
+  lastFetchedAt:       Date | null
   secondsUntilRefresh: number
-  refresh: () => void
-  dismissNewDeals: () => void
+  refresh:             () => void
+  dismissNewDeals:     () => void
 }
 
 export function useDeals(initialDeals: Deal[], filters: DealFilters): UseDealsFeedResult {
-  const [deals, setDeals]               = useState<Deal[]>(initialDeals)
-  const [loading, setLoading]           = useState(false)
-  const [newDealsCount, setNewDeals]    = useState(0)
-  const [lastFetchedAt, setLastFetched] = useState<Date | null>(new Date())
-  const [secondsUntilRefresh, setSecondsLeft] = useState(REFRESH_INTERVAL_MS / 1000)
+  const [deals,              setDeals]        = useState<Deal[]>(initialDeals)
+  const [loading,            setLoading]      = useState(false)
+  const [newDealsCount,      setNewDeals]     = useState(0)
+  const [lastFetchedAt,      setLastFetched]  = useState<Date | null>(new Date())
+  const [secondsUntilRefresh,setSecondsLeft]  = useState(REFRESH_INTERVAL_MS / 1000)
 
-  // Stable ref to track the timestamp of the last successful fetch.
-  const lastFetchRef = useRef<Date>(new Date())
-  // Skip the first filter-effect run — SSR already delivered the default data.
+  const lastFetchRef  = useRef<Date>(new Date())
   const isFirstRender = useRef(true)
 
   const buildUrl = useCallback((since?: string) => {
@@ -56,26 +70,21 @@ export function useDeals(initialDeals: Deal[], filters: DealFilters): UseDealsFe
     if (filters.category)    p.set("category",    filters.category)
     if (filters.minDiscount) p.set("minDiscount", String(filters.minDiscount))
     if (filters.sortBy)      p.set("sortBy",      filters.sortBy)
+    if (filters.search)      p.set("search",      filters.search)
     if (since)               p.set("since",       since)
     return `/api/deals?${p.toString()}`
-  }, [filters.category, filters.minDiscount, filters.sortBy])
+  }, [filters.category, filters.minDiscount, filters.sortBy, filters.search])
 
   const fetchDeals = useCallback(async (opts: { detectNew?: boolean; showLoading?: boolean } = {}) => {
     const now = new Date()
     const msSinceLast = now.getTime() - lastFetchRef.current.getTime()
-
-    // Enforce stale threshold — only applies to background polls, not manual refreshes.
     if (opts.detectNew && msSinceLast < STALE_THRESHOLD_MS) return
-
     if (opts.showLoading) setLoading(true)
-
     const since = opts.detectNew ? lastFetchRef.current.toISOString() : undefined
-
     try {
       const res  = await fetch(buildUrl(since))
       if (!res.ok) return
       const data = await res.json()
-
       setDeals(data.deals ?? [])
       if (opts.detectNew && data.newCount > 0) {
         setNewDeals((prev) => prev + (data.newCount ?? 0))
@@ -88,38 +97,29 @@ export function useDeals(initialDeals: Deal[], filters: DealFilters): UseDealsFe
     }
   }, [buildUrl])
 
-  // Re-fetch when filters change. Skip the very first run — SSR already
-  // populated the deals list with default filters, so no round-trip needed.
+  // Re-fetch when filters change (skip first render — SSR already populated).
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
+    if (isFirstRender.current) { isFirstRender.current = false; return }
     fetchDeals({ showLoading: true })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.category, filters.minDiscount, filters.sortBy])
+  }, [filters.category, filters.minDiscount, filters.sortBy, filters.search])
 
-  // Background poll every REFRESH_INTERVAL_MS.
+  // Background poll every 5 minutes.
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchDeals({ detectNew: true })
-    }, REFRESH_INTERVAL_MS)
+    const interval = setInterval(() => fetchDeals({ detectNew: true }), REFRESH_INTERVAL_MS)
     return () => clearInterval(interval)
   }, [fetchDeals])
 
-  // Countdown ticker: decrements every second to show "refreshes in X".
+  // Countdown ticker.
   useEffect(() => {
     const ticker = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) return REFRESH_INTERVAL_MS / 1000
-        return prev - 1
-      })
+      setSecondsLeft((prev) => (prev <= 1 ? REFRESH_INTERVAL_MS / 1000 : prev - 1))
     }, 1000)
     return () => clearInterval(ticker)
   }, [])
 
   const refresh = useCallback(() => {
-    lastFetchRef.current = new Date(0) // force threshold bypass
+    lastFetchRef.current = new Date(0)
     fetchDeals({ showLoading: true })
     setNewDeals(0)
   }, [fetchDeals])

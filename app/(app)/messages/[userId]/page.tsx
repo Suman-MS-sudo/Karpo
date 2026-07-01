@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
-import { useParams, useSearchParams } from "next/navigation"
+import { useParams, useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Send } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -29,20 +29,27 @@ interface Partner {
 
 export default function MessageThreadPage() {
   const { data: session } = useSession()
-  const params = useParams()
+  const router      = useRouter()
+  const params      = useParams()
   const searchParams = useSearchParams()
-  const partnerId = params.userId as string
+  const partnerId   = params.userId as string
+
+  // Context params let us build a smarter fallback for the back button
   const contextListingId = searchParams.get("context")
-  const contextType = searchParams.get("type")
-  const backHref = contextListingId && contextType === "listing"
-    ? `/marketplace/${contextListingId}`
-    : "/messages"
+  const contextType      = searchParams.get("type")
+
   const [messages, setMessages] = useState<Message[]>([])
-  const [partner, setPartner] = useState<Partner | null>(null)
-  const [input, setInput] = useState("")
-  const [sending, setSending] = useState(false)
+  const [partner,  setPartner]  = useState<Partner | null>(null)
+  const [input,    setInput]    = useState("")
+  const [sending,  setSending]  = useState(false)
+  const [canGoBack, setCanGoBack] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Detect whether the browser has history to go back to
+  useEffect(() => {
+    setCanGoBack(window.history.length > 1)
+  }, [])
 
   useEffect(() => {
     fetch(`/api/profile/${partnerId}`).then((r) => r.json()).then((d) => setPartner(d))
@@ -51,8 +58,6 @@ export default function MessageThreadPage() {
       fetch(`/api/messages/${partnerId}`).then((r) => r.json()).then((d) => setMessages(d.messages ?? []))
 
     fetchMessages()
-
-    // Clear any stale interval before creating a new one
     if (pollRef.current) clearInterval(pollRef.current)
     pollRef.current = setInterval(fetchMessages, 10_000)
 
@@ -65,20 +70,30 @@ export default function MessageThreadPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Smart back: prefer browser history, fall back to context-aware href
+  const handleBack = () => {
+    if (canGoBack) {
+      router.back()
+    } else if (contextListingId && contextType === "listing") {
+      router.push(`/marketplace/${contextListingId}`)
+    } else {
+      router.push("/messages")
+    }
+  }
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || sending) return
     setSending(true)
     const content = input.trim()
     setInput("")
-    // Optimistic update
     const tempMsg: Message = { id: "temp-" + Date.now(), senderId: session!.user!.id, content, createdAt: new Date().toISOString() }
     setMessages((prev) => [...prev, tempMsg])
     try {
-      const res = await fetch(`/api/messages/${partnerId}`, {
-        method: "POST",
+      const res  = await fetch(`/api/messages/${partnerId}`, {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body:    JSON.stringify({ content }),
       })
       const data = await res.json()
       setMessages((prev) => prev.map((m) => m.id === tempMsg.id ? data : m))
@@ -94,9 +109,14 @@ export default function MessageThreadPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href={backHref} className="text-muted-foreground hover:text-foreground">
+        <button
+          onClick={handleBack}
+          className="text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-0.5 rounded-lg hover:bg-muted"
+          title="Go back"
+        >
           <ArrowLeft className="h-5 w-5" />
-        </Link>
+        </button>
+
         {partner && (
           <>
             <Avatar className="h-9 w-9">
@@ -105,7 +125,9 @@ export default function MessageThreadPage() {
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
-                <Link href={`/profile/${partner.id}`} className="font-medium hover:underline">{partner.name}</Link>
+                <Link href={`/profile/${partner.id}`} className="font-medium hover:underline">
+                  {partner.name}
+                </Link>
                 {partner.isVerified && <VerifiedBadge size="sm" />}
               </div>
               {partner.jobTitle && <p className="text-xs text-muted-foreground">{partner.jobTitle}</p>}
@@ -123,9 +145,14 @@ export default function MessageThreadPage() {
           const isMine = msg.senderId === session?.user?.id
           return (
             <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
-              <div className={cn("max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm", isMine ? "bg-primary-600 text-white rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm")}>
+              <div className={cn(
+                "max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm break-words",
+                isMine ? "bg-primary-600 text-white rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"
+              )}>
                 <p>{msg.content}</p>
-                <p className={cn("text-[10px] mt-1", isMine ? "text-blue-200" : "text-muted-foreground")}>{formatRelativeTime(msg.createdAt)}</p>
+                <p className={cn("text-[10px] mt-1", isMine ? "text-blue-200" : "text-muted-foreground")}>
+                  {formatRelativeTime(msg.createdAt)}
+                </p>
               </div>
             </div>
           )

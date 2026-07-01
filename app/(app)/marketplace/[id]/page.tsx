@@ -20,10 +20,12 @@ import { BoostButton }             from "@/components/marketplace/BoostButton"
 import { OfferButton }             from "@/components/marketplace/OfferButton"
 import { OwnerOffersPanel }        from "@/components/marketplace/OwnerOffersPanel"
 import { MarkSoldButton }          from "@/components/marketplace/MarkSoldButton"
+import { ListingImageGallery }    from "@/components/marketplace/ListingImageGallery"
 import { DistanceText }            from "@/components/marketplace/DistanceText"
 import { ReportButton }            from "@/components/marketplace/ReportButton"
 import { ListingEngagePanel }      from "@/components/marketplace/ListingEngagePanel"
 import { ListingEngagementPanel }  from "@/components/marketplace/ListingEngagementPanel"
+import { MessageSellerButton }     from "@/components/marketplace/MessageSellerButton"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { LISTING_CONDITIONS, LISTING_CATEGORIES } from "@/config/services"
 
@@ -219,47 +221,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
           {/* Image gallery */}
           <div className="bg-muted/30 border border-border rounded-2xl overflow-hidden">
             {listing.images.length > 0 ? (
-              <div className="p-2 space-y-2">
-                {/* Hero image */}
-                <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted">
-                  <Image src={listing.images[0]} alt={listing.title} fill
-                    className="object-contain" sizes="(max-width:1024px) 100vw, 66vw" priority />
-                  {isSold && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-2xl font-extrabold text-white tracking-widest border-4 border-white/80 px-6 py-2 rounded-xl rotate-[-12deg] shadow-xl uppercase">Sold</span>
-                    </div>
-                  )}
-                  {/* Boost badge */}
-                  {!isSold && isBoostActive && (
-                    <div className="absolute top-3 left-3">
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full shadow-lg bg-amber-400 text-white">
-                        {listing.boostLevel === "SUPER" ? "💥 Super Featured" : "⭐ Featured"}
-                      </span>
-                    </div>
-                  )}
-                  {/* Image count */}
-                  {listing.images.length > 1 && (
-                    <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      1 / {listing.images.length}
-                    </div>
-                  )}
-                </div>
-                {/* Thumbnails */}
-                {listing.images.length > 1 && (
-                  <div className="grid grid-cols-5 gap-2">
-                    {listing.images.slice(1, 6).map((img, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted border border-border">
-                        <Image src={img} alt="" fill className="object-contain hover:scale-105 transition-transform cursor-zoom-in" sizes="20vw" />
-                        {i === 4 && listing.images.length > 6 && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                            <span className="text-white font-bold text-sm">+{listing.images.length - 6}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ListingImageGallery
+                images={listing.images}
+                title={listing.title}
+                isSold={isSold}
+                isBoostActive={isBoostActive}
+                boostLevel={listing.boostLevel}
+              />
             ) : (
               <div className="aspect-[4/3] flex items-center justify-center">
                 <Package className="h-16 w-16 text-muted-foreground/20" />
@@ -633,9 +601,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   </div>
                 </div>
               </div>
-              <Button className="w-full gap-2" asChild>
-                <Link href={`/messages/${listing.userId}`}><MessageSquare className="h-4 w-4" /> Message Seller</Link>
-              </Button>
+              <MessageSellerButton
+                sellerId={listing.userId}
+                sellerName={listing.user.name ?? "Seller"}
+                sellerAvatar={listing.user.avatarUrl ?? listing.user.image ?? ""}
+                sellerJobTitle={listing.user.jobTitle ?? ""}
+                isVerified={listing.user.isVerified}
+              />
               {listing.phone && (
                 <div className="grid grid-cols-2 gap-2">
                   <Button variant="outline" size="sm" className="gap-1.5" asChild>
@@ -684,11 +656,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
               {/* Contact — always visible for buy/sell */}
               <div className="space-y-2">
-                <Button className="w-full gap-2" asChild>
-                  <Link href={`/messages/${listing.userId}?context=${listing.id}&type=listing`}>
-                    <MessageSquare className="h-4 w-4" /> Message Seller
-                  </Link>
-                </Button>
+                <MessageSellerButton
+                  sellerId={listing.userId}
+                  sellerName={listing.user.name ?? "Seller"}
+                  sellerAvatar={listing.user.avatarUrl ?? listing.user.image ?? ""}
+                  sellerJobTitle={listing.user.jobTitle ?? ""}
+                  isVerified={listing.user.isVerified}
+                />
                 {listing.phone && (
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="outline" size="sm" className="gap-1.5" asChild>

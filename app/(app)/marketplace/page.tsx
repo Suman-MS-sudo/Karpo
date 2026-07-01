@@ -3,11 +3,12 @@ export const dynamic = "force-dynamic"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
-import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap } from "lucide-react"
+import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap, LayoutGrid } from "lucide-react"
 import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { MarketplaceFilters } from "@/components/marketplace/MarketplaceFilters"
+import { LISTING_CATEGORIES } from "@/config/services"
 
 const PAGE_SIZE = 24
 
@@ -101,6 +102,35 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     ...(featuredIds.length ? { NOT: { id: { in: featuredIds } } } : {}),
   }
 
+  // ── One listing per category (spotlight — shown when no filters active) ──────
+  const isFiltered = !!(searchParams.q || searchParams.category || searchParams.condition ||
+    searchParams.city || searchParams.negotiable || searchParams.minPrice || searchParams.maxPrice)
+
+  const categorySpotlight = !isFiltered ? await (async () => {
+    const categoryValues = LISTING_CATEGORIES.map((c) => c.value)
+    const rows = await Promise.all(
+      categoryValues.map((cat) =>
+        prisma.listing.findFirst({
+          where: { status: "ACTIVE", category: cat, NOT: { id: { in: featuredIds } } },
+          orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+          select: {
+            id: true, title: true, description: true, price: true, images: true,
+            category: true, condition: true, isNegotiable: true, boostLevel: true,
+            viewCount: true, city: true, createdAt: true, userId: true,
+            user: {
+              select: {
+                id: true, name: true, image: true, avatarUrl: true,
+                isVerified: true, jobTitle: true, department: true,
+                membership: { select: { plan: true } },
+              },
+            },
+          },
+        })
+      )
+    )
+    return rows.filter(Boolean) as NonNullable<(typeof rows)[number]>[]
+  })() : []
+
   const [listings, gridTotal] = await Promise.all([
     prisma.listing.findMany({
       where: gridWhere,
@@ -193,8 +223,42 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         </section>
       )}
 
+      {/* ── Category spotlight (one per category, no filters active) ────────── */}
+      {!isFiltered && categorySpotlight.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <LayoutGrid className="h-4 w-4 text-primary-600" />
+            <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Browse by Category</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {categorySpotlight.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                id={listing.id}
+                href={`/marketplace/${listing.id}`}
+                title={listing.title}
+                subtitle={listing.description}
+                price={listing.price}
+                images={listing.images}
+                author={listing.user}
+                badge={listing.category}
+                city={listing.city}
+                createdAt={listing.createdAt}
+                condition={listing.condition}
+                isNegotiable={listing.isNegotiable}
+                boostLevel={listing.boostLevel}
+                viewCount={listing.viewCount}
+                serviceBorderColor="border-l-violet-400"
+                isOwn={listing.userId === session?.user?.id}
+                listingId={listing.id}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── Main grid ──────────────────────────────────────────────────────── */}
-      {listings.length === 0 && featuredListings.length === 0 ? (
+      {listings.length === 0 && featuredListings.length === 0 && categorySpotlight.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-5xl mb-4">📦</p>
           <h3 className="text-xl font-semibold mb-2">No listings found</h3>
@@ -203,7 +267,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
           </p>
           <Button asChild><Link href="/marketplace/new">Post First Item</Link></Button>
         </div>
-      ) : (
+      ) : listings.length > 0 ? (
         <>
           {listings.length > 0 && (
             <>
@@ -239,7 +303,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
             </>
           )}
         </>
-      )}
+      ) : null}
 
       {/* ── Pagination ────────────────────────────────────────────────────── */}
       {totalPages > 1 && (

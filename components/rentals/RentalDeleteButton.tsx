@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Trash2, Loader2, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -16,16 +17,16 @@ export function RentalDeleteButton({ rentalId }: Props) {
     try {
       const res = await fetch(`/api/rentals/${rentalId}`, { method: "DELETE" })
       if (res.ok) {
+        toast.success("Rental listing deleted")
         router.push("/my-postings?tab=rentals")
-        router.refresh()
       } else {
         const d = await res.json().catch(() => ({}))
-        alert(d.error ?? "Delete failed")
+        toast.error(d.error ?? "Delete failed")
         setDeleting(false)
         setConfirming(false)
       }
     } catch {
-      alert("Delete failed — check your connection")
+      toast.error("Delete failed — check your connection")
       setDeleting(false)
       setConfirming(false)
     }

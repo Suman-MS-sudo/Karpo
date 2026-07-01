@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
+import { toast } from "sonner"
 import { ArrowLeft, Upload, X, Loader2, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -8,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CITIES, LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
+import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
 
 export default function EditListingPage() {
   const router = useRouter()
@@ -49,7 +51,7 @@ export default function EditListingPage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
-    if (images.length + files.length > 10) { alert("Maximum 10 images allowed"); return }
+    if (images.length + files.length > 10) { toast.error("Maximum 10 images allowed"); return }
     setUploading(true)
     try {
       for (const file of files) {
@@ -64,7 +66,7 @@ export default function EditListingPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.category) { alert("Please select a category"); return }
+    if (!form.category) { toast.error("Please select a category"); return }
     setSaving(true)
     try {
       const res = await fetch(`/api/listings/${id}`, {
@@ -77,11 +79,15 @@ export default function EditListingPage() {
           images,
         }),
       })
-      if (res.ok) router.push(`/marketplace/${id}`)
-      else {
+      if (res.ok) {
+        toast.success("Listing updated successfully!")
+        router.push(`/marketplace/${id}`)
+      } else {
         const data = await res.json()
-        alert(data.error ?? "Failed to save")
+        toast.error(data.error ?? "Failed to save")
       }
+    } catch {
+      toast.error("Something went wrong — please try again")
     } finally { setSaving(false) }
   }
 
@@ -90,8 +96,14 @@ export default function EditListingPage() {
     setDeleting(true)
     try {
       const res = await fetch(`/api/listings/${id}`, { method: "DELETE" })
-      if (res.ok) router.push("/marketplace")
-      else alert("Failed to delete listing")
+      if (res.ok) {
+        toast.success("Listing deleted")
+        router.push("/marketplace")
+      } else {
+        toast.error("Failed to delete listing")
+      }
+    } catch {
+      toast.error("Something went wrong — please try again")
     } finally { setDeleting(false) }
   }
 
@@ -176,12 +188,12 @@ export default function EditListingPage() {
           </div>
           <div className="space-y-1.5">
             <Label>City *</Label>
-            <Select required value={form.city} onValueChange={(v) => setForm((f) => ({ ...f, city: v }))}>
-              <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-              <SelectContent>
-                {CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <CityAutocomplete
+              required
+              value={form.city}
+              onChange={(city) => setForm((f) => ({ ...f, city }))}
+              placeholder="Type a city name…"
+            />
           </div>
         </div>
 

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { toast } from "sonner"
 import {
   ArrowLeft, Upload, X, Loader2, Info, MapPin, Phone, Search, ChevronDown,
   Cpu, Car, Armchair, Tv, BookOpen, Dumbbell, Shirt,
@@ -14,8 +15,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { cn } from "@/lib/utils"
-import { CITIES, LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
+import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
 import type { PickedLocation } from "@/components/marketplace/LocationPicker"
 
 const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -105,7 +107,7 @@ export default function NewListingPage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
-    if (images.length + files.length > maxImages) { alert(`Maximum ${maxImages} images allowed`); return }
+    if (images.length + files.length > maxImages) { toast.error(`Maximum ${maxImages} images allowed`); return }
     setUploading(true)
     try {
       for (const file of files) {
@@ -120,7 +122,7 @@ export default function NewListingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.category) { alert("Please select a category"); return }
+    if (!form.category) { toast.error("Please select a category"); return }
     setLoading(true)
     try {
       const res = await fetch("/api/listings", {
@@ -137,8 +139,14 @@ export default function NewListingPage() {
         }),
       })
       const data = await res.json()
-      if (res.ok) router.push(`/marketplace/${data.id}`)
-      else alert(data.error ?? "Failed to create listing")
+      if (res.ok) {
+        toast.success("Listing posted successfully!")
+        router.push(`/marketplace/${data.id}`)
+      } else {
+        toast.error(data.error ?? "Failed to create listing")
+      }
+    } catch {
+      toast.error("Something went wrong — please try again")
     } finally { setLoading(false) }
   }
 
@@ -344,12 +352,12 @@ export default function NewListingPage() {
             </div>
             <div className="space-y-1.5">
               <Label>City *</Label>
-              <Select required value={form.city} onValueChange={(v) => set("city", v)}>
-                <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-                <SelectContent>
-                  {CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <CityAutocomplete
+                required
+                value={form.city}
+                onChange={(city) => set("city", city)}
+                placeholder="Type a city name…"
+              />
             </div>
           </div>
 

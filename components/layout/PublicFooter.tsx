@@ -9,7 +9,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
+              <Image src="/logo.jpg" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
               <span className="font-bold text-lg">Korpo</span>
             </div>
             <p className="text-blue-200 text-sm leading-relaxed">

@@ -12,7 +12,10 @@ async function requireAdmin() {
 export async function GET() {
   const { error } = await requireAdmin()
   if (error) return error
-  const deals = await prisma.deal.findMany({ orderBy: { createdAt: "desc" } })
+  const deals = await prisma.deal.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { redemptions: true } } },
+  })
   return NextResponse.json(deals)
 }
 
@@ -21,8 +24,11 @@ export async function POST(req: NextRequest) {
   if (error) return error
 
   const body = await req.json()
-  const { title, description, discount, code, validUntil, category, merchantName,
-          merchantUrl, terms, usageLimit, redemptionSteps } = body
+  const {
+    title, description, discount, code, validFrom, validUntil,
+    category, merchantName, merchantUrl, companyLogo, terms,
+    usageLimit, redemptionSteps, featured, trending, badge, source,
+  } = body
 
   if (!title || !description || !discount || !validUntil || !merchantName) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -30,20 +36,26 @@ export async function POST(req: NextRequest) {
 
   const deal = await prisma.deal.create({
     data: {
-      merchantId:      "admin",
       title,
       description,
       discount:        Number(discount),
       code:            code || null,
+      validFrom:       validFrom  ? new Date(validFrom)  : null,
       validUntil:      new Date(validUntil),
       category:        category ?? "OTHER",
-      merchantName:    merchantName,
-      merchantUrl:     merchantUrl || null,
-      terms:           terms || null,
+      merchantName,
+      merchantUrl:     merchantUrl  || null,
+      companyLogo:     companyLogo  || null,
+      terms:           terms        || null,
       redemptionSteps: redemptionSteps || null,
       usageLimit:      usageLimit ? Number(usageLimit) : null,
-      images:          [],
+      images:          "[]",
       isActive:        true,
+      featured:        !!featured,
+      trending:        !!trending,
+      badge:           badge  || null,
+      source:          source || "MANUAL",
+      lastUpdated:     new Date(),
     },
   })
 

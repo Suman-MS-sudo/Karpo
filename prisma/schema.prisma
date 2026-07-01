@@ -541,30 +541,43 @@ model ServicePost {
 }
 
 model Deal {
-  id          String   @id @default(cuid())
-  merchantId  String
+  id          String    @id @default(cuid())
+  merchantId  String    @default("admin")
   title       String
   description String
   discount    Int
   code        String?
+  validFrom   DateTime?
   validUntil  DateTime
   category    String
-  images      String   @default("[]")
-  isActive    Boolean  @default(true)
-  // Enterprise fields
+  images      String    @default("[]")
+  isActive    Boolean   @default(true)
+  // Merchant info
   merchantName    String  @default("")
   merchantUrl     String?
+  companyLogo     String?
   terms           String?
   redemptionSteps String?
   website         String?
   usageLimit      Int?
   usedCount       Int     @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  viewCount       Int     @default(0)
+  // Curation flags
+  featured    Boolean   @default(false)
+  trending    Boolean   @default(false)
+  badge       String?
+  // Sourcing
+  source      String    @default("MANUAL")
+  lastUpdated DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   redemptions DealRedemption[]
 
   @@index([isActive, validUntil])
+  @@index([featured, isActive])
+  @@index([trending, isActive])
+  @@index([category, isActive])
 }
 
 model Event {

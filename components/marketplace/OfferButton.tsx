@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { toast } from "sonner"
 import { CheckCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,9 +35,10 @@ export function OfferButton({ listingId, defaultAmount, existingOffer }: Props) 
       if (res.ok) {
         setDone({ amount: parsed })
         setOpen(false)
+        toast.success("Offer sent! The seller will respond shortly.")
       } else {
         const data = await res.json()
-        alert(data.error ?? "Failed to submit offer")
+        toast.error(data.error ?? "Failed to submit offer")
       }
     } finally {
       setLoading(false)

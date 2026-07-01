@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Zap, ChevronDown, ChevronUp, CheckCircle2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BOOST_TIERS } from "@/config/services"
@@ -58,7 +59,7 @@ export function BoostButton({ listingId, boostLevel, boostExpiresAt }: Props) {
         body:    JSON.stringify({ level }),
       })
       const data = await res.json()
-      if (!res.ok) { alert(data.error ?? "Failed to create order"); return }
+      if (!res.ok) { toast.error(data.error ?? "Failed to create order"); return }
 
       await loadRazorpay()
       const tier = BOOST_TIERS.find((t) => t.level === level)!
@@ -77,6 +78,7 @@ export function BoostButton({ listingId, boostLevel, boostExpiresAt }: Props) {
             body:    JSON.stringify(response),
           })
           setSuccess(level)
+          toast.success("Listing boosted! It will now appear in Featured.")
           router.refresh()
         },
         theme: { color: "#1E3A5F" },

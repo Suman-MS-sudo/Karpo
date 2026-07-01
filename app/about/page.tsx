@@ -144,7 +144,7 @@ export default function AboutPage() {
               <div className="relative">
                 <div className="w-72 h-72 rounded-3xl bg-gradient-to-br from-[#1E3A5F] to-[#2E86AB] flex items-center justify-center shadow-2xl">
                   <Image
-                    src="/logo.png"
+                    src="/logo.jpg"
                     alt="Korpo"
                     width={180}
                     height={180}
