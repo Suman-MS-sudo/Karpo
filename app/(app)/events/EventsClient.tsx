@@ -4,10 +4,11 @@ import { useState, useMemo, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
-  Search, Plus, SlidersHorizontal, X, LayoutGrid, List,
+  Search, Plus, X, LayoutGrid, List,
   Calendar, MapPin, Users, Clock, Bookmark, BookmarkCheck,
   TrendingUp, Sparkles, Globe, Video, ChevronDown, Zap,
-  ArrowUpDown, Filter,
+  ArrowUpDown, Filter, LayoutDashboard,
+  Mountain, Trophy, Handshake, Palette, MoreHorizontal,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,12 +40,12 @@ export interface EventItem {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { value: "All",        label: "All Events",  emoji: "✦"  },
-  { value: "TREK",       label: "Treks",       emoji: "🥾" },
-  { value: "SPORTS",     label: "Sports",      emoji: "⚽" },
-  { value: "NETWORKING", label: "Networking",  emoji: "🤝" },
-  { value: "HOBBY",      label: "Hobbies",     emoji: "🎨" },
-  { value: "OTHER",      label: "More",        emoji: "🎉" },
+  { value: "All",        label: "All Events",  Icon: LayoutDashboard, iconBg: "bg-white/10",              iconColor: "text-white"                          },
+  { value: "TREK",       label: "Treks",       Icon: Mountain,        iconBg: "bg-emerald-500/20",        iconColor: "text-emerald-400"                    },
+  { value: "SPORTS",     label: "Sports",      Icon: Trophy,          iconBg: "bg-blue-500/20",           iconColor: "text-blue-400"                       },
+  { value: "NETWORKING", label: "Networking",  Icon: Handshake,       iconBg: "bg-violet-500/20",         iconColor: "text-violet-400"                     },
+  { value: "HOBBY",      label: "Hobbies",     Icon: Palette,         iconBg: "bg-rose-500/20",           iconColor: "text-rose-400"                       },
+  { value: "OTHER",      label: "More",        Icon: MoreHorizontal,  iconBg: "bg-amber-500/20",          iconColor: "text-amber-400"                      },
 ]
 
 const CAT_COLORS: Record<string, { bg: string; text: string; dot: string; gradient: string }> = {
@@ -243,33 +244,53 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
         </div>
       </div>
 
-      {/* ── Category pill strip ───────────────────────────────────────────────── */}
-      <div className="bg-slate-950 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+      {/* ── Category icon strip ──────────────────────────────────────────────── */}
+      <div className="bg-slate-950 border-b border-slate-800/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-stretch gap-1 overflow-x-auto scrollbar-hide">
             {CATEGORIES.map(cat => {
               const count    = events.filter(e => cat.value === "All" || e.category === cat.value).length
               const isActive = category === cat.value
-              const cc       = CAT_COLORS[cat.value]
               return (
                 <button
                   key={cat.value}
                   onClick={() => setCategory(cat.value)}
                   className={cn(
-                    "flex items-center gap-2.5 pl-3 pr-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 shrink-0 border",
-                    isActive
-                      ? "bg-white text-slate-900 border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]"
-                      : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20"
+                    "flex flex-col items-center gap-2 px-5 pt-4 pb-3 min-w-[90px] shrink-0 relative transition-all duration-200 group",
+                    isActive ? "opacity-100" : "opacity-50 hover:opacity-80"
                   )}
                 >
-                  <span className="text-base leading-none">{cat.emoji}</span>
-                  <span>{cat.label}</span>
+                  {/* Icon container */}
+                  <div className={cn(
+                    "h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200",
+                    isActive
+                      ? cn(cat.iconBg, "ring-2 ring-white/30 scale-110 shadow-lg")
+                      : cn(cat.iconBg, "group-hover:scale-105")
+                  )}>
+                    <cat.Icon className={cn("h-5 w-5", cat.iconColor)} strokeWidth={isActive ? 2.5 : 2} />
+                  </div>
+
+                  {/* Label */}
                   <span className={cn(
-                    "text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center tabular-nums",
-                    isActive ? "bg-slate-900/15 text-slate-900" : "bg-white/10 text-slate-400"
+                    "text-xs font-semibold whitespace-nowrap leading-none transition-colors",
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-slate-300"
+                  )}>
+                    {cat.label}
+                  </span>
+
+                  {/* Count */}
+                  <span className={cn(
+                    "text-[10px] font-bold tabular-nums leading-none",
+                    isActive ? "text-slate-300" : "text-slate-600"
                   )}>
                     {count}
                   </span>
+
+                  {/* Active indicator line */}
+                  <div className={cn(
+                    "absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full transition-all duration-200",
+                    isActive ? "w-8 bg-white" : "w-0 bg-transparent"
+                  )} />
                 </button>
               )
             })}
