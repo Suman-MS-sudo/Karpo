@@ -27,10 +27,16 @@ function serializeDeal(d: any): Deal {
     featured:     !!d.featured,
     trending:     !!d.trending,
     badge:        d.badge        ?? null,
-    source:       d.source       ?? "MANUAL",
-    lastUpdated:  d.lastUpdated  ? new Date(d.lastUpdated).toISOString() : new Date(d.updatedAt).toISOString(),
-    createdAt:    new Date(d.createdAt).toISOString(),
-    updatedAt:    new Date(d.updatedAt).toISOString(),
+    source:          d.source          ?? "MANUAL",
+    lastUpdated:     d.lastUpdated  ? new Date(d.lastUpdated).toISOString() : new Date(d.updatedAt).toISOString(),
+    createdAt:       new Date(d.createdAt).toISOString(),
+    updatedAt:       new Date(d.updatedAt).toISOString(),
+    // Affiliate fields
+    affiliateUrl:     d.affiliateUrl     ?? null,
+    affiliateNetwork: d.affiliateNetwork ?? null,
+    originalPrice:    d.originalPrice    ?? null,
+    salePrice:        d.salePrice        ?? null,
+    externalId:       d.externalId       ?? null,
   }
 }
 
