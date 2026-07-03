@@ -132,6 +132,22 @@ const SERVICE_NAV: Record<string, NavSection[]> = {
       { href: "/events/new", label: "Create Event",  icon: Plus    },
       { href: "/my-events",  label: "My Events",     icon: Package },
     ]},
+    { title: "Category", items: [
+      { href: "/events?category=TREK",       label: "🥾 Treks"       },
+      { href: "/events?category=SPORTS",     label: "⚽ Sports"       },
+      { href: "/events?category=NETWORKING", label: "🤝 Networking"  },
+      { href: "/events?category=HOBBY",      label: "🎨 Hobbies"     },
+    ]},
+    { title: "When", items: [
+      { href: "/events?date=today",   label: "Today"        },
+      { href: "/events?date=weekend", label: "This weekend" },
+      { href: "/events?date=week",    label: "This week"    },
+      { href: "/events?date=month",   label: "This month"   },
+    ]},
+    { title: "Price", items: [
+      { href: "/events?price=free", label: "Free events" },
+      { href: "/events?price=paid", label: "Paid events" },
+    ]},
   ],
 
   "learning": [
