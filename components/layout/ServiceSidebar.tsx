@@ -218,20 +218,11 @@ export function ServiceSidebar({ className }: { className?: string }) {
     SERVICES.find((s) => pathname.startsWith(s.route)) ??
     SERVICES.find((s) => s.id === MY_ROUTE_MAP[cleanPath])
 
-  const baseSections = isAdmin
-    ? ADMIN_NAV
+  const sections = isAdmin
+    ? []
     : activeService ? (SERVICE_NAV[activeService.id] ?? []) : HOME_NAV
 
-  const sections = !isAdmin && isAdminUser
-    ? [...baseSections, { title: "Admin", items: [
-        { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
-        { href: "/admin/users",     label: "Users",      icon: Users           },
-        { href: "/admin/companies", label: "Companies",  icon: Building2       },
-        { href: "/admin/deals",     label: "Deals",      icon: Tag             },
-        { href: "/admin/concierge", label: "Concierge",  icon: Shield          },
-        { href: "/admin/reports",   label: "Reports",    icon: FileWarning     },
-      ]}]
-    : baseSections
+  if (isAdmin) return null
 
   return (
     <aside className={cn(

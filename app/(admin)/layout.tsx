@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { AdminShell } from "@/components/layout/AdminShell"
+import { AppShell } from "@/components/layout/AppShell"
 
 export default async function AdminGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user) redirect("/auth/signin?callbackUrl=/admin")
   if (session.user.role !== "ADMIN") redirect("/dashboard")
-  return <AdminShell>{children}</AdminShell>
+  return <AppShell>{children}</AppShell>
 }

@@ -9,7 +9,17 @@ import { cn } from "@/lib/utils"
 import {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users,
   GraduationCap, Shield, Gift, LayoutDashboard, Pin, PinOff,
+  Building2, FileWarning,
 } from "lucide-react"
+
+const ADMIN_SUB_ITEMS = [
+  { href: "/admin",           label: "Dashboard",  Icon: LayoutDashboard, exact: true  },
+  { href: "/admin/users",     label: "Users",      Icon: Users,           exact: false },
+  { href: "/admin/companies", label: "Companies",  Icon: Building2,       exact: false },
+  { href: "/admin/deals",     label: "Deals",      Icon: Tag,             exact: false },
+  { href: "/admin/concierge", label: "Concierge",  Icon: Shield,          exact: false },
+  { href: "/admin/reports",   label: "Reports",    Icon: FileWarning,     exact: false },
+]
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users, GraduationCap, Shield, Gift,
@@ -209,7 +219,35 @@ export function ServiceRail() {
                 Pinned
               </p>
               <div className="space-y-0.5 mb-1">
-                {pinnedItems.map(renderItem)}
+                {pinnedItems.map(item => (
+                  <div key={item.id}>
+                    {renderItem(item)}
+                    {item.id === "admin" && pathname.startsWith("/admin") && (
+                      <div className="mt-0.5 space-y-0.5 pl-[10px]">
+                        {ADMIN_SUB_ITEMS.map(sub => {
+                          const isSubActive = sub.exact
+                            ? pathname === sub.href
+                            : pathname === sub.href || pathname.startsWith(sub.href + "/")
+                          return (
+                            <Link key={sub.href} href={sub.href} className={cn(
+                              "flex items-center gap-3 h-9 w-full rounded-xl pr-1 transition-colors duration-150",
+                              isSubActive ? "bg-blue-100 dark:bg-blue-950/40 shadow-sm" : "hover:bg-muted"
+                            )}>
+                              <span className="flex items-center justify-center w-[34px] h-full shrink-0">
+                                <sub.Icon className={cn("h-[15px] w-[15px]", isSubActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground")} />
+                              </span>
+                              <span className={cn(
+                                "text-xs font-medium whitespace-nowrap flex-1 min-w-0",
+                                panePinned ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-100 delay-150",
+                                isSubActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
+                              )}>{sub.label}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
               <div className="h-px bg-border mx-2 my-2" />
             </>
@@ -224,7 +262,48 @@ export function ServiceRail() {
             </p>
           )}
           <div className="space-y-0.5">
-            {(mounted ? unpinnedItems : visibleItems).map(renderItem)}
+            {(mounted ? unpinnedItems : visibleItems).map(item => (
+              <div key={item.id}>
+                {renderItem(item)}
+                {/* Admin sub-items — shown inline when on /admin routes */}
+                {item.id === "admin" && pathname.startsWith("/admin") && (
+                  <div className="mt-0.5 space-y-0.5 pl-[10px]">
+                    {ADMIN_SUB_ITEMS.map(sub => {
+                      const isSubActive = sub.exact
+                        ? pathname === sub.href
+                        : pathname === sub.href || pathname.startsWith(sub.href + "/")
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={cn(
+                            "flex items-center gap-3 h-9 w-full rounded-xl pr-1",
+                            "transition-colors duration-150",
+                            isSubActive
+                              ? "bg-blue-100 dark:bg-blue-950/40 shadow-sm"
+                              : "hover:bg-muted"
+                          )}
+                        >
+                          <span className="flex items-center justify-center w-[34px] h-full shrink-0">
+                            <sub.Icon className={cn(
+                              "h-[15px] w-[15px]",
+                              isSubActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
+                            )} />
+                          </span>
+                          <span className={cn(
+                            "text-xs font-medium whitespace-nowrap flex-1 min-w-0",
+                            panePinned ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-100 delay-150",
+                            isSubActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
+                          )}>
+                            {sub.label}
+                          </span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </nav>
 

@@ -91,7 +91,7 @@ export const SERVICES: ServiceConfig[] = [
     route: "/deals",
     model: "Deal",
     isPremium: false,
-    isActive: true,
+    isActive: false,
   },
   {
     id: "events",
@@ -117,7 +117,7 @@ export const SERVICES: ServiceConfig[] = [
     route: "/learning",
     model: "Course",
     isPremium: false,
-    isActive: true,
+    isActive: false,
   },
   {
     id: "concierge",
@@ -130,7 +130,7 @@ export const SERVICES: ServiceConfig[] = [
     route: "/concierge",
     model: "ConciergeLead",
     isPremium: false,
-    isActive: true,
+    isActive: false,
   },
   {
     id: "benefits",
@@ -143,7 +143,7 @@ export const SERVICES: ServiceConfig[] = [
     route: "/benefits",
     model: "BenefitProduct",
     isPremium: false,
-    isActive: true,
+    isActive: false,
   },
 ]
 

@@ -93,30 +93,6 @@ export default async function DashboardPage() {
       borderColor: "border-amber-200 dark:border-amber-800",
       count: eventCount, countLabel: "upcoming", isPremium: false,
     },
-    {
-      id: "deals", name: "Employee Deals", icon: "Tag", route: "/deals", newHref: null,
-      color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-100 dark:bg-rose-500/15",
-      borderColor: "border-rose-200 dark:border-rose-800",
-      count: null, countLabel: "exclusive discounts", isPremium: false,
-    },
-    {
-      id: "learning", name: "Learning Hub", icon: "GraduationCap", route: "/learning", newHref: "/learning/new",
-      color: "text-indigo-600 dark:text-indigo-400", bgColor: "bg-indigo-100 dark:bg-indigo-500/15",
-      borderColor: "border-indigo-200 dark:border-indigo-800",
-      count: null, countLabel: "courses & workshops", isPremium: false,
-    },
-    {
-      id: "concierge", name: "Concierge", icon: "Shield", route: "/concierge", newHref: "/concierge/new",
-      color: "text-sky-600 dark:text-sky-400", bgColor: "bg-sky-100 dark:bg-sky-500/15",
-      borderColor: "border-sky-200 dark:border-sky-800",
-      count: null, countLabel: "tax · legal · insurance", isPremium: false,
-    },
-    {
-      id: "benefits", name: "Benefits", icon: "Gift", route: "/benefits", newHref: null,
-      color: "text-pink-600 dark:text-pink-400", bgColor: "bg-pink-100 dark:bg-pink-500/15",
-      borderColor: "border-pink-200 dark:border-pink-800",
-      count: null, countLabel: "loans & insurance", isPremium: false,
-    },
   ]
 
   return (
