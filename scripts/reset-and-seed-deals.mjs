@@ -649,7 +649,7 @@ for (const d of DEALS) {
       ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?,
-      'API', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      'API', ?, ?, ?
     )`,
     args: [
       id,
@@ -658,6 +658,7 @@ for (const d of DEALS) {
       d.merchantName, d.affiliateUrl, d.website, d.affiliateNetwork,
       d.companyLogo ?? null, d.terms ?? null, d.originalPrice ?? null, d.salePrice ?? null,
       d.featured ? 1 : 0, d.trending ? 1 : 0, d.badge ?? null,
+      now.toISOString(), now.toISOString(), now.toISOString(),
     ],
   })
   inserted++
