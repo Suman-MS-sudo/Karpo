@@ -1,14 +1,17 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useRef, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import {
-  Search, Plus, X, LayoutGrid, List,
+  Search, Plus, X, LayoutGrid, List, Package,
   Calendar, MapPin, Users, Clock, Bookmark, BookmarkCheck,
   TrendingUp, Sparkles, Globe, Video, ChevronDown, Zap,
-  ArrowUpDown, Filter, LayoutDashboard,
+  ArrowUpDown, Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation,
   Mountain, Trophy, Handshake, Palette, MoreHorizontal,
+  Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
+  Clapperboard, Dumbbell, Plane,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,20 +43,40 @@ export interface EventItem {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { value: "All",        label: "All Events",  Icon: LayoutDashboard, iconBg: "bg-slate-100 dark:bg-white/10",        iconColor: "text-slate-600 dark:text-white"        },
-  { value: "TREK",       label: "Treks",       Icon: Mountain,        iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400"},
-  { value: "SPORTS",     label: "Sports",      Icon: Trophy,          iconBg: "bg-blue-100 dark:bg-blue-500/20",       iconColor: "text-blue-600 dark:text-blue-400"      },
-  { value: "NETWORKING", label: "Networking",  Icon: Handshake,       iconBg: "bg-violet-100 dark:bg-violet-500/20",   iconColor: "text-violet-600 dark:text-violet-400"  },
-  { value: "HOBBY",      label: "Hobbies",     Icon: Palette,         iconBg: "bg-rose-100 dark:bg-rose-500/20",       iconColor: "text-rose-600 dark:text-rose-400"      },
-  { value: "OTHER",      label: "More",        Icon: MoreHorizontal,  iconBg: "bg-amber-100 dark:bg-amber-500/20",     iconColor: "text-amber-600 dark:text-amber-400"    },
+  { value: "All",        label: "All",         Icon: LayoutDashboard, iconBg: "bg-slate-100 dark:bg-white/10",          iconColor: "text-slate-600 dark:text-white"           },
+  { value: "TREK",       label: "Trek",         Icon: Mountain,        iconBg: "bg-emerald-100 dark:bg-emerald-500/20",  iconColor: "text-emerald-600 dark:text-emerald-400"  },
+  { value: "SPORTS",     label: "Sports",       Icon: Trophy,          iconBg: "bg-blue-100 dark:bg-blue-500/20",        iconColor: "text-blue-600 dark:text-blue-400"        },
+  { value: "NETWORKING", label: "Networking",   Icon: Handshake,       iconBg: "bg-violet-100 dark:bg-violet-500/20",    iconColor: "text-violet-600 dark:text-violet-400"    },
+  { value: "MUSIC",      label: "Music",        Icon: Music,           iconBg: "bg-purple-100 dark:bg-purple-500/20",    iconColor: "text-purple-600 dark:text-purple-400"    },
+  { value: "COMEDY",     label: "Standup",      Icon: Mic2,            iconBg: "bg-orange-100 dark:bg-orange-500/20",    iconColor: "text-orange-600 dark:text-orange-400"    },
+  { value: "FOOD",       label: "Food",         Icon: UtensilsCrossed, iconBg: "bg-yellow-100 dark:bg-yellow-500/20",    iconColor: "text-yellow-600 dark:text-yellow-400"    },
+  { value: "WELLNESS",   label: "Wellness",     Icon: Heart,           iconBg: "bg-pink-100 dark:bg-pink-500/20",        iconColor: "text-pink-600 dark:text-pink-400"        },
+  { value: "TECH",       label: "Tech",         Icon: Cpu,             iconBg: "bg-cyan-100 dark:bg-cyan-500/20",        iconColor: "text-cyan-600 dark:text-cyan-400"        },
+  { value: "WORKSHOP",   label: "Workshop",     Icon: Hammer,          iconBg: "bg-slate-100 dark:bg-slate-500/20",      iconColor: "text-slate-600 dark:text-slate-400"      },
+  { value: "GAMING",     label: "Gaming",       Icon: Gamepad2,        iconBg: "bg-indigo-100 dark:bg-indigo-500/20",    iconColor: "text-indigo-600 dark:text-indigo-400"    },
+  { value: "MOVIE",      label: "Movie",        Icon: Clapperboard,    iconBg: "bg-red-100 dark:bg-red-500/20",          iconColor: "text-red-600 dark:text-red-400"          },
+  { value: "FITNESS",    label: "Fitness",      Icon: Dumbbell,        iconBg: "bg-lime-100 dark:bg-lime-500/20",        iconColor: "text-lime-600 dark:text-lime-400"        },
+  { value: "HOBBY",      label: "Hobbies",      Icon: Palette,         iconBg: "bg-rose-100 dark:bg-rose-500/20",        iconColor: "text-rose-600 dark:text-rose-400"        },
+  { value: "TRAVEL",     label: "Travel",       Icon: Plane,           iconBg: "bg-sky-100 dark:bg-sky-500/20",          iconColor: "text-sky-600 dark:text-sky-400"          },
+  { value: "OTHER",      label: "Other",        Icon: MoreHorizontal,  iconBg: "bg-amber-100 dark:bg-amber-500/20",      iconColor: "text-amber-600 dark:text-amber-400"      },
 ]
 
 const CAT_COLORS: Record<string, { bg: string; text: string; dot: string; gradient: string }> = {
-  TREK:       { bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500",  gradient: "from-emerald-800 to-teal-900"   },
-  SPORTS:     { bg: "bg-blue-100 dark:bg-blue-900/40",      text: "text-blue-700 dark:text-blue-300",       dot: "bg-blue-500",     gradient: "from-blue-800 to-indigo-900"    },
-  NETWORKING: { bg: "bg-violet-100 dark:bg-violet-900/40",  text: "text-violet-700 dark:text-violet-300",   dot: "bg-violet-500",   gradient: "from-violet-800 to-purple-900"  },
-  HOBBY:      { bg: "bg-rose-100 dark:bg-rose-900/40",      text: "text-rose-700 dark:text-rose-300",       dot: "bg-rose-500",     gradient: "from-rose-800 to-pink-900"      },
-  OTHER:      { bg: "bg-amber-100 dark:bg-amber-900/40",    text: "text-amber-700 dark:text-amber-300",     dot: "bg-amber-500",    gradient: "from-amber-800 to-orange-900"   },
+  TREK:       { bg: "bg-emerald-100 dark:bg-emerald-900/40", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500", gradient: "from-emerald-800 to-teal-900"    },
+  SPORTS:     { bg: "bg-blue-100 dark:bg-blue-900/40",       text: "text-blue-700 dark:text-blue-300",       dot: "bg-blue-500",    gradient: "from-blue-800 to-indigo-900"     },
+  NETWORKING: { bg: "bg-violet-100 dark:bg-violet-900/40",   text: "text-violet-700 dark:text-violet-300",   dot: "bg-violet-500",  gradient: "from-violet-800 to-purple-900"   },
+  MUSIC:      { bg: "bg-purple-100 dark:bg-purple-900/40",   text: "text-purple-700 dark:text-purple-300",   dot: "bg-purple-500",  gradient: "from-purple-800 to-fuchsia-900"  },
+  COMEDY:     { bg: "bg-orange-100 dark:bg-orange-900/40",   text: "text-orange-700 dark:text-orange-300",   dot: "bg-orange-500",  gradient: "from-orange-800 to-red-900"      },
+  FOOD:       { bg: "bg-yellow-100 dark:bg-yellow-900/40",   text: "text-yellow-700 dark:text-yellow-300",   dot: "bg-yellow-500",  gradient: "from-yellow-700 to-amber-900"    },
+  WELLNESS:   { bg: "bg-pink-100 dark:bg-pink-900/40",       text: "text-pink-700 dark:text-pink-300",       dot: "bg-pink-500",    gradient: "from-pink-800 to-rose-900"       },
+  TECH:       { bg: "bg-cyan-100 dark:bg-cyan-900/40",       text: "text-cyan-700 dark:text-cyan-300",       dot: "bg-cyan-500",    gradient: "from-cyan-800 to-blue-900"       },
+  WORKSHOP:   { bg: "bg-slate-100 dark:bg-slate-800/60",     text: "text-slate-700 dark:text-slate-300",     dot: "bg-slate-500",   gradient: "from-slate-700 to-slate-900"     },
+  GAMING:     { bg: "bg-indigo-100 dark:bg-indigo-900/40",   text: "text-indigo-700 dark:text-indigo-300",   dot: "bg-indigo-500",  gradient: "from-indigo-800 to-violet-900"   },
+  MOVIE:      { bg: "bg-red-100 dark:bg-red-900/40",         text: "text-red-700 dark:text-red-300",         dot: "bg-red-500",     gradient: "from-red-800 to-rose-900"        },
+  FITNESS:    { bg: "bg-lime-100 dark:bg-lime-900/40",       text: "text-lime-700 dark:text-lime-300",       dot: "bg-lime-500",    gradient: "from-lime-700 to-green-900"      },
+  HOBBY:      { bg: "bg-rose-100 dark:bg-rose-900/40",       text: "text-rose-700 dark:text-rose-300",       dot: "bg-rose-500",    gradient: "from-rose-800 to-pink-900"       },
+  TRAVEL:     { bg: "bg-sky-100 dark:bg-sky-900/40",         text: "text-sky-700 dark:text-sky-300",         dot: "bg-sky-500",     gradient: "from-sky-700 to-blue-900"        },
+  OTHER:      { bg: "bg-amber-100 dark:bg-amber-900/40",     text: "text-amber-700 dark:text-amber-300",     dot: "bg-amber-500",   gradient: "from-amber-800 to-orange-900"    },
 }
 
 const DATE_FILTERS = [
@@ -69,6 +92,21 @@ const SORT_OPTIONS = [
   { value: "popular",    label: "Most popular"        },
   { value: "price_asc",  label: "Price: Low → High"   },
   { value: "price_desc", label: "Price: High → Low"   },
+]
+
+const CITIES = [
+  { name: "Bengaluru",  state: "Karnataka"      },
+  { name: "Hyderabad",  state: "Telangana"      },
+  { name: "Mumbai",     state: "Maharashtra"    },
+  { name: "Delhi",      state: "NCR"            },
+  { name: "Pune",       state: "Maharashtra"    },
+  { name: "Chennai",    state: "Tamil Nadu"     },
+  { name: "Kolkata",    state: "West Bengal"    },
+  { name: "Ahmedabad",  state: "Gujarat"        },
+  { name: "Jaipur",     state: "Rajasthan"      },
+  { name: "Kochi",      state: "Kerala"         },
+  { name: "Chandigarh", state: "Punjab"         },
+  { name: "Coimbatore", state: "Tamil Nadu"     },
 ]
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -113,8 +151,10 @@ interface Props {
 }
 
 export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEventsCount, eventsLimit }: Props) {
+  const searchParams = useSearchParams()
+  const router       = useRouter()
   const [search,      setSearch]      = useState("")
-  const [category,    setCategory]    = useState("All")
+  const [category,    setCategory]    = useState(() => searchParams.get("category") ?? "All")
   const [dateFilter,  setDateFilter]  = useState("all")
   const [priceFilter, setPriceFilter] = useState("all")   // all | free | paid
   const [formatFilter,setFormatFilter]= useState("all")   // all | online | inperson
@@ -123,6 +163,94 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   const [bookmarks,   setBookmarks]   = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
   const [sortOpen,    setSortOpen]    = useState(false)
+  const [cityFilter,      setCityFilter]      = useState<string>("Bengaluru")
+  const [cityOpen,        setCityOpen]        = useState(false)
+  const [locationFilter, setLocationFilter] = useState<string | null>(null) // detected city/area
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError,   setLocationError]   = useState<string | null>(null)
+  const [catScrolled, setCatScrolled] = useState({ left: false, right: true })
+  const [barPinned,   setBarPinned]   = useState(false)
+  const [barStyle,    setBarStyle]    = useState<React.CSSProperties>({})
+  const [barHeight,   setBarHeight]   = useState(0)
+  const catRef  = useRef<HTMLDivElement>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
+  const barEl   = useRef<HTMLDivElement>(null)
+
+  // Sync category from URL (sidebar links use ?category=X)
+  useEffect(() => {
+    const cat = searchParams.get("category")
+    setCategory(cat ?? "All")
+  }, [searchParams])
+
+  // Sync date filter from URL (?date=today etc.)
+  useEffect(() => {
+    const d = searchParams.get("date")
+    if (d) setDateFilter(d)
+    const p = searchParams.get("price")
+    if (p) setPriceFilter(p)
+  }, [searchParams])
+
+  useEffect(() => {
+    const main = document.getElementById("main-scroll")
+    if (!main) return
+
+    const updateBarStyle = () => {
+      const rect = main.getBoundingClientRect()
+      setBarStyle({ left: rect.left, right: window.innerWidth - rect.right, top: rect.top })
+      if (barEl.current) setBarHeight(barEl.current.offsetHeight)
+    }
+
+    const onScroll = () => {
+      const heroBottom = heroRef.current?.getBoundingClientRect().bottom ?? 0
+      const mainTop    = main.getBoundingClientRect().top
+      const shouldPin  = heroBottom <= mainTop
+      setBarPinned(shouldPin)
+      if (shouldPin) updateBarStyle()
+    }
+
+    updateBarStyle()
+    window.addEventListener("resize", updateBarStyle)
+    main.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      main.removeEventListener("scroll", onScroll)
+      window.removeEventListener("resize", updateBarStyle)
+    }
+  }, [])
+
+  const scrollCat = (dir: "left" | "right") => {
+    const el = catRef.current
+    if (!el) return
+    // scroll by the visible container width (shows next/prev 10 items)
+    el.scrollBy({ left: dir === "left" ? -el.clientWidth : el.clientWidth, behavior: "smooth" })
+  }
+
+  const onCatScroll = () => {
+    const el = catRef.current
+    if (!el) return
+    setCatScrolled({
+      left:  el.scrollLeft > 8,
+      right: el.scrollLeft < el.scrollWidth - el.clientWidth - 8,
+    })
+  }
+
+  const requestLocation = async () => {
+    if (!navigator.geolocation) { setLocationError("Geolocation not supported"); return }
+    setLocationLoading(true); setLocationError(null)
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`)
+          const data = await res.json()
+          const area = data.address?.suburb || data.address?.neighbourhood || data.address?.city_district
+                    || data.address?.city    || data.address?.town         || data.address?.state
+          setLocationFilter(area ?? "Nearby")
+        } catch { setLocationError("Could not detect location") }
+        finally  { setLocationLoading(false) }
+      },
+      () => { setLocationError("Location access denied"); setLocationLoading(false) },
+      { timeout: 8000 }
+    )
+  }
 
   const toggleBookmark = useCallback((id: string, e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
@@ -151,6 +279,8 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
       if (priceFilter === "paid"   && ev.fee === 0)    return false
       if (formatFilter === "online"   && !ev.isOnline) return false
       if (formatFilter === "inperson" && ev.isOnline)  return false
+      if (cityFilter     && cityFilter !== "All" && !ev.location.toLowerCase().includes(cityFilter.toLowerCase())) return false
+      if (locationFilter && !ev.location.toLowerCase().includes(locationFilter.toLowerCase())) return false
       return true
     })
 
@@ -170,14 +300,15 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
 
   // Active filter count (excluding category since it's a tab)
   const activeFilters = [
-    dateFilter  !== "all" ? dateFilter  : null,
-    priceFilter !== "all" ? priceFilter : null,
+    dateFilter   !== "all" ? dateFilter   : null,
+    priceFilter  !== "all" ? priceFilter  : null,
     formatFilter !== "all" ? formatFilter : null,
-    search ? "search" : null,
+    search         ? "search"   : null,
+    locationFilter ? "location" : null,
   ].filter(Boolean)
 
   const clearAll = () => {
-    setSearch(""); setDateFilter("all"); setPriceFilter("all"); setFormatFilter("all")
+    setSearch(""); setDateFilter("all"); setPriceFilter("all"); setFormatFilter("all"); setLocationFilter(null)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -186,122 +317,228 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
     <div className="min-h-full bg-background">
 
       {/* ── Hero header ──────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-0">
+      <div ref={heroRef} className="relative text-white overflow-hidden" style={{ minHeight: 320 }}>
+        {/* Background image — professional event/conference crowd */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=85&auto=format&fit=crop"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          aria-hidden
+        />
+        {/* Vibrant Gen Z overlay — keep the neon colors visible but text readable */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/75" />
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-950/40 via-transparent to-pink-950/30" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
 
           {/* Top row */}
-          <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-slate-400 border border-slate-700 rounded-full px-3 py-1">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-white/60 border border-white/20 rounded-full px-3 py-1 backdrop-blur-sm bg-white/5">
                   <Sparkles className="h-3 w-3" /> Corporate Events
                 </span>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">Events &amp; Communities</h1>
-              <p className="text-slate-400 mt-1 text-sm">Treks, sports, networking &amp; hobby clubs — only verified professionals.</p>
+              <h1 className="text-4xl font-bold tracking-tight drop-shadow-lg">Events &amp; Communities</h1>
+              <p className="text-white/60 mt-2 text-sm">Treks, sports, networking &amp; hobby clubs — only verified professionals.</p>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {!isPremium && (
-                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs">
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs backdrop-blur-sm">
                   <span className="text-amber-300 font-medium">{myEventsCount}/{eventsLimit} events</span>
                   <Link href="/membership" className="flex items-center gap-1 text-amber-400 font-bold hover:underline">
                     <Zap className="h-3 w-3" />Upgrade
                   </Link>
                 </div>
               )}
-              <Button asChild className="bg-white text-slate-900 hover:bg-slate-100 font-semibold shadow-lg">
+              <Button asChild variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium">
+                <Link href="/my-events"><Package className="h-4 w-4 mr-1.5" /> My Events</Link>
+              </Button>
+              <Button asChild className="bg-white text-slate-900 hover:bg-white/90 font-semibold shadow-lg backdrop-blur-sm">
                 <Link href="/events/new"><Plus className="h-4 w-4 mr-1.5" /> Create Event</Link>
               </Button>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-6 mb-6">
-            <div><p className="text-2xl font-bold">{totalEvents}</p><p className="text-xs text-slate-400 mt-0.5">Upcoming</p></div>
-            <div className="w-px h-8 bg-slate-700" />
-            <div><p className="text-2xl font-bold">{totalRsvps.toLocaleString()}</p><p className="text-xs text-slate-400 mt-0.5">Total RSVPs</p></div>
-            <div className="w-px h-8 bg-slate-700" />
-            <div><p className="text-2xl font-bold">100%</p><p className="text-xs text-slate-400 mt-0.5">Verified</p></div>
+          <div className="flex items-center gap-8 mb-8">
+            <div>
+              <p className="text-3xl font-bold tabular-nums">{totalEvents}</p>
+              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Upcoming</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className="text-3xl font-bold tabular-nums">{totalRsvps.toLocaleString()}</p>
+              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total RSVPs</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className="text-3xl font-bold">100%</p>
+              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
+            </div>
           </div>
 
-          {/* Search bar */}
-          <div className="relative mb-5">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search events, venues, tags…"
-              className="w-full h-11 pl-10 pr-4 rounded-xl bg-white/10 border border-white/15 text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 transition-all"
-            />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-        </div>
-      </div>
-
-      {/* ── Category icon strip ──────────────────────────────────────────────── */}
-      <div className="bg-background border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-stretch gap-1 overflow-x-auto scrollbar-hide">
-            {CATEGORIES.map(cat => {
-              const count    = events.filter(e => cat.value === "All" || e.category === cat.value).length
-              const isActive = category === cat.value
-              return (
-                <button
-                  key={cat.value}
-                  onClick={() => setCategory(cat.value)}
-                  className={cn(
-                    "flex flex-col items-center gap-2 px-5 pt-4 pb-3 min-w-[90px] shrink-0 relative transition-all duration-200 group",
-                    isActive ? "opacity-100" : "opacity-40 hover:opacity-70"
-                  )}
-                >
-                  {/* Icon container */}
-                  <div className={cn(
-                    "h-11 w-11 rounded-2xl flex items-center justify-center transition-all duration-200",
-                    isActive
-                      ? cn(cat.iconBg, "ring-2 ring-border scale-110 shadow-sm")
-                      : cn(cat.iconBg, "group-hover:scale-105")
-                  )}>
-                    <cat.Icon className={cn("h-5 w-5", cat.iconColor)} strokeWidth={isActive ? 2.5 : 2} />
-                  </div>
-
-                  {/* Label */}
-                  <span className={cn(
-                    "text-xs font-semibold whitespace-nowrap leading-none transition-colors",
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    {cat.label}
-                  </span>
-
-                  {/* Count */}
-                  <span className={cn(
-                    "text-[10px] font-bold tabular-nums leading-none",
-                    isActive ? "text-muted-foreground" : "text-muted-foreground/50"
-                  )}>
-                    {count}
-                  </span>
-
-                  {/* Active indicator line */}
-                  <div className={cn(
-                    "absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full transition-all duration-200 bg-primary-600",
-                    isActive ? "w-8" : "w-0"
-                  )} />
+          {/* Search + Location row */}
+          <div className="flex gap-2 items-center pb-2">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search events, venues, tags…"
+                className="w-full h-12 pl-11 pr-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 transition-all"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                  <X className="h-4 w-4" />
                 </button>
-              )
-            })}
+              )}
+            </div>
+
+            {/* Near me button */}
+            <button
+              onClick={requestLocation}
+              disabled={locationLoading}
+              title={locationFilter ? `Filtering: ${locationFilter}` : "Find events near me"}
+              className={cn(
+                "h-12 px-4 rounded-xl border text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap backdrop-blur-md",
+                locationFilter
+                  ? "bg-blue-500/30 border-blue-400/50 text-blue-200 hover:bg-blue-500/40"
+                  : "bg-white/10 border-white/20 text-white/80 hover:bg-white/20"
+              )}
+            >
+              <Navigation className={cn("h-4 w-4", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
+              {locationLoading ? "Locating…" : locationFilter ? locationFilter : "Near me"}
+              {locationFilter && (
+                <button onClick={e => { e.stopPropagation(); setLocationFilter(null) }} className="ml-1 hover:text-white">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </button>
           </div>
+
+          {/* Location error */}
+          {locationError && (
+            <p className="text-xs text-red-400/80 mt-2">{locationError}</p>
+          )}
+
         </div>
       </div>
 
-      {/* ── Filter bar ───────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border shadow-sm">
+      {/* ── Category icon strip + Filter bar ────────────────────────────────── */}
+      {barPinned && <div style={{ height: barHeight }} />}
+      <div
+        ref={barEl}
+        className="z-30 bg-background shadow-sm"
+        style={barPinned ? { position: "fixed", ...barStyle } : { position: "sticky", top: 0 }}
+      >
+        {/* Category icon strip — 10 visible at a time, page with arrows */}
+        <div className="border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
+          {/* Left arrow */}
+          <button
+            onClick={() => scrollCat("left")}
+            disabled={!catScrolled.left}
+            className="shrink-0 w-8 self-stretch flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          {/* Fixed 10-slot window */}
+          <div ref={catRef} onScroll={onCatScroll} className="flex-1 overflow-x-auto scrollbar-hide">
+            <div className="flex">
+              {CATEGORIES.map(cat => {
+                const count    = events.filter(e => cat.value === "All" || e.category === cat.value).length
+                const isActive = category === cat.value
+                return (
+                  <button
+                    key={cat.value}
+                    onClick={() => setCategory(cat.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group",
+                      "flex-1 min-w-[80px]",
+                      isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
+                    )}
+                  >
+                    <div className={cn(
+                      "h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-150",
+                      isActive ? cn(cat.iconBg, "ring-2 ring-border scale-110 shadow-sm") : cn(cat.iconBg, "group-hover:scale-105")
+                    )}>
+                      <cat.Icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                    </div>
+                    <span className={cn("text-[11px] font-semibold whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                      {cat.label}
+                    </span>
+                    <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                      {count}
+                    </span>
+                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-primary-600 transition-all duration-150", isActive ? "w-8" : "w-0")} />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Right arrow */}
+          <button
+            onClick={() => scrollCat("right")}
+            disabled={!catScrolled.right}
+            className="shrink-0 w-8 self-stretch flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          </div>{/* end max-w-7xl */}
+        </div>
+
+        {/* ── Filter bar ─────────────────────────────────────────────────────── */}
+        <div className="border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
           <div className="flex items-center gap-2 flex-wrap">
+
+            {/* City picker */}
+            <div className="relative">
+              <button
+                onClick={() => setCityOpen(o => !o)}
+                className="flex items-center gap-1.5 h-8 pl-2.5 pr-3 rounded-lg border border-border hover:border-foreground/30 bg-background text-sm font-medium transition-all group"
+              >
+                <MapPin className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                <span className="text-foreground">{cityFilter}</span>
+                <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform ml-0.5", cityOpen && "rotate-180")} />
+              </button>
+
+              {cityOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setCityOpen(false)} />
+                  <div className="absolute left-0 top-full mt-1.5 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden w-64">
+                    <div className="px-3 pt-3 pb-2 border-b border-border">
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Select City</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-0.5 p-2 max-h-64 overflow-y-auto">
+                      {CITIES.map(city => (
+                        <button
+                          key={city.name}
+                          onClick={() => { setCityFilter(city.name); setCityOpen(false) }}
+                          className={cn(
+                            "flex flex-col items-start px-3 py-2 rounded-lg text-left transition-all",
+                            cityFilter === city.name
+                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                              : "hover:bg-muted text-foreground"
+                          )}
+                        >
+                          <span className="text-sm font-medium leading-tight">{city.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{city.state}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="w-px h-5 bg-border" />
 
             {/* Date quick filters */}
             <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
@@ -343,6 +580,22 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   )}>{l}</button>
               ))}
             </div>
+
+            {/* Location / Near me filter */}
+            <button
+              onClick={locationFilter ? () => setLocationFilter(null) : requestLocation}
+              disabled={locationLoading}
+              className={cn(
+                "flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap",
+                locationFilter
+                  ? "bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300"
+                  : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
+              )}
+            >
+              <Navigation className={cn("h-3.5 w-3.5", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
+              {locationLoading ? "Locating…" : locationFilter ? `Near ${locationFilter}` : "Near me"}
+              {locationFilter && <X className="h-3 w-3 ml-0.5" />}
+            </button>
 
             {/* Spacer */}
             <div className="flex-1" />
@@ -415,11 +668,18 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   <button onClick={() => setFormatFilter("all")}><X className="h-3 w-3 ml-0.5" /></button>
                 </span>
               )}
+              {locationFilter && (
+                <span className="inline-flex items-center gap-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                  <Navigation className="h-3 w-3" /> Near {locationFilter}
+                  <button onClick={() => setLocationFilter(null)}><X className="h-3 w-3 ml-0.5" /></button>
+                </span>
+              )}
               <button onClick={clearAll} className="text-xs text-muted-foreground hover:text-red-500 underline transition-colors">Clear all</button>
             </div>
           )}
         </div>
       </div>
+      </div>{/* end bar wrapper */}
 
       {/* ── Content ──────────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

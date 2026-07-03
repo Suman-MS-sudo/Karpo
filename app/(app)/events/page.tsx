@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import { FREE_LIMITS } from "@/lib/limits"
@@ -68,13 +69,15 @@ export default async function EventsPage() {
   })
 
   return (
-    <EventsClient
-      events={serialized}
-      totalEvents={totalEvents}
-      totalRsvps={totalRsvps}
-      isPremium={isPremium}
-      myEventsCount={myEventsCount}
-      eventsLimit={FREE_LIMITS.events}
-    />
+    <Suspense>
+      <EventsClient
+        events={serialized}
+        totalEvents={totalEvents}
+        totalRsvps={totalRsvps}
+        isPremium={isPremium}
+        myEventsCount={myEventsCount}
+        eventsLimit={FREE_LIMITS.events}
+      />
+    </Suspense>
   )
 }

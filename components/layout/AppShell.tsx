@@ -52,6 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <TopNav onMenuClick={() => setDrawerOpen((o) => !o)} />
           <main
+            id="main-scroll"
             className="flex-1 overflow-y-auto pb-20 lg:pb-0"
             style={{ overflowAnchor: "none" }}
           >
