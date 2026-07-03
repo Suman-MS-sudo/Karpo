@@ -240,25 +240,34 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
             )}
           </div>
 
-          {/* Category tabs */}
-          <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide">
+        </div>
+      </div>
+
+      {/* ── Category pill strip ───────────────────────────────────────────────── */}
+      <div className="bg-slate-950 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
             {CATEGORIES.map(cat => {
-              const count = events.filter(e => cat.value === "All" || e.category === cat.value).length
+              const count    = events.filter(e => cat.value === "All" || e.category === cat.value).length
               const isActive = category === cat.value
+              const cc       = CAT_COLORS[cat.value]
               return (
                 <button
                   key={cat.value}
                   onClick={() => setCategory(cat.value)}
                   className={cn(
-                    "flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-sm font-medium whitespace-nowrap transition-all border-b-2 shrink-0",
+                    "flex items-center gap-2.5 pl-3 pr-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 shrink-0 border",
                     isActive
-                      ? "bg-background text-foreground border-primary-600 shadow-sm"
-                      : "text-slate-400 border-transparent hover:text-white hover:border-slate-600"
+                      ? "bg-white text-slate-900 border-white shadow-[0_0_20px_rgba(255,255,255,0.15)]"
+                      : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20"
                   )}
                 >
-                  <span>{cat.emoji}</span>
-                  {cat.label}
-                  <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", isActive ? "bg-primary-600/20 text-primary-600" : "bg-white/10 text-slate-400")}>
+                  <span className="text-base leading-none">{cat.emoji}</span>
+                  <span>{cat.label}</span>
+                  <span className={cn(
+                    "text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center tabular-nums",
+                    isActive ? "bg-slate-900/15 text-slate-900" : "bg-white/10 text-slate-400"
+                  )}>
                     {count}
                   </span>
                 </button>
