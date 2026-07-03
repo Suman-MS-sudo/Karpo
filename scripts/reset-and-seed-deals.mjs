@@ -432,7 +432,7 @@ const DEALS = [
     featured:        true,
     trending:        false,
     badge:           "EXCLUSIVE",
-    images:          '["https://www.hdfcbank.com/content/api/contentstream-id/723fb80a-2dde-42a3-9793-7ae1be57c87f/ae9cac31-0b4d-4a13-8af3-45cfbf66e86f/Personal/Pay/Cards/Credit-Cards/Image/MoneyBackPlus.png"]',
+    images:          '["https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg"]',
     companyLogo:     "https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg",
     validUntil:      in60days,
     terms:           "Only for new cardholders. Amazon voucher delivered within 30 days of first transaction.",
