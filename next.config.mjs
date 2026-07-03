@@ -31,6 +31,7 @@ const nextConfig = {
       { protocol: "https", hostname: "*.udemycdn.com" },
       { protocol: "https", hostname: "*.cloudfront.net" },
       { protocol: "https", hostname: "**.googleusercontent.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
   experimental: {
