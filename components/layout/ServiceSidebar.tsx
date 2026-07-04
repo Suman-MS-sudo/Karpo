@@ -260,11 +260,10 @@ export function ServiceSidebar({ className }: { className?: string }) {
   }
   const ServiceIcon = activeService ? (iconMap[activeService.icon] ?? ShoppingBag) : null
 
-  // When collapsed: show a slim 16px toggle strip only (no w-0 trick)
   return (
     <div className={cn(
       "hidden lg:flex shrink-0 transition-[width] duration-200 ease-in-out relative",
-      collapsed ? "w-4" : "w-[220px]",
+      collapsed ? "w-0" : "w-[220px]",
       className
     )}>
 
@@ -338,7 +337,7 @@ export function ServiceSidebar({ className }: { className?: string }) {
         </div>
       </aside>
 
-      {/* Toggle tab — juts out from the right edge, never overlaps sidebar content */}
+      {/* Toggle tab — always visible, attached to right edge of sidebar (or rail when collapsed) */}
       {mounted && (
         <button
           onClick={toggle}
