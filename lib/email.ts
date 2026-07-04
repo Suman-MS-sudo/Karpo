@@ -1,8 +1,13 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy client — instantiated on first use so build doesn't fail without RESEND_API_KEY
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 
-// Use verified sender — falls back to Resend's shared domain until korpo.in is verified
 const FROM = process.env.EMAIL_FROM ?? "Korpo <onboarding@resend.dev>"
 
 interface EmailPayload {
@@ -12,7 +17,8 @@ interface EmailPayload {
 }
 
 export async function sendEmail({ to, subject, html }: EmailPayload) {
-  if (!process.env.RESEND_API_KEY) {
+  const resend = getResend()
+  if (!resend) {
     console.warn("RESEND_API_KEY not set — skipping email")
     return
   }
@@ -75,7 +81,8 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
 </body>
 </html>`
 
-  if (!process.env.RESEND_API_KEY) {
+  const resend = getResend()
+  if (!resend) {
     console.log(`\n${"─".repeat(50)}`)
     console.log(`[KORPO DEV] OTP Email`)
     console.log(`To:  ${to}`)
