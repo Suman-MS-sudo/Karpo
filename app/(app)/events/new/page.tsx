@@ -536,10 +536,18 @@ export default function NewEventPage() {
                 </div>
               )}
             </SectionCard>
+
+            {/* Mobile publish button — only visible when right column is below fold */}
+            <div className="lg:hidden">
+              <Button type="submit" form="event-form" className="w-full gap-2" size="lg" disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                {loading ? "Publishing…" : "Publish Event"}
+              </Button>
+            </div>
           </div>
 
           {/* ── RIGHT: Live Preview ───────────────────────────────────────── */}
-          <div className="lg:sticky lg:top-[72px] space-y-4">
+          <div className="hidden lg:block lg:sticky lg:top-[72px] space-y-4">
 
             {/* Preview card */}
             <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
