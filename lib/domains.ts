@@ -90,6 +90,18 @@ export const TEMP_DOMAINS = new Set([
   "quickinbox.com", "rcpt.at",
   "recode.me", "recursor.net",
   "regbypass.com", "regbypass.comsafe-mail.net",
+  // Additional disposables caught in the wild
+  "fivejm.com", "fivermail.com", "five-mail.com",
+  "byom.de", "clrmail.com", "cuvox.de", "dayrep.com",
+  "deagot.com", "desoz.com", "dingbone.com", "doanart.com",
+  "donemail.ru", "dontrackme.com", "drdrb.com", "drdrb.net",
+  "dumankaya.com", "dumpandfuck.com", "dumpmail.de", "dumpyemail.com",
+  "egxmail.com", "eightfifteen.com", "emaildienst.de",
+  "emailias.com", "emailinfive.com", "emailisvalid.com",
+  "emailpinoy.com", "emailsensei.com", "emailtemporanea.com",
+  "fakemailz.com", "fakeemailgenerator.com",
+  "mailtemp.net", "mailtemp.co.uk", "tempmailo.com",
+  "spamwc.de", "spamwc.org", "spamwc.net",
 ])
 
 // Suspicious TLDs heavily abused by disposable services
