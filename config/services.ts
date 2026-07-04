@@ -16,7 +16,7 @@ export interface ServiceConfig {
 export const SERVICES: ServiceConfig[] = [
   {
     id: "buy-sell",
-    name: "Buy & Sell",
+    name: "Marketplace",
     icon: "ShoppingBag",
     description: "Buy and sell electronics, vehicles, furniture and more with verified colleagues",
     color: "text-blue-600 dark:text-blue-400",
@@ -30,7 +30,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "rentals",
-    name: "Rental & Flatmate Hub",
+    name: "Rentals",
     icon: "Home",
     description: "Find verified apartments, PGs, rooms and flatmates near your office",
     color: "text-emerald-600 dark:text-emerald-400",
@@ -43,7 +43,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "job-referrals",
-    name: "Job Referrals",
+    name: "Referrals",
     icon: "Briefcase",
     description: "Post and find internal referrals within trusted corporate networks",
     color: "text-violet-600 dark:text-violet-400",
@@ -56,7 +56,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "carpool",
-    name: "Corporate Carpool",
+    name: "Carpool",
     icon: "Car",
     description: "Share your daily commute with verified colleagues on the same route",
     color: "text-orange-600 dark:text-orange-400",
@@ -69,7 +69,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "services",
-    name: "Skill Marketplace",
+    name: "Skills",
     icon: "Wrench",
     description: "Hire verified professionals for photography, coding, design, tax filing and more",
     color: "text-cyan-600 dark:text-cyan-400",
@@ -82,7 +82,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "deals",
-    name: "Employee Deals",
+    name: "Deals",
     icon: "Tag",
     description: "Exclusive discounts from curated brands — only for verified corporate employees",
     color: "text-rose-600 dark:text-rose-400",
@@ -95,7 +95,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "events",
-    name: "Events & Communities",
+    name: "Events",
     icon: "Users",
     description: "Join treks, sports groups, networking events and hobby communities",
     color: "text-amber-600 dark:text-amber-400",
@@ -108,7 +108,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "learning",
-    name: "Learning Hub",
+    name: "Learning",
     icon: "GraduationCap",
     description: "Workshops, mentoring and certification prep from peer professionals",
     color: "text-indigo-600 dark:text-indigo-400",
@@ -121,7 +121,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "concierge",
-    name: "Concierge Services",
+    name: "Concierge",
     icon: "Shield",
     description: "Tax, legal, insurance and financial guidance from vetted professionals",
     color: "text-sky-600 dark:text-sky-400",
@@ -134,7 +134,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "benefits",
-    name: "Employee Benefits",
+    name: "Benefits",
     icon: "Gift",
     description: "Loans, insurance, travel packages and financial products for salaried professionals",
     color: "text-pink-600 dark:text-pink-400",
