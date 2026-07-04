@@ -1,4 +1,6 @@
-import nodemailer, { type Transporter } from "nodemailer"
+import { Resend } from "resend"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 interface EmailPayload {
   to: string | string[]
@@ -6,35 +8,15 @@ interface EmailPayload {
   html: string
 }
 
-let transporter: Transporter | undefined
-
-function getTransporter(): Transporter | undefined {
-  if (!process.env.ZOHO_SMTP_USER || !process.env.ZOHO_SMTP_PASS) return undefined
-  if (transporter) return transporter
-
-  transporter = nodemailer.createTransport({
-    host: process.env.ZOHO_SMTP_HOST ?? "smtp.zoho.in",
-    port: Number(process.env.ZOHO_SMTP_PORT ?? 465),
-    secure: true,
-    auth: {
-      user: process.env.ZOHO_SMTP_USER,
-      pass: process.env.ZOHO_SMTP_PASS,
-    },
-  })
-  return transporter
-}
-
 export async function sendEmail({ to, subject, html }: EmailPayload) {
-  const t = getTransporter()
-  if (!t) {
-    console.warn("ZOHO_SMTP_USER/ZOHO_SMTP_PASS not set — skipping email")
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY not set — skipping email")
     return
   }
-
   try {
-    await t.sendMail({
+    await resend.emails.send({
       from: process.env.EMAIL_FROM ?? "Korpo <notifications@korpo.in>",
-      to,
+      to: Array.isArray(to) ? to : [to],
       subject,
       html,
     })
@@ -90,9 +72,7 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
 </body>
 </html>`
 
-  // Development: print OTP to server console if Zoho SMTP isn't configured
-  const t = getTransporter()
-  if (!t) {
+  if (!process.env.RESEND_API_KEY) {
     console.log(`\n${"─".repeat(50)}`)
     console.log(`[KORPO DEV] OTP Email`)
     console.log(`To:  ${to}`)
@@ -102,15 +82,15 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
   }
 
   try {
-    await t.sendMail({
+    await resend.emails.send({
       from: process.env.EMAIL_FROM ?? "Korpo <notifications@korpo.in>",
-      to,
+      to: [to],
       subject,
       html,
     })
     return { success: true }
   } catch (err) {
-    console.error("[OTP Email] Zoho SMTP error:", err)
+    console.error("[OTP Email] Resend error:", err)
     return { success: false, error: "Failed to send email" }
   }
 }
