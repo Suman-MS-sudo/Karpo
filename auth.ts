@@ -39,10 +39,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await prisma.verificationToken.deleteMany({ where: { identifier: email } })
 
         // Auto-link company domain if one exists
-        const domain = email.split("@")[1]
-        const company = await prisma.company.findFirst({
-          where: { domain, isApproved: true },
-        })
+        const domain      = email.split("@")[1]
+        const company     = await prisma.company.findFirst({ where: { domain, isApproved: true } })
+        const isExisting  = !!(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
 
         // Find or create user
         const dbUser = await prisma.user.upsert({
@@ -61,6 +60,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             membership: { create: { plan: isAdmin ? "PREMIUM" : "FREE" } },
           },
         })
+
+        // If new user has no company match, create a pending CompanyRequest for admin review
+        if (!company && !isExisting && !isAdmin) {
+          const domain = email.split("@")[1]
+          const existing = await prisma.companyRequest.findFirst({ where: { domain } })
+          if (!existing) {
+            await prisma.companyRequest.create({
+              data: {
+                name:        domain.split(".")[0].replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                domain,
+                requestedBy: email,
+                status:      "PENDING",
+              },
+            })
+          }
+        }
 
         // Dev/test users get auto-provisioned company + PREMIUM membership
         const devDomains: Record<string, string> = {
