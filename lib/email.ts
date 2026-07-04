@@ -2,6 +2,9 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Use verified sender — falls back to Resend's shared domain until korpo.in is verified
+const FROM = process.env.EMAIL_FROM ?? "Korpo <onboarding@resend.dev>"
+
 interface EmailPayload {
   to: string | string[]
   subject: string
@@ -15,7 +18,7 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
   }
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM ?? "Korpo <notifications@korpo.in>",
+      from: FROM,
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
@@ -83,7 +86,7 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
 
   try {
     await resend.emails.send({
-      from: process.env.EMAIL_FROM ?? "Korpo <notifications@korpo.in>",
+      from: FROM,
       to: [to],
       subject,
       html,
