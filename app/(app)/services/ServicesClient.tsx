@@ -419,10 +419,10 @@ function ServiceCard({ service: s }: { service: ServiceItem }) {
   const img = parsePortfolio(s.portfolio)[0]
 
   return (
-    <Link href={`/services/${s.id}`} className="group block">
-      <div className="rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-200">
-        {/* Cover / portfolio image */}
-        <div className="relative h-40 bg-muted overflow-hidden">
+    <Link href={`/services/${s.id}`} className="group block h-full">
+      <div className="h-full flex flex-col rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-200">
+        {/* Cover — fixed height */}
+        <div className="relative h-40 shrink-0 bg-muted overflow-hidden">
           {img ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={img} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -431,24 +431,23 @@ function ServiceCard({ service: s }: { service: ServiceItem }) {
               {cat && <cat.Icon className={cn("h-12 w-12 opacity-30", cat.iconColor)} />}
             </div>
           )}
-          {/* Category badge */}
           {cat && (
             <div className={cn("absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold backdrop-blur-sm", cat.iconBg, cat.iconColor)}>
               <cat.Icon className="h-3 w-3" />{cat.label}
             </div>
           )}
-          {/* Price badge */}
           <div className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg text-[10px] font-bold bg-black/60 text-white backdrop-blur-sm">
             {s.priceType === "NEGOTIABLE" ? "Negotiable" : s.price ? `₹${s.price.toLocaleString()}${PRICE_TYPE_LABEL[s.priceType] ?? ""}` : "Free"}
           </div>
         </div>
 
-        <div className="p-4">
-          <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-2">{s.title}</h3>
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{s.description}</p>
+        {/* Body — flex-1 so all cards stretch to same row height */}
+        <div className="flex flex-col flex-1 p-4">
+          <h3 className="font-semibold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors mb-1.5">{s.title}</h3>
+          <p className="text-xs text-muted-foreground line-clamp-2 flex-1">{s.description}</p>
 
-          {/* Author */}
-          <div className="flex items-center gap-2.5 pt-3 border-t border-border">
+          {/* Author — always at bottom */}
+          <div className="flex items-center gap-2.5 pt-3 mt-3 border-t border-border">
             <Avatar className="h-7 w-7 shrink-0">
               <AvatarImage src={s.user.image ?? ""} />
               <AvatarFallback className="text-[10px]">{initials(s.user.name)}</AvatarFallback>
