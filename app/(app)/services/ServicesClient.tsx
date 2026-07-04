@@ -22,7 +22,7 @@ export interface ServiceItem {
   category:    string
   priceType:   string   // HOURLY | FIXED | NEGOTIABLE
   price:       number | null
-  portfolio:   string[]
+  portfolio:   string[] | string   // may arrive as JSON string from DB
   city:        string | null
   createdAt:   string
   user: {
@@ -61,6 +61,11 @@ const CATEGORIES = [
 
 const PRICE_TYPE_LABEL: Record<string, string> = {
   HOURLY: "/hr", FIXED: "fixed", NEGOTIABLE: "negotiable",
+}
+
+function parsePortfolio(p: string[] | string): string[] {
+  if (Array.isArray(p)) return p
+  try { return JSON.parse(p) } catch { return [] }
 }
 
 function initials(name: string | null) {
@@ -411,7 +416,7 @@ export function ServicesClient({ services, totalServices, isPremium, myCount, sk
 
 function ServiceCard({ service: s }: { service: ServiceItem }) {
   const cat = CATEGORIES.find(c => c.value === s.category)
-  const img = s.portfolio[0]
+  const img = parsePortfolio(s.portfolio)[0]
 
   return (
     <Link href={`/services/${s.id}`} className="group block">
@@ -468,7 +473,7 @@ function ServiceCard({ service: s }: { service: ServiceItem }) {
 
 function ServiceRow({ service: s }: { service: ServiceItem }) {
   const cat = CATEGORIES.find(c => c.value === s.category)
-  const img = s.portfolio[0]
+  const img = parsePortfolio(s.portfolio)[0]
 
   return (
     <Link href={`/services/${s.id}`} className="group block">

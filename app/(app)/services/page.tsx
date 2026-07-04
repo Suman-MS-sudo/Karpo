@@ -32,7 +32,12 @@ export default async function ServicesPage() {
     category:    p.category,
     priceType:   p.priceType,
     price:       p.price,
-    portfolio:   (() => { try { return JSON.parse(p.portfolio) } catch { return [] } })(),
+    portfolio:   (() => {
+      const raw = p.portfolio as unknown
+      if (Array.isArray(raw)) return raw as string[]
+      if (typeof raw === "string") { try { return JSON.parse(raw) } catch {} }
+      return []
+    })(),
     city:        p.city,
     createdAt:   p.createdAt.toISOString(),
     user: {
