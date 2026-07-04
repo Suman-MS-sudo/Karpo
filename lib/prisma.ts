@@ -62,10 +62,9 @@ function serializeInput(model: string | undefined, data: unknown): void {
 }
 
 function createPrismaClient() {
-  // Fallback to local dev.db so the app never crashes on a missing env var
-  const url = process.env.TURSO_DATABASE_URL ?? "file:./prisma/dev.db"
-  if (!process.env.TURSO_DATABASE_URL) {
-    console.warn("[prisma] TURSO_DATABASE_URL not set — falling back to file:./prisma/dev.db")
+  const url = process.env.TURSO_DATABASE_URL
+  if (!url) {
+    throw new Error("[prisma] TURSO_DATABASE_URL is not set — the app must connect to Turso, no local DB fallback")
   }
 
   const libsql = createClient({

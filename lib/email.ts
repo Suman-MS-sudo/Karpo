@@ -1,4 +1,4 @@
-const RESEND_API_URL = "https://api.resend.com/emails"
+import nodemailer, { type Transporter } from "nodemailer"
 
 interface EmailPayload {
   to: string | string[]
@@ -6,28 +6,39 @@ interface EmailPayload {
   html: string
 }
 
+let transporter: Transporter | undefined
+
+function getTransporter(): Transporter | undefined {
+  if (!process.env.ZOHO_SMTP_USER || !process.env.ZOHO_SMTP_PASS) return undefined
+  if (transporter) return transporter
+
+  transporter = nodemailer.createTransport({
+    host: process.env.ZOHO_SMTP_HOST ?? "smtp.zoho.in",
+    port: Number(process.env.ZOHO_SMTP_PORT ?? 465),
+    secure: true,
+    auth: {
+      user: process.env.ZOHO_SMTP_USER,
+      pass: process.env.ZOHO_SMTP_PASS,
+    },
+  })
+  return transporter
+}
+
 export async function sendEmail({ to, subject, html }: EmailPayload) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY not set — skipping email")
+  const t = getTransporter()
+  if (!t) {
+    console.warn("ZOHO_SMTP_USER/ZOHO_SMTP_PASS not set — skipping email")
     return
   }
 
-  const res = await fetch(RESEND_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? "noreply@korpo.in",
+  try {
+    await t.sendMail({
+      from: process.env.EMAIL_FROM ?? "Korpo <notifications@korpo.in>",
       to,
       subject,
       html,
-    }),
-  })
-
-  if (!res.ok) {
-    const err = await res.text()
+    })
+  } catch (err) {
     console.error("Email send failed:", err)
   }
 }
@@ -79,8 +90,9 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
 </body>
 </html>`
 
-  // Development: print OTP to server console if no Resend key
-  if (!process.env.RESEND_API_KEY) {
+  // Development: print OTP to server console if Zoho SMTP isn't configured
+  const t = getTransporter()
+  if (!t) {
     console.log(`\n${"─".repeat(50)}`)
     console.log(`[KORPO DEV] OTP Email`)
     console.log(`To:  ${to}`)
@@ -90,28 +102,15 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
   }
 
   try {
-    const res = await fetch(RESEND_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: process.env.EMAIL_FROM ?? "Korpo <noreply@korpo.in>",
-        to: [to],
-        subject,
-        html,
-      }),
+    await t.sendMail({
+      from: process.env.EMAIL_FROM ?? "Korpo <notifications@korpo.in>",
+      to,
+      subject,
+      html,
     })
-
-    if (!res.ok) {
-      const body = await res.text()
-      console.error("[OTP Email] Resend error:", body)
-      return { success: false, error: "Failed to send email" }
-    }
     return { success: true }
   } catch (err) {
-    console.error("[OTP Email] Error:", err)
+    console.error("[OTP Email] Zoho SMTP error:", err)
     return { success: false, error: "Failed to send email" }
   }
 }
