@@ -178,7 +178,7 @@ export default function NewEventPage() {
       </div>
 
       <form id="event-form" onSubmit={handleSubmit}>
-        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-8 items-start">
+        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
 
           {/* ── LEFT: Form ───────────────────────────────────────────────── */}
           <div className="space-y-6 min-w-0">
@@ -496,7 +496,7 @@ export default function NewEventPage() {
                 <button
                   type="button"
                   onClick={addAgendaItem}
-                  className="w-full py-8 border-2 border-dashed border-border rounded-xl flex flex-col items-center gap-2 text-muted-foreground hover:border-muted-foreground/40 hover:bg-muted/30 transition-all"
+                  className="w-full py-5 border-2 border-dashed border-border rounded-xl flex flex-col items-center gap-2 text-muted-foreground hover:border-muted-foreground/40 hover:bg-muted/30 transition-all"
                 >
                   <ListChecks className="h-6 w-6" />
                   <span className="text-sm">Add a schedule or agenda for your event</span>
@@ -539,7 +539,7 @@ export default function NewEventPage() {
           </div>
 
           {/* ── RIGHT: Live Preview ───────────────────────────────────────── */}
-          <div className="xl:sticky xl:top-20 space-y-4">
+          <div className="lg:sticky lg:top-[72px] space-y-4">
 
             {/* Preview card */}
             <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
