@@ -178,7 +178,7 @@ export default function NewEventPage() {
       </div>
 
       <form id="event-form" onSubmit={handleSubmit}>
-        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
+        <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
 
           {/* ── LEFT: Form ───────────────────────────────────────────────── */}
           <div className="space-y-6 min-w-0">
