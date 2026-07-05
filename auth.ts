@@ -1,13 +1,23 @@
 import NextAuth from "next-auth"
+import type { Provider } from "next-auth/providers"
 import Credentials from "next-auth/providers/credentials"
+import LinkedIn from "next-auth/providers/linkedin"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
+import { provisionUser } from "@/lib/auth-provision"
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
-  providers: [
+function isAdminEmail(email: string) {
+  const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase())
+  return adminEmails.includes(email)
+}
+
+// LinkedIn is a fully independent, revocable auth method: unset
+// LINKEDIN_CLIENT_ID/LINKEDIN_CLIENT_SECRET (env-only, no code change) to disable
+// it instantly — the provider is simply omitted and OTP sign-in is unaffected.
+const linkedinEnabled = Boolean(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET)
+
+const providers: Provider[] = [
     Credentials({
       credentials: {
         email: { type: "email" },
@@ -19,8 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!email || !otp) return null
 
-        const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())
-        const isAdmin = adminEmails.includes(email)
+        const isAdmin = isAdminEmail(email)
 
         // Domain guard (defence-in-depth — send-otp also validates); admin bypasses
         if (!isAdmin && isDomainBlocked(email).blocked) return null
@@ -38,74 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Consume the token immediately
         await prisma.verificationToken.deleteMany({ where: { identifier: email } })
 
-        // Auto-link company domain if one exists
-        const domain      = email.split("@")[1]
-        const company     = await prisma.company.findFirst({ where: { domain, isApproved: true } })
-        const isExisting  = !!(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
-
-        // Find or create user
-        const dbUser = await prisma.user.upsert({
-          where: { email },
-          update: {
-            isVerified: true,
-            ...(isAdmin ? { role: "ADMIN" } : {}),
-            ...(company ? { companyId: company.id } : {}),
-          },
-          create: {
-            email,
-            name: isAdmin ? "Admin" : null,
-            isVerified: true,
-            role: isAdmin ? "ADMIN" : "USER",
-            ...(company ? { companyId: company.id } : {}),
-            membership: { create: { plan: isAdmin ? "PREMIUM" : "FREE" } },
-          },
-        })
-
-        // If new user has no company match, create a pending CompanyRequest for admin review
-        if (!company && !isExisting && !isAdmin) {
-          const domain = email.split("@")[1]
-          const existing = await prisma.companyRequest.findFirst({ where: { domain } })
-          if (!existing) {
-            await prisma.companyRequest.create({
-              data: {
-                name:        domain.split(".")[0].replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
-                domain,
-                requestedBy: email,
-                status:      "PENDING",
-              },
-            })
-          }
-        }
-
-        // Dev/test users get auto-provisioned company + PREMIUM membership
-        const devDomains: Record<string, string> = {
-          "testcorp.com": "Test Corp",
-          "korpo.com": "Korpo",
-        }
-        const userDomain = email.split("@")[1]
-        if (email === "dev@testcorp.com" || userDomain in devDomains) {
-          const companyName = devDomains[userDomain] ?? "Test Corp"
-          const devCompany = await prisma.company.upsert({
-            where: { domain: userDomain },
-            update: {},
-            create: { name: companyName, domain: userDomain, isApproved: true },
-          })
-          await prisma.membership.upsert({
-            where: { userId: dbUser.id },
-            update: { plan: "PREMIUM" },
-            create: { userId: dbUser.id, plan: "PREMIUM" },
-          })
-          // Ensure user has city + company so they skip onboarding
-          await prisma.user.update({
-            where: { id: dbUser.id },
-            data: {
-              companyId: devCompany.id,
-              city: dbUser.city ?? "Bengaluru",
-              name: dbUser.name ?? email.split("@")[0],
-              isVerified: true,
-            },
-          })
-        }
+        const { dbUser } = await provisionUser(email, { isAdmin })
 
         return {
           id: dbUser.id,
@@ -115,9 +57,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       },
     }),
-  ],
+
+]
+
+if (linkedinEnabled) {
+  providers.push(
+    LinkedIn({
+      clientId: process.env.LINKEDIN_CLIENT_ID,
+      clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+      // Safe to auto-link by email: LinkedIn's OIDC profile only reports
+      // email_verified accounts, and users already prove domain ownership via OTP.
+      allowDangerousEmailAccountLinking: true,
+    })
+  )
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
+  providers,
 
   callbacks: {
+    async signIn({ user, account }) {
+      // Credentials flow already validates domain + provisions the user in authorize()
+      if (account?.provider !== "linkedin") return true
+
+      const email = user.email?.trim().toLowerCase()
+      if (!email) return false
+
+      const isAdmin = isAdminEmail(email)
+      if (!isAdmin && isDomainBlocked(email).blocked) {
+        return "/auth/signin?error=domain_blocked"
+      }
+
+      // Adapter has already created the User row for a first-time OAuth sign-in;
+      // provisionUser upserts on email so it works for both new and returning users.
+      await provisionUser(email, { isAdmin, name: user.name })
+      return true
+    },
+
     async jwt({ token, user, trigger }) {
       if (user?.id || trigger === "update") {
         const id = user?.id ?? (token.sub as string)

@@ -1,6 +1,6 @@
 "use client"
 import { Suspense, useState, useRef, useEffect, useCallback } from "react"
-import { signIn } from "next-auth/react"
+import { signIn, getProviders } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ShieldCheck, ArrowLeft, Loader2, Mail, RefreshCw } from "lucide-react"
@@ -25,6 +25,13 @@ function SignInContent() {
   const [resendIn, setResendIn] = useState(0)
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  // LinkedIn is an optional, independently revocable provider — only registered
+  // server-side when LINKEDIN_CLIENT_ID/SECRET are set. Hide the button otherwise.
+  const [linkedinAvailable, setLinkedinAvailable] = useState(false)
+  useEffect(() => {
+    getProviders().then((providers) => setLinkedinAvailable(!!providers?.linkedin))
+  }, [])
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -127,6 +134,12 @@ function SignInContent() {
     }
   }, [email, otp, isNewUser, callbackUrl, router])
 
+  const [linkedinLoading, setLinkedinLoading] = useState(false)
+  const handleLinkedInSignIn = useCallback(() => {
+    setLinkedinLoading(true)
+    signIn("linkedin", { callbackUrl })
+  }, [callbackUrl])
+
   const urlError = params.get("error")
 
   return (
@@ -160,6 +173,8 @@ function SignInContent() {
           {error || (
             urlError === "OAuthAccountNotLinked"
               ? "This email is linked to another sign-in method."
+              : urlError === "domain_blocked"
+              ? "Personal, temporary, or disposable email providers are not allowed. Please use a corporate LinkedIn account."
               : "Something went wrong. Please try again."
           )}
         </div>
@@ -192,6 +207,34 @@ function SignInContent() {
           <Button type="submit" className="w-full" size="lg" disabled={loading || !email.includes("@")}>
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send verification code →"}
           </Button>
+
+          {linkedinAvailable && (
+            <>
+              <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted-foreground">OR</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={handleLinkedInSignIn}
+                disabled={linkedinLoading}
+              >
+                {linkedinLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <svg className="h-4 w-4 mr-2 shrink-0" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.114 20.452H3.558V9h3.556v11.452z" />
+                  </svg>
+                )}
+                Continue with LinkedIn
+              </Button>
+            </>
+          )}
         </form>
       )}
 
