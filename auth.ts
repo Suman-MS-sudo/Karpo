@@ -110,6 +110,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: true,
             isVerified: true,
             companyId: true,
+            workEmail: true,
             city: true,
             avatarUrl: true,
             membership: { select: { plan: true } },
@@ -122,6 +123,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.role         = dbUser.role
           token.isVerified   = dbUser.isVerified
           token.companyId    = dbUser.companyId ?? undefined
+          token.workEmail    = dbUser.workEmail ?? undefined
           token.city         = dbUser.city ?? undefined
           token.avatarUrl    = dbUser.avatarUrl ?? undefined
           token.membershipPlan = dbUser.membership?.plan ?? "FREE"
@@ -137,6 +139,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role           = token.role as string | undefined
         session.user.isVerified     = token.isVerified as boolean | undefined
         session.user.companyId      = token.companyId as string | undefined
+        session.user.workEmail      = token.workEmail as string | undefined
         session.user.city           = token.city as string | undefined
         session.user.avatarUrl      = token.avatarUrl as string | undefined
         session.user.membershipPlan = token.membershipPlan as string | undefined

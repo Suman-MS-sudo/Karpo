@@ -28,6 +28,7 @@ declare module "next-auth" {
       role?: string
       isVerified?: boolean
       companyId?: string
+      workEmail?: string
       city?: string
       avatarUrl?: string
       membershipPlan?: string

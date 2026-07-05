@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Building2, ArrowRight, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,13 +11,32 @@ export default function VerifyPage() {
   const { data: session } = useSession()
   // const status = params.get("status") - reserved for future use
 
+  // Prefer the validated corporate email (workEmail, set via LinkedIn's
+  // /auth/corp-email step) over the login identity — LinkedIn logins can be a
+  // personal inbox, which must never be offered up as the "corporate domain".
+  const effectiveEmail = session?.user?.workEmail ?? session?.user?.email
   const [form, setForm] = useState({
     companyName: "",
-    domain: session?.user?.email?.split("@")[1] ?? "",
+    domain: effectiveEmail?.split("@")[1] ?? "",
     city: "",
   })
   const [submitted, setSubmitted] = useState(false)
+  const [alreadyPending, setAlreadyPending] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(true)
   const [loading, setLoading] = useState(false)
+
+  // Session loads asynchronously — sync the domain once it's available, then
+  // check whether a request for this domain was already filed (e.g. the
+  // LinkedIn corp-email step auto-files one) so we don't ask for a duplicate.
+  useEffect(() => {
+    if (!effectiveEmail) return
+    const domain = effectiveEmail.split("@")[1]
+    setForm((f) => ({ ...f, domain }))
+    fetch(`/api/companies/request/status?domain=${encodeURIComponent(domain)}`)
+      .then((res) => res.json())
+      .then((data) => setAlreadyPending(!!data.pending))
+      .finally(() => setCheckingStatus(false))
+  }, [effectiveEmail])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +45,7 @@ export default function VerifyPage() {
       await fetch("/api/companies/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.companyName, domain: form.domain, city: form.city, requestedBy: session?.user?.email }),
+        body: JSON.stringify({ name: form.companyName, domain: form.domain, city: form.city, requestedBy: effectiveEmail }),
       })
       setSubmitted(true)
     } finally {
@@ -34,7 +53,7 @@ export default function VerifyPage() {
     }
   }
 
-  if (submitted) {
+  if (submitted || (!checkingStatus && alreadyPending)) {
     return (
       <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
         <div className="h-16 w-16 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -42,7 +61,7 @@ export default function VerifyPage() {
         </div>
         <h1 className="text-2xl font-bold mb-2">Request submitted!</h1>
         <p className="text-muted-foreground mb-6">
-          We&apos;ll review your company domain and get back within 24 hours. We&apos;ll notify you at <strong>{session?.user?.email}</strong>.
+          We&apos;ll review your company domain (<strong>{form.domain}</strong>) and get back within 24 hours. We&apos;ll notify you at <strong>{effectiveEmail}</strong>.
         </p>
         <Button asChild variant="outline">
           <Link href="/">Back to home</Link>
@@ -50,6 +69,8 @@ export default function VerifyPage() {
       </div>
     )
   }
+
+  if (checkingStatus) return null
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm p-8">
