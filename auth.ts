@@ -94,9 +94,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       // Adapter has already created the User row for a first-time OAuth sign-in;
       // provisionUser upserts on email so it works for both new and returning users.
-      // isVerified stays false until the user confirms an OTP sent to this email —
-      // see /auth/verify-linkedin, enforced by app/(app)/layout.tsx.
-      await provisionUser(email, { isAdmin, name: user.name, verifyImmediately: isAdmin })
+      // LinkedIn's own login is trusted as sufficient verification — no follow-up OTP.
+      await provisionUser(email, { isAdmin, name: user.name })
       return true
     },
 
