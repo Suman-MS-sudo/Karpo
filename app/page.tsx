@@ -3,7 +3,7 @@ import Image from "next/image"
 import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { SERVICES, CITIES } from "@/config/services"
+import { SERVICES } from "@/config/services"
 import {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag,
   GraduationCap, Shield, Gift,
@@ -28,9 +28,9 @@ const howItWorks = [
 ]
 
 const testimonials = [
-  { name: "Priya K.", role: "Software Engineer, TCS", text: "Found my flatmate in 2 days. Knowing they're a TCS colleague made all the difference." },
-  { name: "Rahul M.", role: "Analyst, Deloitte", text: "Got 3 referral requests within a week of posting. The quality is just better here." },
-  { name: "Anjali S.", role: "PM, Infosys", text: "Sold my laptop in 4 hours. Verified buyers only — zero scammers, zero stress." },
+  { name: "Priya K.", role: "Software Engineer", text: "Found my flatmate in 2 days. Knowing they're a verified colleague made all the difference." },
+  { name: "Rahul M.", role: "Analyst", text: "Got 3 referral requests within a week of posting. The quality is just better here." },
+  { name: "Anjali S.", role: "Product Manager", text: "Sold my laptop in 4 hours. Verified buyers only — zero scammers, zero stress." },
 ]
 
 const trustPoints = [
@@ -47,9 +47,9 @@ export default function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Korpo" width={32} height={32} className="rounded-lg object-contain" />
-            <span className="font-bold text-xl text-foreground">Korpo</span>
+          <div className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="Korpo" width={44} height={44} className="rounded-lg object-contain" />
+            <span className="font-bold text-2xl text-foreground">Korpo</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="#services"     className="hover:text-foreground transition-colors">Services</Link>
@@ -71,17 +71,16 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-background">
-        {/* Soft rainbow glow behind the logo — echoes the brand mark without a hard color block */}
-        <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 hidden lg:block w-[520px] h-[520px] pointer-events-none select-none">
-          <div className="absolute inset-0 rounded-full bg-brand-red-400/10 blur-3xl" />
-          <div className="absolute inset-8 rounded-full bg-brand-yellow-400/10 blur-3xl" />
-          <div className="absolute inset-16 rounded-full bg-brand-green-400/10 blur-3xl" />
+        {/* Logo watermark — bled off the right edge of the viewport, only the left half visible */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 right-0 hidden lg:block w-[640px] h-[640px] opacity-[0.16] dark:opacity-[0.22] pointer-events-none select-none"
+          aria-hidden="true"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.png"
+            src="/logo-transparent.png"
             alt=""
-            aria-hidden="true"
-            style={{ position: "absolute", inset: 0, margin: "auto", width: 380, height: 380, objectFit: "contain" }}
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
           />
         </div>
 
@@ -133,10 +132,10 @@ export default function LandingPage() {
       <section id="services" className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">10 services. One verified network.</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground">6 services. One verified network.</h2>
             <p className="mt-3 text-muted-foreground text-lg">Everything you need, with people you can trust.</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {SERVICES.filter((s) => s.isActive).map((service) => {
               const Icon = iconMap[service.icon] ?? ShoppingBag
               return (
@@ -226,16 +225,11 @@ export default function LandingPage() {
       {/* Cities */}
       <section id="cities" className="py-16 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Active in your city</h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            {CITIES.map((city) => (
-              <div key={city} className="flex items-center gap-2 bg-card border border-border rounded-full px-5 py-2.5 text-sm font-medium text-foreground">
-                <MapPin className="h-4 w-4 text-brand-red-600" />
-                {city}
-              </div>
-            ))}
+          <h2 className="text-2xl font-bold text-foreground mb-4">Active across most Indian cities</h2>
+          <div className="inline-flex items-center gap-2 bg-card border border-border rounded-full px-5 py-2.5 text-sm font-medium text-foreground">
+            <MapPin className="h-4 w-4 text-brand-red-600" />
+            New cities added as our network grows
           </div>
-          <p className="mt-4 text-muted-foreground text-sm">More cities launching soon</p>
         </div>
       </section>
 

@@ -8,9 +8,15 @@ const PUBLIC_PREFIXES = [
   "/favicon.ico",
   "/terms",
   "/privacy",
+  "/about",
+  "/contact",
   "/robots.txt",
   "/sitemap.xml",
 ]
+
+// Static assets served from /public (logos, favicons, decorative images) —
+// always accessible regardless of session, same as any other public site asset.
+const STATIC_ASSET_RE = /\.(png|jpe?g|svg|webp|gif|ico|avif)$/i
 
 // Landing page is public; everything else under "/" requires auth
 const PUBLIC_EXACT = new Set(["/"])
@@ -20,6 +26,7 @@ export function middleware(req: NextRequest) {
 
   if (PUBLIC_EXACT.has(pathname)) return NextResponse.next()
   if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) return NextResponse.next()
+  if (STATIC_ASSET_RE.test(pathname)) return NextResponse.next()
 
   // NextAuth v5 JWT cookies — HTTP dev uses plain name, HTTPS prod uses __Secure- prefix
   const sessionToken =
