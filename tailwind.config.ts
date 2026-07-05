@@ -71,6 +71,32 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         surface:  "hsl(var(--surface))",
+        // Brand accent trio (from the logo) — landing page only for now.
+        "brand-red": {
+          DEFAULT: "#E53935",
+          50:  "#fdecec",
+          100: "#fbd0cf",
+          400: "#ef5350",
+          500: "#e53935",
+          600: "#d32f2f",
+          700: "#b71c1c",
+        },
+        "brand-yellow": {
+          DEFAULT: "#FBC02D",
+          50:  "#fff9e6",
+          100: "#fff2c2",
+          400: "#fdd835",
+          500: "#fbc02d",
+          600: "#f9a825",
+        },
+        "brand-green": {
+          DEFAULT: "#43A047",
+          50:  "#eaf6ea",
+          100: "#c8e6c9",
+          400: "#66bb6a",
+          500: "#4caf50",
+          600: "#43a047",
+        },
         success:  "hsl(var(--success))",
         warning:  "hsl(var(--warning))",
         sidebar: {
