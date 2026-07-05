@@ -293,7 +293,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
     })
 
     return list
-  }, [events, search, category, dateFilter, priceFilter, formatFilter, sort])
+  }, [events, search, category, dateFilter, priceFilter, formatFilter, sort, cityFilter, locationFilter])
 
   const spotlight  = filtered.find(e => e.isBoosted) ?? filtered[0]
   const gridEvents = spotlight ? filtered.filter(e => e.id !== spotlight.id) : []
