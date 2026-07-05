@@ -19,9 +19,15 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   // Update request status
   await prisma.companyRequest.update({ where: { id: params.id }, data: { status: "APPROVED" } })
 
-  // Verify all users with this domain
+  // Verify all users with this domain — either their login email (OTP/admin)
+  // or their separately-validated workEmail (LinkedIn logins, see /auth/corp-email)
   await prisma.user.updateMany({
-    where: { email: { endsWith: `@${request.domain}` } },
+    where: {
+      OR: [
+        { email: { endsWith: `@${request.domain}` } },
+        { workEmail: { endsWith: `@${request.domain}` } },
+      ],
+    },
     data: { companyId: company.id, isVerified: true },
   })
 
