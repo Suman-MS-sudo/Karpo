@@ -86,13 +86,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!email) return false
 
       const isAdmin = isAdminEmail(email)
-      if (!isAdmin && isDomainBlocked(email).blocked) {
+      // LinkedIn identity trust lets us allow personal inboxes (Gmail, Outlook, …)
+      // through — only still-abusive disposable/throwaway domains stay blocked.
+      if (!isAdmin && isDomainBlocked(email).reason === "temp") {
         return "/auth/signin?error=domain_blocked"
       }
 
       // Adapter has already created the User row for a first-time OAuth sign-in;
       // provisionUser upserts on email so it works for both new and returning users.
-      await provisionUser(email, { isAdmin, name: user.name })
+      // isVerified stays false until the user confirms an OTP sent to this email —
+      // see /auth/verify-linkedin, enforced by app/(app)/layout.tsx.
+      await provisionUser(email, { isAdmin, name: user.name, verifyImmediately: isAdmin })
       return true
     },
 

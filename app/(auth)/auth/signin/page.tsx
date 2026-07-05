@@ -174,7 +174,7 @@ function SignInContent() {
             urlError === "OAuthAccountNotLinked"
               ? "This email is linked to another sign-in method."
               : urlError === "domain_blocked"
-              ? "Personal, temporary, or disposable email providers are not allowed. Please use a corporate LinkedIn account."
+              ? "Temporary or disposable email addresses are not allowed, even via LinkedIn."
               : "Something went wrong. Please try again."
           )}
         </div>

@@ -11,6 +11,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const isAdmin = session.user.role === "ADMIN"
 
+  // LinkedIn sign-ins start unverified (personal inboxes are allowed through
+  // LinkedIn but still need email ownership confirmed) — admin is exempt
+  if (!isAdmin && !session.user.isVerified && session.user.email) {
+    redirect("/auth/verify-linkedin")
+  }
+
   // If user has no company (unknown domain), redirect to verify — admin is exempt
   if (!isAdmin && !session.user.companyId && session.user.email) {
     redirect("/auth/verify?status=unknown_company")

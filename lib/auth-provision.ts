@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { isDomainBlocked } from "@/lib/domains"
 
 const DEV_DOMAINS: Record<string, string> = {
   "testcorp.com": "Test Corp",
@@ -8,7 +9,16 @@ const DEV_DOMAINS: Record<string, string> = {
 // Shared user-provisioning logic used by both the OTP credentials flow and
 // OAuth flows (LinkedIn) — keeps company-linking/CompanyRequest/dev-domain
 // behavior consistent across sign-in methods.
-export async function provisionUser(email: string, opts: { isAdmin: boolean; name?: string | null }) {
+//
+// `verifyImmediately` controls whether isVerified is set true right away
+// (OTP flow — ownership of the corporate inbox was just proven) or left
+// false pending a follow-up check (LinkedIn flow — email still needs its
+// own OTP confirmation). An update never downgrades an already-verified user.
+export async function provisionUser(
+  email: string,
+  opts: { isAdmin: boolean; name?: string | null; verifyImmediately?: boolean }
+) {
+  const verifyImmediately = opts.verifyImmediately ?? true
   const domain = email.split("@")[1]
   const company = await prisma.company.findFirst({ where: { domain, isApproved: true } })
   const isExisting = !!(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
@@ -16,21 +26,23 @@ export async function provisionUser(email: string, opts: { isAdmin: boolean; nam
   const dbUser = await prisma.user.upsert({
     where: { email },
     update: {
-      isVerified: true,
+      ...(verifyImmediately ? { isVerified: true } : {}),
       ...(opts.isAdmin ? { role: "ADMIN" } : {}),
       ...(company ? { companyId: company.id } : {}),
     },
     create: {
       email,
       name: opts.isAdmin ? "Admin" : (opts.name ?? null),
-      isVerified: true,
+      isVerified: verifyImmediately,
       role: opts.isAdmin ? "ADMIN" : "USER",
       ...(company ? { companyId: company.id } : {}),
       membership: { create: { plan: opts.isAdmin ? "PREMIUM" : "FREE" } },
     },
   })
 
-  if (!company && !isExisting && !opts.isAdmin) {
+  // Only file a review request for real, uncatalogued corporate domains —
+  // personal/disposable domains (allowed in via LinkedIn) aren't companies.
+  if (!company && !isExisting && !opts.isAdmin && !isDomainBlocked(email).blocked) {
     const existing = await prisma.companyRequest.findFirst({ where: { domain } })
     if (!existing) {
       await prisma.companyRequest.create({
