@@ -93,17 +93,6 @@ function createPrismaClient() {
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
-function getPrismaClient(): PrismaClient {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = createPrismaClient()
-  }
-  return globalForPrisma.prisma
-}
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
-// Lazy proxy: importing this module (e.g. during Next.js build-time page-data
-// collection) must not connect to Turso — only the first real query should.
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_target, prop, receiver) {
-    return Reflect.get(getPrismaClient(), prop, receiver)
-  },
-})
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
