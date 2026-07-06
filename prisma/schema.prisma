@@ -205,6 +205,24 @@ model CompanyRequest {
   createdAt   DateTime @default(now())
 }
 
+// Alternate verification path for members whose corporate domain can't be
+// confirmed via OTP/company match — proves employment with an org ID card
+// instead. Login stays blocked until an admin reviews and approves it.
+model IdVerificationRequest {
+  id            String    @id @default(cuid())
+  corpEmail     String    @unique
+  phone         String
+  fullName      String
+  employeeId    String?
+  designation   String?
+  frontImageUrl String
+  backImageUrl  String
+  status        String    @default("PENDING")
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
 // ─── Service Models ───────────────────────────────────────────────────────────
 
 model Listing {

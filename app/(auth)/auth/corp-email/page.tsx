@@ -25,10 +25,17 @@ export default function CorpEmailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       })
-      const data = await res.json()
-      if (!res.ok) { setError(data.error ?? "Couldn't validate that email"); return }
+      let data: { error?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        // Non-JSON response (e.g. a 500 HTML error page) — fall through to the generic message below.
+      }
+      if (!res.ok) { setError(data.error ?? "Couldn't validate that email. Please try again."); return }
       await update()
       router.push("/dashboard")
+    } catch {
+      setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }

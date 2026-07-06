@@ -34,16 +34,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  // ── Rate limit: max 3 OTPs per email in 15 minutes ─────────────────────────
-  const since = new Date(Date.now() - 15 * 60 * 1000)
+  // ── Rate limit: max 3 OTPs per email in 10 minutes ─────────────────────────
+  // Tokens are stamped with a 5-minute expiry, so a token whose expiry falls within
+  // the last 10 minutes was created within the last ~15 minutes — comfortably covers
+  // the request window without needing a separate createdAt column.
+  const since = new Date(Date.now() - 10 * 60 * 1000)
   const recentCount = await prisma.verificationToken.count({
     where: { identifier: normalized, expires: { gt: since } },
   })
   if (recentCount >= 3) {
     return NextResponse.json(
-      { error: "Too many requests. Please wait 15 minutes before requesting a new code." },
+      { error: "Too many requests. Please wait 10 minutes before requesting a new code." },
       { status: 429 }
     )
+  }
+
+  // ── Block OTP login while an org ID card verification is outstanding ───────
+  // Once approved, the request's email now has a real User row (created by the
+  // approve route) so this lookup no longer blocks it.
+  if (!isAdmin) {
+    const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: normalized } })
+    if (idRequest && idRequest.status !== "APPROVED") {
+      const message =
+        idRequest.status === "REJECTED"
+          ? "Your ID card verification was rejected. Please resubmit for review."
+          : "Your ID card verification is still pending admin approval."
+      return NextResponse.json({ error: message }, { status: 403 })
+    }
   }
 
   // ── Check if new or existing user ─────────────────────────────────────────
@@ -51,7 +68,7 @@ export async function POST(req: Request) {
 
   // ── Generate & store OTP ───────────────────────────────────────────────────
   const otp = String(randomInt(100000, 999999))
-  const expires = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+  const expires = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes — single-use, consumed on first successful verify
 
   // Delete any previous tokens for this email
   await prisma.verificationToken.deleteMany({ where: { identifier: normalized } })

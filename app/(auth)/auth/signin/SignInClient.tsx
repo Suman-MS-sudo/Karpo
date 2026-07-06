@@ -3,13 +3,13 @@ import { Suspense, useState, useRef, useEffect, useCallback } from "react"
 import { signIn } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ShieldCheck, ArrowLeft, Loader2, Mail, RefreshCw } from "lucide-react"
+import { ShieldCheck, ArrowLeft, Loader2, Mail, RefreshCw, IdCard, Upload, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Step = "email" | "otp"
+type Step = "email" | "otp" | "idcard" | "idcard-submitted"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
@@ -133,6 +133,65 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     signIn("linkedin", { callbackUrl })
   }, [callbackUrl])
 
+  // ── ID card verification ────────────────────────────────────────────────────
+  const [idFullName, setIdFullName]       = useState("")
+  const [idCorpEmail, setIdCorpEmail]     = useState("")
+  const [idPhone, setIdPhone]             = useState("")
+  const [idDesignation, setIdDesignation] = useState("")
+  const [idEmployeeId, setIdEmployeeId]   = useState("")
+  const [idFront, setIdFront] = useState<{ file: File; url: string } | null>(null)
+  const [idBack, setIdBack]   = useState<{ file: File; url: string } | null>(null)
+  const [idUploading, setIdUploading] = useState<"front" | "back" | null>(null)
+  const [idSubmitting, setIdSubmitting] = useState(false)
+
+  const handleIdImageUpload = useCallback(async (side: "front" | "back", file: File) => {
+    setError("")
+    setIdUploading(side)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await fetch("/api/id-verification/upload", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Upload failed"); return }
+      const entry = { file, url: data.url as string }
+      if (side === "front") setIdFront(entry)
+      else setIdBack(entry)
+    } catch {
+      setError("Upload failed. Please try again.")
+    } finally {
+      setIdUploading(null)
+    }
+  }, [])
+
+  const handleIdSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    if (!idFront || !idBack) { setError("Please upload both sides of your ID card."); return }
+    setIdSubmitting(true)
+    try {
+      const res = await fetch("/api/id-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: idFullName.trim(),
+          corpEmail: idCorpEmail.trim().toLowerCase(),
+          phone: idPhone.trim(),
+          designation: idDesignation.trim() || undefined,
+          employeeId: idEmployeeId.trim() || undefined,
+          frontImageUrl: idFront.url,
+          backImageUrl: idBack.url,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Couldn't submit your request. Please try again."); return }
+      setStep("idcard-submitted")
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIdSubmitting(false)
+    }
+  }, [idFullName, idCorpEmail, idPhone, idDesignation, idEmployeeId, idFront, idBack])
+
   const urlError = params.get("error")
 
   return (
@@ -143,18 +202,35 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <Image src="/logo.png" alt="Korpo" width={40} height={40} className="rounded-xl object-contain" />
           <span className="font-bold text-2xl text-primary-600">Korpo</span>
         </Link>
-        {step === "email" ? (
+        {step === "email" && (
           <>
             <h1 className="text-2xl font-bold">Sign in to Korpo</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">
               Enter your corporate email to get started
             </p>
           </>
-        ) : (
+        )}
+        {step === "otp" && (
           <>
             <h1 className="text-2xl font-bold">{isNewUser ? "Verify your email" : "Enter your code"}</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">
               We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
+            </p>
+          </>
+        )}
+        {step === "idcard" && (
+          <>
+            <h1 className="text-2xl font-bold">Verify with Organization ID card</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Upload your ID card and details for admin review
+            </p>
+          </>
+        )}
+        {step === "idcard-submitted" && (
+          <>
+            <h1 className="text-2xl font-bold">Request submitted</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              An admin will review your ID card shortly
             </p>
           </>
         )}
@@ -168,7 +244,11 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
               ? "This email is linked to another sign-in method."
               : urlError === "domain_blocked"
               ? "Temporary or disposable email addresses are not allowed, even via LinkedIn."
-              : "Something went wrong. Please try again."
+              : urlError === "email_conflict"
+              ? "That LinkedIn account's email is already linked to another Korpo account."
+              : urlError === "CredentialsSignin"
+              ? "That code is incorrect or has expired. Please request a new one."
+              : "Something went wrong signing you in. Please try again."
           )}
         </div>
       )}
@@ -228,7 +308,116 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
               </Button>
             </>
           )}
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            size="lg"
+            onClick={() => { setError(""); setStep("idcard") }}
+          >
+            <IdCard className="h-4 w-4 mr-2 shrink-0" />
+            Verify with Organization ID card
+          </Button>
         </form>
+      )}
+
+      {/* ── Step: Organization ID card verification ─────────────────────────── */}
+      {step === "idcard" && (
+        <form onSubmit={handleIdSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="id-fullname">Full name</Label>
+            <Input id="id-fullname" value={idFullName} onChange={(e) => setIdFullName(e.target.value)} required autoFocus />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="id-corp-email">Corporate email</Label>
+            <Input id="id-corp-email" type="email" autoComplete="email" placeholder="you@yourcompany.com"
+              value={idCorpEmail} onChange={(e) => setIdCorpEmail(e.target.value)} required />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="id-phone">Phone number</Label>
+            <Input id="id-phone" type="tel" placeholder="+91 98765 43210" value={idPhone} onChange={(e) => setIdPhone(e.target.value)} required />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="id-designation">Designation (optional)</Label>
+              <Input id="id-designation" value={idDesignation} onChange={(e) => setIdDesignation(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="id-employee-id">Employee ID (optional)</Label>
+              <Input id="id-employee-id" value={idEmployeeId} onChange={(e) => setIdEmployeeId(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Front side upload */}
+          <div className="space-y-1.5">
+            <Label>ID card — front side</Label>
+            <label className="flex items-center gap-3 border border-dashed border-border rounded-xl p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleIdImageUpload("front", f) }} />
+              {idUploading === "front" ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : idFront ? (
+                <CheckCircle2 className="h-4 w-4 text-success" />
+              ) : (
+                <Upload className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="text-sm text-muted-foreground truncate">
+                {idFront ? idFront.file.name : "Upload front side"}
+              </span>
+            </label>
+          </div>
+
+          {/* Back side upload */}
+          <div className="space-y-1.5">
+            <Label>ID card — back side</Label>
+            <label className="flex items-center gap-3 border border-dashed border-border rounded-xl p-3 cursor-pointer hover:bg-muted/30 transition-colors">
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleIdImageUpload("back", f) }} />
+              {idUploading === "back" ? (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              ) : idBack ? (
+                <CheckCircle2 className="h-4 w-4 text-success" />
+              ) : (
+                <Upload className="h-4 w-4 text-muted-foreground" />
+              )}
+              <span className="text-sm text-muted-foreground truncate">
+                {idBack ? idBack.file.name : "Upload back side"}
+              </span>
+            </label>
+          </div>
+
+          <Button type="submit" className="w-full" size="lg" disabled={idSubmitting || idUploading !== null || !idFront || !idBack}>
+            {idSubmitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Submitting…</> : "Submit for review →"}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => { setStep("email"); setError("") }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
+        </form>
+      )}
+
+      {/* ── Step: ID card request submitted ──────────────────────────────────── */}
+      {step === "idcard-submitted" && (
+        <div className="space-y-5 text-center">
+          <div className="mx-auto h-12 w-12 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+            <IdCard className="h-6 w-6 text-primary-600" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            We've received your details for <span className="font-medium text-foreground">{idCorpEmail}</span>.
+            You'll be able to sign in with this email once an admin approves your request.
+          </p>
+          <Button variant="outline" className="w-full" size="lg" onClick={() => setStep("email")}>
+            Back to sign in
+          </Button>
+        </div>
       )}
 
       {/* ── Step 2: OTP input ────────────────────────────────────────────────── */}

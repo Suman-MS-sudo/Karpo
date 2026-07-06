@@ -44,6 +44,13 @@ const providers: Provider[] = [
         })
         if (!token) return null
 
+        // Block login while an org ID card verification is outstanding, even if an
+        // OTP was already issued before the request was filed (see send-otp route).
+        if (!isAdmin) {
+          const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
+          if (idRequest && idRequest.status !== "APPROVED") return null
+        }
+
         // Consume the token immediately
         await prisma.verificationToken.deleteMany({ where: { identifier: email } })
 
@@ -74,7 +81,10 @@ if (linkedinEnabled) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  // Inactivity logout: the session cookie's expiry is (re)stamped to now + maxAge
+  // on every request that's older than updateAge since the last stamp, so an idle
+  // session (no requests) expires 15 minutes after the last activity.
+  session: { strategy: "jwt", maxAge: 15 * 60, updateAge: 60 },
   providers,
 
   callbacks: {
@@ -123,6 +133,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id },
           select: {
             id: true,
+            email: true,
             name: true,
             role: true,
             isVerified: true,
@@ -136,6 +147,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         })
         if (dbUser) {
           token.sub          = dbUser.id
+          token.email        = dbUser.email
           token.name         = dbUser.name
           token.role         = dbUser.role
           token.isVerified   = dbUser.isVerified
@@ -153,6 +165,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id             = token.sub as string
+        session.user.email          = (token.email as string | undefined) ?? session.user.email
         session.user.role           = token.role as string | undefined
         session.user.isVerified     = token.isVerified as boolean | undefined
         session.user.companyId      = token.companyId as string | undefined

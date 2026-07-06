@@ -150,6 +150,23 @@ CREATE TABLE "CompanyRequest" (
 );
 
 -- CreateTable
+CREATE TABLE "IdVerificationRequest" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "corpEmail" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
+    "fullName" TEXT NOT NULL,
+    "employeeId" TEXT,
+    "designation" TEXT,
+    "frontImageUrl" TEXT NOT NULL,
+    "backImageUrl" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'PENDING',
+    "reviewedAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX "IdVerificationRequest_corpEmail_key" ON "IdVerificationRequest"("corpEmail");
+
+-- CreateTable
 CREATE TABLE "Listing" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,

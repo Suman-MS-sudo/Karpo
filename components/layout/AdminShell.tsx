@@ -4,18 +4,19 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
-  LayoutDashboard, Users, Building2, Tag, Shield, FileWarning,
+  LayoutDashboard, Users, Building2, Tag, Shield, FileWarning, BadgeCheck,
   LogOut, ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const NAV = [
-  { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard, exact: true },
-  { href: "/admin/users",     label: "Users",      icon: Users            },
-  { href: "/admin/companies", label: "Companies",  icon: Building2        },
-  { href: "/admin/deals",     label: "Deals",      icon: Tag              },
-  { href: "/admin/concierge", label: "Concierge",  icon: Shield           },
-  { href: "/admin/reports",   label: "Reports",    icon: FileWarning      },
+  { href: "/admin",                 label: "Dashboard",         icon: LayoutDashboard, exact: true },
+  { href: "/admin/users",           label: "Users",             icon: Users            },
+  { href: "/admin/companies",       label: "Companies",         icon: Building2        },
+  { href: "/admin/id-verifications", label: "ID Verifications", icon: BadgeCheck       },
+  { href: "/admin/deals",           label: "Deals",             icon: Tag              },
+  { href: "/admin/concierge",       label: "Concierge",         icon: Shield           },
+  { href: "/admin/reports",         label: "Reports",           icon: FileWarning      },
 ]
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

@@ -9,16 +9,17 @@ import { cn } from "@/lib/utils"
 import {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users,
   GraduationCap, Shield, Gift, LayoutDashboard, Pin, PinOff,
-  Building2, FileWarning,
+  Building2, FileWarning, BadgeCheck,
 } from "lucide-react"
 
 const ADMIN_SUB_ITEMS = [
-  { href: "/admin",           label: "Dashboard",  Icon: LayoutDashboard, exact: true  },
-  { href: "/admin/users",     label: "Users",      Icon: Users,           exact: false },
-  { href: "/admin/companies", label: "Companies",  Icon: Building2,       exact: false },
-  { href: "/admin/deals",     label: "Deals",      Icon: Tag,             exact: false },
-  { href: "/admin/concierge", label: "Concierge",  Icon: Shield,          exact: false },
-  { href: "/admin/reports",   label: "Reports",    Icon: FileWarning,     exact: false },
+  { href: "/admin",                  label: "Dashboard",         Icon: LayoutDashboard, exact: true  },
+  { href: "/admin/users",            label: "Users",             Icon: Users,           exact: false },
+  { href: "/admin/companies",        label: "Companies",         Icon: Building2,       exact: false },
+  { href: "/admin/id-verifications", label: "ID Verifications",  Icon: BadgeCheck,      exact: false },
+  { href: "/admin/deals",            label: "Deals",             Icon: Tag,             exact: false },
+  { href: "/admin/concierge",        label: "Concierge",         Icon: Shield,          exact: false },
+  { href: "/admin/reports",          label: "Reports",           Icon: FileWarning,     exact: false },
 ]
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
