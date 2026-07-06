@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     siteName: "Korpo",
     title: "Korpo — Your work ID. Your pass to everything else.",
     description: "India's first verified corporate employee marketplace",
-    images: [{ url: "/logo.jpg", width: 512, height: 512, alt: "Korpo" }],
+    images: [{ url: "/logo.png", width: 512, height: 512, alt: "Korpo" }],
   },
 }
 

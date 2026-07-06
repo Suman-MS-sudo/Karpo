@@ -46,7 +46,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
 
       {/* Brand — mobile only (desktop rail shows logo) */}
       <Link href="/dashboard" className="flex items-center gap-2 mr-2 lg:hidden">
-        <Image src="/logo.jpg" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
+        <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
         <span className="font-bold text-foreground">Korpo</span>
       </Link>
 

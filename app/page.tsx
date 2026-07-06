@@ -73,7 +73,7 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-background">
         {/* Logo watermark — bled off the right edge of the viewport, only the left half visible */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 right-0 hidden lg:block w-[640px] h-[640px] opacity-[0.16] dark:opacity-[0.22] pointer-events-none select-none"
+          className="absolute top-1/2 -translate-y-1/2 translate-x-1/2 right-0 block w-[280px] h-[280px] sm:w-[420px] sm:h-[420px] lg:w-[640px] lg:h-[640px] opacity-[0.14] dark:opacity-[0.20] pointer-events-none select-none"
           aria-hidden="true"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
