@@ -68,11 +68,6 @@ if (linkedinEnabled) {
       // Safe to auto-link by email: LinkedIn's OIDC profile only reports
       // email_verified accounts, and users already prove domain ownership via OTP.
       allowDangerousEmailAccountLinking: true,
-      // Force LinkedIn to re-prompt for credentials every time instead of
-      // silently reusing its own browser SSO session — otherwise "Continue
-      // with LinkedIn" can log a user straight into whichever LinkedIn
-      // account is already active in their browser without asking.
-      authorization: { params: { prompt: "login" } },
     })
   )
 }
