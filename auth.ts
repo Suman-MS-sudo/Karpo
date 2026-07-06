@@ -68,6 +68,11 @@ if (linkedinEnabled) {
       // Safe to auto-link by email: LinkedIn's OIDC profile only reports
       // email_verified accounts, and users already prove domain ownership via OTP.
       allowDangerousEmailAccountLinking: true,
+      // Force LinkedIn to re-prompt for credentials every time instead of
+      // silently reusing its own browser SSO session — otherwise "Continue
+      // with LinkedIn" can log a user straight into whichever LinkedIn
+      // account is already active in their browser without asking.
+      authorization: { params: { prompt: "login" } },
     })
   )
 }
@@ -78,13 +83,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
 
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Credentials flow already validates domain + provisions the user in authorize()
       if (account?.provider !== "linkedin") return true
 
-      const email = user.email?.trim().toLowerCase()
-      if (!email) return false
+      // `user.email` reflects whatever email was stored on the User row the last
+      // time this LinkedIn account (providerAccountId) was linked — it does NOT
+      // update on its own if the member later changes their LinkedIn primary
+      // email. `profile.email` is the live value from today's OIDC token, so it's
+      // the one we trust; if it drifted from the stored value, sync it here.
+      // Otherwise every future login with this LinkedIn identity keeps resolving
+      // to the old email forever, even after the member's LinkedIn email changes.
+      const liveEmail = (profile?.email as string | undefined)?.trim().toLowerCase()
+      if (!liveEmail) return false
 
+      if (user.id && liveEmail !== user.email?.trim().toLowerCase()) {
+        const conflict = await prisma.user.findUnique({ where: { email: liveEmail }, select: { id: true } })
+        if (conflict && conflict.id !== user.id) {
+          // Someone else already owns that email outright — don't silently merge accounts.
+          return "/auth/signin?error=email_conflict"
+        }
+        await prisma.user.update({ where: { id: user.id }, data: { email: liveEmail } })
+      }
+
+      const email = liveEmail
       const isAdmin = isAdminEmail(email)
       // LinkedIn identity trust lets us allow personal inboxes (Gmail, Outlook, …)
       // through — only still-abusive disposable/throwaway domains stay blocked.
