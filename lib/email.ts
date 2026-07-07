@@ -105,6 +105,62 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
   }
 }
 
+// ── Password setup link email (ID card verification approval) ─────────────────
+
+interface PasswordSetupEmailOptions {
+  to: string
+  link: string
+}
+
+export async function sendPasswordSetupEmail({ to, link }: PasswordSetupEmailOptions): Promise<{ success: boolean; error?: string }> {
+  const subject = "Your Korpo ID card verification was approved — set your password"
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f4f4f5;margin:0;padding:32px 16px">
+  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    <div style="background:#1e40af;padding:24px 32px">
+      <span style="color:#fff;font-weight:700;font-size:22px">Korpo</span>
+    </div>
+    <div style="padding:32px">
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827">You're verified!</h1>
+      <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.5">
+        An admin approved your organization ID card verification. Set a password below to sign in — this link expires in 24 hours.
+      </p>
+      <div style="text-align:center;margin-bottom:28px">
+        <a href="${link}" style="display:inline-block;background:#1e40af;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px">
+          Set your password →
+        </a>
+      </div>
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center">
+        Korpo · Corporate-only verified network<br>This is an automated message — do not reply.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`
+
+  const resend = getResend()
+  if (!resend) {
+    console.log(`\n${"─".repeat(50)}`)
+    console.log(`[KORPO DEV] Password setup email`)
+    console.log(`To:   ${to}`)
+    console.log(`Link: ${link}`)
+    console.log(`${"─".repeat(50)}\n`)
+    return { success: true }
+  }
+
+  try {
+    await resend.emails.send({ from: FROM, to: [to], subject, html })
+    return { success: true }
+  } catch (err) {
+    console.error("[Password Setup Email] Resend error:", err)
+    return { success: false, error: "Failed to send email" }
+  }
+}
+
 export function welcomeEmailHtml(name: string): string {
   return `
     <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:24px">

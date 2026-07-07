@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Step = "email" | "otp" | "idcard" | "idcard-submitted"
+type Step = "email" | "otp" | "password" | "idcard" | "idcard-submitted"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
@@ -23,6 +23,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState("")
   const [resendIn, setResendIn] = useState(0)
+  const [password, setPassword] = useState("")
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -127,6 +128,35 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     }
   }, [email, otp, isNewUser, callbackUrl, router])
 
+  // ── Password sign-in (alternative to OTP, set up post-verification) ────────
+  const handlePasswordSignIn = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      if (result?.error) {
+        setError("Incorrect email or password.")
+        return
+      }
+      const sessionRes = await fetch("/api/auth/session")
+      const sessionData = sessionRes.ok ? await sessionRes.json() : null
+      const isAdmin = sessionData?.user?.role === "ADMIN"
+
+      if (isAdmin) {
+        router.push(callbackUrl.startsWith("/admin") ? callbackUrl : "/admin")
+      } else {
+        router.push(callbackUrl)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [email, password, callbackUrl, router])
+
   const [linkedinLoading, setLinkedinLoading] = useState(false)
   const handleLinkedInSignIn = useCallback(() => {
     setLinkedinLoading(true)
@@ -218,6 +248,14 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
+        {step === "password" && (
+          <>
+            <h1 className="text-2xl font-bold">Sign in with password</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Only works if you've already set one up on a previous login
+            </p>
+          </>
+        )}
         {step === "idcard" && (
           <>
             <h1 className="text-2xl font-bold">Verify with Organization ID card</h1>
@@ -281,6 +319,14 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send verification code →"}
           </Button>
 
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("password") }}
+            className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+          >
+            Have a password? Sign in with it
+          </button>
+
           {linkedinAvailable && (
             <>
               <div className="flex items-center gap-3 py-1">
@@ -319,6 +365,49 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <IdCard className="h-4 w-4 mr-2 shrink-0" />
             Verify with Organization ID card
           </Button>
+        </form>
+      )}
+
+      {/* ── Password sign-in ─────────────────────────────────────────────────── */}
+      {step === "password" && (
+        <form onSubmit={handlePasswordSignIn} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="pw-email">Corporate email</Label>
+            <Input
+              id="pw-email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@yourcompany.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pw-password">Password</Label>
+            <Input
+              id="pw-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <Button type="submit" className="w-full" size="lg" disabled={loading || !email.includes("@") || !password}>
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in…</> : "Sign in →"}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => { setStep("email"); setPassword(""); setError("") }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Use a verification code instead
+          </button>
         </form>
       )}
 

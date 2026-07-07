@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
 import { provisionUser } from "@/lib/auth-provision"
+import { verifyPassword } from "@/lib/password"
 
 function isAdminEmail(email: string) {
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase())
@@ -22,17 +23,40 @@ const providers: Provider[] = [
       credentials: {
         email: { type: "email" },
         otp: { type: "text" },
+        password: { type: "password" },
       },
       async authorize(credentials) {
-        const email = (credentials?.email as string | undefined)?.trim().toLowerCase()
-        const otp   = credentials?.otp as string | undefined
+        const email    = (credentials?.email as string | undefined)?.trim().toLowerCase()
+        const otp      = credentials?.otp as string | undefined
+        const password = credentials?.password as string | undefined
 
-        if (!email || !otp) return null
+        if (!email || (!otp && !password)) return null
 
         const isAdmin = isAdminEmail(email)
 
         // Domain guard (defence-in-depth — send-otp also validates); admin bypasses
         if (!isAdmin && isDomainBlocked(email).blocked) return null
+
+        // Password login — set up once after a first OTP/LinkedIn/ID-card
+        // verification (see /auth/set-password), used on return visits instead
+        // of re-verifying every time.
+        if (password) {
+          const dbUser = await prisma.user.findUnique({ where: { email } })
+          if (!dbUser?.passwordHash) return null
+          if (!(await verifyPassword(password, dbUser.passwordHash))) return null
+
+          if (!isAdmin) {
+            const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
+            if (idRequest && idRequest.status !== "APPROVED") return null
+          }
+
+          return {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            image: dbUser.image ?? dbUser.avatarUrl,
+          }
+        }
 
         // Validate OTP against VerificationToken
         const token = await prisma.verificationToken.findFirst({
@@ -101,6 +125,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // to the old email forever, even after the member's LinkedIn email changes.
       const liveEmail = (profile?.email as string | undefined)?.trim().toLowerCase()
       if (!liveEmail) return false
+
+      // The "safe to auto-link by email" assumption above only holds if LinkedIn
+      // actually verified this address — enforce that rather than assuming it.
+      if (profile?.email_verified !== true) {
+        return "/auth/signin?error=email_conflict"
+      }
 
       if (user.id && liveEmail !== user.email?.trim().toLowerCase()) {
         const conflict = await prisma.user.findUnique({ where: { email: liveEmail }, select: { id: true } })
