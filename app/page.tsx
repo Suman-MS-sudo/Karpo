@@ -45,21 +45,21 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-50 bg-yellow-300 backdrop-blur-sm border-b border-yellow-400/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo.png" alt="Korpo" width={44} height={44} className="rounded-lg object-contain" />
-            <span className="font-bold text-2xl text-foreground">Korpo</span>
+            <Image src="/logo.png" alt="Korpo" width={44} height={44} priority className="rounded-lg object-contain" />
+            <span className="font-bold text-2xl text-gray-900">Korpo</span>
           </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="#services"     className="hover:text-foreground transition-colors">Services</Link>
-            <Link href="#how-it-works" className="hover:text-foreground transition-colors">How it works</Link>
-            <Link href="#cities"       className="hover:text-foreground transition-colors">Cities</Link>
-            <Link href="/about"        className="hover:text-foreground transition-colors">About</Link>
-            <Link href="/contact"      className="hover:text-foreground transition-colors">Contact</Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-gray-700">
+            <Link href="#services"     className="hover:text-gray-900 transition-colors">Services</Link>
+            <Link href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</Link>
+            <Link href="#cities"       className="hover:text-gray-900 transition-colors">Cities</Link>
+            <Link href="/about"        className="hover:text-gray-900 transition-colors">About</Link>
+            <Link href="/contact"      className="hover:text-gray-900 transition-colors">Contact</Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/auth/signin?callbackUrl=/admin" className="text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors px-2 py-1">
+            <Link href="/auth/signin?callbackUrl=/admin" className="text-xs text-gray-700/80 hover:text-gray-900 transition-colors px-2 py-1">
               Admin
             </Link>
             <Button asChild size="sm" className="bg-brand-red-600 hover:bg-brand-red-700 text-white shadow-sm">

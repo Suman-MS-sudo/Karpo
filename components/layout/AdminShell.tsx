@@ -26,13 +26,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="fixed inset-0 flex overflow-hidden bg-[#f8f9fb]">
 
       {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-56 bg-[#1E3A5F] text-white shrink-0">
+      <aside className="hidden lg:flex flex-col w-56 bg-gray-900 text-white shrink-0">
         {/* Logo */}
         <div className="h-14 px-4 flex items-center gap-3 border-b border-white/10 shrink-0">
           <Image src="/logo.png" alt="Korpo" width={30} height={30} className="rounded-lg" />
           <div>
             <p className="font-bold text-sm leading-none">Korpo</p>
-            <p className="text-[10px] text-blue-300 mt-0.5">Admin Portal</p>
+            <p className="text-[10px] text-yellow-400 mt-0.5">Admin Portal</p>
           </div>
         </div>
 
@@ -47,8 +47,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                   isActive
-                    ? "bg-white/15 text-white"
-                    : "text-blue-200 hover:bg-white/10 hover:text-white"
+                    ? "bg-yellow-400 text-gray-900"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -63,7 +63,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="p-3 border-t border-white/10">
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-blue-200 hover:bg-white/10 hover:text-white transition-all w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-300 hover:bg-white/10 hover:text-red-200 transition-all w-full"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             Sign out
@@ -74,21 +74,21 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Main */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center px-6 shrink-0">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Shield className="h-4 w-4 text-[#1E3A5F]" />
-            <span className="font-semibold text-[#1E3A5F]">Admin Panel</span>
+        <header className="h-14 bg-yellow-300 border-b border-yellow-400/50 flex items-center px-6 shrink-0">
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <Shield className="h-4 w-4 text-gray-900" />
+            <span className="font-semibold text-gray-900">Admin Panel</span>
             {pathname !== "/admin" && (
               <>
-                <span className="text-gray-300">/</span>
-                <span className="capitalize text-gray-600">
+                <span className="text-gray-500">/</span>
+                <span className="capitalize text-gray-700">
                   {pathname.split("/").filter(Boolean).slice(1).join(" / ")}
                 </span>
               </>
             )}
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <Link href="/dashboard" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            <Link href="/dashboard" className="text-xs text-gray-700 hover:text-gray-900 transition-colors">
               ← Back to App
             </Link>
           </div>
