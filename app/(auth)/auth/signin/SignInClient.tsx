@@ -169,6 +169,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [idPhone, setIdPhone]             = useState("")
   const [idDesignation, setIdDesignation] = useState("")
   const [idEmployeeId, setIdEmployeeId]   = useState("")
+  const [idPassword, setIdPassword]       = useState("")
+  const [idPasswordConfirm, setIdPasswordConfirm] = useState("")
   const [idFront, setIdFront] = useState<{ file: File; url: string } | null>(null)
   const [idBack, setIdBack]   = useState<{ file: File; url: string } | null>(null)
   const [idUploading, setIdUploading] = useState<"front" | "back" | null>(null)
@@ -197,6 +199,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     e.preventDefault()
     setError("")
     if (!idFront || !idBack) { setError("Please upload both sides of your ID card."); return }
+    if (idPassword.length < 8) { setError("Password must be at least 8 characters."); return }
+    if (idPassword !== idPasswordConfirm) { setError("Passwords don't match."); return }
     setIdSubmitting(true)
     try {
       const res = await fetch("/api/id-verification", {
@@ -210,6 +214,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           employeeId: idEmployeeId.trim() || undefined,
           frontImageUrl: idFront.url,
           backImageUrl: idBack.url,
+          password: idPassword,
         }),
       })
       const data = await res.json()
@@ -220,7 +225,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setIdSubmitting(false)
     }
-  }, [idFullName, idCorpEmail, idPhone, idDesignation, idEmployeeId, idFront, idBack])
+  }, [idFullName, idCorpEmail, idPhone, idDesignation, idEmployeeId, idFront, idBack, idPassword, idPasswordConfirm])
 
   const urlError = params.get("error")
 
@@ -441,6 +446,22 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="id-password">Set a password</Label>
+              <Input id="id-password" type="password" autoComplete="new-password"
+                value={idPassword} onChange={(e) => setIdPassword(e.target.value)} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="id-password-confirm">Confirm password</Label>
+              <Input id="id-password-confirm" type="password" autoComplete="new-password"
+                value={idPasswordConfirm} onChange={(e) => setIdPasswordConfirm(e.target.value)} required />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            You'll be able to sign in with this password as soon as an admin approves your request.
+          </p>
+
           {/* Front side upload */}
           <div className="space-y-1.5">
             <Label>ID card — front side</Label>
@@ -479,7 +500,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </label>
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={idSubmitting || idUploading !== null || !idFront || !idBack}>
+          <Button type="submit" className="w-full" size="lg" disabled={idSubmitting || idUploading !== null || !idFront || !idBack || !idPassword || !idPasswordConfirm}>
             {idSubmitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Submitting…</> : "Submit for review →"}
           </Button>
 
@@ -501,7 +522,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           </div>
           <p className="text-sm text-muted-foreground">
             We've received your details for <span className="font-medium text-foreground">{idCorpEmail}</span>.
-            You'll be able to sign in with this email once an admin approves your request.
+            Once an admin approves your request, sign in with this email and the password you just set.
           </p>
           <Button variant="outline" className="w-full" size="lg" onClick={() => setStep("email")}>
             Back to sign in

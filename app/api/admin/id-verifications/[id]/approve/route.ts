@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
-import { randomBytes } from "crypto"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import { sendPasswordSetupEmail } from "@/lib/email"
+import { sendIdVerificationApprovedEmail } from "@/lib/email"
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const session = await auth()
@@ -14,11 +13,15 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const domain = request.corpEmail.split("@")[1]
   const company = await prisma.company.findFirst({ where: { domain, isApproved: true } })
 
+  // The password the applicant chose at submission time (see
+  // /api/id-verification) becomes their login password the moment they're
+  // approved — no separate email/link step needed.
   await prisma.user.upsert({
     where: { email: request.corpEmail },
     update: {
       isVerified: true,
       phone: request.phone,
+      passwordHash: request.passwordHash,
       ...(company ? { companyId: company.id } : {}),
     },
     create: {
@@ -28,6 +31,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
       jobTitle: request.designation,
       isVerified: true,
       role: "USER",
+      passwordHash: request.passwordHash,
       ...(company ? { companyId: company.id } : {}),
       membership: { create: { plan: "FREE" } },
     },
@@ -38,17 +42,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     data: { status: "APPROVED", reviewedAt: new Date() },
   })
 
-  // ID-card-verified users never go through an authenticated session before
-  // this point (unlike OTP/LinkedIn), so password setup can't rely on
-  // requireAuth() — mail them a one-time token instead.
-  const token = randomBytes(32).toString("hex")
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000)
-  await prisma.verificationToken.deleteMany({ where: { identifier: request.corpEmail } })
-  await prisma.verificationToken.create({ data: { identifier: request.corpEmail, token, expires } })
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? ""
-  const link = `${baseUrl}/auth/set-password?email=${encodeURIComponent(request.corpEmail)}&token=${token}`
-  await sendPasswordSetupEmail({ to: request.corpEmail, link })
+  await sendIdVerificationApprovedEmail(request.corpEmail)
 
   return NextResponse.json({ success: true })
 }

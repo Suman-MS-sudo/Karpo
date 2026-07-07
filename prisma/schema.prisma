@@ -218,6 +218,7 @@ model IdVerificationRequest {
   designation   String?
   frontImageUrl String
   backImageUrl  String
+  passwordHash  String?
   status        String    @default("PENDING")
   reviewedAt    DateTime?
   createdAt     DateTime  @default(now())

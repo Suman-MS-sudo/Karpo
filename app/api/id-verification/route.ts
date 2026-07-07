@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
+import { hashPassword } from "@/lib/password"
 
 // Submitted before the user has an account — this is the alternate path for
 // proving corporate employment via an org ID card instead of domain/OTP match.
@@ -16,9 +17,13 @@ export async function POST(req: Request) {
   const designation = (body.designation as string | undefined)?.trim() || undefined
   const frontImageUrl = body.frontImageUrl as string | undefined
   const backImageUrl = body.backImageUrl as string | undefined
+  const password = body.password as string | undefined
 
-  if (!corpEmail || !phone || !fullName || !frontImageUrl || !backImageUrl) {
+  if (!corpEmail || !phone || !fullName || !frontImageUrl || !backImageUrl || !password) {
     return NextResponse.json({ error: "All required fields must be filled in" }, { status: 400 })
+  }
+  if (password.length < 8) {
+    return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 })
   }
 
   const { blocked, reason } = isDomainBlocked(corpEmail)
@@ -40,16 +45,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "An account already exists for this email. Try signing in instead." }, { status: 409 })
   }
 
+  const passwordHash = await hashPassword(password)
+
   // Upsert so a rejected/pending applicant can correct details and resubmit
   // under the same email without piling up duplicate requests.
   await prisma.idVerificationRequest.upsert({
     where: { corpEmail },
     update: {
-      phone, fullName, employeeId, designation, frontImageUrl, backImageUrl,
+      phone, fullName, employeeId, designation, frontImageUrl, backImageUrl, passwordHash,
       status: "PENDING", reviewedAt: null,
     },
     create: {
-      corpEmail, phone, fullName, employeeId, designation, frontImageUrl, backImageUrl,
+      corpEmail, phone, fullName, employeeId, designation, frontImageUrl, backImageUrl, passwordHash,
       status: "PENDING",
     },
   })

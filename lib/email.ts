@@ -105,15 +105,10 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
   }
 }
 
-// ── Password setup link email (ID card verification approval) ─────────────────
+// ── ID card verification approval notice ───────────────────────────────────────
 
-interface PasswordSetupEmailOptions {
-  to: string
-  link: string
-}
-
-export async function sendPasswordSetupEmail({ to, link }: PasswordSetupEmailOptions): Promise<{ success: boolean; error?: string }> {
-  const subject = "Your Korpo ID card verification was approved — set your password"
+export async function sendIdVerificationApprovedEmail(to: string): Promise<{ success: boolean; error?: string }> {
+  const subject = "Your Korpo ID card verification was approved"
 
   const html = `
 <!DOCTYPE html>
@@ -127,13 +122,8 @@ export async function sendPasswordSetupEmail({ to, link }: PasswordSetupEmailOpt
     <div style="padding:32px">
       <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827">You're verified!</h1>
       <p style="margin:0 0 28px;color:#6b7280;font-size:15px;line-height:1.5">
-        An admin approved your organization ID card verification. Set a password below to sign in — this link expires in 24 hours.
+        An admin approved your organization ID card verification. Sign in with your corporate email and the password you set when you submitted your request.
       </p>
-      <div style="text-align:center;margin-bottom:28px">
-        <a href="${link}" style="display:inline-block;background:#1e40af;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px">
-          Set your password →
-        </a>
-      </div>
       <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center">
         Korpo · Corporate-only verified network<br>This is an automated message — do not reply.
       </p>
@@ -145,9 +135,8 @@ export async function sendPasswordSetupEmail({ to, link }: PasswordSetupEmailOpt
   const resend = getResend()
   if (!resend) {
     console.log(`\n${"─".repeat(50)}`)
-    console.log(`[KORPO DEV] Password setup email`)
-    console.log(`To:   ${to}`)
-    console.log(`Link: ${link}`)
+    console.log(`[KORPO DEV] ID verification approved email`)
+    console.log(`To: ${to}`)
     console.log(`${"─".repeat(50)}\n`)
     return { success: true }
   }
@@ -156,7 +145,7 @@ export async function sendPasswordSetupEmail({ to, link }: PasswordSetupEmailOpt
     await resend.emails.send({ from: FROM, to: [to], subject, html })
     return { success: true }
   } catch (err) {
-    console.error("[Password Setup Email] Resend error:", err)
+    console.error("[ID Verification Approved Email] Resend error:", err)
     return { success: false, error: "Failed to send email" }
   }
 }

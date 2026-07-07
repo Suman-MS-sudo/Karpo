@@ -1,6 +1,6 @@
 "use client"
-import { Suspense, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { KeyRound, ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,22 +11,13 @@ function skipForNow(router: ReturnType<typeof useRouter>) {
   router.push("/dashboard")
 }
 
-function SetPasswordContent() {
+export default function SetPasswordPage() {
   const router = useRouter()
-  const params = useSearchParams()
-
-  // Present only for ID-card-approval links, where the user has no session yet
-  // (see /api/admin/id-verifications/[id]/approve) — everyone else (OTP/LinkedIn)
-  // is already authenticated when they land here.
-  const email = params.get("email")
-  const token = params.get("token")
-  const isTokenFlow = Boolean(email && token)
 
   const [password, setPassword]   = useState("")
   const [confirm, setConfirm]     = useState("")
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState("")
-  const [done, setDone]           = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,37 +30,16 @@ function SetPasswordContent() {
       const res = await fetch("/api/auth/set-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isTokenFlow ? { password, email, token } : { password }),
+        body: JSON.stringify({ password }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setError(data.error ?? "Couldn't set your password. Please try again."); return }
-      if (isTokenFlow) {
-        setDone(true)
-      } else {
-        router.push("/dashboard")
-      }
+      router.push("/dashboard")
     } catch {
       setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
-  }
-
-  if (done) {
-    return (
-      <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center space-y-5">
-        <div className="mx-auto h-12 w-12 rounded-full bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
-          <KeyRound className="h-6 w-6 text-primary-600" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold">Password set</h1>
-          <p className="text-sm text-muted-foreground mt-1.5">You can now sign in with your corporate email and password.</p>
-        </div>
-        <Button className="w-full" size="lg" onClick={() => router.push("/auth/signin")}>
-          Go to sign in
-        </Button>
-      </div>
-    )
   }
 
   return (
@@ -80,16 +50,12 @@ function SetPasswordContent() {
         </div>
         <div>
           <h1 className="text-xl font-bold">Set up a password</h1>
-          <p className="text-sm text-muted-foreground">
-            {isTokenFlow ? `For ${email}` : "Skip OTP/LinkedIn next time"}
-          </p>
+          <p className="text-sm text-muted-foreground">Skip OTP/LinkedIn next time</p>
         </div>
       </div>
 
       <p className="text-sm text-muted-foreground mb-6">
-        {isTokenFlow
-          ? "Your organization ID card verification was approved. Set a password to sign in."
-          : "You're verified — set a password now so you can sign in directly next time instead of repeating verification."}
+        You're verified — set a password now so you can sign in directly next time instead of repeating verification.
       </p>
 
       {error && (
@@ -129,38 +95,22 @@ function SetPasswordContent() {
           {!loading && <ArrowRight className="h-4 w-4" />}
         </Button>
 
-        {!isTokenFlow && (
-          <button
-            type="button"
-            onClick={() => skipForNow(router)}
-            className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Skip for now
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => skipForNow(router)}
+          className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Skip for now
+        </button>
       </form>
 
       <div className="mt-6 flex items-start gap-3 bg-surface rounded-xl p-4 border border-border">
         <ShieldCheck className="h-5 w-5 text-success shrink-0 mt-0.5" />
         <div className="text-xs text-muted-foreground">
-          <p className="font-medium text-foreground mb-0.5">
-            {isTokenFlow ? "One-time link" : "Optional, but recommended"}
-          </p>
-          <p>
-            {isTokenFlow
-              ? "This link only works once and expires in 24 hours."
-              : "You can always fall back to OTP or LinkedIn sign-in — a password is just a faster path."}
-          </p>
+          <p className="font-medium text-foreground mb-0.5">Optional, but recommended</p>
+          <p>You can always fall back to OTP or LinkedIn sign-in — a password is just a faster path.</p>
         </div>
       </div>
     </div>
-  )
-}
-
-export default function SetPasswordPage() {
-  return (
-    <Suspense>
-      <SetPasswordContent />
-    </Suspense>
   )
 }
