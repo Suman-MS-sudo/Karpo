@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Bell, CheckCheck } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Bell, CheckCheck, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatRelativeTime } from "@/lib/utils"
 import { cn } from "@/lib/utils"
@@ -16,8 +17,19 @@ interface Notif {
 }
 
 export default function NotificationsPage() {
+  const router = useRouter()
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [loading, setLoading] = useState(true)
+  const [canGoBack, setCanGoBack] = useState(false)
+
+  useEffect(() => {
+    setCanGoBack(window.history.length > 1)
+  }, [])
+
+  const handleBack = () => {
+    if (canGoBack) router.back()
+    else router.push("/dashboard")
+  }
 
   useEffect(() => {
     fetch("/api/notifications?limit=50")
@@ -34,7 +46,16 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleBack}
+            title="Go back"
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted transition-colors shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold">Notifications</h1>
+        </div>
         {notifs.some((n) => !n.isRead) && (
           <Button variant="ghost" size="sm" onClick={markAllRead}>
             <CheckCheck className="h-4 w-4" /> Mark all read

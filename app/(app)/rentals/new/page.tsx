@@ -10,9 +10,9 @@ import {
   Wifi, ShieldCheck, Users, ChevronRight,
   BedDouble, Bath, Building2, Info,
 } from "lucide-react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CITIES } from "@/config/services"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 
 const MapPicker = dynamic(
   () => import("@/components/rentals/MapPicker").then((m) => m.MapPicker),
@@ -179,9 +179,15 @@ export default function NewRentalPage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     // Snapshot files immediately — do NOT reference e.target after any await
-    const files = Array.from(e.target.files ?? [])
-    if (!files.length) return
-    setUploadError("")
+    const selected = Array.from(e.target.files ?? [])
+    if (!selected.length) return
+    const remaining = 10 - images.length
+    const files = selected.slice(0, remaining)
+    setUploadError(selected.length > remaining ? `Only ${remaining} more photo${remaining === 1 ? "" : "s"} can be added — max 10 total.` : "")
+    if (!files.length) {
+      if (fileInputRef.current) fileInputRef.current.value = ""
+      return
+    }
     setUploading(true)
     try {
       for (const file of files) {
@@ -243,12 +249,23 @@ export default function NewRentalPage() {
     document.getElementById(id)?.scrollIntoView({ behavior:"smooth", block:"start" })
   }
 
+  const hasProgress = images.length > 0 || form.title.trim() !== "" || form.rent.trim() !== "" || form.area.trim() !== ""
+
+  const handleLeave = () => {
+    if (hasProgress && !confirm("You have unsaved progress on this listing. Leave without saving?")) return
+    router.push("/rentals")
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back */}
-      <Link href="/rentals" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors">
+      <button
+        type="button"
+        onClick={handleLeave}
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors"
+      >
         <ArrowLeft className="h-4 w-4" /> Back to Rentals
-      </Link>
+      </button>
 
       <div className="flex items-center gap-3 mb-8">
         <div className="h-11 w-11 rounded-2xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -316,10 +333,12 @@ export default function NewRentalPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={LABEL}>City *</label>
-                  <select required className={SELECT} value={form.city} onChange={setStr("city")}>
-                    <option value="">Select city</option>
-                    {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <CityAutocomplete
+                    required
+                    value={form.city}
+                    onChange={(city) => set("city", city)}
+                    placeholder="Select city"
+                  />
                 </div>
                 <div>
                   <label className={LABEL}>Area / Locality *</label>
@@ -650,8 +669,8 @@ export default function NewRentalPage() {
 
           {/* Submit */}
           <div className="flex gap-3">
-            <Button type="button" variant="outline" size="lg" asChild className="flex-1">
-              <Link href="/rentals">Cancel</Link>
+            <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleLeave}>
+              Cancel
             </Button>
             <Button type="submit" size="lg" className="flex-2 flex-1" disabled={loading}>
               {loading ? (

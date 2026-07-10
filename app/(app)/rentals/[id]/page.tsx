@@ -6,8 +6,8 @@ import Link from "next/link"
 import loadDynamic from "next/dynamic"
 import {
   ArrowLeft, MapPin, Calendar, CheckCircle2, BedDouble, Bath,
-  Layers, Users, Eye, Phone, MessageSquare, Car, Zap,
-  Droplets, Flame, Wifi, Home, PencilLine, Compass,
+  Layers, Users, Phone, MessageSquare, Car, Zap,
+  Droplets, Flame, Wifi, Home, Compass,
   SquareArrowOutUpRight, Info, ShieldCheck,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
@@ -19,6 +19,8 @@ import { RentalInquiryPanel } from "@/components/rentals/RentalInquiryPanel"
 import { RentalEngagePanel }  from "@/components/rentals/RentalEngagePanel"
 import { RentalReportButton } from "@/components/rentals/RentalReportButton"
 import { RentalDeleteButton } from "@/components/rentals/RentalDeleteButton"
+import { RentalImageGallery } from "@/components/rentals/RentalImageGallery"
+import { RentalPhotoManager } from "@/components/rentals/RentalPhotoManager"
 
 const MapView = loadDynamic(
   () => import("@/components/rentals/MapView").then((m) => m.MapView),
@@ -154,11 +156,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         <div className="flex items-center gap-2">
           {isOwner && (
             <>
-              <Button variant="outline" size="sm" asChild className="gap-1.5">
-                <Link href={`/rentals/${params.id}/edit`}>
-                  <PencilLine className="h-3.5 w-3.5" /> Edit
-                </Link>
-              </Button>
+              <RentalPhotoManager rentalId={params.id} initialImages={rental.images} />
               <RentalDeleteButton rentalId={params.id} />
               <Button variant="outline" size="sm" asChild className="gap-1.5">
                 <Link href="/my-postings?tab=rentals">
@@ -182,49 +180,15 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         <div className="lg:col-span-2 space-y-5">
 
           {/* Image gallery */}
-          <div className="rounded-2xl overflow-hidden border border-border bg-muted">
-            {rental.images.length > 0 ? (
-              <div className="space-y-2 p-2">
-                <div className="relative aspect-video rounded-xl overflow-hidden">
-                  <Image src={rental.images[0]} alt={rental.title} fill className="object-cover" priority sizes="(max-width:1024px) 100vw, 66vw" />
-                  {isFilled && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-white font-extrabold text-2xl uppercase tracking-widest border-4 border-white/80 px-6 py-2 rounded-xl rotate-[-12deg]">Filled</span>
-                    </div>
-                  )}
-                  <div className="absolute top-3 left-3 flex gap-1.5">
-                    <span className={`text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${typeColor}`}>{rental.type}</span>
-                    {rental.furnished !== "UNFURNISHED" && (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-black/50 text-white backdrop-blur-sm">
-                        {rental.furnished === "FULLY" ? "Fully Furnished" : "Semi Furnished"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full backdrop-blur-sm">
-                    <Eye className="h-3 w-3" /> {rental.viewCount} views
-                  </div>
-                </div>
-                {rental.images.length > 1 && (
-                  <div className="grid grid-cols-4 gap-2">
-                    {rental.images.slice(1, 5).map((img, i) => (
-                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden">
-                        <Image src={img} alt="" fill className="object-cover" sizes="25vw" />
-                        {i === 3 && rental.images.length > 5 && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                            <span className="text-white font-bold text-sm">+{rental.images.length - 5}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="aspect-video flex items-center justify-center">
-                <Home className="h-12 w-12 text-muted-foreground/20" />
-              </div>
-            )}
-          </div>
+          <RentalImageGallery
+            images={rental.images}
+            title={rental.title}
+            isFilled={isFilled}
+            typeLabel={rental.type}
+            typeColor={typeColor}
+            furnishedLabel={rental.furnished !== "UNFURNISHED" ? (rental.furnished === "FULLY" ? "Fully Furnished" : "Semi Furnished") : null}
+            viewCount={rental.viewCount}
+          />
 
           {/* Title + Price */}
           <div className="flex items-start justify-between gap-4 flex-wrap">

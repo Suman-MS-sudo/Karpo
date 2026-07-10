@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
-import { CITIES } from "@/config/services"
+import { RentalCityFilter } from "@/components/rentals/RentalCityFilter"
 
 export const dynamic = "force-dynamic"
 
@@ -215,16 +215,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
               City
             </span>
-            <div className="flex flex-wrap gap-1.5">
-              <Pill href={buildUrl(sp, { city: undefined, page: undefined })} active={!activeCity}>
-                All Cities
-              </Pill>
-              {CITIES.map((c) => (
-                <Pill key={c} href={buildUrl(sp, { city: c, page: undefined })} active={activeCity === c}>
-                  {c}
-                </Pill>
-              ))}
-            </div>
+            <RentalCityFilter activeCity={activeCity ?? ""} />
           </div>
 
           {/* Divider */}

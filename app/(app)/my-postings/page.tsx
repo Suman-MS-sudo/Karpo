@@ -231,7 +231,7 @@ function RentalsSection({ rentals, limit }: { rentals: any[]; limit?: number }) 
               <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{r.viewCount}</span>
               <span>{formatRelativeTime(r.createdAt)}</span>
             </MetaRow>
-            <Actions href={`/rentals/${r.id}`} editHref={r.status === "ACTIVE" ? `/rentals/${r.id}/edit` : undefined} />
+            <Actions href={`/rentals/${r.id}`} editHref={r.status === "ACTIVE" ? `/rentals/${r.id}` : undefined} />
           </div>
         </PostCard>
       ))}

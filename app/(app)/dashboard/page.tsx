@@ -47,11 +47,11 @@ export default async function DashboardPage() {
     prisma.message.count({ where: { receiverId: userId, isRead: false } }),
     prisma.listing.aggregate({ where: { userId }, _sum: { viewCount: true } }),
     prisma.listing.count({ where: { status: "ACTIVE", ...cityFilter } }),
-    prisma.rentalPost.count({ where: { status: "ACTIVE" } }),
-    prisma.jobReferral.count({ where: { status: "OPEN" } }),
-    prisma.carpoolRoute.count({ where: { isActive: true } }),
-    prisma.servicePost.count({ where: { isActive: true } }),
-    prisma.event.count({ where: { isActive: true, date: { gte: new Date() } } }),
+    prisma.rentalPost.count({ where: { status: "ACTIVE", ...cityFilter } }),
+    prisma.jobReferral.count({ where: { status: "OPEN", ...(userCity ? { location: userCity } : {}) } }),
+    prisma.carpoolRoute.count({ where: { isActive: true, ...(userCity ? { fromLocation: userCity } : {}) } }),
+    prisma.servicePost.count({ where: { isActive: true, ...cityFilter } }),
+    prisma.event.count({ where: { isActive: true, date: { gte: new Date() }, ...(userCity ? { location: userCity } : {}) } }),
   ])
 
   const totalViews = viewsAgg._sum.viewCount ?? 0
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-xl font-bold leading-tight">
+              <h1 className="text-xl font-bold leading-tight text-red-500">
                 Good day, {session?.user?.name?.split(" ")[0] ?? "there"}!
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -135,6 +135,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Stats row ─────────────────────────────────────────────── */}
+      <div>
+      <h2 className="text-base font-semibold mb-4">My Dashboard</h2>
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {[
           { label: "Active Listings", value: myListingsCount, icon: TrendingUp,   href: "/my-postings", color: "text-blue-600 dark:text-blue-400",      bg: "bg-blue-100 dark:bg-blue-500/15"      },
@@ -153,6 +155,7 @@ export default async function DashboardPage() {
             </div>
           </Link>
         ))}
+      </div>
       </div>
 
       {/* ── Premium upsell — free users only ──────────────────────── */}

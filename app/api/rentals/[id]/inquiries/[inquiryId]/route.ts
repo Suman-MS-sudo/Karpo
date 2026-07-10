@@ -19,6 +19,21 @@ const ACTION_STATUS: Record<string, string> = {
   CLOSE_DEAL: "ACCEPTED",
 }
 
+export async function DELETE(_req: NextRequest, { params }: Ctx) {
+  const { session, error } = await requireVerified()
+  if (error) return error
+
+  const inquiry = await prisma.rentalInquiry.findUnique({ where: { id: params.inquiryId } })
+  if (!inquiry) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  if (inquiry.userId !== session.user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (inquiry.status === "ACCEPTED" || inquiry.status === "DONE") {
+    return NextResponse.json({ error: "This request has already been accepted and can no longer be revoked" }, { status: 400 })
+  }
+
+  await prisma.rentalInquiry.delete({ where: { id: params.inquiryId } })
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(req: NextRequest, { params }: Ctx) {
   const { session, error } = await requireVerified()
   if (error) return error

@@ -5,6 +5,7 @@ import { MessageSquare } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
+import { MessagesBackButton } from "@/components/shared/MessagesBackButton"
 
 export default async function MessagesPage() {
   const session = await auth()
@@ -36,7 +37,10 @@ export default async function MessagesPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold mb-6">Messages</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <MessagesBackButton />
+        <h1 className="text-2xl font-bold">Messages</h1>
+      </div>
 
       {conversations.length === 0 ? (
         <div className="text-center py-20">

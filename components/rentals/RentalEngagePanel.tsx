@@ -184,12 +184,14 @@ function MessageForm({
 // ─── Status Card ───────────────────────────────────────────────────────────
 
 function StatusCard({
-  engagement, ownerName, ownerAvatar, onUpgrade,
+  engagement, ownerName, ownerAvatar, onUpgrade, onRevoke, revoking,
 }: {
   engagement: MyEngagement
   ownerName: string
   ownerAvatar?: string | null
   onUpgrade: (mode: "visit" | "message") => void
+  onRevoke: () => void
+  revoking: boolean
 }) {
   const meta   = STATUS_META[engagement.status] ?? STATUS_META.PENDING
   const Icon   = meta.icon
@@ -275,6 +277,16 @@ function StatusCard({
         </button>
       )}
 
+      {/* Revoke — interest or visit request, while not yet accepted/done */}
+      {(engagement.type === "INTEREST" || engagement.type === "VISIT") &&
+        (isPending || engagement.status === "CONFIRMED") && (
+        <button onClick={onRevoke} disabled={revoking}
+          className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-xs font-semibold disabled:opacity-50">
+          {revoking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+          {revoking ? "Revoking…" : engagement.type === "VISIT" ? "Cancel Visit Request" : "Revoke Interest"}
+        </button>
+      )}
+
       {isDeclined && (
         <p className="text-xs text-muted-foreground text-center">
           You can reach out via the Messages tab.
@@ -294,6 +306,7 @@ export function RentalEngagePanel({ rentalId, myEngagement: initial, ownerName, 
   const [mode,    setMode]    = useState<Mode>("options")
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState("")
+  const [revoking, setRevoking] = useState(false)
 
   const submit = async (payload: Record<string, any>) => {
     setLoading(true)
@@ -328,16 +341,40 @@ export function RentalEngagePanel({ rentalId, myEngagement: initial, ownerName, 
   const sendMessage = (msg: string, moveIn: string) =>
     submit({ type: "INQUIRY", message: msg, moveInDate: moveIn || undefined })
 
+  const revoke = async () => {
+    if (!engagement) return
+    const label = engagement.type === "VISIT" ? "visit request" : "interest"
+    if (!confirm(`Revoke your ${label} for this listing?`)) return
+    setRevoking(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/rentals/${rentalId}/inquiries/${engagement.id}`, { method: "DELETE" })
+      if (res.ok) {
+        setEngagement(null)
+        setMode("options")
+        router.refresh()
+      } else {
+        const data = await res.json().catch(() => null)
+        setError(data?.error ?? "Could not revoke — please try again")
+      }
+    } finally {
+      setRevoking(false)
+    }
+  }
+
   // After any engagement exists, show status + upgrade options
   if (engagement && mode === "options") {
     return (
       <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
         <h3 className="font-semibold text-sm">Your Status</h3>
+        {error && <p className="text-xs text-destructive">{error}</p>}
         <StatusCard
           engagement={engagement}
           ownerName={ownerName}
           ownerAvatar={ownerAvatar}
           onUpgrade={(m) => setMode(m)}
+          onRevoke={revoke}
+          revoking={revoking}
         />
       </div>
     )

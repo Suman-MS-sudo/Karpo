@@ -69,25 +69,26 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     visitTime: visitTime  ?? null,
   }
 
-  const inquiry = existing
-    ? await prisma.rentalInquiry.update({ where: { id: existing.id }, data })
-    : await prisma.rentalInquiry.create({ data })
-
   const notifyBody = {
-    INTEREST: `${inquiry.userId} is interested in your listing: "${rental.title}"`,
+    INTEREST: `Someone is interested in your listing: "${rental.title}"`,
     VISIT: `Someone requested a visit for "${rental.title}"${visitDate ? ` on ${new Date(visitDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}`,
     INQUIRY: `New message about your listing: "${rental.title}"`,
   }[type] ?? `New inquiry for "${rental.title}"`
 
-  await prisma.notification.create({
-    data: {
-      userId: rental.userId,
-      type:   "RENTAL_INQUIRY",
-      title:  type === "VISIT" ? "Visit request received" : type === "INTEREST" ? "Someone is interested" : "New rental inquiry",
-      body:   notifyBody,
-      link:   `/rentals/${params.id}`,
-    },
-  })
+  const [inquiry] = await prisma.$transaction([
+    existing
+      ? prisma.rentalInquiry.update({ where: { id: existing.id }, data })
+      : prisma.rentalInquiry.create({ data }),
+    prisma.notification.create({
+      data: {
+        userId: rental.userId,
+        type:   "RENTAL_INQUIRY",
+        title:  type === "VISIT" ? "Visit request received" : type === "INTEREST" ? "Someone is interested" : "New rental inquiry",
+        body:   notifyBody,
+        link:   `/rentals/${params.id}`,
+      },
+    }),
+  ])
 
   return NextResponse.json(inquiry, { status: existing ? 200 : 201 })
 }
