@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
@@ -21,7 +21,19 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   const [quickPostOpen, setQuickPostOpen] = useState(false)
   const [searchQuery,   setSearchQuery]   = useState("")
   const searchRef = useRef<HTMLInputElement>(null)
+  const quickPostRef = useRef<HTMLDivElement>(null)
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
+
+  useEffect(() => {
+    if (!quickPostOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (quickPostRef.current && !quickPostRef.current.contains(e.target as Node)) {
+        setQuickPostOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [quickPostOpen])
 
   const handleServiceSelect = (service: ServiceConfig) => {
     setQuickPostOpen(false)
@@ -45,9 +57,9 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
       </button>
 
       {/* Brand — mobile only (desktop rail shows logo) */}
-      <Link href="/dashboard" className="flex items-center gap-2 mr-2 lg:hidden">
-        <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain" />
-        <span className="font-bold text-gray-900">Korpo</span>
+      <Link href="/dashboard" className="flex items-center gap-2 mr-2 shrink-0 lg:hidden">
+        <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain shrink-0" />
+        <span className="font-bold text-gray-900 whitespace-nowrap">Korpo</span>
       </Link>
 
       {/* Global search — desktop centered, mobile full width */}
@@ -76,20 +88,17 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
       {/* Right actions */}
       <div className="flex items-center gap-1">
         {/* Quick Post */}
-        <div className="relative">
+        <div className="relative" ref={quickPostRef}>
           <Button size="sm" onClick={() => setQuickPostOpen((o) => !o)} className="gap-1.5 h-8 px-3 text-xs">
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Post</span>
             <ChevronDown className="h-3 w-3 opacity-70" />
           </Button>
           {quickPostOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setQuickPostOpen(false)} />
-              <div className="absolute right-0 top-11 z-50 w-80 bg-card border border-border rounded-2xl shadow-xl p-4">
-                <p className="text-sm font-semibold mb-3">What would you like to post?</p>
-                <ServiceGrid variant="picker" onSelect={handleServiceSelect} />
-              </div>
-            </>
+            <div className="absolute right-0 top-11 z-50 w-80 bg-card border border-border rounded-2xl shadow-xl p-4">
+              <p className="text-sm font-semibold mb-3">What would you like to post?</p>
+              <ServiceGrid variant="picker" onSelect={handleServiceSelect} />
+            </div>
           )}
         </div>
 

@@ -99,7 +99,7 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
 
       {/* ── Welcome card ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 via-red-700 to-red-800 p-6 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-red-400 p-6 text-white">
         <div className="absolute -top-10 -right-10 h-40 w-40 bg-white/5 rounded-full" />
         <div className="absolute -bottom-6 -left-6 h-28 w-28 bg-white/5 rounded-full" />
         <div className="relative flex items-center justify-between gap-4">

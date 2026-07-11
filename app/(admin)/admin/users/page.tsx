@@ -21,8 +21,8 @@ export default async function AdminUsersPage({ searchParams }: Props) {
 
   const where: Record<string, unknown> = {}
   if (q) where.OR = [
-    { name:  { contains: q, mode: "insensitive" } },
-    { email: { contains: q, mode: "insensitive" } },
+    { name:  { contains: q } },
+    { email: { contains: q } },
   ]
   if (filter === "unverified") where.isVerified = false
   if (filter === "verified")   where.isVerified = true

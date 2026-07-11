@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const PAGE       = 20
 
   const where: any = { status: "ACTIVE" }
-  if (q)        where.OR = [{ title: { contains: q, mode: "insensitive" } }, { tagline: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }]
+  if (q)        where.OR = [{ title: { contains: q } }, { tagline: { contains: q } }, { description: { contains: q } }]
   if (category) where.category = category
   if (format)   where.format = format
   if (minRating) where.avgRating = { gte: parseFloat(minRating) }

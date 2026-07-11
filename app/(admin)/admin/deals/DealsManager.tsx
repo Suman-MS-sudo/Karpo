@@ -470,7 +470,7 @@ export function DealsManager({ deals: initial }: { deals: AdminDeal[] }) {
               )}
 
               <div className="flex gap-3 pt-1">
-                <Button variant="outline" className="flex-1" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button variant="outline" className="flex-1 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" onClick={() => setShowForm(false)}>Cancel</Button>
                 <Button className="flex-1" disabled={saving} onClick={save}>
                   {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editing ? "Save Changes" : "Create Deal"}
                 </Button>

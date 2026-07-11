@@ -178,7 +178,7 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm">Full Application</p>
-          <button onClick={() => setMode("options")} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+          <button onClick={() => setMode("options")} className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Cancel</button>
         </div>
 
         <div className="space-y-3">

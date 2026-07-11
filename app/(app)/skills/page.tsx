@@ -25,7 +25,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   const sort    = searchParams.sort ?? "featured"
 
   const where: any = { status: "ACTIVE" }
-  if (searchParams.q)        where.OR = [{ title: { contains: searchParams.q, mode: "insensitive" } }, { tagline: { contains: searchParams.q, mode: "insensitive" } }, { description: { contains: searchParams.q, mode: "insensitive" } }]
+  if (searchParams.q)        where.OR = [{ title: { contains: searchParams.q } }, { tagline: { contains: searchParams.q } }, { description: { contains: searchParams.q } }]
   if (searchParams.category) where.category    = searchParams.category
   if (searchParams.format)   where.format      = searchParams.format
   if (searchParams.minRating) where.avgRating  = { gte: parseFloat(searchParams.minRating) }

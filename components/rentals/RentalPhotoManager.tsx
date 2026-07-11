@@ -140,7 +140,7 @@ export function RentalPhotoManager({ rentalId, initialImages }: Props) {
       </div>
 
       <div className="flex gap-2 pt-1">
-        <Button variant="outline" size="sm" className="flex-1" onClick={cancel} disabled={saving}>Cancel</Button>
+        <Button variant="outline" size="sm" className="flex-1 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" onClick={cancel} disabled={saving}>Cancel</Button>
         <Button size="sm" className="flex-1 gap-2" onClick={save} disabled={saving || uploading || images.length === 0}>
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           {saving ? "Saving…" : "Save Photos"}

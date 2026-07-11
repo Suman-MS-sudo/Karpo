@@ -292,7 +292,7 @@ export default function EditListingPage() {
           <Button type="submit" className="flex-1" size="lg" disabled={saving || uploading}>
             {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Changes"}
           </Button>
-          <Button type="button" variant="outline" size="lg" asChild>
+          <Button type="button" variant="outline" size="lg" className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" asChild>
             <Link href={`/marketplace/${id}`}>Cancel</Link>
           </Button>
         </div>

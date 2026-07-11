@@ -87,7 +87,7 @@ export function SkillReviewForm({ listingId, orderId, sellerName }: Props) {
     <div className="border border-border rounded-2xl p-5 space-y-5">
       <div className="flex items-center justify-between">
         <p className="font-semibold">Review {sellerName}</p>
-        <button onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+        <button onClick={() => setOpen(false)} className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">Cancel</button>
       </div>
 
       {/* Ratings */}

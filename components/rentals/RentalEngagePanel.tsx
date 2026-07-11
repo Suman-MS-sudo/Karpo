@@ -127,7 +127,7 @@ function VisitForm({
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1" onClick={onCancel} disabled={loading}>Cancel</Button>
+        <Button variant="outline" size="sm" className="flex-1 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" onClick={onCancel} disabled={loading}>Cancel</Button>
         <Button size="sm" className="flex-1 gap-2" disabled={loading || !date || !time}
           onClick={() => onSubmit(date, time, note)}>
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Calendar className="h-3.5 w-3.5" />}
@@ -170,7 +170,7 @@ function MessageForm({
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1" onClick={onCancel} disabled={loading}>Cancel</Button>
+        <Button variant="outline" size="sm" className="flex-1 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" onClick={onCancel} disabled={loading}>Cancel</Button>
         <Button size="sm" className="flex-1 gap-2" disabled={loading || !msg.trim()}
           onClick={() => onSubmit(msg, moveIn)}>
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="h-3.5 w-3.5" />}

@@ -136,7 +136,7 @@ function ReviewCard({ review, listingId, isSeller }: { review: Review; listingId
                 <Button size="sm" className="text-xs" disabled={loading || !reply.trim()} onClick={submitReply}>
                   {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Post Reply"}
                 </Button>
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => setReplyOpen(false)}>Cancel</Button>
+                <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" onClick={() => setReplyOpen(false)}>Cancel</Button>
               </div>
             </div>
           ) : (

@@ -221,7 +221,7 @@ export default function EditEventPage() {
           <Button type="submit" className="flex-1" disabled={loading}>
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Changes"}
           </Button>
-          <Button type="button" variant="outline" asChild>
+          <Button type="button" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" asChild>
             <Link href={`/events/${id}`}>Cancel</Link>
           </Button>
         </div>

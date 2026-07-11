@@ -275,7 +275,7 @@ export function CarpoolRequestPanel({
           ) : (
             <button
               onClick={() => setCancelConfirm(true)}
-              className="w-full text-xs text-muted-foreground hover:text-red-500 dark:hover:text-red-400 transition-colors py-1 underline underline-offset-2"
+              className="w-full text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors py-1 underline underline-offset-2"
             >
               Cancel {myRequest.status === "APPROVED" ? "my seat" : "request"}
             </button>
@@ -449,7 +449,7 @@ export function CarpoolRequestPanel({
 
         {/* Footer — fixed */}
         <div className="px-6 py-4 border-t border-border flex gap-3 shrink-0">
-          <Button variant="outline" className="flex-1" onClick={() => { setModalOpen(false); setError("") }}>
+          <Button variant="outline" className="flex-1 text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" onClick={() => { setModalOpen(false); setError("") }}>
             Cancel
           </Button>
           <Button className="flex-1 gap-2" disabled={loading} onClick={submit}>

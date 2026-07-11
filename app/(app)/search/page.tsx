@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     )
   }
 
-  const contains = { contains: q, mode: "insensitive" as const }
+  const contains = { contains: q }
 
   const [listings, referrals, rentals, carpool, skills, events] = await Promise.all([
     prisma.listing.findMany({

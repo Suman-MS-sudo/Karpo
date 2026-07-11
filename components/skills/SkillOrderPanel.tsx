@@ -278,7 +278,7 @@ export function SkillOrderPanel({ listingId, sellerId, sellerName, myOrder, pack
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="font-semibold text-sm">Place an Order</p>
-          <button onClick={() => setMode("options")} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+          <button onClick={() => setMode("options")} className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">Cancel</button>
         </div>
 
         {/* Package selector */}
