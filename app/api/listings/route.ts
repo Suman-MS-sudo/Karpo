@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 
@@ -93,5 +94,6 @@ export async function POST(req: Request) {
       boostExpiresAt: isPremium ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null,
     },
   })
+  revalidatePath("/dashboard")
   return NextResponse.json(listing, { status: 201 })
 }

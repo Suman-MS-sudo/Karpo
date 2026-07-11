@@ -126,12 +126,17 @@ export function RentalPhotoManager({ rentalId, initialImages }: Props) {
         )}
 
         {!uploading && images.length < 10 && (
-          <label className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted hover:border-foreground/20 transition-all group">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted hover:border-foreground/20 transition-all group"
+          >
             <Upload className="h-5 w-5 text-muted-foreground mb-1 group-hover:text-foreground transition-colors" />
             <span className="text-[10px] text-muted-foreground group-hover:text-foreground">Add Photo</span>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={handleUpload} />
-          </label>
+          </button>
         )}
+        {/* Hidden input — display:none prevents scroll-to-top on focus */}
+        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} />
       </div>
 
       <div className="flex gap-2 pt-1">

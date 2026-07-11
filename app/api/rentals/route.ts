@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
     const rental = await prisma.rentalPost.create({
       data: { ...coreData(session.user.id, body), ...extendedData(body), isBoosted: isPremium },
     })
+    revalidatePath("/dashboard")
     return NextResponse.json(rental, { status: 201 })
   } catch (err: any) {
     // P2022 = column doesn't exist yet (db push pending) — fall back to core fields only

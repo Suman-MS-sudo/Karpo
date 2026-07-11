@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { emitNotification } from "@/lib/notification-events"
 
 type Ctx = { params: { id: string } }
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     INQUIRY: `New message about your listing: "${rental.title}"`,
   }[type] ?? `New inquiry for "${rental.title}"`
 
-  const [inquiry] = await prisma.$transaction([
+  const [inquiry, notification] = await prisma.$transaction([
     existing
       ? prisma.rentalInquiry.update({ where: { id: existing.id }, data })
       : prisma.rentalInquiry.create({ data }),
@@ -89,6 +90,16 @@ export async function POST(req: NextRequest, { params }: Ctx) {
       },
     }),
   ])
+
+  emitNotification(rental.userId, {
+    id:        notification.id,
+    title:     notification.title,
+    body:      notification.body,
+    type:      notification.type,
+    isRead:    notification.isRead,
+    link:      notification.link,
+    createdAt: notification.createdAt.toISOString(),
+  })
 
   return NextResponse.json(inquiry, { status: existing ? 200 : 201 })
 }

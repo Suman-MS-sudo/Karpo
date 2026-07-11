@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { MarketplaceFilters } from "@/components/marketplace/MarketplaceFilters"
 import { LISTING_CATEGORIES } from "@/config/services"
+import { fuzzyFilter } from "@/lib/fuzzy"
 
 const PAGE_SIZE = 24
 
@@ -131,27 +132,42 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     return rows.filter(Boolean) as NonNullable<(typeof rows)[number]>[]
   })() : []
 
-  const [listings, gridTotal] = await Promise.all([
-    prisma.listing.findMany({
-      where: gridWhere,
-      orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+  const LISTING_SELECT = {
+    id: true, title: true, description: true, price: true, images: true,
+    category: true, condition: true, isNegotiable: true, boostLevel: true,
+    viewCount: true, city: true, createdAt: true, userId: true,
+    user: {
       select: {
-        id: true, title: true, description: true, price: true, images: true,
-        category: true, condition: true, isNegotiable: true, boostLevel: true,
-        viewCount: true, city: true, createdAt: true, userId: true,
-        user: {
-          select: {
-            id: true, name: true, image: true, avatarUrl: true,
-            isVerified: true, jobTitle: true, department: true,
-            membership: { select: { plan: true } },
-          },
-        },
+        id: true, name: true, image: true, avatarUrl: true,
+        isVerified: true, jobTitle: true, department: true,
+        membership: { select: { plan: true } },
       },
-    }),
-    prisma.listing.count({ where: gridWhere }),
-  ])
+    },
+  } as const
+
+  let listings, gridTotal
+
+  if (searchParams.q) {
+    const exactCount = await prisma.listing.count({ where: gridWhere })
+    if (exactCount > 0) {
+      ;[listings, gridTotal] = await Promise.all([
+        prisma.listing.findMany({ where: gridWhere, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, select: LISTING_SELECT }),
+        Promise.resolve(exactCount),
+      ])
+    } else {
+      // Typo-tolerant fallback — e.g. "wadrobe" still finds "wardrobe"
+      const { OR, ...gridWhereNoQuery } = gridWhere as typeof gridWhere & { OR?: unknown }
+      const candidates = await prisma.listing.findMany({ where: gridWhereNoQuery, orderBy, take: 500, select: LISTING_SELECT })
+      const matched = fuzzyFilter(candidates, searchParams.q, (l) => [l.title, l.description])
+      gridTotal = matched.length
+      listings = matched.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE)
+    }
+  } else {
+    ;[listings, gridTotal] = await Promise.all([
+      prisma.listing.findMany({ where: gridWhere, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, select: LISTING_SELECT }),
+      prisma.listing.count({ where: gridWhere }),
+    ])
+  }
 
   const totalPages  = Math.ceil(gridTotal / PAGE_SIZE)
   const totalCount  = featuredListings.length + gridTotal

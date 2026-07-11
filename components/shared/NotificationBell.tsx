@@ -34,9 +34,22 @@ export function NotificationBell() {
   // Initial fetch + refresh on navigation
   useEffect(() => { fetchNotifs() }, [fetchNotifs, pathname])
 
-  // Poll for new notifications every 30 s
+  // Live push via SSE — new notifications (e.g. rental interest/visit requests)
+  // appear instantly without waiting for a poll or page reload.
   useEffect(() => {
-    const id = setInterval(fetchNotifs, 30_000)
+    const source = new EventSource("/api/notifications/stream")
+    source.onmessage = (e) => {
+      try {
+        const notif = JSON.parse(e.data) as Notif
+        setNotifs((prev) => [notif, ...prev.filter((n) => n.id !== notif.id)])
+      } catch {}
+    }
+    return () => source.close()
+  }, [])
+
+  // Poll as a fallback safety net in case the SSE connection drops
+  useEffect(() => {
+    const id = setInterval(fetchNotifs, 60_000)
     return () => clearInterval(id)
   }, [fetchNotifs])
 

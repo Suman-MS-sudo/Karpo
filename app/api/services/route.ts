@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 
@@ -36,5 +37,6 @@ export async function POST(req: Request) {
       city: body.city,
     },
   })
+  revalidatePath("/dashboard")
   return NextResponse.json(post, { status: 201 })
 }

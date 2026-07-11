@@ -35,20 +35,17 @@ export function CityAutocomplete({
     ? CITIES.slice(0, 50)
     : CITIES.filter((c) => c.toLowerCase().includes(query.toLowerCase())).slice(0, 50)
 
-  // Close on outside click
+  // Close on outside click — keep whatever the user typed (custom city names
+  // that aren't in the predefined list are still valid filter/search values).
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
-        // If input doesn't match a valid city, reset to last valid or empty
-        if (!CITIES.includes(query)) {
-          setQuery(value)
-        }
       }
     }
     document.addEventListener("mousedown", onMouseDown)
     return () => document.removeEventListener("mousedown", onMouseDown)
-  }, [query, value])
+  }, [])
 
   // Scroll highlighted item into view
   useEffect(() => {
@@ -120,7 +117,11 @@ export function CityAutocomplete({
           placeholder={placeholder}
           onFocus={() => setOpen(true)}
           onChange={(e) => {
-            setQuery(e.target.value)
+            const v = e.target.value
+            setQuery(v)
+            // Propagate immediately so custom city names (not in the predefined
+            // list) are captured too, not just ones picked from the dropdown.
+            onChange(v)
             setOpen(true)
             setHighlighted(-1)
           }}

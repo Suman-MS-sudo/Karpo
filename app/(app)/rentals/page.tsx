@@ -5,7 +5,7 @@ import Image from "next/image"
 import {
   Plus, MapPin, Calendar, ChevronLeft, ChevronRight,
   Wifi, Car, Dumbbell, Shield, Utensils, Zap, Home,
-  BedDouble, Bath, SlidersHorizontal,
+  BedDouble, Bath,
 } from "lucide-react"
 import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
@@ -13,44 +13,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
-import { RentalCityFilter } from "@/components/rentals/RentalCityFilter"
+import { RentalFilters } from "@/components/rentals/RentalFilters"
+import { fuzzyFilter } from "@/lib/fuzzy"
 
 export const dynamic = "force-dynamic"
 
 const PAGE_SIZE = 18
-
-const TYPES = [
-  { value: "",          label: "All Types",  count: null },
-  { value: "APARTMENT", label: "Apartment"              },
-  { value: "ROOM",      label: "Room"                   },
-  { value: "PG",        label: "PG"                     },
-  { value: "FLATMATE",  label: "Flatmate"               },
-  { value: "STUDIO",    label: "Studio"                 },
-  { value: "VILLA",     label: "Villa"                  },
-]
-
-const FURNISHED_OPTS = [
-  { value: "",           label: "Any"          },
-  { value: "FULLY",      label: "Fully Furnished" },
-  { value: "SEMI",       label: "Semi Furnished"  },
-  { value: "UNFURNISHED",label: "Unfurnished"     },
-]
-
-const GENDER_OPTS = [
-  { value: "",       label: "Any Gender"  },
-  { value: "MALE",   label: "Male Only"   },
-  { value: "FEMALE", label: "Female Only" },
-]
-
-const BHK_OPTS = ["1BHK", "2BHK", "3BHK", "4BHK+", "Studio", "Room", "PG Room"]
-
-const RENT_RANGES = [
-  { value: "",           label: "Any Budget"    },
-  { value: "0-10000",    label: "Under ₹10k"   },
-  { value: "10000-20000",label: "₹10k–₹20k"   },
-  { value: "20000-35000",label: "₹20k–₹35k"   },
-  { value: "35000-",     label: "₹35k+"        },
-]
 
 const AMENITY_ICONS: Record<string, React.ComponentType<{className?: string}>> = {
   WiFi: Wifi, Parking: Car, Gym: Dumbbell, Security: Shield,
@@ -69,8 +37,15 @@ const TYPE_COLOR: Record<string, string> = {
 interface PageProps {
   searchParams: {
     type?: string; city?: string; furnished?: string; bhk?: string
-    minRent?: string; maxRent?: string; gender?: string; page?: string; budget?: string
+    q?: string; page?: string; budget?: string; sort?: string
   }
+}
+
+const SORT_MAP = {
+  newest:     [{ isBoosted: "desc" as const }, { createdAt: "desc" as const }],
+  price_asc:  [{ rent: "asc" as const }],
+  price_desc: [{ rent: "desc" as const }],
+  views:      [{ viewCount: "desc" as const }, { createdAt: "desc" as const }],
 }
 
 function buildUrl(base: Record<string, string | undefined>, override: Record<string, string | undefined>) {
@@ -79,20 +54,6 @@ function buildUrl(base: Record<string, string | undefined>, override: Record<str
   for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v)
   const s = p.toString()
   return `/rentals${s ? `?${s}` : ""}`
-}
-
-function Pill({
-  active, href, children,
-}: { active: boolean; href: string; children: React.ReactNode }) {
-  return (
-    <Link href={href}>
-      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border cursor-pointer transition-all whitespace-nowrap ${
-        active
-          ? "bg-primary-600 text-white border-primary-600 shadow-sm"
-          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground bg-background"
-      }`}>{children}</span>
-    </Link>
-  )
 }
 
 export default async function RentalsPage({ searchParams }: PageProps) {
@@ -112,13 +73,12 @@ export default async function RentalsPage({ searchParams }: PageProps) {
     return [min || undefined, max || undefined]
   })()
 
-  const where = {
+  const baseWhere = {
     status: "ACTIVE",
     ...(searchParams.type ? { type: searchParams.type } : {}),
     ...(searchParams.city ? { city: searchParams.city } : {}),
     ...(searchParams.furnished ? { furnished: searchParams.furnished } : {}),
     ...(searchParams.bhk       ? { bhk:       searchParams.bhk }       : {}),
-    ...(searchParams.gender    ? { gender:    searchParams.gender }     : {}),
     ...((budgetMin || budgetMax) ? {
       rent: {
         ...(budgetMin ? { gte: parseInt(budgetMin) } : {}),
@@ -127,18 +87,53 @@ export default async function RentalsPage({ searchParams }: PageProps) {
     } : {}),
   }
 
-  const [rentals, total] = await Promise.all([
-    prisma.rentalPost.findMany({
-      where,
-      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      include: {
-        user: { include: { company: { select: { name: true, logo: true, domain: true } } } },
-      },
-    }),
-    prisma.rentalPost.count({ where }),
-  ])
+  const orderBy = SORT_MAP[(searchParams.sort as keyof typeof SORT_MAP) ?? "newest"] ?? SORT_MAP.newest
+  const q = searchParams.q?.trim()
+
+  const where = q ? {
+    ...baseWhere,
+    OR: [
+      { title:       { contains: q } },
+      { description: { contains: q } },
+      { area:        { contains: q } },
+      { societyName: { contains: q } },
+      { landmark:    { contains: q } },
+      { city:        { contains: q } },
+    ],
+  } : baseWhere
+
+  let rentals, total
+
+  if (q) {
+    // Exact substring match first; if a typo yields nothing, fall back to a
+    // fuzzy (typo-tolerant) match over a bounded candidate pool.
+    const exactCount = await prisma.rentalPost.count({ where })
+    if (exactCount > 0) {
+      ;[rentals, total] = await Promise.all([
+        prisma.rentalPost.findMany({
+          where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
+          include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+        }),
+        Promise.resolve(exactCount),
+      ])
+    } else {
+      const candidates = await prisma.rentalPost.findMany({
+        where: baseWhere, orderBy, take: 500,
+        include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+      })
+      const matched = fuzzyFilter(candidates, q, (r) => [r.title, r.description, r.area, r.societyName, r.landmark, r.city])
+      total = matched.length
+      rentals = matched.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE)
+    }
+  } else {
+    ;[rentals, total] = await Promise.all([
+      prisma.rentalPost.findMany({
+        where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
+        include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+      }),
+      prisma.rentalPost.count({ where }),
+    ])
+  }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
   const sp = {
@@ -146,18 +141,10 @@ export default async function RentalsPage({ searchParams }: PageProps) {
     city: searchParams.city,
     furnished: searchParams.furnished,
     bhk: searchParams.bhk,
-    gender: searchParams.gender,
     budget: searchParams.budget,
+    q: searchParams.q,
+    sort: searchParams.sort,
   }
-
-  const activeType      = searchParams.type      ?? ""
-  const activeFurnished = searchParams.furnished  ?? ""
-  const activeGender    = searchParams.gender     ?? ""
-  const activeBhk       = searchParams.bhk        ?? ""
-  const activeBudget    = searchParams.budget      ?? ""
-
-  const activeCity = searchParams.city ?? ""
-  const hasActiveFilters = !!(activeCity || activeFurnished || activeGender || activeBhk || activeBudget)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -184,152 +171,8 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Filter panel */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
-
-        {/* Type tab bar */}
-        <div className="flex items-center border-b border-border overflow-x-auto scrollbar-hide">
-          {TYPES.map((t) => {
-            const active = activeType === t.value
-            return (
-              <Link
-                key={t.value}
-                href={buildUrl(sp, { type: t.value || undefined, page: undefined })}
-                className={`relative shrink-0 px-5 py-3.5 text-sm font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${
-                  active
-                    ? "border-primary-600 text-primary-600 dark:text-primary-400"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                }`}
-              >
-                {t.label}
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* Filter rows */}
-        <div className="p-4 space-y-3">
-
-          {/* Row 0: City */}
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
-              City
-            </span>
-            <RentalCityFilter activeCity={activeCity ?? ""} />
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-border" />
-
-          {/* Row 1: Furnishing + Gender */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            {/* Furnishing */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
-                Furnishing
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {FURNISHED_OPTS.map((f) => (
-                  <Pill
-                    key={f.value}
-                    href={buildUrl(sp, { furnished: f.value || undefined, page: undefined })}
-                    active={activeFurnished === f.value}
-                  >
-                    {f.label}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden sm:block h-5 w-px bg-border" />
-
-            {/* Gender */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-14">
-                Gender
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {GENDER_OPTS.map((g) => (
-                  <Pill
-                    key={g.value}
-                    href={buildUrl(sp, { gender: g.value || undefined, page: undefined })}
-                    active={activeGender === g.value}
-                  >
-                    {g.label}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-border" />
-
-          {/* Row 2: BHK + Budget */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            {/* BHK */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-20">
-                BHK / Size
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {BHK_OPTS.map((b) => (
-                  <Pill
-                    key={b}
-                    href={buildUrl(sp, { bhk: activeBhk === b ? undefined : b, page: undefined })}
-                    active={activeBhk === b}
-                  >
-                    {b}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden lg:block h-5 w-px bg-border" />
-
-            {/* Budget */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider shrink-0 w-14">
-                Budget
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {RENT_RANGES.map((r) => (
-                  <Pill
-                    key={r.value}
-                    href={buildUrl(sp, { budget: r.value || undefined, page: undefined })}
-                    active={activeBudget === r.value}
-                  >
-                    {r.label}
-                  </Pill>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Active filter summary + clear */}
-          {hasActiveFilters && (
-            <div className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <SlidersHorizontal className="h-3.5 w-3.5 text-primary-600" />
-                <span className="text-xs text-primary-600 font-medium">Active filters:</span>
-                {activeCity      && <span className="text-xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-md">{activeCity}</span>}
-                {activeFurnished && <span className="text-xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-md">{FURNISHED_OPTS.find(f => f.value === activeFurnished)?.label}</span>}
-                {activeGender    && <span className="text-xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-md">{GENDER_OPTS.find(g => g.value === activeGender)?.label}</span>}
-                {activeBhk       && <span className="text-xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-md">{activeBhk}</span>}
-                {activeBudget    && <span className="text-xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-md">{RENT_RANGES.find(r => r.value === activeBudget)?.label}</span>}
-              </div>
-              <Link
-                href={buildUrl({ type: activeType || undefined }, {})}
-                className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
-              >
-                Clear all
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Filters */}
+      <RentalFilters current={sp} />
 
       {/* Premium listings label */}
       {rentals.some((r) => r.isBoosted) && (

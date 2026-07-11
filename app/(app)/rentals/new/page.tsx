@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import dynamic from "next/dynamic"
@@ -141,18 +141,31 @@ type FormState = {
   description: string
 }
 
+const DRAFT_KEY = "rentals-new-draft"
+
+function loadDraft(): { form?: FormState; images?: string[]; amenities?: string[]; furnishingItems?: string[] } | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 export default function NewRentalPage() {
   const router = useRouter()
   const { data: session } = useSession()
+  const draft = useRef(loadDraft())
   const [loading, setLoading]         = useState(false)
-  const [images, setImages]           = useState<string[]>([])
+  const [images, setImages]           = useState<string[]>(draft.current?.images ?? [])
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState("")
   const fileInputRef                  = useRef<HTMLInputElement>(null)
-  const [amenities, setAmenities]     = useState<string[]>([])
-  const [furnishingItems, setFurnishingItems] = useState<string[]>([])
+  const [amenities, setAmenities]     = useState<string[]>(draft.current?.amenities ?? [])
+  const [furnishingItems, setFurnishingItems] = useState<string[]>(draft.current?.furnishingItems ?? [])
 
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = useState<FormState>(draft.current?.form ?? {
     title:"", type:"APARTMENT", phone:"",
     city: session?.user?.city ?? "", area:"", societyName:"", landmark:"", fullAddress:"",
     latitude: null, longitude: null,
@@ -169,6 +182,16 @@ export default function NewRentalPage() {
     vegetarianOnly:false, visitorsAllowed:true, nonVegAllowed:true, petsAllowed:false,
     description:"",
   })
+
+  // Persist a draft on every change so entered details survive an accidental
+  // reload/navigation (e.g. while the native photo picker is open).
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, images, amenities, furnishingItems }))
+    } catch {
+      // sessionStorage unavailable (private mode, quota) — draft persistence is best-effort
+    }
+  }, [form, images, amenities, furnishingItems])
 
   const set = (k: keyof FormState, v: any) => setForm((p) => ({ ...p, [k]: v }))
   const setStr = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -234,8 +257,10 @@ export default function NewRentalPage() {
         }),
       })
       const data = await res.json()
-      if (res.ok) router.push(`/rentals/${data.id}`)
-      else alert(data.error ?? "Something went wrong")
+      if (res.ok) {
+        sessionStorage.removeItem(DRAFT_KEY)
+        router.push(`/rentals/${data.id}`)
+      } else alert(data.error ?? "Something went wrong")
     } finally {
       setLoading(false)
     }
@@ -253,6 +278,7 @@ export default function NewRentalPage() {
 
   const handleLeave = () => {
     if (hasProgress && !confirm("You have unsaved progress on this listing. Leave without saving?")) return
+    sessionStorage.removeItem(DRAFT_KEY)
     router.push("/rentals")
   }
 
@@ -657,12 +683,17 @@ export default function NewRentalPage() {
                 )}
 
                 {!uploading && images.length < 10 && (
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted hover:border-foreground/20 transition-all group">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted hover:border-foreground/20 transition-all group"
+                  >
                     <Upload className="h-5 w-5 text-muted-foreground mb-1 group-hover:text-foreground transition-colors" />
                     <span className="text-[10px] text-muted-foreground group-hover:text-foreground">Add Photo</span>
-                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={handleImageUpload} />
-                  </label>
+                  </button>
                 )}
+                {/* Hidden input — display:none prevents scroll-to-top on focus */}
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
               </div>
             </div>
           </div>

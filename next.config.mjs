@@ -36,6 +36,9 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client", "@libsql/client", "@prisma/adapter-libsql"],
+    staleTimes: {
+      dynamic: 0,
+    },
   },
 };
 
