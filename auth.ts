@@ -6,7 +6,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
 import { provisionUser } from "@/lib/auth-provision"
-import { verifyPassword } from "@/lib/password"
+import { verifyPassword, hashPassword } from "@/lib/password"
+import { normalizePhone } from "@/lib/phone"
 
 function isAdminEmail(email: string) {
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase())
@@ -24,11 +25,40 @@ const providers: Provider[] = [
         email: { type: "email" },
         otp: { type: "text" },
         password: { type: "password" },
+        name: { type: "text" },
+        phone: { type: "tel" },
+        newPassword: { type: "password" },
+        whatsappOtp: { type: "text" },
       },
       async authorize(credentials) {
-        const email    = (credentials?.email as string | undefined)?.trim().toLowerCase()
-        const otp      = credentials?.otp as string | undefined
-        const password = credentials?.password as string | undefined
+        const email       = (credentials?.email as string | undefined)?.trim().toLowerCase()
+        const otp         = credentials?.otp as string | undefined
+        const password    = credentials?.password as string | undefined
+        const regName     = credentials?.name as string | undefined
+        const regPhone    = credentials?.phone as string | undefined
+        const newPassword = credentials?.newPassword as string | undefined
+        const whatsappOtp = credentials?.whatsappOtp as string | undefined
+
+        // ── WhatsApp OTP login (returning users, phone-based, no email) ────────
+        if (!email && regPhone && whatsappOtp) {
+          const phone = normalizePhone(regPhone)
+          const token = await prisma.verificationToken.findFirst({
+            where: { identifier: `wa:${phone}`, token: whatsappOtp, expires: { gt: new Date() } },
+          })
+          if (!token) return null
+
+          const dbUser = await prisma.user.findUnique({ where: { phone } })
+          if (!dbUser || !dbUser.isVerified) return null
+
+          await prisma.verificationToken.deleteMany({ where: { identifier: `wa:${phone}` } })
+
+          return {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            image: dbUser.image ?? dbUser.avatarUrl,
+          }
+        }
 
         if (!email || (!otp && !password)) return null
 
@@ -78,7 +108,17 @@ const providers: Provider[] = [
         // Consume the token immediately
         await prisma.verificationToken.deleteMany({ where: { identifier: email } })
 
-        const { dbUser } = await provisionUser(email, { isAdmin })
+        // Registration form (Name/Phone/Password) collected upfront on the
+        // "register" step — only applied when creating a brand-new account;
+        // a returning user's existing phone/password aren't overwritten by a
+        // plain re-login OTP that happens not to carry these fields.
+        const isNewAccount = !(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
+        const regProvision =
+          isNewAccount && regName && regPhone && newPassword
+            ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword) }
+            : {}
+
+        const { dbUser } = await provisionUser(email, { isAdmin, ...regProvision })
 
         return {
           id: dbUser.id,

@@ -11,7 +11,10 @@ const DEV_DOMAINS: Record<string, string> = {
 // behavior consistent across sign-in methods. Both flows are trusted enough
 // (OTP proves inbox ownership; LinkedIn's own login proves identity) to
 // verify the user immediately.
-export async function provisionUser(email: string, opts: { isAdmin: boolean; name?: string | null }) {
+export async function provisionUser(
+  email: string,
+  opts: { isAdmin: boolean; name?: string | null; phone?: string | null; passwordHash?: string | null }
+) {
   const domain = email.split("@")[1]
   const company = await prisma.company.findFirst({ where: { domain, isApproved: true } })
   const isExisting = !!(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
@@ -22,10 +25,14 @@ export async function provisionUser(email: string, opts: { isAdmin: boolean; nam
       isVerified: true,
       ...(opts.isAdmin ? { role: "ADMIN" } : {}),
       ...(company ? { companyId: company.id } : {}),
+      ...(opts.phone ? { phone: opts.phone } : {}),
+      ...(opts.passwordHash ? { passwordHash: opts.passwordHash } : {}),
     },
     create: {
       email,
       name: opts.isAdmin ? "Admin" : (opts.name ?? null),
+      phone: opts.phone ?? null,
+      passwordHash: opts.passwordHash ?? null,
       isVerified: true,
       role: opts.isAdmin ? "ADMIN" : "USER",
       ...(company ? { companyId: company.id } : {}),

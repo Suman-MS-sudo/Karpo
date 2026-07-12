@@ -70,7 +70,7 @@ model User {
   image           String?
   avatarUrl       String?
   bio             String?
-  phone           String?
+  phone           String?   @unique
   city            String?
   department      String?
   jobTitle        String?

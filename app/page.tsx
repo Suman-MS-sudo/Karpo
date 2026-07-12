@@ -62,6 +62,9 @@ export default function LandingPage() {
             <Link href="/auth/signin?callbackUrl=/admin" className="text-xs text-gray-700/80 hover:text-gray-900 transition-colors px-2 py-1">
               Admin
             </Link>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/auth/signin?mode=register">Register</Link>
+            </Button>
             <Button asChild size="sm" className="bg-brand-red-600 hover:bg-brand-red-700 text-white shadow-sm">
               <Link href="/auth/signin">Join with work email <ArrowRight className="h-4 w-4" /></Link>
             </Button>

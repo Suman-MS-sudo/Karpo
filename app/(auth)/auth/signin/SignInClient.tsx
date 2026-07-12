@@ -9,14 +9,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Step = "email" | "otp" | "password" | "idcard" | "idcard-submitted"
+type Step = "email" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
   const router      = useRouter()
   const callbackUrl = params.get("callbackUrl") ?? "/dashboard"
 
-  const [step, setStep]       = useState<Step>("email")
+  const [step, setStep]       = useState<Step>(params.get("mode") === "register" ? "register" : "email")
   const [email, setEmail]     = useState("")
   const [otp, setOtp]         = useState(["", "", "", "", "", ""])
   const [isNewUser, setIsNewUser] = useState(false)
@@ -24,6 +24,25 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [error, setError]     = useState("")
   const [resendIn, setResendIn] = useState(0)
   const [password, setPassword] = useState("")
+
+  // ── Registration (Name/Corp email/Phone/Password, upfront) ─────────────────
+  const [regName, setRegName]         = useState("")
+  const [regPhone, setRegPhone]       = useState("")
+  const [regPassword, setRegPassword] = useState("")
+  const [regPasswordConfirm, setRegPasswordConfirm] = useState("")
+  const [registering, setRegistering] = useState(false)
+
+  // ── WhatsApp OTP login (returning users) ────────────────────────────────────
+  const [waPhone, setWaPhone]   = useState("")
+  const [waOtp, setWaOtp]       = useState(["", "", "", "", "", ""])
+  const [waResendIn, setWaResendIn] = useState(0)
+  const waOtpRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  useEffect(() => {
+    if (waResendIn <= 0) return
+    const t = setTimeout(() => setWaResendIn((n) => n - 1), 1000)
+    return () => clearTimeout(t)
+  }, [waResendIn])
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -104,6 +123,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         redirect: false,
         email: email.trim().toLowerCase(),
         otp: finalCode,
+        ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword } : {}),
       })
       if (result?.error) {
         setError("Invalid or expired code. Please try again.")
@@ -126,7 +146,110 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setLoading(false)
     }
-  }, [email, otp, isNewUser, callbackUrl, router])
+  }, [email, otp, isNewUser, callbackUrl, router, registering, regName, regPhone, regPassword])
+
+  // ── Registration: submit Name/Email/Phone/Password, then send email OTP ───
+  const handleRegisterSubmit = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    if (regPassword.length < 8) { setError("Password must be at least 8 characters."); return }
+    if (regPassword !== regPasswordConfirm) { setError("Passwords don't match."); return }
+    setLoading(true)
+    try {
+      const res  = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Failed to send code"); return }
+      setIsNewUser(data.isNewUser)
+      setRegistering(true)
+      setStep("otp")
+      setResendIn(60)
+      if (data.devOtp) {
+        const digits = String(data.devOtp).split("")
+        setOtp(digits)
+        setTimeout(() => handleVerifyOTP(data.devOtp), 300)
+        return
+      }
+      setTimeout(() => otpRefs.current[0]?.focus(), 50)
+    } finally {
+      setLoading(false)
+    }
+  }, [email, regPassword, regPasswordConfirm, handleVerifyOTP])
+
+  // ── WhatsApp OTP login: step 1, send code ───────────────────────────────────
+  const handleSendWhatsAppOTP = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const res  = await fetch("/api/auth/send-whatsapp-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: waPhone.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Failed to send code"); return }
+      setStep("phone-otp")
+      setWaResendIn(60)
+      if (data.devOtp) {
+        const digits = String(data.devOtp).split("")
+        setWaOtp(digits)
+        setTimeout(() => handleVerifyWhatsAppOTP(data.devOtp), 300)
+        return
+      }
+      setTimeout(() => waOtpRefs.current[0]?.focus(), 50)
+    } finally {
+      setLoading(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waPhone])
+
+  // ── WhatsApp OTP login: step 2, verify code ─────────────────────────────────
+  const handleVerifyWhatsAppOTP = useCallback(async (code?: string) => {
+    const finalCode = code ?? waOtp.join("")
+    if (finalCode.length !== 6) return
+    setError("")
+    setLoading(true)
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        phone: waPhone.trim(),
+        whatsappOtp: finalCode,
+      })
+      if (result?.error) {
+        setError("Invalid or expired code. Please try again.")
+        setWaOtp(["", "", "", "", "", ""])
+        waOtpRefs.current[0]?.focus()
+        return
+      }
+      const sessionRes = await fetch("/api/auth/session")
+      const sessionData = sessionRes.ok ? await sessionRes.json() : null
+      const isAdmin = sessionData?.user?.role === "ADMIN"
+      router.push(isAdmin ? (callbackUrl.startsWith("/admin") ? callbackUrl : "/admin") : callbackUrl)
+    } finally {
+      setLoading(false)
+    }
+  }, [waPhone, waOtp, callbackUrl, router])
+
+  const handleWaOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1)
+    const next  = [...waOtp]
+    next[index] = digit
+    setWaOtp(next)
+    if (digit && index < 5) waOtpRefs.current[index + 1]?.focus()
+    if (digit && index === 5 && next.every(Boolean)) {
+      handleVerifyWhatsAppOTP(next.join(""))
+    }
+  }
+
+  const handleWaOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !waOtp[index] && index > 0) waOtpRefs.current[index - 1]?.focus()
+    if (e.key === "ArrowLeft" && index > 0) waOtpRefs.current[index - 1]?.focus()
+    if (e.key === "ArrowRight" && index < 5) waOtpRefs.current[index + 1]?.focus()
+  }
 
   // ── Password sign-in (alternative to OTP, set up post-verification) ────────
   const handlePasswordSignIn = useCallback(async (e?: React.FormEvent) => {
@@ -277,6 +400,30 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
+        {step === "register" && (
+          <>
+            <h1 className="text-2xl font-bold">Create your Korpo account</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Name, corporate email, phone and a password — verified once by email
+            </p>
+          </>
+        )}
+        {step === "phone" && (
+          <>
+            <h1 className="text-2xl font-bold">Sign in with WhatsApp</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Enter the phone number you registered with
+            </p>
+          </>
+        )}
+        {step === "phone-otp" && (
+          <>
+            <h1 className="text-2xl font-bold">Enter your code</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              We sent a 6-digit code on WhatsApp to <span className="font-medium text-foreground">{waPhone}</span>
+            </p>
+          </>
+        )}
       </div>
 
       {/* Error banner */}
@@ -330,6 +477,22 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
           >
             Have a password? Sign in with it
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("phone") }}
+            className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+          >
+            Sign in with WhatsApp OTP
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("register") }}
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
+          >
+            New here? Create an account
           </button>
 
           {linkedinAvailable && (
@@ -527,6 +690,139 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <Button variant="outline" className="w-full" size="lg" onClick={() => setStep("email")}>
             Back to sign in
           </Button>
+        </div>
+      )}
+
+      {/* ── Step: Registration (Name/Corp email/Phone/Password) ─────────────── */}
+      {step === "register" && (
+        <form onSubmit={handleRegisterSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="reg-name">Full name</Label>
+            <Input id="reg-name" value={regName} onChange={(e) => setRegName(e.target.value)} required autoFocus />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="reg-email">Corporate email</Label>
+            <Input id="reg-email" type="email" autoComplete="email" placeholder="you@yourcompany.com"
+              value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="reg-phone">Phone number</Label>
+            <Input id="reg-phone" type="tel" placeholder="+91 98765 43210"
+              value={regPhone} onChange={(e) => setRegPhone(e.target.value)} required />
+            <p className="text-xs text-muted-foreground">Used to sign in with a WhatsApp OTP from your next login onward.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="reg-password">Set a password</Label>
+              <Input id="reg-password" type="password" autoComplete="new-password"
+                value={regPassword} onChange={(e) => setRegPassword(e.target.value)} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="reg-password-confirm">Confirm password</Label>
+              <Input id="reg-password-confirm" type="password" autoComplete="new-password"
+                value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} required />
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full" size="lg"
+            disabled={loading || !regName || !email.includes("@") || !regPhone || !regPassword || !regPasswordConfirm}>
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Verify email & create account →"}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => { setStep("email"); setError("") }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+          </button>
+        </form>
+      )}
+
+      {/* ── Step: WhatsApp OTP sign-in — phone entry ─────────────────────────── */}
+      {step === "phone" && (
+        <form onSubmit={handleSendWhatsAppOTP} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="wa-phone">Phone number</Label>
+            <Input id="wa-phone" type="tel" placeholder="+91 98765 43210"
+              value={waPhone} onChange={(e) => setWaPhone(e.target.value)} required autoFocus />
+          </div>
+
+          <Button type="submit" className="w-full" size="lg" disabled={loading || !waPhone}>
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send WhatsApp code →"}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => { setStep("email"); setError("") }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+          </button>
+        </form>
+      )}
+
+      {/* ── Step: WhatsApp OTP sign-in — code entry ──────────────────────────── */}
+      {step === "phone-otp" && (
+        <div className="space-y-5">
+          <div>
+            <Label className="block text-center mb-3">Enter the 6-digit code</Label>
+            <div className="flex gap-2 justify-center">
+              {waOtp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => { waOtpRefs.current[i] = el }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleWaOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleWaOtpKeyDown(i, e)}
+                  disabled={loading}
+                  className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-xl
+                    focus:border-primary-600 focus:ring-2 focus:ring-primary-200 focus:outline-none
+                    bg-background transition-all
+                    ${digit ? "border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300" : "border-border"}
+                    ${loading ? "opacity-50 cursor-not-allowed" : ""}
+                  `}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={loading || waOtp.join("").length !== 6}
+            onClick={() => handleVerifyWhatsAppOTP()}
+          >
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying…</> : "Verify & Sign in →"}
+          </Button>
+
+          <div className="flex items-center justify-between text-sm pt-1">
+            <button
+              type="button"
+              onClick={() => { setStep("phone"); setWaOtp(["","","","","",""]); setError("") }}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Change number
+            </button>
+            {waResendIn > 0 ? (
+              <span className="text-muted-foreground">Resend in {waResendIn}s</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSendWhatsAppOTP()}
+                disabled={loading}
+                className="flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Resend code
+              </button>
+            )}
+          </div>
         </div>
       )}
 
