@@ -3,20 +3,20 @@ import { Suspense, useState, useRef, useEffect, useCallback } from "react"
 import { signIn } from "next-auth/react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ShieldCheck, ArrowLeft, Loader2, Mail, RefreshCw, IdCard, Upload, CheckCircle2 } from "lucide-react"
+import { ShieldCheck, ArrowLeft, ArrowRight, Loader2, Mail, RefreshCw, IdCard, Upload, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Step = "email" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp"
+type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
   const router      = useRouter()
   const callbackUrl = params.get("callbackUrl") ?? "/dashboard"
 
-  const [step, setStep]       = useState<Step>(params.get("mode") === "register" ? "register" : "email")
+  const [step, setStep]       = useState<Step>(params.get("mode") === "register" ? "register-choice" : "signin")
   const [email, setEmail]     = useState("")
   const [otp, setOtp]         = useState(["", "", "", "", "", ""])
   const [isNewUser, setIsNewUser] = useState(false)
@@ -360,11 +360,19 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <Image src="/logo.png" alt="Korpo" width={40} height={40} className="rounded-xl object-contain" />
           <span className="font-bold text-2xl text-primary-600">Korpo</span>
         </Link>
-        {step === "email" && (
+        {step === "signin" && (
           <>
             <h1 className="text-2xl font-bold">Sign in to Korpo</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">
-              Enter your corporate email to get started
+              Choose how you&apos;d like to sign in
+            </p>
+          </>
+        )}
+        {step === "register-choice" && (
+          <>
+            <h1 className="text-2xl font-bold">Register with Korpo</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Verify your corporate identity to get started
             </p>
           </>
         )}
@@ -443,97 +451,116 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         </div>
       )}
 
-      {/* ── Step 1: Email input ──────────────────────────────────────────────── */}
-      {step === "email" && (
-        <form onSubmit={handleSendOTP} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Corporate email</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@yourcompany.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-9"
-                required
-                autoFocus
-              />
+      {/* ── Register: choice menu ────────────────────────────────────────────── */}
+      {step === "register-choice" && (
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("register") }}
+            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+          >
+            <div className="h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center shrink-0">
+              <Mail className="h-5 w-5 text-primary-600" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Gmail, Yahoo, Outlook and temporary addresses are blocked.
-            </p>
-          </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">Verify your Corp email</p>
+              <p className="text-xs text-muted-foreground">One-time OTP sent to your work inbox</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
-          <Button type="submit" className="w-full" size="lg" disabled={loading || !email.includes("@")}>
-            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send verification code →"}
-          </Button>
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("idcard") }}
+            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+          >
+            <div className="h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center shrink-0">
+              <IdCard className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">Don&apos;t have a Corp email?</p>
+              <p className="text-xs text-muted-foreground">Register with your Organization ID card</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("signin") }}
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground font-medium transition-colors pt-1"
+          >
+            Already verified? Sign in
+          </button>
+        </div>
+      )}
+
+      {/* ── Sign in: verified users only ──────────────────────────────────────── */}
+      {step === "signin" && (
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("phone") }}
+            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+          >
+            <div className="h-10 w-10 rounded-lg bg-brand-green-50 dark:bg-brand-green-600/10 flex items-center justify-center shrink-0">
+              <svg className="h-5 w-5 text-brand-green-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.45 3.38 1.3 4.85L2.05 22l5.36-1.41a9.9 9.9 0 0 0 4.63 1.18h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0 0 12.04 2zm5.83 14.11c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.12.11-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.75-4.14-4.9-4.33-.14-.2-1.17-1.56-1.17-2.98 0-1.42.74-2.11 1-2.41.26-.3.57-.37.76-.37.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.57.81 1.98.88 2.12.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.45.12.61-.07.17-.19.71-.83.9-1.11.19-.29.38-.24.64-.14.26.1 1.65.78 1.94.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">WhatsApp OTP</p>
+              <p className="text-xs text-muted-foreground">Code sent to your registered number</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
 
           <button
             type="button"
             onClick={() => { setError(""); setStep("password") }}
-            className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
           >
-            Have a password? Sign in with it
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setError(""); setStep("phone") }}
-            className="w-full text-center text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
-          >
-            Sign in with WhatsApp OTP
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setError(""); setStep("register") }}
-            className="w-full text-center text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
-          >
-            New here? Create an account
+            <div className="h-10 w-10 rounded-lg bg-brand-yellow-50 dark:bg-brand-yellow-600/10 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5 text-brand-yellow-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">Password</p>
+              <p className="text-xs text-muted-foreground">Sign in with your saved password</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
           {linkedinAvailable && (
-            <>
-              <div className="flex items-center gap-3 py-1">
-                <div className="h-px flex-1 bg-border" />
-                <span className="text-xs text-muted-foreground">OR</span>
-                <div className="h-px flex-1 bg-border" />
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                size="lg"
-                onClick={handleLinkedInSignIn}
-                disabled={linkedinLoading}
-              >
+            <button
+              type="button"
+              onClick={handleLinkedInSignIn}
+              disabled={linkedinLoading}
+              className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group disabled:opacity-60"
+            >
+              <div className="h-10 w-10 rounded-lg bg-[#0A66C2]/10 flex items-center justify-center shrink-0">
                 {linkedinLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-5 w-5 animate-spin text-[#0A66C2]" />
                 ) : (
-                  <svg className="h-4 w-4 mr-2 shrink-0" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden="true">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.114 20.452H3.558V9h3.556v11.452z" />
                   </svg>
                 )}
-                Continue with LinkedIn
-              </Button>
-            </>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">Continue with LinkedIn</p>
+                <p className="text-xs text-muted-foreground">Sign in using your LinkedIn account</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           )}
 
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="w-full"
-            size="lg"
-            onClick={() => { setError(""); setStep("idcard") }}
+            onClick={() => { setError(""); setStep("register-choice") }}
+            className="w-full text-center text-sm text-muted-foreground hover:text-foreground font-medium transition-colors pt-1"
           >
-            <IdCard className="h-4 w-4 mr-2 shrink-0" />
-            Verify with Organization ID card
-          </Button>
-        </form>
+            New here? Create an account
+          </button>
+        </div>
       )}
 
       {/* ── Password sign-in ─────────────────────────────────────────────────── */}
@@ -571,10 +598,10 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <button
             type="button"
-            onClick={() => { setStep("email"); setPassword(""); setError("") }}
+            onClick={() => { setStep("signin"); setPassword(""); setError("") }}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Use a verification code instead
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
         </form>
       )}
@@ -669,7 +696,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <button
             type="button"
-            onClick={() => { setStep("email"); setError("") }}
+            onClick={() => { setStep("register-choice"); setError("") }}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back
@@ -687,7 +714,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             We've received your details for <span className="font-medium text-foreground">{idCorpEmail}</span>.
             Once an admin approves your request, sign in with this email and the password you just set.
           </p>
-          <Button variant="outline" className="w-full" size="lg" onClick={() => setStep("email")}>
+          <Button variant="outline" className="w-full" size="lg" onClick={() => setStep("signin")}>
             Back to sign in
           </Button>
         </div>
@@ -734,10 +761,10 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <button
             type="button"
-            onClick={() => { setStep("email"); setError("") }}
+            onClick={() => { setStep("register-choice"); setError("") }}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
         </form>
       )}
@@ -757,7 +784,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <button
             type="button"
-            onClick={() => { setStep("email"); setError("") }}
+            onClick={() => { setStep("signin"); setError("") }}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
@@ -871,7 +898,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <div className="flex items-center justify-between text-sm pt-1">
             <button
               type="button"
-              onClick={() => { setStep("email"); setOtp(["","","","","",""]); setError("") }}
+              onClick={() => { setStep("register"); setOtp(["","","","","",""]); setError("") }}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Change email

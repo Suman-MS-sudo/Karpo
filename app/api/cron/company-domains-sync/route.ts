@@ -48,18 +48,22 @@ export async function POST(req: Request) {
     const rows = pending
       .map((r) => `<tr><td style="padding:6px 12px">${r.name}</td><td style="padding:6px 12px">${r.domain}</td><td style="padding:6px 12px">${r.requestedBy}</td></tr>`)
       .join("")
-    await sendEmail({
-      to: adminEmail,
-      subject: `Korpo: ${pending.length} company request${pending.length === 1 ? "" : "s"} awaiting review`,
-      html: `
-        <p>${pending.length} company domain request${pending.length === 1 ? " is" : "s are"} still pending approval.</p>
-        <table style="border-collapse:collapse">
-          <tr><th style="text-align:left;padding:6px 12px">Company</th><th style="text-align:left;padding:6px 12px">Domain</th><th style="text-align:left;padding:6px 12px">Requested by</th></tr>
-          ${rows}
-        </table>
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/companies">Review in the admin panel →</a></p>
-      `,
-    })
+    try {
+      await sendEmail({
+        to: adminEmail,
+        subject: `Korpo: ${pending.length} company request${pending.length === 1 ? "" : "s"} awaiting review`,
+        html: `
+          <p>${pending.length} company domain request${pending.length === 1 ? " is" : "s are"} still pending approval.</p>
+          <table style="border-collapse:collapse">
+            <tr><th style="text-align:left;padding:6px 12px">Company</th><th style="text-align:left;padding:6px 12px">Domain</th><th style="text-align:left;padding:6px 12px">Requested by</th></tr>
+            ${rows}
+          </table>
+          <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/companies">Review in the admin panel →</a></p>
+        `,
+      })
+    } catch (err) {
+      console.error("[company-domains-sync] admin digest email failed:", err)
+    }
   }
 
   return NextResponse.json({ newlyApprovedDomains: inserted, pendingReview: pending.length })

@@ -23,14 +23,16 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
     return
   }
   try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: FROM,
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
     })
+    if (error) throw error
   } catch (err) {
     console.error("Email send failed:", err)
+    throw err
   }
 }
 
@@ -92,12 +94,16 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
   }
 
   try {
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: FROM,
       to: [to],
       subject,
       html,
     })
+    if (error) {
+      console.error("[OTP Email] Resend error:", error)
+      return { success: false, error: "Failed to send email" }
+    }
     return { success: true }
   } catch (err) {
     console.error("[OTP Email] Resend error:", err)
@@ -142,7 +148,11 @@ export async function sendIdVerificationApprovedEmail(to: string): Promise<{ suc
   }
 
   try {
-    await resend.emails.send({ from: FROM, to: [to], subject, html })
+    const { error } = await resend.emails.send({ from: FROM, to: [to], subject, html })
+    if (error) {
+      console.error("[ID Verification Approved Email] Resend error:", error)
+      return { success: false, error: "Failed to send email" }
+    }
     return { success: true }
   } catch (err) {
     console.error("[ID Verification Approved Email] Resend error:", err)
