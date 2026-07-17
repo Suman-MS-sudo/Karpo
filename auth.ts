@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
 import { provisionUser } from "@/lib/auth-provision"
+import { getLinkedInVerificationReport } from "@/lib/linkedin-verification"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
 
@@ -146,6 +147,10 @@ if (linkedinEnabled) {
       // Safe to auto-link by email: LinkedIn's OIDC profile only reports
       // email_verified accounts, and users already prove domain ownership via OTP.
       allowDangerousEmailAccountLinking: true,
+      // r_verify_details grants the Verification Report API call in the signIn
+      // callback below (Account preferences → Verifications' WORKPLACE status) —
+      // requires the "Verified on LinkedIn" product enabled on the LinkedIn app.
+      authorization: { params: { scope: "openid profile email r_verify_details" } },
     })
   )
 }
@@ -173,12 +178,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const liveEmail = (profile?.email as string | undefined)?.trim().toLowerCase()
       if (!liveEmail) return false
 
-      // The "safe to auto-link by email" assumption above only holds if LinkedIn
-      // actually verified this address — enforce that rather than assuming it.
-      // Unverified members are sent back to Korpo sign-in with a pointer to go
-      // verify their email on LinkedIn first, then retry.
-      if (profile?.email_verified !== true) {
-        return "/auth/signin?error=linkedin_unverified"
+      // Check Account preferences → Verifications (WORKPLACE category via
+      // work email or Microsoft Entra) rather than trusting the Sign in &
+      // Security email_verified claim alone — that only proves inbox
+      // ownership, not that LinkedIn has actually confirmed the member's
+      // employer. Falls back to email_verified only if the app hasn't been
+      // granted API access yet (config gap, not a member-level failure).
+      let workplaceVerified: boolean
+      let verificationUrl: string | undefined
+      if (account.access_token) {
+        const report = await getLinkedInVerificationReport(account.access_token)
+        if (report.ok) {
+          workplaceVerified = report.verifications.includes("WORKPLACE")
+          verificationUrl = report.verificationUrl
+        } else {
+          workplaceVerified = profile?.email_verified === true
+        }
+      } else {
+        workplaceVerified = profile?.email_verified === true
+      }
+
+      if (!workplaceVerified) {
+        const redirectTo = verificationUrl
+          ? `/auth/signin?error=linkedin_unverified&verificationUrl=${encodeURIComponent(verificationUrl)}`
+          : "/auth/signin?error=linkedin_unverified"
+        return redirectTo
       }
 
       if (user.id && liveEmail !== user.email?.trim().toLowerCase()) {
@@ -199,16 +223,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return "/auth/signin?error=domain_blocked"
       }
 
-      // LinkedIn's OIDC profile only ever reports verified addresses (enforced
-      // above), so a non-personal domain here is a genuine, already-verified
-      // corporate/workplace email. Capture it as workEmail immediately so the
-      // member skips the separate /auth/corp-email declaration step and, if it
-      // matches a company we already know, is matched/verified right away.
+      // A workplace-verified member whose account email is itself a
+      // non-personal domain gives us a genuine corporate email match against
+      // our Company/User records — capture it as workEmail immediately so the
+      // member skips the separate /auth/corp-email declaration step.
       const isCorporateEmail = domainCheck.reason !== "personal"
 
       // Adapter has already created the User row for a first-time OAuth sign-in;
       // provisionUser upserts on email so it works for both new and returning users.
-      // LinkedIn's own login is trusted as sufficient verification — no follow-up OTP.
+      // LinkedIn's own workplace verification is trusted as sufficient — no follow-up OTP.
       await provisionUser(email, { isAdmin, name: user.name, workEmail: isCorporateEmail ? email : undefined })
       return true
     },

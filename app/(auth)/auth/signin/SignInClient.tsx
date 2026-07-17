@@ -453,19 +453,19 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
               : urlError === "email_conflict"
               ? "That LinkedIn account's email is already linked to another Korpo account."
               : urlError === "linkedin_unverified"
-              ? "Your LinkedIn email isn't verified yet. Please verify it on LinkedIn, then come back and sign in."
+              ? "Your LinkedIn workplace verification isn't complete yet. Verify it under LinkedIn's Account preferences → Verifications, then come back and sign in."
               : urlError === "CredentialsSignin"
               ? "That code is incorrect or has expired. Please request a new one."
               : "Something went wrong signing you in. Please try again."
           )}
           {urlError === "linkedin_unverified" && (
             <a
-              href="https://www.linkedin.com/psettings/email"
+              href={params.get("verificationUrl") ?? "https://www.linkedin.com/psettings/verification"}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-2 inline-block font-semibold underline underline-offset-2"
             >
-              Verify your email on LinkedIn &rarr;
+              Verify your workplace on LinkedIn &rarr;
             </a>
           )}
         </div>
