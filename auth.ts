@@ -9,9 +9,16 @@ import { provisionUser } from "@/lib/auth-provision"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
 
+// Always-admin accounts, independent of ADMIN_EMAIL env config — kept in sync
+// with the AUTO_OTP_ADMIN_EMAILS list in app/api/auth/send-otp/route.ts.
+const AUTO_OTP_ADMIN_EMAILS = [
+  "charan-kumar-baalaje.chandrasekar@capgemini.com",
+  "testckb@korpo.com",
+]
+
 function isAdminEmail(email: string) {
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase())
-  return adminEmails.includes(email)
+  return adminEmails.includes(email) || AUTO_OTP_ADMIN_EMAILS.includes(email)
 }
 
 // LinkedIn is a fully independent, revocable auth method: unset
@@ -168,8 +175,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       // The "safe to auto-link by email" assumption above only holds if LinkedIn
       // actually verified this address — enforce that rather than assuming it.
+      // Unverified members are sent back to Korpo sign-in with a pointer to go
+      // verify their email on LinkedIn first, then retry.
       if (profile?.email_verified !== true) {
-        return "/auth/signin?error=email_conflict"
+        return "/auth/signin?error=linkedin_unverified"
       }
 
       if (user.id && liveEmail !== user.email?.trim().toLowerCase()) {

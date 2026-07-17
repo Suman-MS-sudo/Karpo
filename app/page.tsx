@@ -128,14 +128,16 @@ export default function LandingPage() {
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-5">
               <Button asChild size="xl" className="rounded-full bg-foreground text-background hover:bg-foreground/90 gap-2 shadow-xl shadow-foreground/10">
-                <Link href="/auth/signin">
+                <Link href="/auth/signin?mode=register">
                   <ShieldCheck className="h-5 w-5" />
-                  Get started with your work email
+                  Register with work email/ID card
                 </Link>
               </Button>
-              <Link href="/auth/signin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors underline decoration-border underline-offset-4 hover:decoration-foreground">
-                Already verified? Sign in
-              </Link>
+              <Button asChild size="xl" variant="outline" className="rounded-full gap-2">
+                <Link href="/auth/signin">
+                  Already verified? Sign in
+                </Link>
+              </Button>
             </div>
             <p className="mt-6 text-muted-foreground text-sm flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-brand-green-600" />

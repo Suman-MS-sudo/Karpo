@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp"
+type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
@@ -392,6 +392,14 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
+        {step === "email-otp" && (
+          <>
+            <h1 className="text-2xl font-bold">Sign in with Corp email</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              We'll send a one-time code to your corporate email
+            </p>
+          </>
+        )}
         {step === "idcard" && (
           <>
             <h1 className="text-2xl font-bold">Verify with Organization ID card</h1>
@@ -444,9 +452,21 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
               ? "Temporary or disposable email addresses are not allowed, even via LinkedIn."
               : urlError === "email_conflict"
               ? "That LinkedIn account's email is already linked to another Korpo account."
+              : urlError === "linkedin_unverified"
+              ? "Your LinkedIn email isn't verified yet. Please verify it on LinkedIn, then come back and sign in."
               : urlError === "CredentialsSignin"
               ? "That code is incorrect or has expired. Please request a new one."
               : "Something went wrong signing you in. Please try again."
+          )}
+          {urlError === "linkedin_unverified" && (
+            <a
+              href="https://www.linkedin.com/psettings/email"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block font-semibold underline underline-offset-2"
+            >
+              Verify your email on LinkedIn &rarr;
+            </a>
           )}
         </div>
       )}
@@ -479,7 +499,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-foreground">Don&apos;t have a Corp email?</p>
-              <p className="text-xs text-muted-foreground">Register with your Organization ID card</p>
+              <p className="text-xs font-bold text-foreground">Register with your Organization ID card</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
@@ -525,6 +545,21 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-foreground">Password</p>
               <p className="text-xs text-muted-foreground">Sign in with your saved password</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setError(""); setRegistering(false); setStep("email-otp") }}
+            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+          >
+            <div className="h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center shrink-0">
+              <Mail className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">Corp email OTP</p>
+              <p className="text-xs text-muted-foreground">Enter your email to get a one-time code</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
@@ -599,6 +634,37 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <button
             type="button"
             onClick={() => { setStep("signin"); setPassword(""); setError("") }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
+        </form>
+      )}
+
+      {/* ── Corp email OTP sign-in — direct email entry, no registration fields ─ */}
+      {step === "email-otp" && (
+        <form onSubmit={handleSendOTP} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email-otp-email">Corporate email</Label>
+            <Input
+              id="email-otp-email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@yourcompany.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+
+          <Button type="submit" className="w-full" size="lg" disabled={loading || !email.includes("@")}>
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send code →"}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => { setStep("signin"); setError("") }}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back
@@ -898,7 +964,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <div className="flex items-center justify-between text-sm pt-1">
             <button
               type="button"
-              onClick={() => { setStep("register"); setOtp(["","","","","",""]); setError("") }}
+              onClick={() => { setStep(registering ? "register" : "email-otp"); setOtp(["","","","","",""]); setError("") }}
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Change email

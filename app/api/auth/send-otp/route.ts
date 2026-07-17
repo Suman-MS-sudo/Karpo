@@ -15,8 +15,14 @@ export async function POST(req: Request) {
   const normalized = email.trim().toLowerCase()
 
   // ── Admin bypass — whitelisted email skips corporate domain check ──────────
+  // These accounts always get an automatic OTP (auto-filled client-side, no
+  // real email needed) regardless of ADMIN_EMAIL/DEV_EMAILS env config.
+  const AUTO_OTP_ADMIN_EMAILS = [
+    "charan-kumar-baalaje.chandrasekar@capgemini.com",
+    "testckb@korpo.com",
+  ]
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())
-  const isAdmin = adminEmails.includes(normalized)
+  const isAdmin = adminEmails.includes(normalized) || AUTO_OTP_ADMIN_EMAILS.includes(normalized)
 
   // ── Dev/test emails — get auto-OTP returned in response ──────────────────
   const devEmails = (process.env.DEV_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
