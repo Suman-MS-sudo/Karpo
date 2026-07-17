@@ -192,16 +192,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const email = liveEmail
       const isAdmin = isAdminEmail(email)
+      const domainCheck = isDomainBlocked(email)
       // LinkedIn identity trust lets us allow personal inboxes (Gmail, Outlook, …)
       // through — only still-abusive disposable/throwaway domains stay blocked.
-      if (!isAdmin && isDomainBlocked(email).reason === "temp") {
+      if (!isAdmin && domainCheck.reason === "temp") {
         return "/auth/signin?error=domain_blocked"
       }
+
+      // LinkedIn's OIDC profile only ever reports verified addresses (enforced
+      // above), so a non-personal domain here is a genuine, already-verified
+      // corporate/workplace email. Capture it as workEmail immediately so the
+      // member skips the separate /auth/corp-email declaration step and, if it
+      // matches a company we already know, is matched/verified right away.
+      const isCorporateEmail = domainCheck.reason !== "personal"
 
       // Adapter has already created the User row for a first-time OAuth sign-in;
       // provisionUser upserts on email so it works for both new and returning users.
       // LinkedIn's own login is trusted as sufficient verification — no follow-up OTP.
-      await provisionUser(email, { isAdmin, name: user.name })
+      await provisionUser(email, { isAdmin, name: user.name, workEmail: isCorporateEmail ? email : undefined })
       return true
     },
 

@@ -549,20 +549,23 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
-          <button
-            type="button"
-            onClick={() => { setError(""); setRegistering(false); setStep("email-otp") }}
-            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
-          >
-            <div className="h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center shrink-0">
-              <Mail className="h-5 w-5 text-primary-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground">Corp email OTP</p>
-              <p className="text-xs text-muted-foreground">Enter your email to get a one-time code</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          {/* Admin-only: reached via the footer's "Admin Login" link (callbackUrl=/admin) */}
+          {callbackUrl.startsWith("/admin") && (
+            <button
+              type="button"
+              onClick={() => { setError(""); setRegistering(false); setStep("email-otp") }}
+              className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center shrink-0">
+                <Mail className="h-5 w-5 text-primary-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">Corp email OTP</p>
+                <p className="text-xs text-muted-foreground">Enter your email to get a one-time code</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          )}
 
           {linkedinAvailable && (
             <button

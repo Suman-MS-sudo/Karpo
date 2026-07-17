@@ -13,11 +13,20 @@ const DEV_DOMAINS: Record<string, string> = {
 // verify the user immediately.
 export async function provisionUser(
   email: string,
-  opts: { isAdmin: boolean; name?: string | null; phone?: string | null; passwordHash?: string | null }
+  opts: { isAdmin: boolean; name?: string | null; phone?: string | null; passwordHash?: string | null; workEmail?: string | null }
 ) {
   const domain = email.split("@")[1]
   const company = await prisma.company.findFirst({ where: { domain, isApproved: true } })
   const isExisting = !!(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
+
+  // A caller-supplied workEmail (e.g. LinkedIn's own verified corporate email)
+  // is only trustworthy to attach if it isn't already claimed by someone else —
+  // the unique constraint would otherwise throw and abort the whole sign-in.
+  let workEmail = opts.workEmail ?? undefined
+  if (workEmail) {
+    const workEmailOwner = await prisma.user.findUnique({ where: { workEmail }, select: { email: true } })
+    if (workEmailOwner && workEmailOwner.email !== email) workEmail = undefined
+  }
 
   const dbUser = await prisma.user.upsert({
     where: { email },
@@ -27,6 +36,7 @@ export async function provisionUser(
       ...(company ? { companyId: company.id } : {}),
       ...(opts.phone ? { phone: opts.phone } : {}),
       ...(opts.passwordHash ? { passwordHash: opts.passwordHash } : {}),
+      ...(workEmail ? { workEmail } : {}),
     },
     create: {
       email,
@@ -36,6 +46,7 @@ export async function provisionUser(
       isVerified: true,
       role: opts.isAdmin ? "ADMIN" : "USER",
       ...(company ? { companyId: company.id } : {}),
+      ...(workEmail ? { workEmail } : {}),
       membership: { create: { plan: opts.isAdmin ? "PREMIUM" : "FREE" } },
     },
   })
