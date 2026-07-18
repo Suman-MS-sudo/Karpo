@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation"
 import { X } from "lucide-react"
 import { Sidebar } from "./Sidebar"
 import { ServiceRail } from "./ServiceRail"
-import { ServiceSidebar } from "./ServiceSidebar"
 import { TopNav } from "./TopNav"
 import { MobileNav } from "./MobileNav"
 import { ChatProvider } from "@/components/chat/ChatContext"
@@ -23,9 +22,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* ── Desktop 3-column layout ─────────────────────────────── */}
         {/* Icon rail — always visible on desktop */}
         <ServiceRail />
-
-        {/* Context sidebar — always visible on desktop */}
-        <ServiceSidebar />
 
         {/* Mobile sidebar drawer */}
         {drawerOpen && (

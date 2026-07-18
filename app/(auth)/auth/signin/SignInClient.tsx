@@ -159,7 +159,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       const res  = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), phone: regPhone.trim() }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Failed to send code"); return }
@@ -177,7 +177,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setLoading(false)
     }
-  }, [email, regPassword, regPasswordConfirm, handleVerifyOTP])
+  }, [email, regPhone, regPassword, regPasswordConfirm, handleVerifyOTP])
 
   // ── WhatsApp OTP login: step 1, send code ───────────────────────────────────
   const handleSendWhatsAppOTP = useCallback(async (e?: React.FormEvent) => {

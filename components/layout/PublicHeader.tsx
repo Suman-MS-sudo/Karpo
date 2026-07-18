@@ -18,25 +18,28 @@ export function PublicHeader() {
   return (
     <header
       className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-200 ${
-        scrolled
-          ? "bg-[#dadce0]/80 border-[#bdc1c6]/60 shadow-sm"
-          : "bg-yellow-300 border-yellow-400/50"
+        scrolled ? "bg-background/90 border-border shadow-sm" : "bg-background/70 border-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.png" alt="Korpo" width={32} height={32} priority className="rounded-lg object-contain" />
-          <span className="font-bold text-xl text-[#1E3A5F]">Korpo</span>
+          <span className="font-bold text-xl text-foreground">Korpo</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
-          <Link href="/#services"     className="hover:text-[#1E3A5F] transition-colors">Services</Link>
-          <Link href="/#how-it-works" className="hover:text-[#1E3A5F] transition-colors">How it works</Link>
-          <Link href="/about"         className="hover:text-[#1E3A5F] transition-colors font-medium">About</Link>
-          <Link href="/contact"       className="hover:text-[#1E3A5F] transition-colors font-medium">Contact</Link>
+        <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <Link href="/#services"     className="hover:text-foreground transition-colors">Find Talent</Link>
+          <Link href="/#categories"   className="hover:text-foreground transition-colors">Categories</Link>
+          <Link href="/#how-it-works" className="hover:text-foreground transition-colors">How it Works</Link>
+          <Link href="/about"         className="hover:text-foreground transition-colors">For Business</Link>
         </nav>
-        <Button asChild size="sm">
-          <Link href="/auth/signin">Join with work email <ArrowRight className="h-4 w-4" /></Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Link href="/auth/signin">Log in</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/auth/signin">Sign up <ArrowRight className="h-4 w-4" /></Link>
+          </Button>
+        </div>
       </div>
     </header>
   )

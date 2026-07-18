@@ -288,7 +288,7 @@ export function SkillOrderPanel({ listingId, sellerId, sellerName, myOrder, pack
             <div className="space-y-2">
               {packages.map((p, i) => (
                 <button key={i} type="button" onClick={() => setSelectedPkg(i)}
-                  className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${selectedPkg === i ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30" : "border-border hover:border-muted-foreground/50"}`}>
+                  className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all ${selectedPkg === i ? "border-primary-500 bg-primary/10" : "border-border hover:border-muted-foreground/50"}`}>
                   <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${selectedPkg === i ? "border-primary-500 bg-primary-500" : "border-input"}`}>
                     {selectedPkg === i && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                   </div>
@@ -319,7 +319,7 @@ export function SkillOrderPanel({ listingId, sellerId, sellerName, myOrder, pack
           <div className="grid grid-cols-2 gap-2">
             {["UPI", "TRANSFER", "CASH", "WALLET"].map((pm) => (
               <button key={pm} type="button" onClick={() => setPaymentMode(pm)}
-                className={`text-xs py-2 rounded-lg border font-medium transition-all ${paymentMode === pm ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30 text-primary-700" : "border-border text-muted-foreground"}`}>
+                className={`text-xs py-2 rounded-lg border font-medium transition-all ${paymentMode === pm ? "border-primary-500 bg-primary/10 text-primary-700 dark:text-primary-400" : "border-border text-muted-foreground"}`}>
                 {PAYMENT_LABELS[pm]}
               </button>
             ))}
@@ -355,7 +355,7 @@ export function SkillOrderPanel({ listingId, sellerId, sellerName, myOrder, pack
   return (
     <div className="space-y-3">
       <button onClick={() => setMode("form")}
-        className="w-full flex items-center gap-3 p-4 rounded-xl border border-primary-200 dark:border-primary-700 bg-primary-50/60 dark:bg-primary-950/20 hover:bg-primary-100/60 dark:hover:bg-primary-900/30 transition-all text-left group">
+        className="w-full flex items-center gap-3 p-4 rounded-xl border border-primary-200 dark:border-primary-700 bg-primary/5 hover:bg-primary/10 transition-all text-left group">
         <div className="h-9 w-9 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
           <Package className="h-4 w-4 text-primary-600 dark:text-primary-400" />
         </div>

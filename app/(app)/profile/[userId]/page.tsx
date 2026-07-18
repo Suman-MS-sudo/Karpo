@@ -13,7 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { RatingStars } from "@/components/shared/RatingStars"
-import { SocialShare, PROFILE_SOCIAL_PLATFORMS } from "@/components/shared/SocialShare"
+import { SocialShare } from "@/components/shared/SocialShare"
+import { PROFILE_SOCIAL_PLATFORMS } from "@/lib/socialPlatforms"
 import { formatDate, getInitials } from "@/lib/utils"
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -89,6 +90,11 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
         take:    8,
         include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
       },
+      skillListings: {
+        where:   { status: "ACTIVE" },
+        take:    8,
+        orderBy: { createdAt: "desc" },
+      },
       reviewsReceived: {
         include:  { reviewer: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
         orderBy:  { createdAt: "desc" },
@@ -111,10 +117,12 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
       {/* ── Profile hero ─────────────────────────────────────────────── */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden mb-6">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden mb-4">
 
         {/* Gradient banner */}
-        <div className="h-24 bg-gradient-to-br from-primary-500/20 via-accent-500/10 to-transparent" />
+        <div className="h-28 bg-gradient-to-br from-[#1e1b4b] via-primary to-accent relative overflow-hidden">
+          <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_top_right,white,transparent_60%)]" aria-hidden />
+        </div>
 
         <div className="px-6 pb-6">
           {/* Avatar overlapping banner */}
@@ -228,11 +236,69 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
         </div>
       </div>
 
+      {/* ── Stat strip ───────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-card grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border mb-6">
+        <div className="px-5 py-4 text-center">
+          <p className="text-lg font-bold">{(user as any).yearsOfExp != null ? `${(user as any).yearsOfExp}+ Yrs` : "—"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Experience</p>
+        </div>
+        <div className="px-5 py-4 text-center">
+          <p className="text-lg font-bold">{user.listings.length + user.skillListings.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Active Listings</p>
+        </div>
+        <div className="px-5 py-4 text-center">
+          <p className="text-lg font-bold flex items-center justify-center gap-1">
+            {avgRating > 0 ? <><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />{avgRating.toFixed(1)}</> : "New"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">Rating</p>
+        </div>
+        <div className="px-5 py-4 text-center">
+          <p className="text-lg font-bold">{user.createdAt.getFullYear()}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Member Since</p>
+        </div>
+      </div>
+
       {/* ── Content grid ──────────────────────────────────────────────── */}
       <div className="grid lg:grid-cols-3 gap-6">
 
         {/* Active listings */}
         <div className="lg:col-span-2 space-y-6">
+          {user.skillListings.length > 0 && (
+            <div>
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                Skill Services
+                <span className="text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                  {user.skillListings.length}
+                </span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {user.skillListings.map((listing) => {
+                  const rawPackages = listing.packages as unknown
+                  const packages: { price: number }[] =
+                    Array.isArray(rawPackages) ? rawPackages
+                    : typeof rawPackages === "string" ? (() => { try { return JSON.parse(rawPackages) } catch { return [] } })()
+                    : []
+                  const startPrice = listing.pricingModel === "HOURLY" ? listing.hourlyRate : packages.length ? Math.min(...packages.map(p => p.price)) : null
+                  return (
+                    <Link
+                      key={listing.id}
+                      href={`/skills/${listing.id}`}
+                      className="group block rounded-2xl border border-border bg-card p-4 hover:shadow-md hover:border-primary/30 transition-all"
+                    >
+                      <p className="text-xs font-medium text-primary">{listing.category}</p>
+                      <h3 className="font-semibold text-sm mt-1 group-hover:text-primary transition-colors line-clamp-1">{listing.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{listing.tagline ?? listing.description}</p>
+                      <p className="text-sm font-bold mt-3">
+                        {startPrice != null ? `₹${startPrice.toLocaleString()}` : "Contact"}
+                        {listing.pricingModel === "HOURLY" && <span className="text-xs font-normal text-muted-foreground">/hr</span>}
+                      </p>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {user.listings.length > 0 && (
             <div>
               <h2 className="font-semibold mb-4 flex items-center gap-2">
@@ -260,7 +326,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
             </div>
           )}
 
-          {user.listings.length === 0 && (
+          {user.listings.length === 0 && user.skillListings.length === 0 && (
             <div className="bg-card border border-border rounded-2xl p-8 text-center">
               <p className="text-muted-foreground text-sm">No active listings.</p>
             </div>

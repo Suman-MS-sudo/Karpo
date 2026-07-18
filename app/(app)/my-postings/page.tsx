@@ -33,7 +33,7 @@ const NEW_ROUTES: Record<string, string> = {
   rentals:     "/rentals/new",
   referrals:   "/referrals/new",
   carpool:     "/carpool/new",
-  services:    "/services/new",
+  services:    "/skills/new",
   events:      "/events/new",
 }
 
@@ -169,7 +169,7 @@ async function fetchAll(userId: string) {
       where: { userId },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.servicePost.findMany({
+    prisma.skillListing.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
     }),
@@ -302,26 +302,25 @@ function CarpoolSection({ carpools, limit }: { carpools: any[]; limit?: number }
 
 function ServicesSection({ services, limit }: { services: any[]; limit?: number }) {
   const items = limit ? services.slice(0, limit) : services
-  if (!items.length) return <EmptyState icon={Wrench} label="service posts" newRoute="/services/new" />
+  if (!items.length) return <EmptyState icon={Wrench} label="skill listings" newRoute="/skills/new" />
   return (
     <div className="space-y-3">
       {items.map((s) => (
-        <PostCard key={s.id} href={`/services/${s.id}`}>
-          <Thumb src={s.portfolio?.[0]} fallback={Wrench} />
+        <PostCard key={s.id} href={`/skills/${s.id}`}>
+          <Thumb src={undefined} fallback={Wrench} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-2 justify-between flex-wrap">
               <p className="font-semibold text-sm leading-tight truncate">{s.title}</p>
-              <StatusBadge active={s.isActive} />
+              <StatusBadge status={s.status} />
             </div>
             <MetaRow>
               <span>{s.category}</span>
-              {s.price && <span className="font-medium text-foreground">{s.priceType === "HOURLY" ? `${formatCurrency(s.price)}/hr` : formatCurrency(s.price)}</span>}
-              {s.priceType === "FREE" && <span className="text-green-600 dark:text-green-400">Free</span>}
-              {s.priceType === "QUOTE" && <span>Quote-based</span>}
-              {s.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.city}</span>}
+              {s.pricingModel === "HOURLY" && s.hourlyRate && <span className="font-medium text-foreground">{formatCurrency(s.hourlyRate)}/hr</span>}
+              {s.avgRating != null && s.reviewCount > 0 && <span>★ {s.avgRating.toFixed(1)} ({s.reviewCount})</span>}
+              {s.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.location}</span>}
               <span>{formatRelativeTime(s.createdAt)}</span>
             </MetaRow>
-            <Actions href={`/services/${s.id}`} editHref={`/services/${s.id}/edit`} />
+            <Actions href={`/skills/${s.id}`} editHref={`/skills/${s.id}/edit`} />
           </div>
         </PostCard>
       ))}
@@ -432,7 +431,7 @@ function OverviewSection({
               ...rentals.map(r   => ({ ...r, _type: "rentals",     _href: `/rentals/${r.id}` })),
               ...referrals.map(r => ({ ...r, _type: "referrals",   _href: `/referrals/${r.id}` })),
               ...carpools.map(c  => ({ ...c, _type: "carpool",     _href: `/carpool/${c.id}` })),
-              ...services.map(s  => ({ ...s, _type: "services",    _href: `/services/${s.id}` })),
+              ...services.map(s  => ({ ...s, _type: "services",    _href: `/skills/${s.id}` })),
               ...events.map(e    => ({ ...e, _type: "events",      _href: `/events/${e.id}` })),
             ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
 
@@ -578,7 +577,7 @@ export default async function MyPostingsPage({ searchParams }: { searchParams: {
 
       {tab === "services" && (
         <>
-          <SectionHeader icon={Wrench} label="Services" color={TABS[5].color} bg={TABS[5].bg} count={counts.services} newRoute="/services/new" />
+          <SectionHeader icon={Wrench} label="Services" color={TABS[5].color} bg={TABS[5].bg} count={counts.services} newRoute="/skills/new" />
           <ServicesSection services={services} />
         </>
       )}

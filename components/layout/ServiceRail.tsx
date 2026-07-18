@@ -177,17 +177,21 @@ export function ServiceRail() {
           : "w-[68px] hover:w-[220px] hover:shadow-[4px_0_20px_rgba(0,0,0,0.07)] dark:hover:shadow-[4px_0_20px_rgba(0,0,0,0.3)]"
       )}>
 
-        {/* Logo row */}
+        {/* Logo row — icon slot matches the w-[44px] column used by nav items below,
+            so the logo stays centered in the collapsed rail instead of a fixed margin
+            that only looked right in one of the two (collapsed/expanded) states. */}
         <div className="h-14 flex items-center border-b border-sidebar-border shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-3 flex-1 min-w-0">
-            <Image
-              src="/logo.png" alt="Korpo"
-              width={32} height={32}
-              className="rounded-lg object-contain shrink-0 ml-[18px]"
-            />
+          <Link href="/dashboard" className="flex items-center flex-1 min-w-0">
+            <span className="flex items-center justify-center w-[44px] h-full shrink-0">
+              <Image
+                src="/logo.png" alt="Korpo"
+                width={28} height={28}
+                className="rounded-lg object-contain shrink-0"
+              />
+            </span>
             <span className={cn(
               "font-bold text-sm whitespace-nowrap text-foreground flex-1 min-w-0",
-              panePinned ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-100 delay-150"
+              panePinned ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-150"
             )}>
               Korpo
             </span>

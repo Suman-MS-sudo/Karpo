@@ -1,8 +1,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import Image from "next/image"
-import { Plus, Wrench, ExternalLink, MapPin, Clock } from "lucide-react"
+import { Plus, Wrench, ExternalLink, MapPin, Clock, Star, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
@@ -15,40 +14,29 @@ const TABS = [
   { key: "paused", label: "Paused" },
 ]
 
-const PRICE_TYPE_LABEL: Record<string, string> = {
-  FIXED:  "Fixed",
-  HOURLY: "/hr",
-  DAILY:  "/day",
-  QUOTE:  "Quote",
-  FREE:   "Free",
-}
+interface Package { price: number }
 
-interface PageProps { searchParams: { tab?: string } }
-
-export default async function MyServicesPage({ searchParams }: PageProps) {
+export default async function MyServicesPage({ searchParams }: { searchParams: { tab?: string } }) {
   const session = await auth()
   const userId  = session!.user!.id
   const tab     = TABS.find((t) => t.key === searchParams.tab)?.key ?? "all"
 
-  const isActiveFilter = tab === "all" ? undefined : tab === "active"
+  const statusFilter = tab === "all" ? undefined : tab === "active" ? "ACTIVE" : "PAUSED"
 
-  const services = await prisma.servicePost.findMany({
-    where:   { userId, ...(isActiveFilter !== undefined ? { isActive: isActiveFilter } : {}) },
+  const services = await prisma.skillListing.findMany({
+    where:   { userId, ...(statusFilter ? { status: statusFilter } : {}) },
     orderBy: { createdAt: "desc" },
   })
 
-  const activeCount = services.filter(s => s.isActive).length
-  const pausedCount = services.filter(s => !s.isActive).length
+  const activeCount = services.filter(s => s.status === "ACTIVE").length
+  const pausedCount = services.filter(s => s.status === "PAUSED").length
   const totalCount  = services.length
 
-  function priceLabel(s: { priceType: string; price: number | null }) {
-    if (s.priceType === "FREE")  return "Free"
-    if (s.priceType === "QUOTE") return "Get a Quote"
-    if (!s.price) return "—"
-    const suffix = PRICE_TYPE_LABEL[s.priceType] ?? ""
-    return s.priceType === "HOURLY" ? `${formatCurrency(s.price)}/hr`
-         : s.priceType === "DAILY"  ? `${formatCurrency(s.price)}/day`
-         : formatCurrency(s.price)
+  function priceLabel(s: { pricingModel: string; hourlyRate: number | null; packages: unknown }) {
+    if (s.pricingModel === "HOURLY") return s.hourlyRate ? `${formatCurrency(s.hourlyRate)}/hr` : "—"
+    const pkgs = s.packages as Package[] | null
+    if (!pkgs?.length) return "—"
+    return `From ${formatCurrency(Math.min(...pkgs.map(p => p.price)))}`
   }
 
   return (
@@ -61,7 +49,7 @@ export default async function MyServicesPage({ searchParams }: PageProps) {
           <p className="text-muted-foreground text-sm mt-0.5">Skills and services you've offered</p>
         </div>
         <Button asChild>
-          <Link href="/services/new"><Plus className="h-4 w-4" /> Offer a Service</Link>
+          <Link href="/skills/new"><Plus className="h-4 w-4" /> Offer a Service</Link>
         </Button>
       </div>
 
@@ -96,7 +84,7 @@ export default async function MyServicesPage({ searchParams }: PageProps) {
               {t.label}
               {cnt > 0 && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  tab === t.key ? "bg-primary-600 text-white" : "bg-muted text-muted-foreground"
+                  tab === t.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                 }`}>{cnt}</span>
               )}
             </Link>
@@ -110,7 +98,7 @@ export default async function MyServicesPage({ searchParams }: PageProps) {
           <Wrench className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
           <p className="font-medium text-muted-foreground">No services posted yet.</p>
           <Button asChild size="sm" className="mt-4">
-            <Link href="/services/new"><Plus className="h-4 w-4" /> Offer your first service</Link>
+            <Link href="/skills/new"><Plus className="h-4 w-4" /> Offer your first service</Link>
           </Button>
         </div>
       ) : (
@@ -119,13 +107,9 @@ export default async function MyServicesPage({ searchParams }: PageProps) {
             <div key={s.id}
               className="group bg-card border border-border rounded-2xl p-4 hover:border-border/60 hover:shadow-sm transition-all">
               <div className="flex gap-4">
-                {/* Thumbnail */}
+                {/* Icon */}
                 <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-muted border border-border shrink-0 flex items-center justify-center">
-                  {s.portfolio?.[0] ? (
-                    <Image src={s.portfolio[0]} alt={s.title} fill className="object-cover" sizes="64px" />
-                  ) : (
-                    <Wrench className="h-6 w-6 text-muted-foreground/30" />
-                  )}
+                  <Wrench className="h-6 w-6 text-muted-foreground/30" />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -135,23 +119,29 @@ export default async function MyServicesPage({ searchParams }: PageProps) {
                       <p className="text-xs text-muted-foreground mt-0.5">{s.category}</p>
                     </div>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                      s.isActive
+                      s.status === "ACTIVE"
                         ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
                         : "bg-muted text-muted-foreground"
                     }`}>
-                      {s.isActive ? "ACTIVE" : "PAUSED"}
+                      {s.status}
                     </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">{priceLabel(s)}</span>
-                    {s.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.city}</span>}
+                    {s.avgRating != null && s.reviewCount > 0 && (
+                      <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" />{s.avgRating.toFixed(1)} ({s.reviewCount})</span>
+                    )}
+                    {s.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.location}</span>}
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatRelativeTime(s.createdAt)}</span>
                   </div>
 
                   <div className="flex items-center gap-2 mt-3">
                     <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs gap-1.5" asChild>
-                      <Link href={`/services/${s.id}`}><ExternalLink className="h-3 w-3" /> View</Link>
+                      <Link href={`/skills/${s.id}`}><ExternalLink className="h-3 w-3" /> View</Link>
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs gap-1.5" asChild>
+                      <Link href={`/skills/${s.id}/edit`}><Pencil className="h-3 w-3" /> Edit</Link>
                     </Button>
                   </div>
                 </div>

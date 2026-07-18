@@ -2,17 +2,19 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
 import { sendOTPEmail } from "@/lib/email"
+import { normalizePhone } from "@/lib/phone"
 import { randomInt } from "crypto"
 
 export async function POST(req: Request) {
   try {
-  const { email } = await req.json()
+  const { email, phone: rawPhone } = await req.json()
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Email is required" }, { status: 400 })
   }
 
   const normalized = email.trim().toLowerCase()
+  const phone = typeof rawPhone === "string" && rawPhone.trim() ? normalizePhone(rawPhone) : undefined
 
   // ── Admin bypass — whitelisted email skips corporate domain check ──────────
   // These accounts always get an automatic OTP (auto-filled client-side, no
@@ -71,6 +73,25 @@ export async function POST(req: Request) {
 
   // ── Check if new or existing user ─────────────────────────────────────────
   const existingUser = await prisma.user.findUnique({ where: { email: normalized } })
+
+  // `phone` is only present when this call comes from the registration form
+  // (send-otp is also used bare, with just an email, for OTP resend) — so it
+  // doubles as a signal that this must be a brand-new account.
+  if (phone) {
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "This email is already registered. Please sign in instead." },
+        { status: 409 }
+      )
+    }
+    const phoneOwner = await prisma.user.findUnique({ where: { phone }, select: { id: true } })
+    if (phoneOwner) {
+      return NextResponse.json(
+        { error: "This phone number is already registered. Please sign in instead." },
+        { status: 409 }
+      )
+    }
+  }
 
   // ── Generate & store OTP ───────────────────────────────────────────────────
   const otp = String(randomInt(100000, 999999))

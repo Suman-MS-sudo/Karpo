@@ -47,6 +47,10 @@ interface OTPEmailOptions {
 export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Promise<{ success: boolean; error?: string }> {
   const subject = isNewUser ? "Welcome to Korpo — Verify your email" : "Your Korpo sign-in code"
 
+  const greeting = isNewUser
+    ? "You're joining Korpo's verified corporate network. Use this code to verify your email."
+    : "Use this code to sign in to your Korpo account."
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -68,6 +72,8 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
 </body>
 </html>`
 
+  const text = `Korpo\n\n${greeting}\n\nYour code: ${otp}\n\nThis code expires in 10 minutes. If you didn't request it, you can ignore this email.\n\nKorpo — corporate employee marketplace`
+
   const resend = getResend()
   if (!resend) {
     console.log(`\n${"─".repeat(50)}`)
@@ -84,6 +90,7 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
       to: [to],
       subject,
       html,
+      text,
     })
     if (error) {
       console.error("[OTP Email] Resend error:", error)

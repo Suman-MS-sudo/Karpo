@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
 import { hashPassword } from "@/lib/password"
+import { normalizePhone } from "@/lib/phone"
 
 // Submitted before the user has an account — this is the alternate path for
 // proving corporate employment via an org ID card instead of domain/OTP match.
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 })
 
   const corpEmail = (body.corpEmail as string | undefined)?.trim().toLowerCase()
-  const phone = (body.phone as string | undefined)?.trim()
+  const phone = (body.phone as string | undefined)?.trim() ? normalizePhone(body.phone as string) : undefined
   const fullName = (body.fullName as string | undefined)?.trim()
   const employeeId = (body.employeeId as string | undefined)?.trim() || undefined
   const designation = (body.designation as string | undefined)?.trim() || undefined
@@ -42,7 +43,12 @@ export async function POST(req: Request) {
     select: { id: true },
   })
   if (existingUser) {
-    return NextResponse.json({ error: "An account already exists for this email. Try signing in instead." }, { status: 409 })
+    return NextResponse.json({ error: "This email is already registered. Please sign in instead." }, { status: 409 })
+  }
+
+  const phoneOwner = await prisma.user.findUnique({ where: { phone }, select: { id: true } })
+  if (phoneOwner) {
+    return NextResponse.json({ error: "This phone number is already registered. Please sign in instead." }, { status: 409 })
   }
 
   const passwordHash = await hashPassword(password)

@@ -47,11 +47,11 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 h-14 bg-yellow-300 dark:bg-yellow-400 backdrop-blur-md border-b border-yellow-400/50 flex items-center px-4 gap-2 shrink-0">
+    <header className="sticky top-0 z-50 h-14 bg-card/95 backdrop-blur-md border-b border-border flex items-center px-4 gap-2 shrink-0">
       {/* Mobile menu toggle */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-black/10 text-gray-900 transition-colors"
+        className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted text-foreground transition-colors"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -59,20 +59,20 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
       {/* Brand — mobile only (desktop rail shows logo) */}
       <Link href="/dashboard" className="flex items-center gap-2 mr-2 shrink-0 lg:hidden">
         <Image src="/logo.png" alt="Korpo" width={28} height={28} className="rounded-lg object-contain shrink-0" />
-        <span className="font-bold text-gray-900 whitespace-nowrap">Korpo</span>
+        <span className="font-bold text-foreground whitespace-nowrap">Korpo</span>
       </Link>
 
       {/* Global search — desktop centered, mobile full width */}
       <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-auto hidden sm:block">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
             ref={searchRef}
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search listings, jobs, rentals, events…"
-            className="w-full h-9 pl-9 pr-4 text-sm bg-white/80 hover:bg-white focus:bg-white border border-transparent focus:border-border rounded-xl outline-none transition-all placeholder:text-gray-500 text-gray-900"
+            className="w-full h-9 pl-9 pr-4 text-sm bg-muted/60 hover:bg-muted focus:bg-background border border-transparent focus:border-border rounded-xl outline-none transition-all placeholder:text-muted-foreground text-foreground"
           />
         </div>
       </form>
@@ -80,7 +80,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
       {/* Mobile: search icon button */}
       <button
         onClick={() => router.push("/search")}
-        className="sm:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-black/10 text-gray-900 transition-colors ml-auto"
+        className="sm:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted text-foreground transition-colors ml-auto"
       >
         <Search className="h-5 w-5" />
       </button>

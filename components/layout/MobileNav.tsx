@@ -43,8 +43,8 @@ const SERVICE_TABS: Record<string, Array<{ href: string; label: string; icon: Re
     { href: "/profile/me",  label: "Profile",  icon: User            },
   ],
   "services":     [
-    { href: "/services",     label: "Browse",   icon: Wrench          },
-    { href: "/services/new", label: "Offer",    icon: Plus            },
+    { href: "/skills",       label: "Browse",   icon: Wrench          },
+    { href: "/skills/new",   label: "Offer",    icon: Plus            },
     { href: "/my-services",  label: "Mine",     icon: LayoutGrid      },
     { href: "/messages",     label: "Messages", icon: MessageSquare   },
     { href: "/profile/me",   label: "Profile",  icon: User            },

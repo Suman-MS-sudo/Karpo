@@ -54,10 +54,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
       select: { id: true, fromLocation: true, toLocation: true, pricePerSeat: true },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.servicePost.findMany({
-      where: { isActive: true, OR: [{ title: contains }, { description: contains }] },
+    prisma.skillListing.findMany({
+      where: { status: "ACTIVE", OR: [{ title: contains }, { tagline: contains }, { description: contains }] },
       take: 6,
-      select: { id: true, title: true, price: true, priceType: true, category: true },
+      select: { id: true, title: true, hourlyRate: true, pricingModel: true, category: true },
       orderBy: { createdAt: "desc" },
     }),
     prisma.event.findMany({
@@ -188,15 +188,15 @@ export default async function SearchPage({ searchParams }: PageProps) {
           title="Skill Marketplace"
           icon={<Wrench className="h-4 w-4" />}
           color="text-cyan-600"
-          href={`/services?q=${encodeURIComponent(q)}`}
+          href={`/skills?q=${encodeURIComponent(q)}`}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {skills.map((s) => (
-              <Link key={s.id} href={`/services/${s.id}`}
+              <Link key={s.id} href={`/skills/${s.id}`}
                 className="border border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">
                 <p className="text-sm font-semibold line-clamp-1">{s.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {s.category} · {s.priceType === "FREE" ? "Free" : s.priceType === "QUOTE" ? "Get a Quote" : s.price ? `from ₹${Number(s.price).toLocaleString("en-IN")}` : ""}
+                  {s.category}{s.pricingModel === "HOURLY" && s.hourlyRate ? ` · from ₹${s.hourlyRate.toLocaleString("en-IN")}/hr` : ""}
                 </p>
               </Link>
             ))}

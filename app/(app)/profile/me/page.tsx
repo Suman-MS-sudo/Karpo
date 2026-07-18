@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   Camera, Loader2, CheckCircle2, Plus, X, ExternalLink, AtSign,
@@ -14,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { getInitials, cn } from "@/lib/utils"
-import { PROFILE_SOCIAL_PLATFORMS } from "@/components/shared/SocialShare"
+import { PROFILE_SOCIAL_PLATFORMS } from "@/lib/socialPlatforms"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -66,6 +67,7 @@ function calcCompletion(form: ProfileForm, hasAvatar: boolean): number {
 
 export default function EditProfilePage() {
   const { data: session, update } = useSession()
+  const router = useRouter()
   const [loading,    setLoading]    = useState(false)
   const [saved,      setSaved]      = useState(false)
   const [error,      setError]      = useState("")
@@ -108,12 +110,17 @@ export default function EditProfilePage() {
     const data = await res.json()
     if (data.url) {
       setAvatarUrl(data.url)
-      await fetch("/api/profile", {
+      const patchRes = await fetch("/api/profile", {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ avatarUrl: data.url }),
       })
+      if (!patchRes.ok) {
+        toast.error("Photo uploaded but failed to save — try again")
+        return
+      }
       await update()
+      router.refresh()
     }
   }
 
@@ -153,6 +160,7 @@ export default function EditProfilePage() {
         return
       }
       await update()
+      router.refresh()
       setSaved(true)
       toast.success("Profile updated successfully!")
       setTimeout(() => setSaved(false), 3000)

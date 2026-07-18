@@ -28,20 +28,31 @@ export async function provisionUser(
     if (workEmailOwner && workEmailOwner.email !== email) workEmail = undefined
   }
 
+  // `User.phone` has its own unique constraint independent of the `email`
+  // upsert key — if this phone is already linked to a *different* account,
+  // writing it here would crash the upsert with a raw SQLITE_CONSTRAINT
+  // error. Drop it instead so the email verification/registration can still
+  // succeed; the caller keeps their existing phone link untouched.
+  let phone = opts.phone ?? null
+  if (phone) {
+    const phoneOwner = await prisma.user.findUnique({ where: { phone }, select: { email: true } })
+    if (phoneOwner && phoneOwner.email !== email) phone = null
+  }
+
   const dbUser = await prisma.user.upsert({
     where: { email },
     update: {
       isVerified: true,
       ...(opts.isAdmin ? { role: "ADMIN" } : {}),
       ...(company ? { companyId: company.id } : {}),
-      ...(opts.phone ? { phone: opts.phone } : {}),
+      ...(phone ? { phone } : {}),
       ...(opts.passwordHash ? { passwordHash: opts.passwordHash } : {}),
       ...(workEmail ? { workEmail } : {}),
     },
     create: {
       email,
       name: opts.isAdmin ? "Admin" : (opts.name ?? null),
-      phone: opts.phone ?? null,
+      phone,
       passwordHash: opts.passwordHash ?? null,
       isVerified: true,
       role: opts.isAdmin ? "ADMIN" : "USER",

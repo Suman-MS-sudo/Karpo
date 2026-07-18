@@ -36,8 +36,8 @@ const SERVICE_SUBNAV: Record<string, Array<{ href: string; label: string; icon: 
     { href: "/carpool/new", label: "Offer a Ride", icon: Plus   },
   ],
   "services": [
-    { href: "/services",   label: "Browse Skills", icon: Search },
-    { href: "/skills/new", label: "Offer a Skill", icon: Plus   },
+    { href: "/skills",      label: "Browse Skills", icon: Search },
+    { href: "/skills/new",  label: "Offer a Skill", icon: Plus   },
   ],
   "deals": [
     { href: "/deals", label: "All Deals", icon: Tag },

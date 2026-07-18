@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     prisma.rentalPost.count({ where: { status: "ACTIVE", ...cityFilter } }),
     prisma.jobReferral.count({ where: { status: "OPEN", ...(userCity ? { location: userCity } : {}) } }),
     prisma.carpoolRoute.count({ where: { isActive: true, ...(userCity ? { fromLocation: userCity } : {}) } }),
-    prisma.servicePost.count({ where: { isActive: true, ...cityFilter } }),
+    prisma.skillListing.count({ where: { status: "ACTIVE", ...(userCity ? { location: userCity } : {}) } }),
     prisma.event.count({ where: { isActive: true, date: { gte: new Date() }, ...(userCity ? { location: userCity } : {}) } }),
   ])
 
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
       count: carpoolCount, countLabel: "active routes", isPremium: false,
     },
     {
-      id: "services", name: "Skill Marketplace", icon: "Wrench", route: "/services", newHref: "/services/new",
+      id: "services", name: "Skill Marketplace", icon: "Wrench", route: "/skills", newHref: "/skills/new",
       color: "text-cyan-600 dark:text-cyan-400", bgColor: "bg-cyan-100 dark:bg-cyan-500/15",
       borderColor: "border-cyan-200 dark:border-cyan-800",
       count: skillCount, countLabel: "professionals", isPremium: false,

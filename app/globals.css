@@ -21,13 +21,13 @@
     --popover-foreground:  222 47% 11%;
 
     /* interactive */
-    --primary:             32 95% 44%;
+    --primary:             243 75% 59%;
     --primary-foreground:  0 0% 100%;
     --secondary:           220 14% 95%;
     --secondary-foreground:222 47% 11%;
     --muted:               220 14% 95%;
     --muted-foreground:    220 10% 46%;
-    --accent:              202 58% 42%;
+    --accent:              262 83% 58%;
     --accent-foreground:   0 0% 100%;
     --destructive:         1 77% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -37,7 +37,7 @@
     /* chrome */
     --border:  220 13% 91%;
     --input:   220 13% 91%;
-    --ring:    32 95% 44%;
+    --ring:    243 75% 59%;
     --radius:  0.75rem;
 
     /* sidebar */
@@ -58,13 +58,13 @@
     --popover-foreground:  220 14% 93%;
 
     /* interactive */
-    --primary:             32 90% 52%;
+    --primary:             243 80% 67%;
     --primary-foreground:  0 0% 100%;
     --secondary:           222 20% 17%;
     --secondary-foreground:220 14% 93%;
     --muted:               222 20% 15%;
     --muted-foreground:    220 10% 52%;
-    --accent:              202 58% 45%;
+    --accent:              262 80% 65%;
     --accent-foreground:   0 0% 100%;
     --destructive:         1 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -74,7 +74,7 @@
     /* chrome */
     --border:  222 20% 20%;
     --input:   222 20% 20%;
-    --ring:    32 90% 52%;
+    --ring:    243 80% 67%;
 
     /* sidebar */
     --sidebar-bg:     222 20% 9%;

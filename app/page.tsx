@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2, Sparkles, Quote } from "lucide-react"
+import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2, Sparkles, Quote, Search, FolderCheck, Gauge } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SERVICES } from "@/config/services"
 import {
@@ -8,17 +8,23 @@ import {
   GraduationCap, Shield, Gift,
 } from "lucide-react"
 
+const heroStats = [
+  { icon: Users,       value: "50,000+", label: "Verified Employees" },
+  { icon: FolderCheck, value: "200+",    label: "Companies Onboarded" },
+  { icon: Star,        value: "4",       label: "Cities Active" },
+  { icon: Gauge,        value: "100%",   label: "Verified Network" },
+]
+
+const floatingCards = [
+  { name: "Priya K.",  role: "Software Engineer", tag: "Top Rated",   badge: "bg-primary/10 text-primary" },
+  { name: "Rahul M.",  role: "Analyst",           tag: "Available Now", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" },
+  { name: "Anjali S.", role: "Product Manager",   tag: "Verified Pro", badge: "bg-accent/10 text-accent" },
+]
+
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users,
   GraduationCap, Shield, Gift,
 }
-
-const stats = [
-  { value: "50,000+", label: "Verified Employees" },
-  { value: "200+", label: "Companies Onboarded" },
-  { value: "4", label: "Cities Active" },
-  { value: "0", label: "Fake Profiles" },
-]
 
 const howItWorks = [
   { step: "01", title: "Verify your corp email", desc: "We send a 6-digit OTP to your work inbox. No passwords, no OAuth — just your email." },
@@ -43,7 +49,7 @@ const trustPoints = [
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/80 mb-4">
-      <span className="h-px w-6 bg-gradient-to-r from-brand-red-500 to-brand-yellow-500" />
+      <span className="h-px w-6 bg-gradient-to-r from-primary to-accent" />
       {children}
     </p>
   )
@@ -84,7 +90,7 @@ export default function LandingPage() {
             <Button asChild size="sm" variant="ghost" className="rounded-full">
               <Link href="/auth/signin?mode=register">Register</Link>
             </Button>
-            <Button asChild size="sm" className="rounded-full bg-foreground text-background hover:bg-foreground/90 shadow-sm">
+            <Button asChild size="sm" className="rounded-full shadow-sm">
               <Link href="/auth/signin">Sign in <ArrowRight className="h-4 w-4" /></Link>
             </Button>
           </div>
@@ -106,54 +112,87 @@ export default function LandingPage() {
         />
         {/* Ambient gradient mesh */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-          <div className="absolute -top-40 -right-32 h-[520px] w-[520px] rounded-full bg-brand-red-500/15 blur-[130px]" />
-          <div className="absolute top-1/3 -left-32 h-[420px] w-[420px] rounded-full bg-brand-green-500/10 blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 h-[360px] w-[360px] rounded-full bg-brand-yellow-500/10 blur-[120px]" />
+          <div className="absolute -top-40 -right-32 h-[520px] w-[520px] rounded-full bg-primary/15 blur-[130px]" />
+          <div className="absolute top-1/3 -left-32 h-[420px] w-[420px] rounded-full bg-accent/10 blur-[120px]" />
+          <div className="absolute bottom-0 right-1/4 h-[360px] w-[360px] rounded-full bg-primary/10 blur-[120px]" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 lg:pt-32 lg:pb-24">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 backdrop-blur-sm px-4 py-1.5 mb-8 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-brand-yellow-500" />
-              <span className="text-sm font-medium text-foreground/90">India&apos;s First Verified Corporate Marketplace</span>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 lg:pt-28 lg:pb-20">
+          <div className="grid lg:grid-cols-[1fr_380px] gap-12 items-center">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-8">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary">Verified Corporate Marketplace</span>
+              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.05] tracking-tight text-balance text-foreground">
+                Find the right{" "}
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  colleagues. Faster.
+                </span>
+              </h1>
+              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
+                Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
+              </p>
+
+              {/* Search bar */}
+              <form action="/auth/signin" className="mt-8 flex items-center gap-2 max-w-lg">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    readOnly
+                    placeholder="What are you looking for?"
+                    className="w-full h-12 pl-11 pr-4 rounded-xl bg-card border border-border text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer"
+                  />
+                </div>
+                <Button type="submit" size="lg" className="h-12 rounded-xl px-6 shrink-0">
+                  Search
+                </Button>
+              </form>
+              <p className="mt-4 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium text-foreground/70">Popular:</span>
+                {["Marketplace", "Rentals", "Referrals", "Carpool"].map(t => (
+                  <span key={t} className="px-2 py-0.5 rounded-full bg-muted">{t}</span>
+                ))}
+              </p>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-[4rem] font-bold leading-[1.04] tracking-tight text-balance text-foreground">
-              Your work ID.{" "}
-              <span className="bg-gradient-to-r from-brand-red-600 via-brand-red-500 to-brand-yellow-500 bg-clip-text text-transparent">
-                Your pass to everything else.
-              </span>
-            </h1>
-            <p className="mt-7 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-              Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
-            </p>
-            <div className="mt-10 flex flex-wrap items-center gap-5">
-              <Button asChild size="xl" className="rounded-full bg-foreground text-background hover:bg-foreground/90 gap-2 shadow-xl shadow-foreground/10">
-                <Link href="/auth/signin?mode=register">
-                  <ShieldCheck className="h-5 w-5" />
-                  Register with work email/ID card
-                </Link>
-              </Button>
-              <Button asChild size="xl" variant="outline" className="rounded-full gap-2">
-                <Link href="/auth/signin">
-                  Already verified? Sign in
-                </Link>
-              </Button>
+
+            {/* Floating professional cards */}
+            <div className="hidden lg:flex flex-col gap-4 relative">
+              <div className="absolute -inset-x-10 -inset-y-10 -z-10 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-[3rem] blur-2xl" />
+              {floatingCards.map((c, i) => (
+                <div
+                  key={c.name}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card/90 backdrop-blur-sm shadow-lg p-3.5"
+                  style={{ marginLeft: i % 2 === 1 ? 28 : 0 }}
+                >
+                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                    {c.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{c.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.role}</p>
+                  </div>
+                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-lg shrink-0 ${c.badge}`}>{c.tag}</span>
+                </div>
+              ))}
             </div>
-            <p className="mt-6 text-muted-foreground text-sm flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-brand-green-600" />
-              OTP verification · Gmail, Yahoo &amp; temp addresses blocked
-            </p>
           </div>
         </div>
 
         {/* Stats bar */}
         <div className="relative border-t border-border/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-y-0 md:divide-x divide-border/60">
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center md:px-6 first:md:pl-0 py-2">
-                  <p className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight tabular-nums">{stat.value}</p>
-                  <p className="text-muted-foreground text-sm mt-1.5">{stat.label}</p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="rounded-2xl border border-border bg-card shadow-sm grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border">
+              {heroStats.map((stat) => (
+                <div key={stat.label} className="flex items-center gap-3 px-6 py-5">
+                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <stat.icon className="h-4.5 w-4.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-foreground tracking-tight tabular-nums leading-none">{stat.value}</p>
+                    <p className="text-muted-foreground text-xs mt-1">{stat.label}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -177,11 +216,11 @@ export default function LandingPage() {
                   <div className="relative flex h-full flex-col items-center gap-3 p-6 rounded-2xl border border-border bg-card text-center overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.15)]">
                     <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-b from-transparent to-black/[0.02] dark:to-white/[0.03]" />
                     {service.badge && (
-                      <span className="absolute top-3 right-3 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-brand-yellow-50 text-brand-yellow-700 dark:bg-brand-yellow-600/15 dark:text-brand-yellow-400">
+      <span className="absolute top-3 right-3 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                         {service.badge}
                       </span>
                     )}
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-surface to-border/40 flex items-center justify-center group-hover:scale-105 group-hover:bg-foreground group-hover:from-foreground group-hover:to-foreground group-hover:text-background transition-all duration-300">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-surface to-border/40 flex items-center justify-center group-hover:scale-105 group-hover:bg-primary group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground transition-all duration-300">
                       <Icon className={`h-6 w-6 ${service.color} group-hover:text-inherit`} />
                     </div>
                     <div className="flex flex-col flex-1 justify-start">
@@ -207,11 +246,7 @@ export default function LandingPage() {
           <div className="relative grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             <div className="hidden md:block absolute top-[27px] left-[16.5%] right-[16.5%] h-px bg-border" aria-hidden="true" />
             {howItWorks.map((item, i) => {
-              const stepColor = [
-                "bg-brand-red-600",
-                "bg-brand-yellow-600",
-                "bg-brand-green-600",
-              ][i]
+              const stepColor = ["bg-primary", "bg-accent", "bg-primary"][i]
               return (
                 <div key={item.step} className="relative h-full rounded-2xl bg-card border border-border p-8 text-center hover:shadow-lg transition-shadow duration-300">
                   <div className={`relative z-10 h-14 w-14 rounded-2xl ${stepColor} text-white flex items-center justify-center text-lg font-bold mx-auto mb-5 shadow-lg`}>
@@ -236,8 +271,8 @@ export default function LandingPage() {
               <div className="space-y-5">
                 {trustPoints.map((point) => (
                   <div key={point} className="flex items-start gap-3.5">
-                    <div className="h-5 w-5 rounded-full bg-brand-green-50 dark:bg-brand-green-600/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-brand-green-600" />
+                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <p className="text-muted-foreground leading-relaxed">{point}</p>
                   </div>
@@ -249,11 +284,11 @@ export default function LandingPage() {
                 <div key={t.name} className="relative bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow">
                   <Quote className="absolute top-5 right-5 h-8 w-8 text-border" />
                   <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-brand-yellow-500 text-brand-yellow-500" />)}
+                    {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
                   </div>
                   <p className="text-foreground/85 text-sm mb-4 leading-relaxed max-w-[90%]">&ldquo;{t.text}&rdquo;</p>
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-red-500 to-brand-yellow-500 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-semibold shrink-0">
                       {t.name.charAt(0)}
                     </div>
                     <div>
@@ -273,7 +308,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-foreground mb-4 tracking-tight">Active across most Indian cities</h2>
           <div className="inline-flex items-center gap-2 bg-card border border-border rounded-full px-5 py-2.5 text-sm font-medium text-foreground shadow-sm">
-            <MapPin className="h-4 w-4 text-brand-red-600" />
+            <MapPin className="h-4 w-4 text-primary" />
             New cities added as our network grows
           </div>
         </div>
@@ -282,7 +317,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="relative py-24 sm:py-28 bg-background overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[900px] rounded-full bg-brand-red-500/10 blur-[140px]" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[900px] rounded-full bg-primary/10 blur-[140px]" />
         </div>
         <div className="max-w-2xl mx-auto px-4 text-center">
           <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-sm shadow-sm p-10 sm:p-14">
@@ -292,7 +327,7 @@ export default function LandingPage() {
             <p className="text-muted-foreground text-lg mb-9">
               Verify your corporate email and get instant access. Zero fake profiles, zero scammers — just verified colleagues.
             </p>
-            <Button asChild size="xl" className="rounded-full bg-foreground text-background hover:bg-foreground/90 shadow-xl shadow-foreground/10">
+            <Button asChild size="xl" className="rounded-full shadow-xl shadow-primary/20">
               <Link href="/auth/signin">
                 Get started <ArrowRight className="h-5 w-5" />
               </Link>
