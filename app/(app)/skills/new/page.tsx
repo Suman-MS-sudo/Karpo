@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
-const CATEGORIES = ["TECH","DATA","DESIGN","ENGINEERING","MARKETING","BUSINESS","FINANCE","LEGAL","LANGUAGE","COACHING","CREATIVE","WELLNESS"]
+const CATEGORIES = ["TECH","DATA","DESIGN","ENGINEERING","MARKETING","BUSINESS","FINANCE","LEGAL","LANGUAGE","COACHING","CREATIVE","WELLNESS","MUSIC","PHOTOGRAPHY"]
 const DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"]
 const SLOTS = ["08:00–09:00","09:00–10:00","10:00–11:00","11:00–12:00","12:00–13:00","13:00–14:00","14:00–15:00","15:00–16:00","16:00–17:00","17:00–18:00","18:00–19:00","19:00–20:00","20:00–21:00"]
 
@@ -111,7 +111,7 @@ export default function NewSkillPage() {
   }
 
   const canNext = [
-    category.length > 0,
+    category.length > 0 && subcategory.trim().length > 0,
     title.length > 3 && description.length > 20,
     pricingModel === "HOURLY" ? !!hourlyRate : packages.some((p) => !!p.price),
     availDays.length > 0,
@@ -121,7 +121,7 @@ export default function NewSkillPage() {
     setLoading(true); setError("")
     try {
       const payload = {
-        category, subcategory: subcategory || undefined,
+        category, subcategory,
         yearsExp: yearsExp || undefined, certifications, portfolioUrl: portfolioUrl || undefined, linkedIn: linkedIn || undefined,
         title, tagline: tagline || undefined, description, skills, deliverables, requirements: requirements || undefined,
         format, location: location || undefined,
@@ -188,7 +188,7 @@ export default function NewSkillPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>Subcategory <span className="text-muted-foreground text-xs font-normal">optional</span></Label>
+              <Label>Subcategory <span className="text-red-500">*</span></Label>
               <Input value={subcategory} onChange={(e) => setSubcategory(e.target.value)} placeholder="e.g. React, Python, Tax Law, Yoga" />
             </div>
             <div className="space-y-1.5">

@@ -4,7 +4,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import {
-  Plus, TrendingUp, Eye, MessageSquare, MapPin, Crown, Zap, ArrowRight,
+  Plus, TrendingUp, Eye, MessageSquare, MapPin, Crown, Zap, ArrowRight, Flag,
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users, GraduationCap, Shield, Gift,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -266,6 +266,23 @@ export default async function DashboardPage() {
           </Button>
         </div>
       )}
+
+      {/* ── Report a concern ──────────────────────────────────────── */}
+      <Link
+        href="/report"
+        className="flex items-center justify-between gap-3 bg-card border border-dashed border-border rounded-2xl p-4 hover:border-muted-foreground/40 hover:bg-muted/30 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+            <Flag className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Report a concern or grievance</p>
+            <p className="text-xs text-muted-foreground">Found a bug, a problem with the app, or something to flag? Let us know.</p>
+          </div>
+        </div>
+        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+      </Link>
     </div>
   )
 }

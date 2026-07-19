@@ -165,6 +165,38 @@ export function ServiceRail() {
       "hidden lg:block relative shrink-0 transition-[width] duration-200 ease-in-out",
       panePinned ? "w-[220px]" : "w-[68px]"
     )}>
+      {/* Logo row — always rendered at full (expanded) width so "Korpo" is never
+          clipped or hidden, independent of whether the rail below is collapsed.
+          Sits above the collapsing rail as a fixed-width overlay. */}
+      <div className="absolute top-0 left-0 z-[51] w-[220px] h-14 flex items-center border-b border-r border-sidebar-border bg-sidebar shadow-sm">
+        <Link href="/dashboard" className="flex items-center flex-1 min-w-0">
+          <span className="flex items-center justify-center w-[44px] h-full shrink-0">
+            <Image
+              src="/logo.png" alt="Korpo"
+              width={28} height={28}
+              className="rounded-lg object-contain shrink-0"
+            />
+          </span>
+          <span className="font-bold text-sm whitespace-nowrap text-foreground flex-1 min-w-0">
+            Korpo
+          </span>
+        </Link>
+        {/* Pane pin toggle */}
+        <button
+          onClick={togglePanePin}
+          title={panePinned ? "Unpin pane" : "Pin pane open"}
+          className={cn(
+            "shrink-0 h-7 w-7 mr-2 rounded-md flex items-center justify-center",
+            "transition-colors duration-100",
+            panePinned
+              ? "text-primary hover:bg-primary/10"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          {panePinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+
       <div className={cn(
         "group",
         "absolute top-0 left-0 bottom-0 z-50",
@@ -177,40 +209,8 @@ export function ServiceRail() {
           : "w-[68px] hover:w-[220px] hover:shadow-[4px_0_20px_rgba(0,0,0,0.07)] dark:hover:shadow-[4px_0_20px_rgba(0,0,0,0.3)]"
       )}>
 
-        {/* Logo row — icon slot matches the w-[44px] column used by nav items below,
-            so the logo stays centered in the collapsed rail instead of a fixed margin
-            that only looked right in one of the two (collapsed/expanded) states. */}
-        <div className="h-14 flex items-center border-b border-sidebar-border shrink-0">
-          <Link href="/dashboard" className="flex items-center flex-1 min-w-0">
-            <span className="flex items-center justify-center w-[44px] h-full shrink-0">
-              <Image
-                src="/logo.png" alt="Korpo"
-                width={28} height={28}
-                className="rounded-lg object-contain shrink-0"
-              />
-            </span>
-            <span className={cn(
-              "font-bold text-sm whitespace-nowrap text-foreground flex-1 min-w-0",
-              panePinned ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-            )}>
-              Korpo
-            </span>
-          </Link>
-          {/* Pane pin toggle */}
-          <button
-            onClick={togglePanePin}
-            title={panePinned ? "Unpin pane" : "Pin pane open"}
-            className={cn(
-              "shrink-0 h-7 w-7 mr-2 rounded-md flex items-center justify-center",
-              "transition-all duration-100",
-              panePinned
-                ? "opacity-100 text-primary hover:bg-primary/10"
-                : "opacity-0 group-hover:opacity-100 text-muted-foreground hover:bg-muted hover:text-foreground delay-150"
-            )}
-          >
-            {panePinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
-          </button>
-        </div>
+        {/* Spacer — logo row now rendered separately above (always full width) */}
+        <div className="h-14 shrink-0 border-b border-sidebar-border" aria-hidden="true" />
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto scrollbar-hide py-3 px-2">

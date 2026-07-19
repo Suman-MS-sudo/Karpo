@@ -1,29 +1,32 @@
 "use client"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { User, MapPin, Briefcase, ArrowRight } from "lucide-react"
+import { User, MapPin, Briefcase, ArrowRight, Droplet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { CITIES } from "@/config/services"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
+
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
 export default function OnboardPage() {
   const { data: session, update } = useSession()
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const [form, setForm] = useState({
     name: session?.user?.name ?? "",
     city: "",
     department: "",
     jobTitle: "",
     bio: "",
+    bloodGroup: "",
+    bloodDonationOptIn: false,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError("")
     setLoading(true)
     try {
       const res = await fetch("/api/profile", {
@@ -31,10 +34,17 @@ export default function OnboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       })
-      if (res.ok) {
-        await update()
-        router.push("/dashboard")
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setError(data?.error ?? "Something went wrong. Please try again.")
+        return
       }
+      await update()
+      // Full reload so the server re-reads the freshly updated session/cookie
+      // before the (app) layout's onboarding-completion check runs again.
+      window.location.href = "/dashboard"
+    } catch {
+      setError("Something went wrong. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -65,20 +75,11 @@ export default function OnboardPage() {
 
         <div className="space-y-1.5">
           <Label className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> City</Label>
-          <Select
-            required
+          <CityAutocomplete
             value={form.city}
-            onValueChange={(v) => setForm((f) => ({ ...f, city: v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select your city" />
-            </SelectTrigger>
-            <SelectContent>
-              {CITIES.map((city) => (
-                <SelectItem key={city} value={city}>{city}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(city) => setForm((f) => ({ ...f, city }))}
+            placeholder="Type your city…"
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -109,6 +110,37 @@ export default function OnboardPage() {
             onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
           />
         </div>
+
+        <div className="space-y-2 rounded-xl border border-border p-4">
+          <Label className="flex items-center gap-2"><Droplet className="h-3.5 w-3.5" /> Blood Group <span className="text-muted-foreground font-normal">(optional)</span></Label>
+          <div className="flex flex-wrap gap-2">
+            {BLOOD_GROUPS.map((bg) => (
+              <button
+                key={bg}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, bloodGroup: f.bloodGroup === bg ? "" : bg }))}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  form.bloodGroup === bg
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-input hover:bg-muted"
+                }`}
+              >
+                {bg}
+              </button>
+            ))}
+          </div>
+          <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={form.bloodDonationOptIn}
+              onChange={(e) => setForm((f) => ({ ...f, bloodDonationOptIn: e.target.checked }))}
+            />
+            I consent to share my blood group with Korpo and be notified when a colleague nearby needs my blood type for donation.
+          </label>
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <Button type="submit" className="w-full" size="lg" disabled={loading || !form.city}>
           {loading ? "Saving…" : "Complete Setup"}

@@ -1,11 +1,11 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   Camera, Loader2, CheckCircle2, Plus, X, ExternalLink, AtSign,
-  User, Link as LinkIcon, Sparkles, AlertCircle, Building2,
+  User, Link as LinkIcon, Sparkles, AlertCircle, Building2, Droplet,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -14,8 +14,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
+import { ReverifyWorkEmail } from "@/components/profile/ReverifyWorkEmail"
 import { getInitials, cn } from "@/lib/utils"
 import { PROFILE_SOCIAL_PLATFORMS } from "@/lib/socialPlatforms"
+
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -32,11 +35,14 @@ type ProfileForm = {
   yearsOfExp: string
   skills:     string[]
   socialLinks: SocialLinks
+  bloodGroup: string
+  bloodDonationOptIn: boolean
 }
 
 const EMPTY_FORM: ProfileForm = {
   name: "", bio: "", city: "", jobTitle: "", department: "",
   phone: "", username: "", yearsOfExp: "", skills: [], socialLinks: {},
+  bloodGroup: "", bloodDonationOptIn: false,
 }
 
 const TABS = [
@@ -76,15 +82,20 @@ export default function EditProfilePage() {
   const [skillInput, setSkillInput] = useState("")
   const [form,       setForm]       = useState<ProfileForm>(EMPTY_FORM)
   const [company,    setCompany]    = useState<{ name: string; logo?: string | null } | null>(null)
+  // Whether a blood group was already on file when the page loaded — once set,
+  // it's shown read-only instead of re-editable, matching intent captured at registration.
+  const [hasSavedBloodGroup, setHasSavedBloodGroup] = useState(false)
 
   // Load profile
-  useEffect(() => {
-    fetch("/api/profile")
+  const loadProfile = useCallback(() => {
+    return fetch("/api/profile")
       .then((r) => r.json())
       .then((d) => {
         if (!d) return
         setAvatarUrl(d.avatarUrl || d.image || "")
-        if (d.company) setCompany(d.company)
+        // `d.company` is only present once a company match exists — clear the
+        // stale one when a re-verification switches to an unmatched domain.
+        setCompany(d.company ?? null)
         setForm({
           name:        d.name        ?? "",
           bio:         d.bio         ?? "",
@@ -96,9 +107,14 @@ export default function EditProfilePage() {
           yearsOfExp:  d.yearsOfExp  != null ? String(d.yearsOfExp) : "",
           skills:      Array.isArray(d.skills) ? d.skills : [],
           socialLinks: (d.socialLinks as SocialLinks) ?? {},
+          bloodGroup:  d.bloodGroup ?? "",
+          bloodDonationOptIn: !!d.bloodDonationOptIn,
         })
+        setHasSavedBloodGroup(!!d.bloodGroup)
       })
   }, [])
+
+  useEffect(() => { loadProfile() }, [loadProfile])
 
   // Avatar upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,22 +345,29 @@ export default function EditProfilePage() {
             </div>
 
             {/* Company — read-only, derived from work email domain */}
-            {company && (
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5" /> Company
-                </Label>
-                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40 cursor-not-allowed opacity-70">
-                  {company.logo ? (
-                    <Image src={company.logo} alt={company.name} width={18} height={18} className="rounded-sm shrink-0" />
-                  ) : (
-                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                  )}
-                  <span className="text-sm">{company.name}</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground">Linked to your work email — cannot be changed here.</p>
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Company
+              </Label>
+              {company ? (
+                <>
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40 cursor-not-allowed opacity-70">
+                    {company.logo ? (
+                      <Image src={company.logo} alt={company.name} width={18} height={18} className="rounded-sm shrink-0" />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="text-sm">{company.name}</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Linked to your work email — cannot be changed here.</p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground px-1">
+                  No company on file yet — an admin needs to approve your organization's domain.
+                </p>
+              )}
+              <ReverifyWorkEmail fullName={form.name} phone={form.phone} onVerified={loadProfile} />
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -398,6 +421,43 @@ export default function EditProfilePage() {
                 onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
                 placeholder="Tell colleagues about yourself — your expertise, what you're working on, and what you're looking for…"
               />
+            </div>
+
+            <div className="space-y-2 rounded-xl border border-border p-4">
+              <Label className="flex items-center gap-2"><Droplet className="h-3.5 w-3.5" /> Blood Group</Label>
+              {hasSavedBloodGroup ? (
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40">
+                  <Droplet className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium">{form.bloodGroup}</span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {BLOOD_GROUPS.map((bg) => (
+                    <button
+                      key={bg}
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, bloodGroup: f.bloodGroup === bg ? "" : bg }))}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
+                        form.bloodGroup === bg
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-input hover:bg-muted"
+                      )}
+                    >
+                      {bg}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={form.bloodDonationOptIn}
+                  onChange={(e) => setForm((f) => ({ ...f, bloodDonationOptIn: e.target.checked }))}
+                />
+                I consent to share my blood group with Korpo and be notified when a colleague nearby needs my blood type for donation.
+              </label>
             </div>
           </div>
         )}

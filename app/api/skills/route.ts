@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
           pricingModel, hourlyRate, packages, format, location, timezone, availability, maxClientsPerMonth,
           yearsExp, certifications, portfolioUrl, linkedIn } = body
 
-  if (!title || !category || !description || !format) {
-    return NextResponse.json({ error: "title, category, description, format are required" }, { status: 400 })
+  if (!title || !category || !subcategory || !description || !format) {
+    return NextResponse.json({ error: "title, category, subcategory, description, format are required" }, { status: 400 })
   }
 
   const isPremium = session.user.membershipPlan === "PREMIUM"

@@ -1,12 +1,25 @@
 import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
-import { BadgeCheck, Clock, CheckCircle, XCircle, Phone, Mail, Briefcase } from "lucide-react"
+import { BadgeCheck, Clock, CheckCircle, XCircle, Phone, Mail, Briefcase, RefreshCw } from "lucide-react"
 import { formatRelativeTime } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
 
+function RequestTypeBadge({ req }: { req: { requestType: string; user: { name: string | null; email: string | null } | null } }) {
+  if (req.requestType !== "REVERIFICATION") return null
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400">
+      <RefreshCw className="h-2.5 w-2.5" />
+      Existing user · {req.user?.name ?? req.user?.email ?? "unknown"}
+    </span>
+  )
+}
+
 export default async function AdminIdVerificationsPage() {
-  const requests = await prisma.idVerificationRequest.findMany({ orderBy: { createdAt: "desc" } })
+  const requests = await prisma.idVerificationRequest.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { user: { select: { name: true, email: true } } },
+  })
 
   const pending  = requests.filter((r) => r.status === "PENDING")
   const approved = requests.filter((r) => r.status === "APPROVED")
@@ -31,7 +44,10 @@ export default async function AdminIdVerificationsPage() {
               <div key={req.id} className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-semibold">{req.fullName}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold">{req.fullName}</p>
+                      <RequestTypeBadge req={req} />
+                    </div>
                     <p className="text-sm text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> {req.corpEmail}</p>
                     <p className="text-sm text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> {req.phone}</p>
                     {req.designation && (
@@ -79,14 +95,27 @@ export default async function AdminIdVerificationsPage() {
           </summary>
           <div className="px-5 pb-4 space-y-2">
             {rejected.map((req) => (
-              <div key={req.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/30">
-                <div>
-                  <p className="font-medium text-sm">{req.fullName}</p>
-                  <p className="text-xs text-muted-foreground">{req.corpEmail} · {req.phone} · {formatRelativeTime(req.createdAt)}</p>
+              <div key={req.id} className="p-3 rounded-xl bg-muted/30">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-sm">{req.fullName}</p>
+                      <RequestTypeBadge req={req} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">{req.corpEmail} · {req.phone} · {formatRelativeTime(req.createdAt)}</p>
+                  </div>
+                  <form action={`/api/admin/id-verifications/${req.id}/approve`} method="POST">
+                    <Button size="sm" variant="outline" type="submit" className="text-xs h-7">Re-approve</Button>
+                  </form>
                 </div>
-                <form action={`/api/admin/id-verifications/${req.id}/approve`} method="POST">
-                  <Button size="sm" variant="outline" type="submit" className="text-xs h-7">Re-approve</Button>
-                </form>
+                <div className="flex gap-3 mt-3">
+                  <a href={req.frontImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <img src={req.frontImageUrl} alt="ID front" className="h-28 w-44 object-cover rounded-lg border border-border" />
+                  </a>
+                  <a href={req.backImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <img src={req.backImageUrl} alt="ID back" className="h-28 w-44 object-cover rounded-lg border border-border" />
+                  </a>
+                </div>
               </div>
             ))}
           </div>
@@ -101,8 +130,19 @@ export default async function AdminIdVerificationsPage() {
           <div className="px-5 pb-4 space-y-2">
             {approved.map((req) => (
               <div key={req.id} className="p-3 rounded-xl bg-muted/30">
-                <p className="font-medium text-sm">{req.fullName}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium text-sm">{req.fullName}</p>
+                  <RequestTypeBadge req={req} />
+                </div>
                 <p className="text-xs text-muted-foreground">{req.corpEmail} · {req.phone} · {formatRelativeTime(req.createdAt)}</p>
+                <div className="flex gap-3 mt-3">
+                  <a href={req.frontImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <img src={req.frontImageUrl} alt="ID front" className="h-28 w-44 object-cover rounded-lg border border-border" />
+                  </a>
+                  <a href={req.backImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+                    <img src={req.backImageUrl} alt="ID back" className="h-28 w-44 object-cover rounded-lg border border-border" />
+                  </a>
+                </div>
               </div>
             ))}
           </div>

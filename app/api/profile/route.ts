@@ -18,7 +18,7 @@ export async function PATCH(req: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const scalar  = ["name", "bio", "city", "phone", "department", "jobTitle", "avatarUrl", "yearsOfExp"]
+  const scalar  = ["name", "bio", "city", "phone", "department", "jobTitle", "avatarUrl", "yearsOfExp", "bloodGroup", "bloodDonationOptIn"]
   const special = ["socialLinks", "skills", "username"]
   const data: Record<string, unknown> = {}
 

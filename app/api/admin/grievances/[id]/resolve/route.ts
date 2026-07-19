@@ -6,9 +6,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const session = await auth()
   if (session?.user?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  await prisma.idVerificationRequest.update({
-    where: { id: params.id },
-    data: { status: "REJECTED", reviewedAt: new Date() },
-  })
-  return NextResponse.redirect(new URL("/admin/id-verifications", req.url), 303)
+  await prisma.appGrievance.update({ where: { id: params.id }, data: { status: "RESOLVED" } })
+  return NextResponse.redirect(new URL("/admin/reports", req.url), 303)
 }

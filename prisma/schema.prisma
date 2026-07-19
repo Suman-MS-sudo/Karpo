@@ -74,6 +74,8 @@ model User {
   city            String?
   department      String?
   jobTitle        String?
+  bloodGroup          String?
+  bloodDonationOptIn  Boolean   @default(false)
   reputationScore Int       @default(0)
   isVerified      Boolean   @default(false)
   role            String    @default("USER")
@@ -119,6 +121,8 @@ model User {
   courses           Course[]
   courseEnrollments CourseEnrollment[]
   conciergeLeads    ConciergeLead[]
+  idVerificationRequests IdVerificationRequest[]
+  appGrievances     AppGrievance[]
 }
 
 model Membership {
@@ -220,6 +224,11 @@ model IdVerificationRequest {
   backImageUrl  String
   passwordHash  String?
   status        String    @default("PENDING")
+  // REGISTRATION (default, pre-account) or REVERIFICATION (existing logged-in
+  // user re-proving employment, e.g. after switching companies).
+  requestType   String    @default("REGISTRATION")
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
   reviewedAt    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -279,6 +288,23 @@ model ListingReport {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([listingId, userId])
+  @@index([status])
+}
+
+// App-wide concern/grievance — distinct from ListingReport, which is always
+// tied to a specific listing. This is for general functionality issues,
+// bugs, or grievances raised from the dashboard.
+model AppGrievance {
+  id        String    @id @default(cuid())
+  userId    String
+  category  String    // BUG | FEATURE_REQUEST | HARASSMENT | PAYMENT | ACCOUNT | OTHER
+  message   String
+  status    String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([status])
 }
 

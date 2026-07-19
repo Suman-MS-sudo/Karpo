@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { SkillListRow } from "@/components/skills/SkillListRow"
 import { SkillListFilters } from "@/components/skills/SkillListFilters"
 import { SkillsLanding } from "./SkillsLanding"
+import { fuzzyFilter } from "@/lib/fuzzy"
 
 export const dynamic = "force-dynamic"
 
@@ -15,6 +16,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   TECH: "Tech & Dev", DATA: "Data & AI", DESIGN: "Design & UX", ENGINEERING: "Engineering",
   MARKETING: "Marketing", BUSINESS: "Business", FINANCE: "Finance", LEGAL: "Legal",
   LANGUAGE: "Languages", COACHING: "Coaching", CREATIVE: "Creative", WELLNESS: "Wellness",
+  MUSIC: "Music", PHOTOGRAPHY: "Photography",
 }
 
 const SKILL_OPTIONS = ["React", "Next.js", "TypeScript", "Node.js", "Python", "AWS", "Docker", "Figma", "SQL"]
@@ -44,17 +46,27 @@ export default async function SkillsPage({ searchParams }: PageProps) {
     return <SkillsLanding isLoggedIn={!!session} />
   }
 
-  const where: any = { status: "ACTIVE" }
-  if (searchParams.q)         where.OR = [{ title: { contains: searchParams.q } }, { tagline: { contains: searchParams.q } }, { description: { contains: searchParams.q } }]
-  if (searchParams.category)  where.category    = searchParams.category
-  if (searchParams.format)    where.format      = searchParams.format
-  if (searchParams.minRating) where.avgRating   = { gte: parseFloat(searchParams.minRating) }
-  if (searchParams.minExp)    where.yearsExp    = { gte: parseInt(searchParams.minExp) }
-  if (searchParams.maxPrice)  where.hourlyRate  = { lte: parseInt(searchParams.maxPrice) }
-  if (searchParams.location)  where.location    = { in: searchParams.location.split(",") }
+  const baseWhere: any = { status: "ACTIVE" }
+  if (searchParams.category)  baseWhere.category    = searchParams.category
+  if (searchParams.format)    baseWhere.format      = searchParams.format
+  if (searchParams.minRating) baseWhere.avgRating   = { gte: parseFloat(searchParams.minRating) }
+  if (searchParams.minExp)    baseWhere.yearsExp    = { gte: parseInt(searchParams.minExp) }
+  if (searchParams.maxPrice)  baseWhere.hourlyRate  = { lte: parseInt(searchParams.maxPrice) }
+  if (searchParams.location)  baseWhere.location    = { in: searchParams.location.split(",") }
   if (searchParams.skills) {
-    where.AND = searchParams.skills.split(",").map(s => ({ skills: { contains: `"${s}"` } }))
+    baseWhere.AND = searchParams.skills.split(",").map(s => ({ skills: { contains: `"${s}"` } }))
   }
+
+  const q = searchParams.q?.trim()
+  const where: any = q ? {
+    ...baseWhere,
+    OR: [
+      { title:       { contains: q } },
+      { tagline:     { contains: q } },
+      { description: { contains: q } },
+      { subcategory: { contains: q } },
+    ],
+  } : baseWhere
 
   const orderBy: any = sort === "price_asc"   ? { hourlyRate: "asc" }
                      : sort === "price_desc"  ? { hourlyRate: "desc" }
@@ -64,17 +76,41 @@ export default async function SkillsPage({ searchParams }: PageProps) {
                      : aiMatch                ? [{ isVerified: "desc" }, { isFeatured: "desc" }, { avgRating: "desc" }]
                      : [{ isFeatured: "desc" }, { avgRating: "desc" }]
 
-  const [listings, total, byCategory, locationRows] = await Promise.all([
-    prisma.skillListing.findMany({
-      where, orderBy,
-      skip:  (page - 1) * PAGE_SIZE,
-      take:  PAGE_SIZE,
-      include: {
-        user:   { select: { id: true, name: true, avatarUrl: true, image: true, jobTitle: true, department: true, isVerified: true, company: { select: { name: true, logo: true } } } },
-        _count: { select: { orders: true, reviews: true } },
-      },
-    }),
-    prisma.skillListing.count({ where }),
+  const listingInclude = {
+    user:   { select: { id: true, name: true, avatarUrl: true, image: true, jobTitle: true, department: true, isVerified: true, company: { select: { name: true, logo: true } } } },
+    _count: { select: { orders: true, reviews: true } },
+  } as const
+
+  let listings: any[], total: number
+
+  if (q) {
+    // Exact substring match first; if a typo yields nothing, fall back to a
+    // fuzzy (typo-tolerant) match over a bounded candidate pool — same
+    // pattern used for rentals search.
+    const exactCount = await prisma.skillListing.count({ where })
+    if (exactCount > 0) {
+      listings = await prisma.skillListing.findMany({
+        where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, include: listingInclude,
+      })
+      total = exactCount
+    } else {
+      const candidates = await prisma.skillListing.findMany({
+        where: baseWhere, orderBy, take: 500, include: listingInclude,
+      })
+      const matched = fuzzyFilter(candidates, q, (l) => [l.title, l.tagline, l.description, l.subcategory])
+      total = matched.length
+      listings = matched.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE)
+    }
+  } else {
+    ;[listings, total] = await Promise.all([
+      prisma.skillListing.findMany({
+        where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, include: listingInclude,
+      }),
+      prisma.skillListing.count({ where }),
+    ])
+  }
+
+  const [byCategory, locationRows] = await Promise.all([
     prisma.skillListing.groupBy({ by: ["category"], where: { status: "ACTIVE" }, _count: { _all: true } }),
     prisma.skillListing.findMany({ where: { status: "ACTIVE", location: { not: null } }, select: { location: true }, distinct: ["location"] }),
   ])

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2, Sparkles, Quote, Search, FolderCheck, Gauge } from "lucide-react"
+import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2, Sparkles, Quote, FolderCheck, Gauge } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SERVICES } from "@/config/services"
 import {
@@ -13,12 +13,6 @@ const heroStats = [
   { icon: FolderCheck, value: "200+",    label: "Companies Onboarded" },
   { icon: Star,        value: "4",       label: "Cities Active" },
   { icon: Gauge,        value: "100%",   label: "Verified Network" },
-]
-
-const floatingCards = [
-  { name: "Priya K.",  role: "Software Engineer", tag: "Top Rated",   badge: "bg-primary/10 text-primary" },
-  { name: "Rahul M.",  role: "Analyst",           tag: "Available Now", badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400" },
-  { name: "Anjali S.", role: "Product Manager",   tag: "Verified Pro", badge: "bg-accent/10 text-accent" },
 ]
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -118,65 +112,35 @@ export default function LandingPage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 lg:pt-28 lg:pb-20">
-          <div className="grid lg:grid-cols-[1fr_380px] gap-12 items-center">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-8">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wide text-primary">Verified Corporate Marketplace</span>
-              </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.05] tracking-tight text-balance text-foreground">
-                Find the right{" "}
-                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  colleagues. Faster.
-                </span>
-              </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-                Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
-              </p>
-
-              {/* Search bar */}
-              <form action="/auth/signin" className="mt-8 flex items-center gap-2 max-w-lg">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <input
-                    type="text"
-                    readOnly
-                    placeholder="What are you looking for?"
-                    className="w-full h-12 pl-11 pr-4 rounded-xl bg-card border border-border text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer"
-                  />
-                </div>
-                <Button type="submit" size="lg" className="h-12 rounded-xl px-6 shrink-0">
-                  Search
-                </Button>
-              </form>
-              <p className="mt-4 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-medium text-foreground/70">Popular:</span>
-                {["Marketplace", "Rentals", "Referrals", "Carpool"].map(t => (
-                  <span key={t} className="px-2 py-0.5 rounded-full bg-muted">{t}</span>
-                ))}
-              </p>
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-8">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">Your work ID. Your pass to everything else.</span>
             </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.05] tracking-tight text-balance text-foreground">
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Verified Corporate Employees Marketplace
+              </span>
+            </h1>
+            <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
+              Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
+            </p>
 
-            {/* Floating professional cards */}
-            <div className="hidden lg:flex flex-col gap-4 relative">
-              <div className="absolute -inset-x-10 -inset-y-10 -z-10 bg-gradient-to-br from-primary/10 via-accent/5 to-transparent rounded-[3rem] blur-2xl" />
-              {floatingCards.map((c, i) => (
-                <div
-                  key={c.name}
-                  className="flex items-center gap-3 rounded-2xl border border-border bg-card/90 backdrop-blur-sm shadow-lg p-3.5"
-                  style={{ marginLeft: i % 2 === 1 ? 28 : 0 }}
-                >
-                  <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                    {c.name.charAt(0)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{c.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{c.role}</p>
-                  </div>
-                  <span className={`text-[10px] font-semibold px-2 py-1 rounded-lg shrink-0 ${c.badge}`}>{c.tag}</span>
-                </div>
-              ))}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Button asChild size="lg" className="h-12 rounded-xl px-6 shadow-sm">
+                <Link href="/auth/signin">
+                  <ShieldCheck className="h-5 w-5" />
+                  Sign in
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6">
+                <Link href="/auth/signin?mode=register">Register</Link>
+              </Button>
             </div>
+            <p className="mt-4 text-xs text-muted-foreground flex items-center gap-2">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              OTP verification · Gmail, Yahoo &amp; temp addresses blocked
+            </p>
           </div>
         </div>
 
@@ -328,7 +292,7 @@ export default function LandingPage() {
               Verify your corporate email and get instant access. Zero fake profiles, zero scammers — just verified colleagues.
             </p>
             <Button asChild size="xl" className="rounded-full shadow-xl shadow-primary/20">
-              <Link href="/auth/signin">
+              <Link href="/auth/signin?mode=register">
                 Get started <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
