@@ -148,6 +148,7 @@ export const SERVICES: ServiceConfig[] = [
 ]
 
 export { INDIAN_CITIES as CITIES } from "@/data/indian-cities"
+export { DEPARTMENTS } from "@/data/departments"
 
 export const FREE_SERVICES = SERVICES.filter((s) => !s.isPremium)
 export const PREMIUM_SERVICES = SERVICES.filter((s) => s.isPremium)

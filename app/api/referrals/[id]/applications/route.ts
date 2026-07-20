@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 const TYPE_RANK: Record<string, number> = { INTEREST: 1, APPLICATION: 2 }
 
@@ -8,7 +9,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { session, error } = await requireAuth()
   if (error) return error
 
-  const { type = "INTEREST", coverLetter, linkedIn, resumeUrl, yearsExp, currentCompany, currentCtc, expectedCtc, noticePeriod } = await req.json()
+  const { type = "APPLICATION", coverLetter, linkedIn, resumeUrl, resumeFileName, yearsExp, currentCompany, currentCtc, expectedCtc, noticePeriod } = await req.json()
+
+  if (!resumeUrl || !String(resumeUrl).trim()) {
+    return NextResponse.json({ error: "A resume/CV link is required to show interest or apply" }, { status: 400 })
+  }
 
   const referral = await prisma.jobReferral.findUnique({
     where: { id: params.id },
@@ -41,6 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     coverLetter:    coverLetter    || null,
     linkedIn:       linkedIn       || null,
     resumeUrl:      resumeUrl      || null,
+    resumeFileName: resumeFileName || null,
     yearsExp:       yearsExp       ? Number(yearsExp)      : null,
     currentCompany: currentCompany || null,
     currentCtc:     currentCtc     ? Number(currentCtc)    : null,
@@ -52,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     ? await prisma.referralApplication.update({ where: { id: existing.id }, data })
     : await prisma.referralApplication.create({ data })
 
-  await prisma.notification.create({
+  const notification = await prisma.notification.create({
     data: {
       userId: referral.userId,
       type:   "GENERAL",
@@ -63,8 +69,26 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       link: `/referrals/${params.id}`,
     },
   })
+  pushNotification(notification)
 
   return NextResponse.json({ application })
+}
+
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const { session, error } = await requireAuth()
+  if (error) return error
+
+  const application = await prisma.referralApplication.findUnique({
+    where: { referralId_userId: { referralId: params.id, userId: session.user.id } },
+  })
+
+  if (!application) return NextResponse.json({ error: "No application found" }, { status: 404 })
+  if (application.status !== "PENDING") {
+    return NextResponse.json({ error: "Only a pending application can be revoked" }, { status: 400 })
+  }
+
+  await prisma.referralApplication.delete({ where: { id: application.id } })
+  return NextResponse.json({ ok: true })
 }
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {

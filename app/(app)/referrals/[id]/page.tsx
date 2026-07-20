@@ -15,6 +15,7 @@ import { UserCard } from "@/components/shared/UserCard"
 import { formatDate } from "@/lib/utils"
 import { ReferralApplyPanel } from "@/components/referrals/ReferralApplyPanel"
 import { ReferralApplicationsPanel } from "@/components/referrals/ReferralApplicationsPanel"
+import { ReferralCloseButton } from "@/components/referrals/ReferralCloseButton"
 
 export const dynamic = "force-dynamic"
 
@@ -48,7 +49,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
   const myApplication = session?.user?.id && !isOwner
     ? await prisma.referralApplication.findUnique({
         where:  { referralId_userId: { referralId: params.id, userId: session.user.id } },
-        select: { id: true, type: true, status: true, coverLetter: true, linkedIn: true, resumeUrl: true, yearsExp: true, currentCompany: true, currentCtc: true, expectedCtc: true, noticePeriod: true },
+        select: { id: true, type: true, status: true, coverLetter: true, linkedIn: true, resumeUrl: true, resumeFileName: true, yearsExp: true, currentCompany: true, currentCtc: true, expectedCtc: true, noticePeriod: true },
       })
     : null
 
@@ -198,10 +199,6 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
               </div>
               <div>
                 <p className="font-semibold text-sm">{ref.company.name}</p>
-                {ref.company.domain && (
-                  <a href={`https://${ref.company.domain}`} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-primary-600 hover:underline">{ref.company.domain}</a>
-                )}
               </div>
             </div>
           </div>
@@ -299,9 +296,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
                 <>
                   <div className="grid grid-cols-2 gap-2 mb-4">
                     <Button variant="outline" size="sm" className="text-xs h-8">Edit</Button>
-                    <Button variant="outline" size="sm" className="text-xs h-8 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50">
-                      {isClosed ? "Reopen" : "Close"}
-                    </Button>
+                    <ReferralCloseButton referralId={ref.id} isClosed={isClosed} />
                   </div>
                   <ReferralApplicationsPanel referralId={ref.id} initialCount={ref._count.applications} />
                 </>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 // Valid pipeline transitions per current status
 const VALID_ACTIONS: Record<string, string[]> = {
@@ -18,8 +19,8 @@ const ACTION_STATUS: Record<string, string> = {
 
 const ACTION_NOTIF: Record<string, { title: string; body: (title: string) => string }> = {
   SHORTLIST: {
-    title: "You've been shortlisted! 🎯",
-    body:  (t) => `Great news — you've been shortlisted for the "${t}" referral. The referrer will reach out shortly.`,
+    title: "You've been accepted! 🎯",
+    body:  (t) => `Great news — you've been accepted for the "${t}" referral. The referrer will reach out shortly.`,
   },
   REFER: {
     title: "Referral submitted! 🚀",
@@ -78,7 +79,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const notif = ACTION_NOTIF[action]
   if (notif) {
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId: application.userId,
         type:   "GENERAL",
@@ -87,12 +88,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         link:   `/referrals/${params.id}`,
       },
     })
+    pushNotification(notification)
   }
 
   // Auto-message on SHORTLIST and REFER
   if (action === "SHORTLIST" || action === "REFER") {
     const msg = action === "SHORTLIST"
-      ? `Hi! Great news — I've shortlisted your application for "${referral.title}". I'll be in touch with next steps soon.`
+      ? `Hi! Great news — I've accepted your application for "${referral.title}". I'll be in touch with next steps soon.`
       : `Hi! I've formally submitted your referral for "${referral.title}". You should expect to hear from the company shortly. Feel free to message me if you have any questions!`
 
     await prisma.message.create({

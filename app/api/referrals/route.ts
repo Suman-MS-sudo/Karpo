@@ -20,18 +20,48 @@ export async function GET() {
   return NextResponse.json({ data: referrals })
 }
 
+// Resolves the posted "Company Name" field to a real Company row: trust a
+// picked id if valid, else match an existing company by name (case-
+// insensitive), else create a new (unapproved) one so posting isn't blocked
+// on a company Korpo doesn't know about yet.
+async function resolveCompanyId(companyId: unknown, companyName: unknown, fallbackId?: string): Promise<string | null> {
+  if (typeof companyId === "string" && companyId) {
+    const existing = await prisma.company.findUnique({ where: { id: companyId } })
+    if (existing) return existing.id
+  }
+
+  const name = typeof companyName === "string" ? companyName.trim() : ""
+  if (!name) return fallbackId ?? null
+
+  const matched = await prisma.company.findFirst({ where: { name: { equals: name } } })
+  if (matched) return matched.id
+
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "company"
+  let domain = `${slug}.new`
+  let suffix = 1
+  while (await prisma.company.findUnique({ where: { domain } })) {
+    domain = `${slug}-${suffix}.new`
+    suffix += 1
+  }
+
+  const created = await prisma.company.create({ data: { name, domain, isApproved: false } })
+  return created.id
+}
+
 export async function POST(req: Request) {
   const { session, error } = await requireVerified()
   if (error) return error
-  if (!session.user.companyId) return NextResponse.json({ error: "No company associated" }, { status: 400 })
 
   const body = await req.json()
+
+  const companyId = await resolveCompanyId(body.companyId, body.companyName, session.user.companyId)
+  if (!companyId) return NextResponse.json({ error: "Company name is required" }, { status: 400 })
 
   const isPremium = session.user.membershipPlan === "PREMIUM"
   const referral = await prisma.jobReferral.create({
     data: {
       userId:          session.user.id,
-      companyId:       session.user.companyId,
+      companyId,
       title:           body.title,
       description:     body.description,
       department:      body.department,

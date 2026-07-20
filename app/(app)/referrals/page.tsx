@@ -11,6 +11,7 @@ import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { ReferralSearchBar } from "@/components/referrals/ReferralSearchBar"
 import { formatRelativeTime } from "@/lib/utils"
+import { fuzzyIncludes } from "@/lib/fuzzy"
 import Image from "next/image"
 
 export const dynamic = "force-dynamic"
@@ -30,7 +31,6 @@ interface Props {
     city?:    string
     mode?:    string
     type?:    string
-    bonus?:   string
     minExp?:  string
     maxExp?:  string
     minSal?:  string
@@ -60,7 +60,6 @@ export default async function ReferralsPage({ searchParams }: Props) {
   const modeFilter     = searchParams.mode    ? searchParams.mode.split(",").filter(Boolean)    : []
   const typeFilter     = searchParams.type    ? searchParams.type.split(",").filter(Boolean)    : []
   const companyQuery   = searchParams.company?.trim()
-  const hasBonus       = searchParams.bonus === "1"
   const minExp         = searchParams.minExp ? Number(searchParams.minExp) : undefined
   const maxExp         = searchParams.maxExp ? Number(searchParams.maxExp) : undefined
   const minSal         = searchParams.minSal ? Number(searchParams.minSal) : undefined
@@ -69,41 +68,85 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
   const hasFilters = !!(
     query || companyQuery || deptFilter.length || cityFilter.length ||
-    modeFilter.length || typeFilter.length || hasBonus ||
+    modeFilter.length || typeFilter.length ||
     minExp !== undefined || maxExp !== undefined ||
     minSal !== undefined || maxSal !== undefined
   )
 
-  const referrals = await prisma.jobReferral.findMany({
-    where: {
-      status: "OPEN",
-      ...(deptFilter.length    ? { department: { in: deptFilter } }                           : {}),
-      ...(modeFilter.length    ? { workMode:   { in: modeFilter } }                           : {}),
-      ...(typeFilter.length    ? { jobType:    { in: typeFilter } }                           : {}),
-      ...(cityFilter.length    ? { location:   { in: cityFilter } }      : {}),
-      ...(companyQuery         ? { company:    { name: { contains: companyQuery } } } : {}),
-      ...(hasBonus             ? { referralBonus: { gt: 0 } }                                 : {}),
-      ...(minExp !== undefined ? { experienceMax: { gte: minExp } }                           : {}),
-      ...(maxExp !== undefined ? { experienceMin: { lte: maxExp } }                           : {}),
-      ...(minSal !== undefined ? { salaryMax: { gte: minSal } }                               : {}),
-      ...(maxSal !== undefined ? { salaryMin: { lte: maxSal } }                               : {}),
-      ...(query ? {
-        OR: [
-          { title:       { contains: query } },
-          { description: { contains: query } },
-          { department:  { contains: query } },
-          { company:     { name: { contains: query } } },
-        ],
-      } : {}),
-    },
-    orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
-    take:    hasFilters ? 100 : 40,
-    include: {
-      user:    { include: { company: { select: { name: true, logo: true, domain: true } } } },
-      company: true,
-      _count:  { select: { applications: true } },
-    },
-  })
+  // Non-text filters only — company/title text matching is handled separately
+  // below so both get an exact-first, fuzzy-fallback (typo-tolerant) pass.
+  const baseWhere = {
+    status: "OPEN" as const,
+    ...(deptFilter.length    ? { department: { in: deptFilter } }                           : {}),
+    ...(modeFilter.length    ? { workMode:   { in: modeFilter } }                           : {}),
+    ...(typeFilter.length    ? { jobType:    { in: typeFilter } }                           : {}),
+    ...(cityFilter.length    ? { location:   { in: cityFilter } }      : {}),
+    ...(minExp !== undefined ? { experienceMax: { gte: minExp } }                           : {}),
+    ...(maxExp !== undefined ? { experienceMin: { lte: maxExp } }                           : {}),
+    ...(minSal !== undefined ? { salaryMax: { gte: minSal } }                               : {}),
+    ...(maxSal !== undefined ? { salaryMin: { lte: maxSal } }                               : {}),
+  }
+
+  const includeArgs = {
+    user:    { include: { company: { select: { name: true, logo: true, domain: true } } } },
+    company: true,
+    _count:  { select: { applications: true } },
+  } as const
+
+  const take = hasFilters ? 100 : 40
+  const hasTextSearch = !!(query || companyQuery)
+
+  let referrals
+  if (hasTextSearch) {
+    // Exact substring match first; if a typo yields nothing, fall back to a
+    // fuzzy (typo-tolerant, spell-correcting) match over a bounded candidate
+    // pool — same approach used for Rentals search, extended to also cover
+    // the dedicated company filter.
+    const exactAnd: Record<string, unknown>[] = []
+    if (query)        exactAnd.push({ OR: [
+      { title:       { contains: query } },
+      { description: { contains: query } },
+      { department:  { contains: query } },
+      { company:     { name: { contains: query } } },
+    ] })
+    if (companyQuery) exactAnd.push({ company: { name: { contains: companyQuery } } })
+
+    referrals = await prisma.jobReferral.findMany({
+      where: { ...baseWhere, AND: exactAnd },
+      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+      take,
+      include: includeArgs,
+    })
+    if (referrals.length === 0) {
+      const candidates = await prisma.jobReferral.findMany({
+        where: baseWhere,
+        orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+        take: 500,
+        include: includeArgs,
+      })
+      referrals = candidates.filter((r) => {
+        const matchesQuery   = !query        || fuzzyIncludes([r.title, r.description, r.department, r.company.name].filter(Boolean).join(" "), query)
+        const matchesCompany = !companyQuery || fuzzyIncludes([r.company.name, r.company.domain].filter(Boolean).join(" "), companyQuery)
+        return matchesQuery && matchesCompany
+      }).slice(0, take)
+    }
+  } else {
+    referrals = await prisma.jobReferral.findMany({
+      where: baseWhere,
+      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+      take,
+      include: includeArgs,
+    })
+  }
+
+  const myAppliedIds = myId
+    ? new Set(
+        (await prisma.referralApplication.findMany({
+          where:  { userId: myId, referralId: { in: referrals.map((r) => r.id) } },
+          select: { referralId: true },
+        })).map((a) => a.referralId)
+      )
+    : new Set<string>()
 
   const boostedCount = referrals.filter((r) => r.isBoosted).length
 
@@ -115,7 +158,6 @@ export default async function ReferralsPage({ searchParams }: Props) {
   if (deptFilter.length)  filterParts.push(deptFilter.join(", "))
   if (modeFilter.length)  filterParts.push(modeFilter.map((m) => WORK_MODE_LABELS[m] ?? m).join(", "))
   if (typeFilter.length)  filterParts.push(typeFilter.map((t) => JOB_TYPE_LABELS[t] ?? t).join(", "))
-  if (hasBonus)           filterParts.push("Has bonus")
   if (minExp !== undefined || maxExp !== undefined)
     filterParts.push(`${minExp ?? 0}–${maxExp ?? "∞"} yrs exp`)
   if (minSal !== undefined || maxSal !== undefined)
@@ -174,6 +216,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
           {referrals.map((ref) => {
             const isBoosted = ref.isBoosted
             const isOwn     = myId === ref.userId
+            const hasApplied = myAppliedIds.has(ref.id)
             return (
               <Link key={ref.id} href={`/referrals/${ref.id}`} className="block group">
                 <div className={`bg-card border rounded-xl overflow-hidden hover:shadow-md transition-all ${
@@ -236,6 +279,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
+                        {hasApplied && <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300">Applied</Badge>}
                         <Badge variant="success">Open</Badge>
                         {ref._count.applications > 0 && (
                           <p className="text-xs text-muted-foreground">{ref._count.applications} applicant{ref._count.applications !== 1 ? "s" : ""}</p>

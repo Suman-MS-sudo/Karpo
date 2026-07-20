@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
@@ -33,7 +34,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   })
 
   // Notify seller
-  await prisma.notification.create({
+  const notification = await prisma.notification.create({
     data: {
       userId: listing.userId,
       type: "OFFER",
@@ -42,6 +43,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       link: `/marketplace/${params.id}`,
     },
   })
+  pushNotification(notification)
 
   return NextResponse.json({ offer })
 }

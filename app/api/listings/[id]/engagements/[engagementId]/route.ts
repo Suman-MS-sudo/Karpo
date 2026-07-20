@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 type Ctx = { params: { id: string; engagementId: string } }
 
@@ -61,7 +62,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const listingTitle = engagement.listing.title
 
   if (action === "ACCEPT") {
-    await prisma.$transaction([
+    const [, notification] = await prisma.$transaction([
       prisma.listingEngagement.update({
         where: { id: params.engagementId },
         data:  { status: newStatus },
@@ -85,12 +86,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         },
       }),
     ])
+    pushNotification(notification)
   } else if (action === "CONFIRM") {
     const visitInfo = engagement.visitDate
       ? `${new Date(engagement.visitDate).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}${engagement.visitTime ? ` · ${engagement.visitTime.charAt(0) + engagement.visitTime.slice(1).toLowerCase()}` : ""}`
       : "as requested"
 
-    await prisma.$transaction([
+    const [, notification] = await prisma.$transaction([
       prisma.listingEngagement.update({
         where: { id: params.engagementId },
         data:  { status: newStatus },
@@ -114,6 +116,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         },
       }),
     ])
+    pushNotification(notification)
   } else if (action === "DONE") {
     await prisma.listingEngagement.update({
       where: { id: params.engagementId },
@@ -121,7 +124,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     })
   } else if (action === "CLOSE_DEAL") {
     // Marks the deal as agreed — listing stays ACTIVE until owner explicitly clicks "Mark Sold"
-    await prisma.$transaction([
+    const [, notification] = await prisma.$transaction([
       prisma.listingEngagement.update({
         where: { id: params.engagementId },
         data:  { status: "ACCEPTED" },
@@ -145,9 +148,10 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         },
       }),
     ])
+    pushNotification(notification)
   } else {
     // DECLINE
-    await prisma.$transaction([
+    const [, notification] = await prisma.$transaction([
       prisma.listingEngagement.update({
         where: { id: params.engagementId },
         data:  { status: newStatus },
@@ -162,6 +166,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         },
       }),
     ])
+    pushNotification(notification)
   }
 
   return NextResponse.json({ ok: true, status: newStatus })

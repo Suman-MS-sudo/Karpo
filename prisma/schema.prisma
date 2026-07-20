@@ -482,6 +482,7 @@ model ReferralApplication {
   coverLetter     String?
   linkedIn        String?
   resumeUrl       String?
+  resumeFileName  String?
   yearsExp        Int?
   currentCompany  String?
   currentCtc      Int?

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 const TYPE_RANK: Record<string, number> = { INTEREST: 1, VISIT: 2 }
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     ? `Someone requested a site visit for "${listing.title}".`
     : `Someone showed interest in "${listing.title}".`
 
-  await prisma.notification.create({
+  const notification = await prisma.notification.create({
     data: {
       userId: listing.userId,
       type:   "OFFER",
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       link:   `/marketplace/${params.id}`,
     },
   })
+  pushNotification(notification)
 
   return NextResponse.json({ engagement })
 }

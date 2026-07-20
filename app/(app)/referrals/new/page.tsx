@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Loader2, Plus, X } from "lucide-react"
 import Link from "next/link"
@@ -9,14 +9,28 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CityAutocomplete } from "@/components/ui/city-autocomplete"
+import { CompanyAutocomplete } from "@/components/ui/company-autocomplete"
+import { DEPARTMENTS } from "@/config/services"
 import { cn } from "@/lib/utils"
 
-const PERK_OPTIONS = [
-  "Health Insurance", "Dental & Vision", "Life Insurance",
-  "Equity / ESOPs", "Performance Bonus", "Flexible Hours",
-  "Work from Home", "WFH Stipend", "Learning Budget",
-  "Gym / Wellness", "Paid Parental Leave", "Team Outings",
-]
+const REQUIRED_FIELDS = [
+  "title", "companyName", "department", "jobType", "workMode",
+  "experienceMin", "experienceMax", "description", "consent",
+] as const
+type RequiredField = (typeof REQUIRED_FIELDS)[number]
+
+const FIELD_LABELS: Record<RequiredField, string> = {
+  title:         "Job Title",
+  companyName:   "Company Name",
+  department:    "Department",
+  jobType:       "Job Type",
+  workMode:      "Work Mode",
+  experienceMin: "Min Experience",
+  experienceMax: "Max Experience",
+  description:   "Job Description",
+  consent:       "the consent checkbox",
+}
 
 function SkillInput({ skills, onChange }: { skills: string[]; onChange: (s: string[]) => void }) {
   const [input, setInput] = useState("")
@@ -62,6 +76,9 @@ export default function NewReferralPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState("")
 
+  const [companyName, setCompanyName] = useState("")
+  const [companyId,   setCompanyId]   = useState<string | undefined>(undefined)
+
   const [form, setForm] = useState({
     title:           "",
     department:      "",
@@ -80,13 +97,44 @@ export default function NewReferralPage() {
     description:     "",
   })
   const [skills, setSkills] = useState<string[]>([])
-  const [perks,  setPerks]  = useState<string[]>([])
+  const [consent, setConsent] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<RequiredField, boolean>>>({})
 
-  function set(key: string, val: string) { setForm((f) => ({ ...f, [key]: val })) }
-  function togglePerk(p: string) { setPerks((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]) }
+  const fieldRefs = useRef<Partial<Record<RequiredField, HTMLDivElement | null>>>({})
+
+  function set(key: string, val: string) {
+    setForm((f) => ({ ...f, [key]: val }))
+    if (key in fieldErrors) setFieldErrors((prev) => ({ ...prev, [key]: false }))
+  }
+
+  function validate(): RequiredField[] {
+    const missing: RequiredField[] = []
+    if (!form.title.trim())         missing.push("title")
+    if (!companyName.trim())        missing.push("companyName")
+    if (!form.department)           missing.push("department")
+    if (!form.jobType)              missing.push("jobType")
+    if (!form.workMode)             missing.push("workMode")
+    if (!form.experienceMin.trim()) missing.push("experienceMin")
+    if (!form.experienceMax.trim()) missing.push("experienceMax")
+    if (!form.description.trim())  missing.push("description")
+    if (!consent)                   missing.push("consent")
+    return missing
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const missing = validate()
+    if (missing.length > 0) {
+      setFieldErrors(Object.fromEntries(missing.map((f) => [f, true])))
+      const firstEl = fieldRefs.current[missing[0]]
+      firstEl?.scrollIntoView({ behavior: "smooth", block: "center" })
+      const focusable = firstEl?.querySelector<HTMLElement>("input, button, textarea")
+      focusable?.focus()
+      setError(`Please fill in ${FIELD_LABELS[missing[0]]}${missing.length > 1 ? ` (and ${missing.length - 1} other field${missing.length > 2 ? "s" : ""})` : ""}.`)
+      return
+    }
+
     setLoading(true); setError("")
     try {
       const res = await fetch("/api/referrals", {
@@ -95,7 +143,8 @@ export default function NewReferralPage() {
         body:    JSON.stringify({
           ...form,
           skills,
-          perks,
+          companyName,
+          companyId,
           experienceMin: parseInt(form.experienceMin),
           experienceMax: parseInt(form.experienceMax),
           openings:      parseInt(form.openings) || 1,
@@ -133,25 +182,55 @@ export default function NewReferralPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
+            <div ref={(el) => { fieldRefs.current.title = el }} className="col-span-2 space-y-1.5">
               <Label>Job Title <span className="text-red-500">*</span></Label>
-              <Input required placeholder="e.g. Senior Software Engineer" value={form.title} onChange={(e) => set("title", e.target.value)} />
+              <Input
+                required
+                placeholder="e.g. Senior Software Engineer"
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                className={cn(fieldErrors.title && "border-red-500 focus-visible:ring-red-400")}
+              />
+              {fieldErrors.title && <p className="text-xs text-red-500">Job title is required.</p>}
             </div>
-            <div className="space-y-1.5">
+            <div ref={(el) => { fieldRefs.current.companyName = el }} className="col-span-2 space-y-1.5">
+              <Label>Company Name <span className="text-red-500">*</span></Label>
+              <CompanyAutocomplete
+                required
+                value={companyName}
+                onChange={(name, id) => {
+                  setCompanyName(name)
+                  setCompanyId(id)
+                  if (fieldErrors.companyName) setFieldErrors((prev) => ({ ...prev, companyName: false }))
+                }}
+                placeholder="e.g. Acme Corp"
+                className={cn(fieldErrors.companyName && "[&>div]:border-red-500 [&>div]:ring-2 [&>div]:ring-red-200")}
+              />
+              {fieldErrors.companyName && <p className="text-xs text-red-500">Company name is required.</p>}
+            </div>
+            <div ref={(el) => { fieldRefs.current.department = el }} className="space-y-1.5">
               <Label>Department <span className="text-red-500">*</span></Label>
-              <Input required placeholder="e.g. Engineering, Product, Data Science" value={form.department} onChange={(e) => set("department", e.target.value)} />
+              <Select required value={form.department} onValueChange={(v) => set("department", v)}>
+                <SelectTrigger className={cn(fieldErrors.department && "border-red-500 ring-2 ring-red-200")}><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectContent>
+                  {DEPARTMENTS.map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {fieldErrors.department && <p className="text-xs text-red-500">Please select a department.</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Office Location</Label>
-              <Input placeholder="e.g. Bengaluru, Hybrid (Delhi NCR)" value={form.location} onChange={(e) => set("location", e.target.value)} />
+              <CityAutocomplete value={form.location} onChange={(city) => set("location", city)} placeholder="e.g. Bengaluru…" />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-1.5">
+            <div ref={(el) => { fieldRefs.current.jobType = el }} className="space-y-1.5">
               <Label>Job Type <span className="text-red-500">*</span></Label>
               <Select required value={form.jobType} onValueChange={(v) => set("jobType", v)}>
-                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectTrigger className={cn(fieldErrors.jobType && "border-red-500 ring-2 ring-red-200")}><SelectValue placeholder="Select…" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="FULL_TIME">Full-time</SelectItem>
                   <SelectItem value="CONTRACT">Contract</SelectItem>
@@ -159,17 +238,19 @@ export default function NewReferralPage() {
                   <SelectItem value="INTERNSHIP">Internship</SelectItem>
                 </SelectContent>
               </Select>
+              {fieldErrors.jobType && <p className="text-xs text-red-500">Please select a job type.</p>}
             </div>
-            <div className="space-y-1.5">
+            <div ref={(el) => { fieldRefs.current.workMode = el }} className="space-y-1.5">
               <Label>Work Mode <span className="text-red-500">*</span></Label>
               <Select required value={form.workMode} onValueChange={(v) => set("workMode", v)}>
-                <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                <SelectTrigger className={cn(fieldErrors.workMode && "border-red-500 ring-2 ring-red-200")}><SelectValue placeholder="Select…" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ONSITE">On-site</SelectItem>
                   <SelectItem value="HYBRID">Hybrid</SelectItem>
                   <SelectItem value="REMOTE">Remote</SelectItem>
                 </SelectContent>
               </Select>
+              {fieldErrors.workMode && <p className="text-xs text-red-500">Please select a work mode.</p>}
             </div>
             <div className="space-y-1.5">
               <Label>No. of Openings</Label>
@@ -208,25 +289,6 @@ export default function NewReferralPage() {
               <Input type="date" value={form.deadline} onChange={(e) => set("deadline", e.target.value)} />
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label>Perks & Benefits</Label>
-            <div className="flex flex-wrap gap-2">
-              {PERK_OPTIONS.map((p) => (
-                <button
-                  key={p} type="button"
-                  onClick={() => togglePerk(p)}
-                  className={cn(
-                    "text-xs px-3 py-1.5 rounded-full border font-medium transition-all",
-                    perks.includes(p)
-                      ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300"
-                      : "border-border text-muted-foreground hover:border-border/70"
-                  )}>
-                  {perks.includes(p) && "✓ "}{p}
-                </button>
-              ))}
-            </div>
-          </div>
         </section>
 
         {/* ── Section 3: Requirements ──────────────────────────── */}
@@ -237,13 +299,25 @@ export default function NewReferralPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
+            <div ref={(el) => { fieldRefs.current.experienceMin = el }} className="space-y-1.5">
               <Label>Min Experience (years) <span className="text-red-500">*</span></Label>
-              <Input required type="number" min="0" max="30" placeholder="3" value={form.experienceMin} onChange={(e) => set("experienceMin", e.target.value)} />
+              <Input
+                required type="number" min="0" max="30" placeholder="3"
+                value={form.experienceMin}
+                onChange={(e) => set("experienceMin", e.target.value)}
+                className={cn(fieldErrors.experienceMin && "border-red-500 focus-visible:ring-red-400")}
+              />
+              {fieldErrors.experienceMin && <p className="text-xs text-red-500">Required.</p>}
             </div>
-            <div className="space-y-1.5">
+            <div ref={(el) => { fieldRefs.current.experienceMax = el }} className="space-y-1.5">
               <Label>Max Experience (years) <span className="text-red-500">*</span></Label>
-              <Input required type="number" min="0" max="30" placeholder="8" value={form.experienceMax} onChange={(e) => set("experienceMax", e.target.value)} />
+              <Input
+                required type="number" min="0" max="30" placeholder="8"
+                value={form.experienceMax}
+                onChange={(e) => set("experienceMax", e.target.value)}
+                className={cn(fieldErrors.experienceMax && "border-red-500 focus-visible:ring-red-400")}
+              />
+              {fieldErrors.experienceMax && <p className="text-xs text-red-500">Required.</p>}
             </div>
           </div>
 
@@ -261,14 +335,16 @@ export default function NewReferralPage() {
             <h2 className="font-semibold">Role Details</h2>
           </div>
 
-          <div className="space-y-1.5">
+          <div ref={(el) => { fieldRefs.current.description = el }} className="space-y-1.5">
             <Label>Job Description <span className="text-red-500">*</span></Label>
             <Textarea
               required rows={7}
               placeholder={"Describe the role, key responsibilities, and what success looks like in this position…"}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
+              className={cn(fieldErrors.description && "border-red-500 focus-visible:ring-red-400")}
             />
+            {fieldErrors.description && <p className="text-xs text-red-500">Job description is required.</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -282,9 +358,28 @@ export default function NewReferralPage() {
           </div>
         </section>
 
+        <div ref={(el) => { fieldRefs.current.consent = el }} className={cn("space-y-1.5 rounded-lg", fieldErrors.consent && "ring-2 ring-red-300 p-2 -m-2")}>
+          <label className="flex items-start gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              required
+              className={cn("mt-0.5", fieldErrors.consent && "accent-red-500 outline outline-2 outline-red-400")}
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked)
+                if (fieldErrors.consent) setFieldErrors((prev) => ({ ...prev, consent: false }))
+              }}
+            />
+            I confirm this referral reflects a genuine opening at my official employer and consciously posting it
+            here. Korpo is not involved in the hiring decision, terms, or outcome — it only facilitates the
+            connection between colleagues.
+          </label>
+          {fieldErrors.consent && <p className="text-xs text-red-500">Please confirm you agree before posting.</p>}
+        </div>
+
         {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-4 py-3">{error}</p>}
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
+        <Button type="submit" className="w-full" size="lg" disabled={loading || !consent}>
           {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Posting…</> : "Post Referral"}
         </Button>
       </form>

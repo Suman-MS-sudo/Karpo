@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, X, Building2 } from "lucide-react"
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp, X, Building2, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { TagAutocomplete } from "@/components/ui/tag-autocomplete"
+import { CITIES, DEPARTMENTS } from "@/config/services"
 
-const DEPARTMENTS = [
-  "Engineering", "Product", "Design", "Data & Analytics", "Sales",
-  "Marketing", "Finance", "HR", "Operations", "Legal", "Consulting", "Other",
-]
 const WORK_MODES = [
   { value: "REMOTE",  label: "Remote"   },
   { value: "HYBRID",  label: "Hybrid"   },
@@ -21,7 +19,6 @@ const JOB_TYPES = [
   { value: "CONTRACT",   label: "Contract"   },
   { value: "INTERNSHIP", label: "Internship" },
 ]
-const CITIES = ["Hyderabad", "Bangalore", "Pune", "Chennai", "Mumbai", "Delhi NCR", "Kolkata"]
 
 function Chip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
@@ -49,7 +46,6 @@ export function ReferralSearchBar() {
   const [cities,    setCities]    = useState<string[]>(params.get("city")  ? params.get("city")!.split(",")  : [])
   const [modes,     setModes]     = useState<string[]>(params.get("mode")  ? params.get("mode")!.split(",")  : [])
   const [types,     setTypes]     = useState<string[]>(params.get("type")  ? params.get("type")!.split(",")  : [])
-  const [hasBonus,  setHasBonus]  = useState(params.get("bonus")  === "1")
   const [minExp,    setMinExp]    = useState(params.get("minExp")   ?? "")
   const [maxExp,    setMaxExp]    = useState(params.get("maxExp")   ?? "")
   const [minSalary, setMinSalary] = useState(params.get("minSal")  ?? "")
@@ -59,7 +55,6 @@ export function ReferralSearchBar() {
   const activeFilterCount =
     depts.length + cities.length + modes.length + types.length +
     (company.trim() ? 1 : 0) +
-    (hasBonus ? 1 : 0) +
     (minExp ? 1 : 0) + (maxExp ? 1 : 0) +
     (minSalary ? 1 : 0) + (maxSalary ? 1 : 0)
 
@@ -78,17 +73,16 @@ export function ReferralSearchBar() {
     if (cities.length)       p.set("city",    cities.join(","))
     if (modes.length)        p.set("mode",    modes.join(","))
     if (types.length)        p.set("type",    types.join(","))
-    if (hasBonus)            p.set("bonus",   "1")
     if (minExp)              p.set("minExp",  minExp)
     if (maxExp)              p.set("maxExp",  maxExp)
     if (minSalary)           p.set("minSal",  minSalary)
     if (maxSalary)           p.set("maxSal",  maxSalary)
     router.push(`/referrals?${p.toString()}`)
-  }, [query, company, depts, cities, modes, types, hasBonus, minExp, maxExp, minSalary, maxSalary, router])
+  }, [query, company, depts, cities, modes, types, minExp, maxExp, minSalary, maxSalary, router])
 
   const handleClear = () => {
     setQuery(""); setCompany(""); setDepts([]); setCities([])
-    setModes([]); setTypes([]); setHasBonus(false)
+    setModes([]); setTypes([])
     setMinExp(""); setMaxExp(""); setMinSalary(""); setMaxSalary("")
     router.push("/referrals")
   }
@@ -143,11 +137,13 @@ export function ReferralSearchBar() {
           {/* Location */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Location / City</p>
-            <div className="flex flex-wrap gap-1.5">
-              {CITIES.map((c) => (
-                <Chip key={c} label={c} active={cities.includes(c)} onClick={() => toggle(cities, setCities, c)} />
-              ))}
-            </div>
+            <TagAutocomplete
+              options={CITIES}
+              value={cities}
+              onChange={setCities}
+              placeholder="Search a city…"
+              icon={<MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+            />
           </div>
 
           {/* Department */}
@@ -204,21 +200,6 @@ export function ReferralSearchBar() {
                 <span className="text-xs text-muted-foreground">L</span>
               </div>
             </div>
-          </div>
-
-          {/* Bonus toggle */}
-          <div className="flex flex-wrap gap-3 items-center">
-            <button
-              type="button"
-              onClick={() => setHasBonus((v) => !v)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium transition-all ${
-                hasBonus
-                  ? "bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400"
-                  : "border-border text-muted-foreground hover:border-amber-400"
-              }`}
-            >
-              💰 Has referral bonus
-            </button>
           </div>
 
           {/* Clear */}

@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { useRouter } from "next/navigation"
 import {
   Users, ChevronDown, ChevronUp, Loader2, CheckCircle2,
-  XCircle, Clock, ExternalLink, Star, FileText, Briefcase,
+  XCircle, Clock, ExternalLink, Download, Star, FileText, Briefcase,
   Building2, IndianRupee, Timer, StickyNote, Save,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -31,6 +30,7 @@ interface Application {
   coverLetter:    string | null
   linkedIn:       string | null
   resumeUrl:      string | null
+  resumeFileName: string | null
   yearsExp:       number | null
   currentCompany: string | null
   currentCtc:     number | null
@@ -46,6 +46,14 @@ interface Props {
   initialCount: number
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  PENDING:     "Pending",
+  SHORTLISTED: "Accepted",
+  REFERRED:    "Referred",
+  HIRED:       "Hired",
+  REJECTED:    "Rejected",
+}
+
 const STATUS_BADGE: Record<string, string> = {
   PENDING:     "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300",
   SHORTLISTED: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
@@ -54,16 +62,22 @@ const STATUS_BADGE: Record<string, string> = {
   REJECTED:    "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
 }
 
+const ACTION_STATUS: Record<string, string> = {
+  SHORTLIST: "SHORTLISTED",
+  REFER:     "REFERRED",
+  HIRE:      "HIRED",
+  REJECT:    "REJECTED",
+}
+
 const PIPELINE_STAGES = [
   { status: "PENDING",     label: "Pending",     icon: Clock,        color: "text-amber-500" },
-  { status: "SHORTLISTED", label: "Shortlisted", icon: Star,         color: "text-blue-500" },
+  { status: "SHORTLISTED", label: "Accepted",    icon: Star,         color: "text-blue-500" },
   { status: "REFERRED",    label: "Referred",    icon: Briefcase,    color: "text-violet-500" },
   { status: "HIRED",       label: "Hired",       icon: CheckCircle2, color: "text-emerald-500" },
   { status: "REJECTED",    label: "Rejected",    icon: XCircle,      color: "text-red-500" },
 ]
 
-function ApplicationCard({ app, referralId }: { app: Application; referralId: string }) {
-  const router             = useRouter()
+function ApplicationCard({ app, referralId, onStatusChange }: { app: Application; referralId: string; onStatusChange: (id: string, status: string) => void }) {
   const [loading, setLoading]   = useState<string | null>(null)
   const [showCover, setShowCover] = useState(false)
   const [notes, setNotes]       = useState(app.referrerNotes ?? "")
@@ -80,12 +94,18 @@ function ApplicationCard({ app, referralId }: { app: Application; referralId: st
   async function act(action: string) {
     setLoading(action)
     try {
-      await fetch(`/api/referrals/${referralId}/applications/${app.id}`, {
+      const res = await fetch(`/api/referrals/${referralId}/applications/${app.id}`, {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ action }),
       })
-      router.refresh()
+      // Update local state immediately — this panel's applicant list is
+      // client-side state fetched once via load(), so router.refresh()
+      // (which only re-renders server components) never reached it, leaving
+      // the status looking unchanged until a full page reload.
+      if (res.ok && ACTION_STATUS[action]) {
+        onStatusChange(app.id, ACTION_STATUS[action])
+      }
     } finally {
       setLoading(null)
     }
@@ -138,7 +158,7 @@ function ApplicationCard({ app, referralId }: { app: Application; referralId: st
             {app.type === "APPLICATION" ? "Application" : "Interest"}
           </div>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_BADGE[app.status] ?? ""}`}>
-            {app.status.charAt(0) + app.status.slice(1).toLowerCase()}
+            {STATUS_LABEL[app.status] ?? app.status}
           </span>
         </div>
       </div>
@@ -189,10 +209,16 @@ function ApplicationCard({ app, referralId }: { app: Application; referralId: st
             </a>
           )}
           {app.resumeUrl && (
-            <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer"
-              className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
-              <ExternalLink className="h-3 w-3" />Resume / Portfolio
-            </a>
+            <>
+              <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer"
+                className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+                <ExternalLink className="h-3 w-3" />Resume / Portfolio
+              </a>
+              <a href={app.resumeUrl} download={app.resumeFileName ?? true} target="_blank" rel="noopener noreferrer"
+                className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+                <Download className="h-3 w-3" />Download
+              </a>
+            </>
           )}
         </div>
       )}
@@ -224,7 +250,7 @@ function ApplicationCard({ app, referralId }: { app: Application; referralId: st
               <Button size="sm" className="gap-1.5 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={() => act("SHORTLIST")} disabled={!!loading}>
                 {loading === "SHORTLIST" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Star className="h-3.5 w-3.5" />}
-                Shortlist
+                Accept
               </Button>
               <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50"
                 onClick={() => act("REJECT")} disabled={!!loading}>
@@ -315,6 +341,10 @@ export function ReferralApplicationsPanel({ referralId, initialCount }: Props) {
     }
   }
 
+  function updateStatus(id: string, status: string) {
+    setApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))
+  }
+
   const pending  = applications.filter((a) => a.status === "PENDING")
   const active   = applications.filter((a) => ["SHORTLISTED", "REFERRED"].includes(a.status))
   const settled  = applications.filter((a) => ["HIRED", "REJECTED"].includes(a.status))
@@ -376,19 +406,19 @@ export function ReferralApplicationsPanel({ referralId, initialCount }: Props) {
               {pending.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Pending Review ({pending.length})</p>
-                  <div className="space-y-3">{pending.map((a) => <ApplicationCard key={a.id} app={a} referralId={referralId} />)}</div>
+                  <div className="space-y-3">{pending.map((a) => <ApplicationCard key={a.id} app={a} referralId={referralId} onStatusChange={updateStatus} />)}</div>
                 </div>
               )}
               {active.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-2">In Pipeline ({active.length})</p>
-                  <div className="space-y-3">{active.map((a) => <ApplicationCard key={a.id} app={a} referralId={referralId} />)}</div>
+                  <div className="space-y-3">{active.map((a) => <ApplicationCard key={a.id} app={a} referralId={referralId} onStatusChange={updateStatus} />)}</div>
                 </div>
               )}
               {settled.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Resolved ({settled.length})</p>
-                  <div className="space-y-3">{settled.map((a) => <ApplicationCard key={a.id} app={a} referralId={referralId} />)}</div>
+                  <div className="space-y-3">{settled.map((a) => <ApplicationCard key={a.id} app={a} referralId={referralId} onStatusChange={updateStatus} />)}</div>
                 </div>
               )}
             </>

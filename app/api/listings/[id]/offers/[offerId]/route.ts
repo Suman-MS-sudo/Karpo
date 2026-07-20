@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 // PATCH /api/listings/[id]/offers/[offerId]
 // Body: { action: "ACCEPT" | "DECLINE" }
@@ -50,7 +51,7 @@ export async function PATCH(
 
   if (action === "ACCEPT") {
     // Accept offer and decline all other pending offers — listing stays ACTIVE until owner marks it sold
-    await prisma.$transaction([
+    const [, , notification] = await prisma.$transaction([
       prisma.listingOffer.update({
         where: { id: params.offerId },
         data: { status: "ACCEPTED" },
@@ -80,9 +81,10 @@ export async function PATCH(
         },
       }),
     ])
+    pushNotification(notification)
   } else {
     // Decline: update offer status and notify buyer
-    await prisma.$transaction([
+    const [, notification] = await prisma.$transaction([
       prisma.listingOffer.update({
         where: { id: params.offerId },
         data: { status: "DECLINED" },
@@ -97,6 +99,7 @@ export async function PATCH(
         },
       }),
     ])
+    pushNotification(notification)
   }
 
   return NextResponse.json({ ok: true, action })
