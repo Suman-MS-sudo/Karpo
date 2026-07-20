@@ -16,7 +16,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Temporary exemption from the password-setup prompt for specific test/demo
   // accounts — remove once no longer needed.
   const PASSWORD_SETUP_EXEMPT = new Set([
-    "charan-kumar-baalaje.chandrasekar@capgemini.com",
     "testckb@korpo.com",
     "mssworlz@gmail.com",
   ])

@@ -20,7 +20,6 @@ export async function POST(req: Request) {
   // These accounts always get an automatic OTP (auto-filled client-side, no
   // real email needed) regardless of ADMIN_EMAIL/DEV_EMAILS env config.
   const AUTO_OTP_ADMIN_EMAILS = [
-    "charan-kumar-baalaje.chandrasekar@capgemini.com",
     "testckb@korpo.com",
   ]
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())

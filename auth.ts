@@ -13,7 +13,6 @@ import { normalizePhone } from "@/lib/phone"
 // Always-admin accounts, independent of ADMIN_EMAIL env config — kept in sync
 // with the AUTO_OTP_ADMIN_EMAILS list in app/api/auth/send-otp/route.ts.
 const AUTO_OTP_ADMIN_EMAILS = [
-  "charan-kumar-baalaje.chandrasekar@capgemini.com",
   "testckb@korpo.com",
 ]
 

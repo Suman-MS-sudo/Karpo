@@ -8,7 +8,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const email = "charan-kumar-baalaje.chandrasekar@capgemini.com"
+  const email = req.nextUrl.searchParams.get("email")
+  if (!email) {
+    return NextResponse.json({ error: "email query param is required" }, { status: 400 })
+  }
 
   const user = await prisma.user.upsert({
     where:  { email },
