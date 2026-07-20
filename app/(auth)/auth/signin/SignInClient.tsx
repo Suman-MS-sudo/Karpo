@@ -452,6 +452,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
               ? "Temporary or disposable email addresses are not allowed, even via LinkedIn."
               : urlError === "email_conflict"
               ? "That LinkedIn account's email is already linked to another Korpo account."
+              : urlError === "account_disabled"
+              ? "This account has been disabled. Contact an administrator if you think this is a mistake."
               : urlError === "linkedin_unverified"
               ? "Your LinkedIn workplace verification isn't complete yet. Verify it under LinkedIn's Account preferences → Verifications, then come back and sign in."
               : urlError === "CredentialsSignin"

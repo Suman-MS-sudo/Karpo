@@ -28,6 +28,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
   if (filter === "verified")   where.isVerified = true
   if (filter === "premium")    where.membership = { plan: "PREMIUM" }
   if (filter === "admin")      where.role = "ADMIN"
+  if (filter === "disabled")   where.isDisabled = true
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
@@ -60,6 +61,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     { value: "verified",   label: "Verified" },
     { value: "premium",    label: "Premium" },
     { value: "admin",      label: "Admin" },
+    { value: "disabled",   label: "Disabled" },
   ]
 
   return (
@@ -141,6 +143,9 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                       {user.role === "ADMIN" && (
                         <Badge className="text-[10px] w-fit bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300">Admin</Badge>
                       )}
+                      {user.isDisabled && (
+                        <Badge variant="destructive" className="text-[10px] w-fit">Disabled</Badge>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
@@ -154,6 +159,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                       userId={user.id}
                       isVerified={user.isVerified}
                       role={user.role}
+                      isDisabled={user.isDisabled}
                       currentAdminId={session?.user?.id ?? ""}
                     />
                   </td>

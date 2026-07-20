@@ -56,7 +56,7 @@ const providers: Provider[] = [
           if (!token) return null
 
           const dbUser = await prisma.user.findUnique({ where: { phone } })
-          if (!dbUser || !dbUser.isVerified) return null
+          if (!dbUser || !dbUser.isVerified || dbUser.isDisabled) return null
 
           await prisma.verificationToken.deleteMany({ where: { identifier: `wa:${phone}` } })
 
@@ -82,6 +82,7 @@ const providers: Provider[] = [
           const dbUser = await prisma.user.findUnique({ where: { email } })
           if (!dbUser?.passwordHash) return null
           if (!(await verifyPassword(password, dbUser.passwordHash))) return null
+          if (dbUser.isDisabled) return null
 
           if (!isAdmin) {
             const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
@@ -105,6 +106,11 @@ const providers: Provider[] = [
           },
         })
         if (!token) return null
+
+        // Reject a disabled account outright — its OTP stays valid (send-otp
+        // doesn't know about disable status) but sign-in must not proceed.
+        const existingUser = await prisma.user.findUnique({ where: { email }, select: { isDisabled: true } })
+        if (existingUser?.isDisabled) return null
 
         // Block login while an org ID card verification is outstanding, even if an
         // OTP was already issued before the request was filed (see send-otp route).
@@ -216,6 +222,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       const email = liveEmail
       const isAdmin = isAdminEmail(email)
+
+      const existingUser = await prisma.user.findUnique({ where: { email }, select: { isDisabled: true } })
+      if (existingUser?.isDisabled) return "/auth/signin?error=account_disabled"
+
       const domainCheck = isDomainBlocked(email)
       // LinkedIn identity trust lets us allow personal inboxes (Gmail, Outlook, …)
       // through — only still-abusive disposable/throwaway domains stay blocked.

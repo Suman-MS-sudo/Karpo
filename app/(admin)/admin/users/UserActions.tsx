@@ -1,18 +1,20 @@
 "use client"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, ShieldOff, Crown, Loader2 } from "lucide-react"
+import { ShieldCheck, ShieldOff, Crown, Loader2, Ban, CheckCircle2 } from "lucide-react"
 
 interface Props {
   userId: string
   isVerified: boolean
   role: string
+  isDisabled: boolean
   currentAdminId: string
 }
 
-export function UserActions({ userId, isVerified, role, currentAdminId }: Props) {
+export function UserActions({ userId, isVerified, role, isDisabled, currentAdminId }: Props) {
   const [verified, setVerified]   = useState(isVerified)
   const [userRole, setUserRole]   = useState(role)
+  const [disabled, setDisabled]   = useState(isDisabled)
   const [loading, setLoading]     = useState<string | null>(null)
 
   const isSelf = userId === currentAdminId
@@ -33,6 +35,7 @@ export function UserActions({ userId, isVerified, role, currentAdminId }: Props)
         // revert
         setVerified(isVerified)
         setUserRole(role)
+        setDisabled(isDisabled)
       }
     } finally {
       setLoading(null)
@@ -72,6 +75,23 @@ export function UserActions({ userId, isVerified, role, currentAdminId }: Props)
             : userRole === "ADMIN"
               ? "Demote"
               : <><Crown className="h-3 w-3 mr-1" />Make Admin</>
+          }
+        </Button>
+      )}
+
+      {!isSelf && (
+        <Button
+          size="sm"
+          variant="outline"
+          className={`h-7 text-xs ${disabled ? "" : "text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"}`}
+          disabled={!!loading}
+          onClick={() => patch({ isDisabled: !disabled }, () => setDisabled((d) => !d))}
+        >
+          {loading === JSON.stringify({ isDisabled: !disabled })
+            ? <Loader2 className="h-3 w-3 animate-spin" />
+            : disabled
+              ? <><CheckCircle2 className="h-3 w-3 mr-1" />Enable</>
+              : <><Ban className="h-3 w-3 mr-1" />Disable</>
           }
         </Button>
       )}

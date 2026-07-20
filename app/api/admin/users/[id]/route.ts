@@ -14,11 +14,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (error) return error
 
   const body = await req.json()
-  const { isVerified, role } = body
+  const { isVerified, role, isDisabled } = body
 
   const data: Record<string, unknown> = {}
   if (typeof isVerified === "boolean") data.isVerified = isVerified
   if (role === "ADMIN" || role === "USER") data.role = role
+  if (typeof isDisabled === "boolean") data.isDisabled = isDisabled
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "No valid fields" }, { status: 400 })
