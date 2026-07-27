@@ -14,10 +14,16 @@ interface Props {
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
-    const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { "User-Agent": "KorpoApp/1.0" } })
+    const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&zoom=18`, { headers: { "User-Agent": "KorpoApp/1.0" } })
     const data = await res.json()
     const a    = data.address ?? {}
-    return [a.suburb ?? a.neighbourhood ?? a.village ?? a.town ?? "", a.city ?? a.state_district ?? ""].filter(Boolean).join(", ")
+    const parts = [
+      a.amenity ?? a.shop ?? a.building ?? a.house_name,
+      [a.house_number, a.road].filter(Boolean).join(" ") || a.road,
+      a.suburb ?? a.neighbourhood ?? a.village ?? a.town,
+      a.city ?? a.state_district,
+    ].filter(Boolean)
+    return parts.slice(0, 4).join(", ")
       || data.display_name?.split(",").slice(0, 3).join(", ")
       || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
   } catch { return `${lat.toFixed(4)}, ${lng.toFixed(4)}` }
@@ -167,6 +173,59 @@ export function CarpoolSearchMap({ onPickup, onDropoff, pickupLat, pickupLng, dr
       if (map) { map.remove(); mapRef.current = null }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep the map in sync when pickup/dropoff change from outside (e.g. typed autocomplete selection)
+  useEffect(() => {
+    const map = mapRef.current
+    const L   = map?._L
+    if (!map || !L) return
+
+    if (pickupLat && pickupLng) {
+      const current = pickupMkRef.current?.getLatLng()
+      if (!current || current.lat !== pickupLat || current.lng !== pickupLng) {
+        pickupMkRef.current?.remove()
+        const icon = L.divIcon({ className: "", html: pinHtml("#22c55e", "P"), iconSize: [28, 38], iconAnchor: [14, 38] })
+        pickupMkRef.current = L.marker([pickupLat, pickupLng], { icon, draggable: true }).addTo(map)
+        pickupMkRef.current.on("dragend", async (ev: any) => {
+          const p = ev.target.getLatLng()
+          const n = await reverseGeocode(p.lat, p.lng)
+          onPickup(p.lat, p.lng, n)
+        })
+        setPickupSet(true)
+      }
+    } else if (pickupMkRef.current) {
+      pickupMkRef.current.remove()
+      pickupMkRef.current = null
+      setPickupSet(false)
+    }
+
+    if (dropoffLat && dropoffLng) {
+      const current = dropoffMkRef.current?.getLatLng()
+      if (!current || current.lat !== dropoffLat || current.lng !== dropoffLng) {
+        dropoffMkRef.current?.remove()
+        const icon = L.divIcon({ className: "", html: pinHtml("#ef4444", "D"), iconSize: [28, 38], iconAnchor: [14, 38] })
+        dropoffMkRef.current = L.marker([dropoffLat, dropoffLng], { icon, draggable: true }).addTo(map)
+        dropoffMkRef.current.on("dragend", async (ev: any) => {
+          const p = ev.target.getLatLng()
+          const n = await reverseGeocode(p.lat, p.lng)
+          onDropoff(p.lat, p.lng, n)
+        })
+        setDropoffSet(true)
+      }
+    } else if (dropoffMkRef.current) {
+      dropoffMkRef.current.remove()
+      dropoffMkRef.current = null
+      setDropoffSet(false)
+    }
+
+    if (pickupLat && pickupLng && dropoffLat && dropoffLng) {
+      map.fitBounds(L.latLngBounds([[pickupLat, pickupLng], [dropoffLat, dropoffLng]]).pad(0.2))
+    } else if (pickupLat && pickupLng) {
+      map.setView([pickupLat, pickupLng], 14)
+    } else if (dropoffLat && dropoffLng) {
+      map.setView([dropoffLat, dropoffLng], 14)
+    }
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function useMyLocation() {
     if (!navigator.geolocation) return

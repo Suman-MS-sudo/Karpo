@@ -24,8 +24,6 @@ interface Props {
   initialData?: Partial<RouteData>
 }
 
-type Mode = "from" | "to" | "stop" | null
-
 // ─── Nominatim helpers ────────────────────────────────────────────────────────
 interface NominatimResult { lat: string; lon: string; display_name: string; address?: Record<string, string> }
 
@@ -123,7 +121,6 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
   const [from,    setFrom]    = useState<Stop | null>(initialData?.fromLat ? { name: initialData.fromLocation!, lat: initialData.fromLat!, lng: initialData.fromLng! } : null)
   const [to,      setTo]      = useState<Stop | null>(initialData?.toLat   ? { name: initialData.toLocation!,   lat: initialData.toLat!,   lng: initialData.toLng!   } : null)
   const [stops,   setStops]   = useState<Stop[]>(initialData?.stops ?? [])
-  const [mode,    setMode]    = useState<Mode>("from")
   const [routing, setRouting] = useState(false)
   const [searchFrom,  setSearchFrom]  = useState(initialData?.fromLocation ?? "")
   const [searchTo,    setSearchTo]    = useState(initialData?.toLocation   ?? "")
@@ -250,31 +247,6 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
         )
       }
 
-      map.on("click", async (e: any) => {
-        const { lat, lng } = e.latlng
-        const name = await reverseGeocode(lat, lng)
-        const pt   = { lat, lng, name }
-
-        if (mode === "from" || (!from && !to)) {
-          setFrom(pt); setSearchFrom(name)
-          setMode("to")
-          setFrom((f) => { notify(pt, to, stops); return pt })
-          redraw(pt, to, stops)
-        } else if (mode === "to") {
-          setTo(pt); setSearchTo(name)
-          setMode("stop")
-          setTo((t) => { notify(from, pt, stops); return pt })
-          redraw(from, pt, stops)
-        } else if (mode === "stop") {
-          setStops((prev) => {
-            const next = [...prev, pt]
-            redraw(from, to, next)
-            notify(from, to, next)
-            return next
-          })
-        }
-      })
-
       observer = new MutationObserver(() => {
         map.eachLayer((l: any) => { if (l._url) l.setUrl(tileUrl(isDark())) })
       })
@@ -288,16 +260,16 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync mode onto the map click handler via a ref trick
-  const modeRef = useRef(mode)
+  // Sync latest from/to/stops onto the map click handler via a ref trick
   const fromRef  = useRef(from)
   const toRef    = useRef(to)
   const stopsRef = useRef(stops)
-  useEffect(() => { modeRef.current = mode }, [mode])
   useEffect(() => { fromRef.current = from }, [from])
   useEffect(() => { toRef.current = to }, [to])
   useEffect(() => { stopsRef.current = stops }, [stops])
 
+  // Map clicks only ever add a pickup stop — origin/destination are set via the
+  // search inputs above so there's no ambiguous mode to switch between.
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
@@ -306,21 +278,10 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
       const { lat, lng } = e.latlng
       const name = await reverseGeocode(lat, lng)
       const pt   = { lat, lng, name }
-      const m    = modeRef.current
       const f    = fromRef.current
       const t    = toRef.current
-      const ss   = stopsRef.current
-
-      if (m === "from" || (!f && !t)) {
-        setFrom(pt); setSearchFrom(name); setMode("to")
-        redraw(pt, t, ss); notify(pt, t, ss)
-      } else if (m === "to") {
-        setTo(pt); setSearchTo(name); setMode("stop")
-        redraw(f, pt, ss); notify(f, pt, ss)
-      } else if (m === "stop") {
-        const next = [...ss, pt]
-        setStops(next); redraw(f, t, next); notify(f, t, next)
-      }
+      const next = [...stopsRef.current, pt]
+      setStops(next); redraw(f, t, next); notify(f, t, next)
     })
   }, [redraw, notify])
 
@@ -342,11 +303,11 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
     const pt = { lat: s.lat, lng: s.lng, name: s.name }
     setSuggestions([]); setSuggestFor(null)
     if (type === "from") {
-      setFrom(pt); setSearchFrom(pt.name); if (mode === "from") setMode("to")
+      setFrom(pt); setSearchFrom(pt.name)
       redraw(pt, to, stops); notify(pt, to, stops)
       mapRef.current?.setView([pt.lat, pt.lng], 14)
     } else {
-      setTo(pt); setSearchTo(pt.name); if (mode === "to") setMode("stop")
+      setTo(pt); setSearchTo(pt.name)
       redraw(from, pt, stops); notify(from, pt, stops)
       mapRef.current?.setView([pt.lat, pt.lng], 14)
     }
@@ -372,7 +333,7 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
         setUserPos({ lat, lng })
         const name = await reverseGeocode(lat, lng)
         const pt   = { lat, lng, name }
-        setFrom(pt); setSearchFrom(name); if (mode === "from") setMode("to")
+        setFrom(pt); setSearchFrom(name)
         mapRef.current?.setView([lat, lng], 14)
         // Update or add user dot
         const L = mapRef.current?._L
@@ -402,10 +363,10 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
     if (!result) return
     const pt = result
     if (type === "from") {
-      setFrom(pt); setSearchFrom(pt.name); if (mode === "from") setMode("to")
+      setFrom(pt); setSearchFrom(pt.name)
       redraw(pt, to, stops); notify(pt, to, stops)
     } else {
-      setTo(pt); setSearchTo(pt.name); if (mode === "to") setMode("stop")
+      setTo(pt); setSearchTo(pt.name)
       redraw(from, pt, stops); notify(from, pt, stops)
     }
   }
@@ -416,12 +377,6 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
       redraw(from, to, next); notify(from, to, next)
       return next
     })
-  }
-
-  const modeLabel: Record<NonNullable<Mode>, string> = {
-    from: "Click the map to set your origin",
-    to:   "Now click to set your destination",
-    stop: "Click anywhere on the map to add a pickup stop",
   }
 
   return (
@@ -494,14 +449,12 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
         </p>
       )}
 
-      {/* Mode indicator */}
-      {mode && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
-          <Navigation className="h-3.5 w-3.5 shrink-0 text-blue-500" />
-          {modeLabel[mode]}
-          {routing && <Loader2 className="h-3 w-3 animate-spin ml-auto" />}
-        </div>
-      )}
+      {/* Map hint */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+        <Navigation className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+        Click anywhere on the map to add a pickup stop
+        {routing && <Loader2 className="h-3 w-3 animate-spin ml-auto" />}
+      </div>
 
       {/* Map */}
       <div className="rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: 340 }}>
@@ -516,25 +469,14 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
         <span className="flex items-center gap-1.5"><span className="h-px w-5 bg-blue-500" />Route</span>
       </div>
 
-      {/* Mode toggle buttons */}
-      <div className="flex gap-2 flex-wrap">
-        {(["from", "to", "stop"] as const).map((m) => (
-          <button key={m} type="button" onClick={() => setMode(m)}
-            className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
-              mode === m
-                ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300"
-                : "border-border text-muted-foreground hover:border-muted-foreground/50"
-            }`}>
-            {m === "from" ? "Set Origin" : m === "to" ? "Set Destination" : "Add Stop"}
-          </button>
-        ))}
-        {stops.length > 0 && (
+      {stops.length > 0 && (
+        <div className="flex">
           <button type="button" onClick={() => { setStops([]); redraw(from, to, []); notify(from, to, []) }}
             className="text-xs px-3 py-1.5 rounded-full border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50">
             Clear stops
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Stops list */}
       {stops.length > 0 && (

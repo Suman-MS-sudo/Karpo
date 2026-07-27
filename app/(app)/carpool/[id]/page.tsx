@@ -12,11 +12,12 @@ import { SocialShare } from "@/components/shared/SocialShare"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import { CarpoolRequestPanel } from "@/components/carpool/CarpoolRequestPanel"
 import { CarpoolRidersPanel } from "@/components/carpool/CarpoolRidersPanel"
 import { CarpoolRideControls } from "@/components/carpool/CarpoolRideControls"
 import { CarpoolLiveTrack } from "@/components/carpool/CarpoolLiveTrack"
+import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export const dynamic = "force-dynamic"
 
@@ -45,6 +46,8 @@ const LUGGAGE_LABELS: Record<string, string> = {
 
 export default async function CarpoolDetailPage({ params }: { params: { id: string } }) {
   const session = await auth()
+
+  await expireOneTimeCarpoolRoutes()
 
   const route = await prisma.carpoolRoute.findUnique({
     where: { id: params.id },
@@ -131,6 +134,11 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
 
             {/* Quick-stat pills */}
             <div className="flex flex-wrap gap-2 mt-3">
+              {route.frequency === "ONCE" && route.departureAt && (
+                <span className="inline-flex items-center gap-1 text-xs bg-muted px-2.5 py-1 rounded-full text-muted-foreground">
+                  <Calendar className="h-3 w-3" /> {formatDate(route.departureAt)}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1 text-xs bg-muted px-2.5 py-1 rounded-full text-muted-foreground">
                 <Clock className="h-3 w-3" /> {route.departureTime}
               </span>
@@ -327,7 +335,9 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
             <div className="px-5 py-4 space-y-2.5 border-b border-border">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" />Departs</span>
-                <span className="font-semibold">{route.departureTime}</span>
+                <span className="font-semibold">
+                  {route.frequency === "ONCE" && route.departureAt ? `${formatDate(route.departureAt)}, ` : ""}{route.departureTime}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />Runs</span>

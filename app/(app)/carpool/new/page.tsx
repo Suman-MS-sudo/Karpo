@@ -62,6 +62,7 @@ export default function NewCarpoolPage() {
 
   const [form, setForm] = useState({
     departureTime:  "",
+    departureDate:  "",
     returnTime:     "",
     seatsAvailable: "3",
     pricePerSeat:   "",
@@ -101,9 +102,15 @@ export default function NewCarpoolPage() {
     if (!routeData.fromLat || !routeData.toLat) {
       setError("Please select the route on the map (set From and To points)"); return
     }
+    if (form.frequency === "ONCE" && !form.departureDate) {
+      setError("Please pick the date for your one-time trip"); return
+    }
     setLoading(true); setError("")
     try {
       const stops = routeData.stops ?? []
+      const departureAt = form.frequency === "ONCE" && form.departureDate && form.departureTime
+        ? new Date(`${form.departureDate}T${form.departureTime}`).toISOString()
+        : undefined
       const res = await fetch("/api/carpool", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,6 +125,7 @@ export default function NewCarpoolPage() {
           pickupPoints:   stops.map((s) => s.name),
           landmarks:      form.landmarks || undefined,
           departureTime:  form.departureTime,
+          departureAt,
           returnTrip,
           returnTime:     form.returnTime || undefined,
           seatsAvailable: parseInt(form.seatsAvailable),
@@ -217,6 +225,21 @@ export default function NewCarpoolPage() {
               </Select>
             </div>
           </div>
+
+          {form.frequency === "ONCE" && (
+            <div className="space-y-1.5">
+              <Label>Departure date <span className="text-red-500">*</span></Label>
+              <Input
+                required
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={form.departureDate}
+                onChange={(e) => set("departureDate", e.target.value)}
+                className="w-44"
+              />
+              <p className="text-xs text-muted-foreground">One-time postings are automatically removed 15 minutes after departure</p>
+            </div>
+          )}
 
           <Toggle label="Return trip available" desc="Riders can also book the return journey" checked={returnTrip} onChange={setReturnTrip} />
           {returnTrip && (

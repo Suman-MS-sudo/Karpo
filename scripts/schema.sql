@@ -381,6 +381,7 @@ CREATE TABLE "CarpoolRoute" (
     "toLng" REAL,
     "stopCoords" TEXT,
     "departureTime" TEXT NOT NULL,
+    "departureAt" DATETIME,
     "returnTrip" BOOLEAN NOT NULL DEFAULT false,
     "returnTime" TEXT,
     "seatsAvailable" INTEGER NOT NULL,

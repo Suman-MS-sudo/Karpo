@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Plus, Car, ExternalLink, Users, Clock, ArrowRight, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { formatCurrency, formatRelativeTime } from "@/lib/utils"
+import { formatCurrency, formatRelativeTime, formatDate } from "@/lib/utils"
+import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export const metadata = { title: "My Carpool Routes" }
 export const dynamic  = "force-dynamic"
@@ -22,6 +23,8 @@ export default async function MyCarpoolPage({ searchParams }: PageProps) {
   const tab     = TABS.find((t) => t.key === searchParams.tab)?.key ?? "all"
 
   const isActiveFilter = tab === "all" ? undefined : tab === "active"
+
+  await expireOneTimeCarpoolRoutes()
 
   const routes = await prisma.carpoolRoute.findMany({
     where:   { userId, ...(isActiveFilter !== undefined ? { isActive: isActiveFilter } : {}) },
@@ -140,6 +143,9 @@ export default async function MyCarpoolPage({ searchParams }: PageProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
+                      {route.frequency === "ONCE" && route.departureAt && (
+                        <span>{formatDate(route.departureAt)}</span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />{route.departureTime}
                       </span>

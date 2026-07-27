@@ -2,10 +2,13 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export async function GET() {
   const { error } = await requireVerified()
   if (error) return error
+
+  await expireOneTimeCarpoolRoutes()
 
   const routes = await prisma.carpoolRoute.findMany({
     where:   { isActive: true },
@@ -37,6 +40,7 @@ export async function POST(req: Request) {
       toLng:               body.toLng    ? Number(body.toLng)    : null,
       stopCoords:          Array.isArray(body.stopCoords) ? body.stopCoords : [],
       departureTime:       body.departureTime,
+      departureAt:         body.departureAt ? new Date(body.departureAt) : null,
       returnTrip:          Boolean(body.returnTrip),
       returnTime:          body.returnTime          || null,
       seatsAvailable:      Number(body.seatsAvailable),

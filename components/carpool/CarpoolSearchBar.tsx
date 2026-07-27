@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import dynamic from "next/dynamic"
 import { Search, MapPin, X, Loader2, ArrowRight, Map, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react"
@@ -27,7 +27,7 @@ async function fetchSuggestions(q: string, nearLat?: number, nearLng?: number): 
     return data.map((r: any) => ({
       lat:  parseFloat(r.lat),
       lng:  parseFloat(r.lon),
-      name: r.display_name.split(", ").slice(0, 3).join(", "),
+      name: r.display_name.split(", ").slice(0, 4).join(", "),
     }))
   } catch { return [] }
 }
@@ -168,6 +168,7 @@ export function CarpoolSearchBar() {
 
   // UI toggles — auto-open filter panel when URL already has filter params
   const [locating,    setLocating]    = useState(false)
+  const [locateError, setLocateError] = useState("")
   const [showMap,     setShowMap]     = useState(false)
   const [showFilters, setShowFilters] = useState(
     !!(params.get("time") || params.get("freq") || params.get("vehicle") || params.get("ac") || params.get("maxPrice"))
@@ -206,7 +207,7 @@ export function CarpoolSearchBar() {
     if (vehicleFilter.length > 0) q.vehicle  = vehicleFilter.join(",")
     if (acOnly)                   q.ac       = "1"
     if (maxPrice)                 q.maxPrice = maxPrice
-    router.push(`/carpool?${new URLSearchParams(q)}`)
+    router.push(`/carpool?${new URLSearchParams(q)}`, { scroll: false })
   }
 
   function handleClearFilters() {
@@ -224,23 +225,55 @@ export function CarpoolSearchBar() {
     params.get("vehicle") || params.get("ac")   || params.get("maxPrice")
   )
 
+  // After results re-render for a new search, scroll them into view — the search
+  // bar is tall enough that results can otherwise land off-screen unnoticed.
+  useEffect(() => {
+    if (!isSearchActive) return
+    const el = document.getElementById("carpool-results")
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [params.toString()]) // eslint-disable-line react-hooks/exhaustive-deps
+
   async function useMyLocation() {
-    if (!navigator.geolocation) return
+    setLocateError("")
+    if (!navigator.geolocation) {
+      setLocateError("Geolocation isn't supported by your browser")
+      return
+    }
+    if (typeof window !== "undefined" && window.isSecureContext === false) {
+      setLocateError("Location access needs a secure (https) connection")
+      return
+    }
     setLocating(true)
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords
         try {
-          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { "User-Agent": "KorpoApp/1.0" } })
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&zoom=18`, { headers: { "User-Agent": "KorpoApp/1.0" } })
           const data = await res.json()
           const a    = data.address ?? {}
-          const name = [a.suburb ?? a.neighbourhood ?? a.village ?? "", a.city ?? a.state_district ?? ""].filter(Boolean).join(", ")
-            || data.display_name?.split(",").slice(0, 2).join(", ")
-          setFrom(name); setFromLat(lat); setFromLng(lng)
-        } catch {}
+          const name = [
+            a.amenity ?? a.shop ?? a.building ?? a.house_name,
+            [a.house_number, a.road].filter(Boolean).join(" ") || a.road,
+            a.suburb ?? a.neighbourhood ?? a.village ?? a.town,
+            a.city ?? a.state_district,
+          ].filter(Boolean).slice(0, 4).join(", ")
+            || data.display_name?.split(",").slice(0, 3).join(", ")
+          setFrom(name); setFromLat(lat); setFromLng(lng); setLocateError("")
+        } catch {
+          setLocateError("Couldn't look up your address — please try again")
+        }
         setLocating(false)
       },
-      () => setLocating(false),
+      (err) => {
+        setLocating(false)
+        if (err.code === err.PERMISSION_DENIED) {
+          setLocateError("Location access denied — enable it in your browser's site settings")
+        } else if (err.code === err.TIMEOUT) {
+          setLocateError("Couldn't get your location in time — please try again")
+        } else {
+          setLocateError("Couldn't get your location — please try again")
+        }
+      },
       { timeout: 8000 }
     )
   }
@@ -303,6 +336,12 @@ export function CarpoolSearchBar() {
         <p className="text-xs text-muted-foreground mt-2.5 flex items-center gap-1.5">
           <MapPin className="h-3 w-3 shrink-0" />
           Pick a location from the suggestions or pin it on the map
+        </p>
+      )}
+
+      {locateError && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2 mt-2.5">
+          {locateError}
         </p>
       )}
 

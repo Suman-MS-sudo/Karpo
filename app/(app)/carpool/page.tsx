@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { CarpoolSearchBar } from "@/components/carpool/CarpoolSearchBar"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import { FREE_LIMITS } from "@/lib/limits"
+import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export const dynamic = "force-dynamic"
 
@@ -47,7 +48,7 @@ function routeMatchesSearch(
   route: RouteRecord,
   pickupLat: number, pickupLng: number,
   dropoffLat: number, dropoffLng: number,
-  thresholdKm = 4,
+  thresholdKm = 5,
 ): boolean {
   if (!route.fromLat || !route.fromLng || !route.toLat || !route.toLng) return false
 
@@ -136,6 +137,8 @@ export default async function CarpoolPage({
   const hasFilters = !!(timeOfDay || freqFilter.length || vehicleFilter.length || acOnly || maxPrice !== null)
   const isFiltered = isSearching || hasFilters
 
+  await expireOneTimeCarpoolRoutes()
+
   const allRoutes = await prisma.carpoolRoute.findMany({
     where: {
       isActive: true,
@@ -196,7 +199,7 @@ export default async function CarpoolPage({
 
       {/* Results header */}
       {isFiltered && (
-        <div className="flex items-center gap-3 mb-4">
+        <div id="carpool-results" className="flex items-center gap-3 mb-4 scroll-mt-24">
           <Search className="h-4 w-4 text-primary-600 shrink-0" />
           {routes.length > 0 ? (
             <p className="text-sm">
@@ -269,6 +272,9 @@ export default async function CarpoolPage({
                           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${FREQ_COLORS[route.frequency] ?? "border-border bg-muted text-muted-foreground"}`}>
                             {FREQ_LABEL[route.frequency] ?? route.frequency}
                           </span>
+                          {route.frequency === "ONCE" && route.departureAt && (
+                            <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{formatDate(route.departureAt)}</span>
+                          )}
                           <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.departureTime}</span>
                           <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.vehicleType}</span>
                           {route.acAvailable && (

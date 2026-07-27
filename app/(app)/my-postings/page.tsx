@@ -9,7 +9,8 @@ import {
   TrendingUp, LayoutGrid, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { formatCurrency, formatRelativeTime } from "@/lib/utils"
+import { formatCurrency, formatRelativeTime, formatDate } from "@/lib/utils"
+import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export const metadata = { title: "My Postings" }
 export const dynamic  = "force-dynamic"
@@ -150,6 +151,8 @@ function EmptyState({ icon: Icon, label, newRoute }: { icon: any; label: string;
 // ─── Fetch helpers ─────────────────────────────────────────────────────────────
 
 async function fetchAll(userId: string) {
+  await expireOneTimeCarpoolRoutes()
+
   const [listings, rentals, referrals, carpools, services, events] = await Promise.all([
     prisma.listing.findMany({
       where: { userId },
@@ -285,6 +288,9 @@ function CarpoolSection({ carpools, limit }: { carpools: any[]; limit?: number }
               <StatusBadge active={c.isActive} />
             </div>
             <MetaRow>
+              {c.frequency === "ONCE" && c.departureAt && (
+                <span>{formatDate(c.departureAt)}</span>
+              )}
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.departureTime}</span>
               <span>{c.seatsAvailable} seat{c.seatsAvailable !== 1 ? "s" : ""}</span>
               <span>{formatCurrency(c.pricePerSeat)}/seat</span>

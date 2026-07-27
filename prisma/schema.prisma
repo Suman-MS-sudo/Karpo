@@ -511,6 +511,7 @@ model CarpoolRoute {
   toLng                Float?
   stopCoords           String?
   departureTime        String
+  departureAt          DateTime?
   returnTrip           Boolean  @default(false)
   returnTime           String?
   seatsAvailable       Int

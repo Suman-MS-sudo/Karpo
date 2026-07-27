@@ -22,10 +22,16 @@ interface Props {
 
 async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
-    const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, { headers: { "User-Agent": "KorpoApp/1.0" } })
+    const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&zoom=18`, { headers: { "User-Agent": "KorpoApp/1.0" } })
     const data = await res.json()
     const a    = data.address ?? {}
-    return [a.suburb ?? a.neighbourhood ?? a.village ?? a.town ?? "", a.city ?? a.state_district ?? ""].filter(Boolean).join(", ") || data.display_name?.split(",").slice(0, 2).join(", ") || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+    const parts = [
+      a.amenity ?? a.shop ?? a.building ?? a.house_name,
+      [a.house_number, a.road].filter(Boolean).join(" ") || a.road,
+      a.suburb ?? a.neighbourhood ?? a.village ?? a.town,
+      a.city ?? a.state_district,
+    ].filter(Boolean)
+    return parts.slice(0, 4).join(", ") || data.display_name?.split(",").slice(0, 3).join(", ") || `${lat.toFixed(4)}, ${lng.toFixed(4)}`
   } catch { return `${lat.toFixed(4)}, ${lng.toFixed(4)}` }
 }
 

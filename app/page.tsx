@@ -81,7 +81,7 @@ export default function LandingPage() {
             <Link href="/auth/signin?callbackUrl=/admin" className="hidden sm:block text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1">
               Admin
             </Link>
-            <Button asChild size="sm" variant="ghost" className="rounded-full">
+            <Button asChild size="sm" className="rounded-full bg-green-600 hover:bg-green-700 text-white">
               <Link href="/auth/signin?mode=register">Register</Link>
             </Button>
             <Button asChild size="sm" className="rounded-full shadow-sm">
@@ -133,7 +133,7 @@ export default function LandingPage() {
                   Sign in
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6">
+              <Button asChild size="lg" className="h-12 rounded-xl px-6 bg-green-600 hover:bg-green-700 text-white shadow-sm">
                 <Link href="/auth/signin?mode=register">Register</Link>
               </Button>
             </div>
