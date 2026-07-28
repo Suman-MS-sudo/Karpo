@@ -652,6 +652,7 @@ model Event {
   // Enterprise fields
   agenda          String?
   onlineLink      String?
+  format          String   @default("IN_PERSON")
   tags            String   @default("[]")
   isBoosted       Boolean  @default(false)
   requiresApproval Boolean @default(false)
@@ -668,6 +669,7 @@ model EventRsvp {
   id        String   @id @default(cuid())
   eventId   String
   userId    String
+  status    String   @default("CONFIRMED")
   createdAt DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)

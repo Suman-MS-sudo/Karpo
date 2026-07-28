@@ -1,13 +1,17 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Upload, X, Loader2, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Upload, X, Loader2, Plus, Trash2, MapPin, Video, Globe } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TimeSelect } from "@/components/events/TimeSelect"
+import { cn } from "@/lib/utils"
+
+type EventFormat = "IN_PERSON" | "ONLINE" | "HYBRID"
 
 type AgendaItem = { time: string; title: string; speaker: string }
 
@@ -24,8 +28,9 @@ export default function EditEventPage() {
   const [form, setForm] = useState({
     title: "", description: "", category: "", date: "", location: "",
     maxParticipants: "", fee: "0", onlineLink: "", tags: [] as string[],
-    requiresApproval: false, isActive: true,
+    requiresApproval: false, isActive: true, format: "IN_PERSON" as EventFormat,
   })
+  const [error, setError] = useState("")
 
   useEffect(() => {
     fetch(`/api/events/${id}`)
@@ -39,6 +44,7 @@ export default function EditEventPage() {
           location: ev.location ?? "", maxParticipants: ev.maxParticipants ? String(ev.maxParticipants) : "",
           fee: String(ev.fee ?? 0), onlineLink: ev.onlineLink ?? "",
           tags: ev.tags ?? [], requiresApproval: ev.requiresApproval ?? false, isActive: ev.isActive ?? true,
+          format: (ev.format as EventFormat) ?? "IN_PERSON",
         })
         setImages(ev.images ?? [])
         setAgenda((ev.agenda ?? []).map((a: any) => ({ time: a.time ?? "", title: a.title ?? "", speaker: a.speaker ?? "" })))
@@ -64,7 +70,10 @@ export default function EditEventPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault(); setError("")
+    if (form.format !== "ONLINE" && !form.location.trim()) { setError("Please enter a venue / address"); return }
+    if (form.format !== "IN_PERSON" && !form.onlineLink.trim()) { setError("Please add a meeting link"); return }
+    setLoading(true)
     try {
       const res = await fetch(`/api/events/${id}`, {
         method: "PUT",
@@ -90,12 +99,14 @@ export default function EditEventPage() {
       <Link href={`/events/${id}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 text-sm">
         <ArrowLeft className="h-4 w-4" /> Back to event
       </Link>
-      <h1 className="text-2xl font-bold mb-6">Edit Event</h1>
+      <h1 className="text-2xl font-black mb-6 bg-gradient-to-r from-fuchsia-600 to-cyan-500 bg-clip-text text-transparent">✏️ Edit Event</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic */}
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
-          <h2 className="font-semibold">Event Details</h2>
+        <div className="bg-card border-2 border-border rounded-3xl p-5 space-y-4 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
+          <h2 className="font-bold flex items-center gap-2">
+            <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Event Details
+          </h2>
           <div className="space-y-1.5">
             <Label>Event Title *</Label>
             <Input required value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
@@ -116,21 +127,47 @@ export default function EditEventPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Location *</Label>
-            <Input required value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Full address or meeting point" />
+            <Label>Format</Label>
+            <div className="flex gap-2">
+              {([
+                { value: "IN_PERSON", label: "In Person", Icon: MapPin },
+                { value: "ONLINE",    label: "Online",    Icon: Video  },
+                { value: "HYBRID",    label: "Hybrid",    Icon: Globe  },
+              ] as const).map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, format: value }))}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border text-sm font-semibold transition-all",
+                    form.format === value ? "bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white border-transparent shadow-sm" : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                  )}
+                >
+                  <Icon className="h-4 w-4" /> {label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Online Meeting Link</Label>
-            <Input type="url" value={form.onlineLink} onChange={(e) => setForm((f) => ({ ...f, onlineLink: e.target.value }))} placeholder="https://meet.google.com/..." />
-          </div>
+          {form.format !== "ONLINE" && (
+            <div className="space-y-1.5">
+              <Label>Location *</Label>
+              <Input required value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Full address or meeting point" />
+            </div>
+          )}
+          {form.format !== "IN_PERSON" && (
+            <div className="space-y-1.5">
+              <Label>Online Meeting Link *</Label>
+              <Input required type="url" value={form.onlineLink} onChange={(e) => setForm((f) => ({ ...f, onlineLink: e.target.value }))} placeholder="https://meet.google.com/..." />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Max Participants</Label>
-              <Input type="number" min="2" value={form.maxParticipants} onChange={(e) => setForm((f) => ({ ...f, maxParticipants: e.target.value }))} placeholder="Unlimited" />
+              <Input type="number" min="2" value={form.maxParticipants} onChange={(e) => setForm((f) => ({ ...f, maxParticipants: e.target.value }))} onWheel={(e) => e.currentTarget.blur()} placeholder="Unlimited" />
             </div>
             <div className="space-y-1.5">
               <Label>Entry Fee (₹)</Label>
-              <Input type="number" min="0" value={form.fee} onChange={(e) => setForm((f) => ({ ...f, fee: e.target.value }))} />
+              <Input type="number" min="0" value={form.fee} onChange={(e) => setForm((f) => ({ ...f, fee: e.target.value }))} onWheel={(e) => e.currentTarget.blur()} />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -146,8 +183,10 @@ export default function EditEventPage() {
         </div>
 
         {/* Tags */}
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-          <h2 className="font-semibold">Tags</h2>
+        <div className="bg-card border-2 border-border rounded-3xl p-5 space-y-3 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
+          <h2 className="font-bold flex items-center gap-2">
+            <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Tags
+          </h2>
           <div className="flex gap-2">
             <Input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag() } }} placeholder="Add tag (Enter to add)" />
             <Button type="button" variant="outline" onClick={addTag}>Add</Button>
@@ -164,9 +203,11 @@ export default function EditEventPage() {
         </div>
 
         {/* Agenda */}
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div className="bg-card border-2 border-border rounded-3xl p-5 space-y-4 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Agenda <span className="text-xs font-normal text-muted-foreground">(optional)</span></h2>
+            <h2 className="font-bold flex items-center gap-2">
+              <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Agenda <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+            </h2>
             <Button type="button" variant="outline" size="sm" onClick={() => setAgenda((a) => [...a, { time: "", title: "", speaker: "" }])}>
               <Plus className="h-3.5 w-3.5 mr-1" />Add item
             </Button>
@@ -185,8 +226,10 @@ export default function EditEventPage() {
         </div>
 
         {/* Images */}
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-          <h2 className="font-semibold">Cover Photo</h2>
+        <div className="bg-card border-2 border-border rounded-3xl p-5 space-y-3 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
+          <h2 className="font-bold flex items-center gap-2">
+            <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Cover Photo
+          </h2>
           <div className="flex gap-2 flex-wrap">
             {images.map((img, i) => (
               <div key={i} className="relative h-20 w-20 rounded-xl overflow-hidden border">
@@ -207,7 +250,7 @@ export default function EditEventPage() {
         </div>
 
         {/* Status */}
-        <div className="bg-card border border-border rounded-2xl p-5">
+        <div className="bg-card border-2 border-border rounded-3xl p-5">
           <label className="flex items-center gap-3 cursor-pointer">
             <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} className="rounded" />
             <div>
@@ -217,11 +260,17 @@ export default function EditEventPage() {
           </label>
         </div>
 
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+            {error}
+          </p>
+        )}
+
         <div className="flex gap-3">
-          <Button type="submit" className="flex-1" disabled={loading}>
+          <Button type="submit" className="flex-1 rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 border-0 hover:brightness-110 shadow-[0_4px_20px_rgba(217,70,239,0.35)] font-bold" disabled={loading}>
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Changes"}
           </Button>
-          <Button type="button" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" asChild>
+          <Button type="button" variant="outline" className="rounded-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/30" asChild>
             <Link href={`/events/${id}`}>Cancel</Link>
           </Button>
         </div>

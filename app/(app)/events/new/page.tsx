@@ -14,7 +14,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { TimeSelect } from "@/components/events/TimeSelect"
 import { cn } from "@/lib/utils"
+
+type EventFormat = "IN_PERSON" | "ONLINE" | "HYBRID"
 
 interface AgendaItem { time: string; title: string; speaker: string }
 
@@ -63,7 +66,7 @@ function MapEmbed({ location }: { location: string }) {
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("bg-card border border-border rounded-2xl p-6 space-y-5", className)}>
+    <div className={cn("bg-card border-2 border-border rounded-3xl p-6 space-y-5 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors", className)}>
       {children}
     </div>
   )
@@ -72,8 +75,10 @@ function SectionCard({ children, className }: { children: React.ReactNode; class
 function SectionTitle({ Icon, children }: { Icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pb-1 border-b border-border">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">{children}</h2>
+      <span className="h-6 w-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-cyan-400 flex items-center justify-center shrink-0">
+        <Icon className="h-3.5 w-3.5 text-white" />
+      </span>
+      <h2 className="font-bold text-sm uppercase tracking-wide text-muted-foreground">{children}</h2>
     </div>
   )
 }
@@ -88,11 +93,13 @@ export default function NewEventPage() {
   const [tagInput,  setTagInput] = useState("")
   const [agenda,    setAgenda]   = useState<AgendaItem[]>([])
   const [mapKey,    setMapKey]   = useState(0)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [form, setForm] = useState({
     title: "", description: "", category: "", date: "", time: "",
     location: "", maxParticipants: "", fee: "0", onlineLink: "",
-    requiresApproval: false, isOnline: false,
+    requiresApproval: false, format: "IN_PERSON" as EventFormat,
   })
+  const [error, setError] = useState("")
 
   const set = (k: keyof typeof form, v: string | boolean) =>
     setForm((f) => ({ ...f, [k]: v }))
@@ -129,7 +136,12 @@ export default function NewEventPage() {
 
   // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setLoading(true)
+    e.preventDefault(); setError("")
+    if (!form.time) { setError("Please select a start time"); return }
+    if (form.format !== "ONLINE" && !form.location.trim()) { setError("Please enter a venue / address"); return }
+    if (form.format !== "IN_PERSON" && !form.onlineLink.trim()) { setError("Please add a meeting link for the online portion"); return }
+    if (!agreedToTerms) { setError("Please confirm the organizer terms below before publishing"); return }
+    setLoading(true)
     try {
       const dateTime = form.date && form.time ? `${form.date}T${form.time}` : form.date
       const res = await fetch("/api/events", {
@@ -139,18 +151,19 @@ export default function NewEventPage() {
           description:     form.description,
           category:        form.category,
           date:            new Date(dateTime),
-          location:        form.location,
+          location:        form.format === "ONLINE" ? "Online" : form.location,
           fee:             parseInt(form.fee) || 0,
           maxParticipants: form.maxParticipants ? parseInt(form.maxParticipants) : undefined,
           images, tags,
           agenda:          agenda.filter((a) => a.title),
-          onlineLink:      form.onlineLink || undefined,
+          onlineLink:      form.format !== "IN_PERSON" ? form.onlineLink : undefined,
+          format:          form.format,
           requiresApproval: form.requiresApproval,
         }),
       })
       const d = await res.json()
       if (res.ok) router.push(`/events/${d.id}`)
-      else alert(d.error ?? "Failed to create event")
+      else setError(d.error ?? "Failed to create event")
     } finally { setLoading(false) }
   }
 
@@ -169,11 +182,8 @@ export default function NewEventPage() {
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">Back to Events</span>
           </Link>
-          <h1 className="text-sm font-semibold">Create Event</h1>
-          <Button type="submit" form="event-form" size="sm" disabled={loading} className="gap-1.5">
-            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-            {loading ? "Publishing…" : "Publish"}
-          </Button>
+          <h1 className="text-sm font-black bg-gradient-to-r from-fuchsia-600 to-cyan-500 bg-clip-text text-transparent">✨ Create Event</h1>
+          <div className="w-24" />
         </div>
       </div>
 
@@ -186,8 +196,8 @@ export default function NewEventPage() {
             {/* Cover photo — hero upload */}
             <div
               className={cn(
-                "relative rounded-2xl border-2 border-dashed overflow-hidden transition-all group cursor-pointer",
-                dragging ? "border-primary-500 bg-primary-50 dark:bg-primary-950/20" : "border-border hover:border-muted-foreground/40",
+                "relative rounded-3xl border-2 border-dashed overflow-hidden transition-all group cursor-pointer",
+                dragging ? "border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/20" : "border-border hover:border-fuchsia-300/60",
                 images[0] ? "h-[240px]" : "h-[180px]"
               )}
               onClick={() => fileRef.current?.click()}
@@ -301,16 +311,7 @@ export default function NewEventPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Time <span className="text-red-500">*</span></Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      required
-                      type="time"
-                      value={form.time}
-                      onChange={(e) => set("time", e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
+                  <TimeSelect value={form.time} onChange={(v) => set("time", v)} />
                 </div>
               </div>
 
@@ -335,59 +336,65 @@ export default function NewEventPage() {
             <SectionCard>
               <SectionTitle Icon={MapPin}>Location</SectionTitle>
 
-              {/* Online toggle */}
+              {/* Format toggle */}
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => set("isOnline", false)}
+                  onClick={() => set("format", "IN_PERSON")}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all",
-                    !form.isOnline ? "bg-primary-600 text-white border-primary-600" : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border text-sm font-semibold transition-all",
+                    form.format === "IN_PERSON" ? "bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white border-transparent shadow-sm" : "border-border text-muted-foreground hover:border-muted-foreground/40"
                   )}
                 >
                   <MapPin className="h-4 w-4" /> In Person
                 </button>
                 <button
                   type="button"
-                  onClick={() => set("isOnline", true)}
+                  onClick={() => set("format", "ONLINE")}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all",
-                    form.isOnline ? "bg-primary-600 text-white border-primary-600" : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border text-sm font-semibold transition-all",
+                    form.format === "ONLINE" ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-transparent shadow-sm" : "border-border text-muted-foreground hover:border-muted-foreground/40"
                   )}
                 >
                   <Video className="h-4 w-4" /> Online
                 </button>
                 <button
                   type="button"
-                  onClick={() => { set("isOnline", false) }}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-muted-foreground text-sm font-medium hover:border-muted-foreground/40 transition-all"
+                  onClick={() => set("format", "HYBRID")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full border text-sm font-semibold transition-all",
+                    form.format === "HYBRID" ? "bg-gradient-to-r from-violet-500 to-pink-500 text-white border-transparent shadow-sm" : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                  )}
                 >
                   <Globe className="h-4 w-4" /> Hybrid
                 </button>
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Venue / Address {!form.isOnline && <span className="text-red-500">*</span>}</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    required={!form.isOnline}
-                    placeholder="Search for a venue or enter full address"
-                    value={form.location}
-                    onChange={(e) => set("location", e.target.value)}
-                    onBlur={() => setMapKey(k => k + 1)}
-                    className="pl-9"
-                  />
-                </div>
-                {form.location && <MapEmbed key={mapKey} location={form.location} />}
-              </div>
-
-              {(form.isOnline || form.onlineLink) && (
+              {form.format !== "ONLINE" && (
                 <div className="space-y-1.5">
-                  <Label>Meeting Link</Label>
+                  <Label>Venue / Address <span className="text-red-500">*</span></Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      required
+                      placeholder="Search for a venue or enter full address"
+                      value={form.location}
+                      onChange={(e) => set("location", e.target.value)}
+                      onBlur={() => setMapKey(k => k + 1)}
+                      className="pl-9"
+                    />
+                  </div>
+                  {form.location && <MapEmbed key={mapKey} location={form.location} />}
+                </div>
+              )}
+
+              {form.format !== "IN_PERSON" && (
+                <div className="space-y-1.5">
+                  <Label>Meeting Link <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
+                      required
                       type="url"
                       placeholder="https://meet.google.com/... or Zoom link"
                       value={form.onlineLink}
@@ -415,6 +422,7 @@ export default function NewEventPage() {
                       placeholder="Unlimited"
                       value={form.maxParticipants}
                       onChange={(e) => set("maxParticipants", e.target.value)}
+                      onWheel={(e) => e.currentTarget.blur()}
                       className="pl-9"
                     />
                   </div>
@@ -428,15 +436,16 @@ export default function NewEventPage() {
                       placeholder="0 for free"
                       value={form.fee}
                       onChange={(e) => set("fee", e.target.value)}
+                      onWheel={(e) => e.currentTarget.blur()}
                       className="pl-9"
                     />
                   </div>
                 </div>
               </div>
-              <label className="flex items-start gap-3 p-3 rounded-xl border border-border hover:bg-muted/40 cursor-pointer transition-colors group">
+              <label className="flex items-start gap-3 p-3 rounded-2xl border border-border hover:bg-muted/40 cursor-pointer transition-colors group">
                 <div className={cn(
                   "mt-0.5 h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors",
-                  form.requiresApproval ? "bg-primary-600 border-primary-600" : "border-muted-foreground/40 group-hover:border-muted-foreground"
+                  form.requiresApproval ? "bg-gradient-to-br from-fuchsia-500 to-violet-500 border-transparent" : "border-muted-foreground/40 group-hover:border-muted-foreground"
                 )}>
                   {form.requiresApproval && <CheckCircle2 className="h-3 w-3 text-white" />}
                 </div>
@@ -506,7 +515,7 @@ export default function NewEventPage() {
                   {agenda.map((item, i) => (
                     <div key={i} className="relative pl-8">
                       {/* timeline dot */}
-                      <div className="absolute left-2.5 top-3 h-2 w-2 rounded-full bg-primary-400 ring-4 ring-primary-100 dark:ring-primary-900" />
+                      <div className="absolute left-2.5 top-3 h-2 w-2 rounded-full bg-gradient-to-r from-fuchsia-400 to-cyan-400 ring-4 ring-fuchsia-100 dark:ring-fuchsia-900" />
                       {i < agenda.length - 1 && (
                         <div className="absolute left-[13px] top-5 bottom-0 w-px bg-border" />
                       )}
@@ -537,20 +546,39 @@ export default function NewEventPage() {
               )}
             </SectionCard>
 
-            {/* Mobile publish button — only visible when right column is below fold */}
-            <div className="lg:hidden">
-              <Button type="submit" form="event-form" className="w-full gap-2" size="lg" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {loading ? "Publishing…" : "Publish Event"}
-              </Button>
-            </div>
+            {/* Organizer consent */}
+            <label className="flex items-start gap-3 p-4 rounded-3xl border-2 border-border bg-muted/30 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-muted-foreground/40"
+              />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                I confirm I am organizing this event independently and am responsible for its planning, safety, and delivery.
+                Korpo only provides a platform to list and discover events between verified professionals — it does not
+                organize, host, supervise, or take responsibility for this event or any interactions between attendees.
+              </p>
+            </label>
+
+            {error && (
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+                {error}
+              </p>
+            )}
+
+            {/* Publish button — bottom of the form */}
+            <Button type="submit" form="event-form" className="w-full gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 border-0 hover:brightness-110 shadow-[0_4px_20px_rgba(217,70,239,0.35)] font-bold" size="lg" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              {loading ? "Publishing…" : "Publish Event"}
+            </Button>
           </div>
 
           {/* ── RIGHT: Live Preview ───────────────────────────────────────── */}
           <div className="hidden lg:block lg:sticky lg:top-[72px] space-y-4">
 
             {/* Preview card */}
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-card border-2 border-fuchsia-200 dark:border-fuchsia-900/60 rounded-3xl overflow-hidden shadow-[0_8px_24px_rgba(217,70,239,0.08)]">
               {/* Preview cover */}
               <div className="relative h-40 bg-gradient-to-br from-muted to-muted/50 overflow-hidden">
                 {images[0] ? (
@@ -623,20 +651,20 @@ export default function NewEventPage() {
             </div>
 
             {/* Checklist */}
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-2.5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Event checklist</p>
+            <div className="bg-card border-2 border-border rounded-3xl p-4 space-y-2.5">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">📋 Event checklist</p>
               {[
                 { done: !!form.title,             label: "Event title"    },
                 { done: !!form.category,          label: "Category"       },
                 { done: !!(form.date && form.time), label: "Date & time"  },
-                { done: !!form.location,          label: "Location"       },
+                { done: form.format === "ONLINE" ? !!form.onlineLink : !!form.location, label: "Location" },
                 { done: !!form.description,       label: "Description"    },
                 { done: images.length > 0,        label: "Cover photo"    },
               ].map(({ done, label }) => (
                 <div key={label} className="flex items-center gap-2.5">
                   <div className={cn(
                     "h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                    done ? "bg-emerald-500 border-emerald-500" : "border-muted-foreground/30"
+                    done ? "bg-gradient-to-br from-emerald-400 to-teal-500 border-transparent" : "border-muted-foreground/30"
                   )}>
                     {done && <CheckCircle2 className="h-2.5 w-2.5 text-white" />}
                   </div>
@@ -645,10 +673,6 @@ export default function NewEventPage() {
               ))}
             </div>
 
-            <Button type="submit" form="event-form" className="w-full gap-2" size="lg" disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              {loading ? "Publishing…" : "Publish Event"}
-            </Button>
             <p className="text-xs text-center text-muted-foreground">You can edit all details after publishing</p>
           </div>
         </div>

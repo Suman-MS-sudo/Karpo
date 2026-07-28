@@ -22,8 +22,8 @@ export default async function EventsPage() {
       take:    100,
       include: {
         organizer: { include: { company: { select: { name: true } } } },
-        rsvps:     { include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 8 },
-        _count:    { select: { rsvps: true } },
+        rsvps:     { where: { status: "CONFIRMED" }, include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 8 },
+        _count:    { select: { rsvps: { where: { status: "CONFIRMED" } } } },
       },
     }),
     prisma.event.count({ where: { isActive: true, date: { gte: new Date() } } }),
@@ -48,6 +48,7 @@ export default async function EventsPage() {
       images,
       tags,
       isBoosted:        ev.isBoosted,
+      format:           ((ev as any).format as "IN_PERSON" | "ONLINE" | "HYBRID") ?? "IN_PERSON",
       isOnline:         !!((ev as any).onlineLink),
       requiresApproval: !!((ev as any).requiresApproval),
       rsvpCount:        ev._count.rsvps,

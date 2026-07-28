@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import dynamic from "next/dynamic"
-import { Search, MapPin, X, Loader2, ArrowRight, Map, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react"
+import { Search, MapPin, X, Loader2, ArrowRight, Map, SlidersHorizontal, ChevronDown, ChevronUp, Navigation } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -34,6 +34,7 @@ async function fetchSuggestions(q: string, nearLat?: number, nearLng?: number): 
 
 function LocationInput({
   label, color, value, onChange, onSelect, placeholder, nearLat, nearLng,
+  onUseMyLocation, locating,
 }: {
   label:       string
   color:       "emerald" | "red"
@@ -43,6 +44,8 @@ function LocationInput({
   placeholder: string
   nearLat?:    number
   nearLng?:    number
+  onUseMyLocation?: () => void
+  locating?:        boolean
 }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [open,        setOpen]        = useState(false)
@@ -70,6 +73,8 @@ function LocationInput({
     setSuggestions([])
   }
 
+  const showDropdown = open && (suggestions.length > 0 || !!onUseMyLocation)
+
   return (
     <div className="relative flex-1 min-w-0">
       <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1 ml-1">{label}</label>
@@ -82,7 +87,7 @@ function LocationInput({
           type="text"
           value={value}
           onChange={(e) => handleChange(e.target.value)}
-          onFocus={() => { if (suggestions.length > 0) setOpen(true) }}
+          onFocus={() => { if (suggestions.length > 0 || onUseMyLocation) setOpen(true) }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={placeholder}
           autoComplete="off"
@@ -95,8 +100,19 @@ function LocationInput({
         )}
       </div>
 
-      {open && suggestions.length > 0 && (
+      {showDropdown && (
         <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
+          {onUseMyLocation && (
+            <button
+              type="button"
+              onMouseDown={() => { onUseMyLocation(); setOpen(false) }}
+              disabled={locating}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-muted transition-colors border-b border-border/50 text-blue-700 dark:text-blue-300 disabled:opacity-60"
+            >
+              {locating ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <Navigation className="h-3.5 w-3.5 shrink-0" />}
+              <span className="text-sm font-medium">{locating ? "Locating…" : "Use my current location"}</span>
+            </button>
+          )}
           {suggestions.map((s, i) => (
             <button
               key={i}
@@ -302,6 +318,8 @@ export function CarpoolSearchBar() {
           placeholder="Where will you board?"
           nearLat={toLat || undefined}
           nearLng={toLng || undefined}
+          onUseMyLocation={useMyLocation}
+          locating={locating}
         />
         <div className="hidden sm:flex items-center justify-center self-end pb-2.5 shrink-0">
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -317,15 +335,6 @@ export function CarpoolSearchBar() {
           nearLng={fromLng || undefined}
         />
         <div className="flex gap-2 shrink-0 self-end">
-          <button
-            type="button"
-            onClick={useMyLocation}
-            disabled={locating}
-            className="text-xs px-3 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-60 transition-all flex items-center gap-1.5 whitespace-nowrap"
-          >
-            {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
-            My location
-          </button>
           <Button onClick={handleSearch} disabled={!canSearch} className="px-5">
             <Search className="h-4 w-4 mr-1.5" /> Search
           </Button>

@@ -41,6 +41,7 @@ export async function POST(req: Request) {
       images: body.images ?? [],
       agenda: body.agenda ?? undefined,
       onlineLink: body.onlineLink,
+      format: body.format ?? "IN_PERSON",
       tags: body.tags ?? [],
       requiresApproval: body.requiresApproval ?? false,
     },

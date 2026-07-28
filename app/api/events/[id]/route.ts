@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const body = await req.json()
   const allowed = [
     "title","description","category","date","location","maxParticipants","fee","images","isActive",
-    "agenda","onlineLink","tags","requiresApproval",
+    "agenda","onlineLink","format","tags","requiresApproval",
   ]
   const data: Record<string, unknown> = {}
   for (const k of allowed) {

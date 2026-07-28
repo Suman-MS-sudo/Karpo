@@ -488,6 +488,7 @@ CREATE TABLE "Event" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "agenda" TEXT,
     "onlineLink" TEXT,
+    "format" TEXT NOT NULL DEFAULT 'IN_PERSON',
     "tags" TEXT NOT NULL DEFAULT '[]',
     "isBoosted" BOOLEAN NOT NULL DEFAULT false,
     "requiresApproval" BOOLEAN NOT NULL DEFAULT false,
@@ -501,6 +502,7 @@ CREATE TABLE "EventRsvp" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "eventId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'CONFIRMED',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "EventRsvp_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "Event" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "EventRsvp_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE

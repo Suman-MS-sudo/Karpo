@@ -5,12 +5,14 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   ArrowLeft, Calendar, MapPin, Users, Globe, Video, Clock,
-  Pencil, CheckCircle, Share2, ExternalLink, ChevronRight,
+  Pencil, ExternalLink, ChevronRight,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatCurrency, getInitials } from "@/lib/utils"
+import { RsvpButton } from "@/components/events/RsvpButton"
+import { PendingRequestsPanel } from "@/components/events/PendingRequestsPanel"
 
 type AgendaItem = { time: string; title: string; speaker?: string }
 
@@ -35,16 +37,20 @@ export default async function EventDetailPage({ params }: { params: { id: string
     where:   { id: params.id },
     include: {
       organizer: { include: { company: { select: { name: true, logo: true, domain: true } } } },
-      rsvps:     { include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 30 },
-      _count:    { select: { rsvps: true } },
+      rsvps:     { include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 50 },
     },
   })
 
   if (!event || !event.isActive) notFound()
 
-  const isOwner        = session?.user?.id === event.organizerId
-  const hasRsvped      = event.rsvps.some((r) => r.userId === session?.user?.id)
-  const isFull         = event.maxParticipants ? event._count.rsvps >= event.maxParticipants : false
+  const isOwner          = session?.user?.id === event.organizerId
+  const confirmedRsvps    = event.rsvps.filter((r) => (r as any).status !== "PENDING")
+  const pendingRsvps      = event.rsvps.filter((r) => (r as any).status === "PENDING")
+  const confirmedCount    = confirmedRsvps.length
+  const myRsvp            = event.rsvps.find((r) => r.userId === session?.user?.id)
+  const myRsvpStatus: "NONE" | "PENDING" | "CONFIRMED" =
+    !myRsvp ? "NONE" : (myRsvp as any).status === "PENDING" ? "PENDING" : "CONFIRMED"
+  const isFull         = event.maxParticipants ? confirmedCount >= event.maxParticipants : false
   const agenda         = event.agenda as AgendaItem[] | null
   const tags           = (() => { try { return JSON.parse((event as any).tags ?? "[]") } catch { return [] } })() as string[]
   const onlineLink     = (event as any).onlineLink as string | null
@@ -52,8 +58,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const eDate          = new Date(event.date)
   const cc             = CATEGORY_COLORS[event.category]
   const gradient       = cc?.light ?? "from-slate-700 to-slate-900"
-  const spotsLeft      = event.maxParticipants ? event.maxParticipants - event._count.rsvps : null
-  const fillPct        = event.maxParticipants ? Math.min(100, (event._count.rsvps / event.maxParticipants) * 100) : 0
+  const spotsLeft      = event.maxParticipants ? event.maxParticipants - confirmedCount : null
+  const fillPct        = event.maxParticipants ? Math.min(100, (confirmedCount / event.maxParticipants) * 100) : 0
 
   return (
     <div className="min-h-full bg-background">
@@ -66,6 +72,8 @@ export default async function EventDetailPage({ params }: { params: { id: string
           <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-60`} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-950/30 via-transparent to-cyan-950/30 pointer-events-none" />
+        <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10">
           {/* Breadcrumb */}
@@ -83,9 +91,14 @@ export default async function EventDetailPage({ params }: { params: { id: string
                 {event.category}
               </span>
             )}
-            {onlineLink && (
+            {(event as any).format === "ONLINE" && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300">
                 <Video className="h-3 w-3" /> Online
+              </span>
+            )}
+            {(event as any).format === "HYBRID" && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-500/20 text-violet-300">
+                <Globe className="h-3 w-3" /> Hybrid
               </span>
             )}
             {requiresApproval && (
@@ -95,7 +108,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             )}
           </div>
 
-          <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight max-w-3xl">{event.title}</h1>
+          <h1 className="text-3xl lg:text-4xl font-black text-white leading-tight max-w-3xl drop-shadow-lg">{event.title}</h1>
 
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
@@ -121,27 +134,27 @@ export default async function EventDetailPage({ params }: { params: { id: string
             </div>
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-slate-400 shrink-0" />
-              <span>{event._count.rsvps} going{event.maxParticipants ? ` · ${spotsLeft} spots left` : ""}</span>
+              <span>{confirmedCount} going{event.maxParticipants ? ` · ${spotsLeft} spots left` : ""}</span>
             </div>
           </div>
 
           {/* Attendee stack */}
-          {event.rsvps.length > 0 && (
+          {confirmedRsvps.length > 0 && (
             <div className="flex items-center gap-3 mt-5">
               <div className="flex -space-x-2">
-                {event.rsvps.slice(0, 8).map((r) => (
+                {confirmedRsvps.slice(0, 8).map((r) => (
                   <Avatar key={r.userId} className="h-8 w-8 ring-2 ring-slate-900">
                     <AvatarImage src={r.user.avatarUrl ?? r.user.image ?? ""} />
                     <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(r.user.name)}</AvatarFallback>
                   </Avatar>
                 ))}
-                {event._count.rsvps > 8 && (
+                {confirmedCount > 8 && (
                   <div className="h-8 w-8 rounded-full ring-2 ring-slate-900 bg-slate-700 flex items-center justify-center text-[10px] text-slate-300 font-semibold">
-                    +{event._count.rsvps - 8}
+                    +{confirmedCount - 8}
                   </div>
                 )}
               </div>
-              <span className="text-sm text-slate-400">{event._count.rsvps} people going</span>
+              <span className="text-sm text-slate-400">{confirmedCount} people going</span>
             </div>
           )}
         </div>
@@ -155,26 +168,26 @@ export default async function EventDetailPage({ params }: { params: { id: string
           <div className="lg:col-span-2 space-y-8">
 
             {/* About */}
-            <section className="bg-card border border-border rounded-2xl p-6">
+            <section className="bg-card border-2 border-border rounded-3xl p-6 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
               <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                <span className="h-1 w-4 rounded bg-primary-600" /> About this event
+                <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> About this event
               </h2>
               <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap text-sm">{event.description}</p>
             </section>
 
             {/* Capacity */}
             {event.maxParticipants && (
-              <section className="bg-card border border-border rounded-2xl p-6">
+              <section className="bg-card border-2 border-border rounded-3xl p-6 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
                 <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                  <span className="h-1 w-4 rounded bg-primary-600" /> Capacity
+                  <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Capacity
                 </h2>
                 <div className="flex items-center justify-between text-sm mb-2">
-                  <span className="text-muted-foreground">{event._count.rsvps} confirmed</span>
+                  <span className="text-muted-foreground">{confirmedCount} confirmed</span>
                   <span className="font-semibold">{event.maxParticipants} max</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${isFull ? "bg-red-500" : fillPct > 80 ? "bg-amber-500" : "bg-emerald-500"}`}
+                    className={`h-full rounded-full transition-all ${isFull ? "bg-gradient-to-r from-red-500 to-rose-500" : fillPct > 80 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-gradient-to-r from-emerald-400 to-teal-400"}`}
                     style={{ width: `${fillPct}%` }}
                   />
                 </div>
@@ -186,9 +199,9 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
             {/* Agenda */}
             {agenda && agenda.length > 0 && (
-              <section className="bg-card border border-border rounded-2xl p-6">
+              <section className="bg-card border-2 border-border rounded-3xl p-6 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
                 <h2 className="text-base font-semibold mb-5 flex items-center gap-2">
-                  <span className="h-1 w-4 rounded bg-primary-600" /> Agenda
+                  <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Agenda
                 </h2>
                 <div className="relative">
                   <div className="absolute left-[52px] top-0 bottom-0 w-px bg-border" />
@@ -197,7 +210,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                       <div key={i} className="flex gap-4 pb-5 last:pb-0">
                         <span className="text-xs font-mono text-muted-foreground w-12 shrink-0 pt-1 text-right">{item.time}</span>
                         <div className="relative pl-5">
-                          <div className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-primary-600 ring-4 ring-background" />
+                          <div className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 ring-4 ring-background" />
                           <p className="text-sm font-medium">{item.title}</p>
                           {item.speaker && <p className="text-xs text-muted-foreground mt-0.5">by {item.speaker}</p>}
                         </div>
@@ -209,7 +222,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             )}
 
             {/* Online link */}
-            {onlineLink && (hasRsvped || isOwner) && (
+            {onlineLink && (myRsvpStatus === "CONFIRMED" || isOwner) && (
               <section className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-6">
                 <h2 className="text-base font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
                   <Globe className="h-4 w-4" /> Online Meeting Link
@@ -224,22 +237,29 @@ export default async function EventDetailPage({ params }: { params: { id: string
                 </a>
               </section>
             )}
-            {onlineLink && !hasRsvped && !isOwner && (
+            {onlineLink && myRsvpStatus !== "CONFIRMED" && !isOwner && (
               <section className="bg-muted/50 border border-border rounded-2xl p-5 flex items-center gap-3">
                 <Globe className="h-5 w-5 text-muted-foreground shrink-0" />
-                <p className="text-sm text-muted-foreground">Online meeting link will be shared after you RSVP.</p>
+                <p className="text-sm text-muted-foreground">
+                  {myRsvpStatus === "PENDING"
+                    ? "Online meeting link will be shared once your RSVP is approved."
+                    : "Online meeting link will be shared after you RSVP."}
+                </p>
               </section>
             )}
 
+            {/* Pending requests — organizer only */}
+            {isOwner && <PendingRequestsPanel eventId={event.id} requests={pendingRsvps.map((r) => ({ userId: r.userId, name: r.user.name, image: r.user.image, avatarUrl: r.user.avatarUrl }))} />}
+
             {/* Attendees */}
-            {event.rsvps.length > 0 && (
-              <section className="bg-card border border-border rounded-2xl p-6">
+            {confirmedRsvps.length > 0 && (
+              <section className="bg-card border-2 border-border rounded-3xl p-6 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
                 <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-                  <span className="h-1 w-4 rounded bg-primary-600" /> Who&apos;s going
-                  <span className="text-muted-foreground font-normal text-sm">({event._count.rsvps})</span>
+                  <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Who&apos;s going
+                  <span className="text-muted-foreground font-normal text-sm">({confirmedCount})</span>
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {event.rsvps.map((rsvp) => (
+                  {confirmedRsvps.map((rsvp) => (
                     <Link
                       key={rsvp.userId}
                       href={`/profile/${rsvp.userId}`}
@@ -263,11 +283,11 @@ export default async function EventDetailPage({ params }: { params: { id: string
           <div className="space-y-4">
 
             {/* RSVP card */}
-            <div className="bg-card border border-border rounded-2xl p-5 sticky top-6">
+            <div className="bg-card border-2 border-fuchsia-200 dark:border-fuchsia-900/60 rounded-3xl p-5 sticky top-6 shadow-[0_8px_30px_rgba(217,70,239,0.08)]">
               {/* Price */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-2xl font-black text-foreground">
+                  <p className="text-2xl font-black bg-gradient-to-r from-fuchsia-600 to-cyan-500 dark:from-fuchsia-400 dark:to-cyan-300 bg-clip-text text-transparent">
                     {event.fee === 0 ? "Free" : formatCurrency(event.fee)}
                   </p>
                   {event.fee > 0 && <p className="text-xs text-muted-foreground">per person</p>}
@@ -286,43 +306,44 @@ export default async function EventDetailPage({ params }: { params: { id: string
                   <Button variant="outline" className="w-full" asChild>
                     <Link href={`/events/${params.id}/edit`}><Pencil className="h-4 w-4 mr-1.5" /> Edit Event</Link>
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">{event._count.rsvps} attendee{event._count.rsvps !== 1 ? "s" : ""} confirmed</p>
+                  <p className="text-xs text-muted-foreground text-center">{confirmedCount} attendee{confirmedCount !== 1 ? "s" : ""} confirmed</p>
                 </div>
-              ) : hasRsvped ? (
-                <Button variant="secondary" className="w-full h-11 font-semibold" disabled>
-                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-500" /> You&apos;re going!
-                </Button>
-              ) : isFull ? (
-                <Button disabled className="w-full h-11">Event Full</Button>
               ) : (
-                <form action={`/api/events/${event.id}/rsvp`} method="POST">
-                  <Button type="submit" className="w-full h-11 font-semibold text-base">
-                    RSVP {event.fee > 0 ? `— ${formatCurrency(event.fee)}` : "— It's Free"}
-                    {requiresApproval && <span className="text-xs opacity-70 ml-1">(needs approval)</span>}
-                  </Button>
-                </form>
+                <RsvpButton
+                  eventId={event.id}
+                  eventTitle={event.title}
+                  initialStatus={myRsvpStatus}
+                  isFull={isFull}
+                  fee={event.fee}
+                  requiresApproval={requiresApproval}
+                />
               )}
 
               {/* Capacity mini bar */}
               {event.maxParticipants && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                    <span>{event._count.rsvps} going</span>
+                    <span>{confirmedCount} going</span>
                     <span>{event.maxParticipants} max</span>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${isFull ? "bg-red-500" : fillPct > 80 ? "bg-amber-500" : "bg-emerald-500"}`}
+                      className={`h-full rounded-full ${isFull ? "bg-gradient-to-r from-red-500 to-rose-500" : fillPct > 80 ? "bg-gradient-to-r from-amber-400 to-orange-500" : "bg-gradient-to-r from-emerald-400 to-teal-400"}`}
                       style={{ width: `${fillPct}%` }}
                     />
                   </div>
                   {!isFull && <p className="text-xs text-muted-foreground mt-1">{spotsLeft} spot{spotsLeft !== 1 ? "s" : ""} left</p>}
                 </div>
               )}
+
+              <p className="text-[11px] text-muted-foreground/80 leading-relaxed mt-4 pt-4 border-t border-border">
+                This event is organized independently by {event.organizer.name?.split(" ")[0] ?? "the host"}. Korpo only
+                provides the platform to list and discover it, and isn&apos;t responsible for how it&apos;s run.
+              </p>
             </div>
 
             {/* Event details card */}
-            <div className="bg-card border border-border rounded-2xl p-5 space-y-3.5">
+            <div className="bg-card border-2 border-border rounded-3xl p-5 space-y-3.5">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Event Details</h3>
               <div className="flex items-start gap-3 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -344,15 +365,15 @@ export default async function EventDetailPage({ params }: { params: { id: string
             </div>
 
             {/* Organiser card */}
-            <div className="bg-card border border-border rounded-2xl p-5">
+            <div className="bg-card border-2 border-border rounded-3xl p-5">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Organised by</h3>
               <Link href={`/profile/${event.organizer.id}`} className="flex items-center gap-3 group">
-                <Avatar className="h-10 w-10 shrink-0">
+                <Avatar className="h-10 w-10 shrink-0 ring-2 ring-fuchsia-300 dark:ring-fuchsia-800">
                   <AvatarImage src={event.organizer.avatarUrl ?? event.organizer.image ?? ""} />
                   <AvatarFallback>{getInitials(event.organizer.name)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold group-hover:text-primary-600 transition-colors truncate">{event.organizer.name}</p>
+                  <p className="text-sm font-semibold group-hover:text-fuchsia-600 transition-colors truncate">{event.organizer.name}</p>
                   {event.organizer.company && (
                     <p className="text-xs text-muted-foreground truncate">{event.organizer.company.name}</p>
                   )}

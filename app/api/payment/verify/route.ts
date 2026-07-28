@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { verifyPaymentSignature } from "@/lib/payments"
+import { emitNotification } from "@/lib/notification-events"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -31,6 +32,50 @@ export async function POST(req: Request) {
       update: { plan: "PREMIUM", endDate },
       create: { userId: session.user.id, plan: "PREMIUM", endDate },
     })
+  }
+
+  if (payment.type === "EVENT_RSVP") {
+    const meta    = JSON.parse(payment.metadata ?? "{}")
+    const eventId = meta.eventId as string
+    const event   = await prisma.event.findUnique({ where: { id: eventId } })
+
+    if (event) {
+      const existing = await prisma.eventRsvp.findUnique({
+        where: { eventId_userId: { eventId, userId: session.user.id } },
+      })
+
+      if (!existing) {
+        const status = event.requiresApproval ? "PENDING" : "CONFIRMED"
+        let capacityOk = true
+        if (status === "CONFIRMED" && event.maxParticipants) {
+          const confirmedCount = await prisma.eventRsvp.count({ where: { eventId, status: "CONFIRMED" } })
+          capacityOk = confirmedCount < event.maxParticipants
+        }
+
+        if (capacityOk) {
+          const [rsvp, notification] = await prisma.$transaction([
+            prisma.eventRsvp.create({ data: { eventId, userId: session.user.id, status } }),
+            prisma.notification.create({
+              data: {
+                userId: event.organizerId,
+                type:   "EVENT_RSVP",
+                title:  status === "PENDING" ? "New RSVP request" : "New attendee",
+                body:   `${session.user.name ?? "Someone"} paid and ${status === "PENDING" ? "requested to join" : "RSVP'd to"} "${event.title}"`,
+                link:   `/events/${eventId}`,
+              },
+            }),
+          ])
+          emitNotification(event.organizerId, {
+            id: notification.id, title: notification.title, body: notification.body,
+            type: notification.type, isRead: notification.isRead, link: notification.link,
+            createdAt: notification.createdAt.toISOString(),
+          })
+          void rsvp
+        }
+        // If capacity ran out between payment and verification, the payment stays
+        // COMPLETED and no RSVP row is created — flagged for manual refund/review.
+      }
+    }
   }
 
   if (payment.type === "LISTING_BOOST") {

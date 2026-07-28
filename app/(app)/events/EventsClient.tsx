@@ -2,13 +2,14 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { Outfit } from "next/font/google"
 import Link from "next/link"
 import Image from "next/image"
 import {
   Search, Plus, X, LayoutGrid, List, Package,
   Calendar, MapPin, Users, Clock, Bookmark, BookmarkCheck,
   TrendingUp, Sparkles, Globe, Video, ChevronDown, Zap,
-  ArrowUpDown, Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation,
+  ArrowUpDown, Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation, Flag,
   Mountain, Trophy, Handshake, Palette, MoreHorizontal,
   Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
   Clapperboard, Dumbbell, Plane,
@@ -17,6 +18,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+
+// A bold, rounded display font for headings/labels — gives the Events section
+// a distinct, friendly identity (Zepto-style) separate from the app's default UI font.
+const outfit = Outfit({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" })
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -32,6 +37,7 @@ export interface EventItem {
   images:          string[]
   tags:            string[]
   isBoosted:       boolean
+  format:          "IN_PERSON" | "ONLINE" | "HYBRID"
   isOnline:        boolean
   requiresApproval:boolean
   rsvpCount:       number
@@ -156,8 +162,9 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   const [search,      setSearch]      = useState("")
   const [category,    setCategory]    = useState(() => searchParams.get("category") ?? "All")
   const [dateFilter,  setDateFilter]  = useState("all")
+  const [customDate,  setCustomDate]  = useState("")      // YYYY-MM-DD, overrides dateFilter presets when set
   const [priceFilter, setPriceFilter] = useState("all")   // all | free | paid
-  const [formatFilter,setFormatFilter]= useState("all")   // all | online | inperson
+  const [formatFilter,setFormatFilter]= useState("all")   // all | online | inperson | hybrid
   const [sort,        setSort]        = useState("date")
   const [view,        setView]        = useState<"grid" | "list">("grid")
   const [bookmarks,   setBookmarks]   = useState<Set<string>>(new Set())
@@ -271,14 +278,19 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
           !ev.location.toLowerCase().includes(search.toLowerCase()) &&
           !ev.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))) return false
       if (category !== "All" && ev.category !== category) return false
-      if (dateFilter === "today"   && !isToday(d))     return false
-      if (dateFilter === "weekend" && !isWeekend(d))   return false
-      if (dateFilter === "week"    && !isThisWeek(d))  return false
-      if (dateFilter === "month"   && !isThisMonth(d)) return false
+      if (customDate) {
+        if (d.toDateString() !== new Date(customDate + "T00:00:00").toDateString()) return false
+      } else {
+        if (dateFilter === "today"   && !isToday(d))     return false
+        if (dateFilter === "weekend" && !isWeekend(d))   return false
+        if (dateFilter === "week"    && !isThisWeek(d))  return false
+        if (dateFilter === "month"   && !isThisMonth(d)) return false
+      }
       if (priceFilter === "free"   && ev.fee !== 0)    return false
       if (priceFilter === "paid"   && ev.fee === 0)    return false
-      if (formatFilter === "online"   && !ev.isOnline) return false
-      if (formatFilter === "inperson" && ev.isOnline)  return false
+      if (formatFilter === "online"   && ev.format !== "ONLINE")    return false
+      if (formatFilter === "inperson" && ev.format !== "IN_PERSON") return false
+      if (formatFilter === "hybrid"   && ev.format !== "HYBRID")    return false
       if (cityFilter     && cityFilter !== "All" && !ev.location.toLowerCase().includes(cityFilter.toLowerCase())) return false
       if (locationFilter && !ev.location.toLowerCase().includes(locationFilter.toLowerCase())) return false
       return true
@@ -293,7 +305,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
     })
 
     return list
-  }, [events, search, category, dateFilter, priceFilter, formatFilter, sort, cityFilter, locationFilter])
+  }, [events, search, category, dateFilter, customDate, priceFilter, formatFilter, sort, cityFilter, locationFilter])
 
   const spotlight  = filtered.find(e => e.isBoosted) ?? filtered[0]
   const gridEvents = spotlight ? filtered.filter(e => e.id !== spotlight.id) : []
@@ -301,14 +313,17 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   // Active filter count (excluding category since it's a tab)
   const activeFilters = [
     dateFilter   !== "all" ? dateFilter   : null,
+    customDate     ? "customDate" : null,
     priceFilter  !== "all" ? priceFilter  : null,
     formatFilter !== "all" ? formatFilter : null,
     search         ? "search"   : null,
     locationFilter ? "location" : null,
+    cityFilter !== "All" ? "city" : null,
   ].filter(Boolean)
 
   const clearAll = () => {
-    setSearch(""); setDateFilter("all"); setPriceFilter("all"); setFormatFilter("all"); setLocationFilter(null)
+    setSearch(""); setDateFilter("all"); setCustomDate(""); setPriceFilter("all")
+    setFormatFilter("all"); setLocationFilter(null); setCityFilter("All")
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -328,7 +343,10 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
         />
         {/* Vibrant Gen Z overlay — keep the neon colors visible but text readable */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/75" />
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-950/40 via-transparent to-pink-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-950/50 via-transparent to-pink-950/40" />
+        {/* Neon blobs for extra Gen-Z pop */}
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/30 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
 
@@ -336,11 +354,14 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
           <div className="flex items-start justify-between gap-4 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-white/60 border border-white/20 rounded-full px-3 py-1 backdrop-blur-sm bg-white/5">
-                  <Sparkles className="h-3 w-3" /> Corporate Events
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase text-white border border-white/30 rounded-full px-3 py-1 backdrop-blur-sm bg-gradient-to-r from-fuchsia-500/30 via-violet-500/30 to-cyan-400/30 shadow-[0_0_20px_rgba(217,70,239,0.35)]">
+                  <Sparkles className="h-3 w-3 text-fuchsia-300" /> Corporate Events
                 </span>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight drop-shadow-lg">Events &amp; Communities</h1>
+              <h1 className={cn(outfit.className, "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
+                <span className="bg-gradient-to-r from-white via-fuchsia-200 to-cyan-200 bg-clip-text text-transparent">Events</span>
+                {" "}<span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">&amp; Communities</span> 🎉
+              </h1>
               <p className="text-white/60 mt-2 text-sm">Treks, sports, networking &amp; hobby clubs — only verified professionals.</p>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
@@ -352,29 +373,35 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   </Link>
                 </div>
               )}
-              <Button asChild variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium">
+              <Button asChild variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full">
                 <Link href="/my-events"><Package className="h-4 w-4 mr-1.5" /> My Events</Link>
               </Button>
-              <Button asChild className="bg-white text-slate-900 hover:bg-white/90 font-semibold shadow-lg backdrop-blur-sm">
+              <Button asChild className="bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 text-white hover:brightness-110 font-bold shadow-[0_4px_20px_rgba(217,70,239,0.4)] backdrop-blur-sm rounded-full border-0">
                 <Link href="/events/new"><Plus className="h-4 w-4 mr-1.5" /> Create Event</Link>
               </Button>
+              <Link
+                href="/report"
+                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 transition-colors mt-0.5"
+              >
+                <Flag className="h-3 w-3" /> Notify Concern
+              </Link>
             </div>
           </div>
 
           {/* Stats */}
           <div className="flex items-center gap-8 mb-8">
             <div>
-              <p className="text-3xl font-bold tabular-nums">{totalEvents}</p>
+              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-fuchsia-300 to-pink-200 bg-clip-text text-transparent")}>{totalEvents}</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Upcoming</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
-              <p className="text-3xl font-bold tabular-nums">{totalRsvps.toLocaleString()}</p>
+              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent")}>{totalRsvps.toLocaleString()}</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total RSVPs</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
-              <p className="text-3xl font-bold">100%</p>
+              <p className={cn(outfit.className, "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
             </div>
           </div>
@@ -389,7 +416,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search events, venues, tags…"
-                className="w-full h-12 pl-11 pr-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 transition-all"
+                className="w-full h-12 pl-11 pr-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400/50 focus:bg-white/15 transition-all"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
@@ -404,7 +431,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               disabled={locationLoading}
               title={locationFilter ? `Filtering: ${locationFilter}` : "Find events near me"}
               className={cn(
-                "h-12 px-4 rounded-xl border text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap backdrop-blur-md",
+                "h-12 px-4 rounded-full border text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap backdrop-blur-md",
                 locationFilter
                   ? "bg-blue-500/30 border-blue-400/50 text-blue-200 hover:bg-blue-500/40"
                   : "bg-white/10 border-white/20 text-white/80 hover:bg-white/20"
@@ -464,18 +491,18 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                     )}
                   >
                     <div className={cn(
-                      "h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-150",
-                      isActive ? cn(cat.iconBg, "ring-2 ring-border scale-110 shadow-sm") : cn(cat.iconBg, "group-hover:scale-105")
+                      "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
+                      isActive ? cn(cat.iconBg, "ring-2 ring-fuchsia-400 scale-110 shadow-[0_0_12px_rgba(217,70,239,0.4)]") : cn(cat.iconBg, "group-hover:scale-105")
                     )}>
                       <cat.Icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
                     </div>
-                    <span className={cn("text-[11px] font-semibold whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                    <span className={cn(outfit.className, "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
                       {cat.label}
                     </span>
                     <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
                       {count}
                     </span>
-                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-primary-600 transition-all duration-150", isActive ? "w-8" : "w-0")} />
+                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
                   </button>
                 )
               })}
@@ -517,6 +544,17 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                       <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Select City</p>
                     </div>
                     <div className="grid grid-cols-2 gap-0.5 p-2 max-h-64 overflow-y-auto">
+                      <button
+                        onClick={() => { setCityFilter("All"); setCityOpen(false) }}
+                        className={cn(
+                          "flex flex-col items-start px-3 py-2 rounded-lg text-left transition-all col-span-2",
+                          cityFilter === "All"
+                            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                            : "hover:bg-muted text-foreground"
+                        )}
+                      >
+                        <span className="text-sm font-medium leading-tight">All Cities</span>
+                      </button>
                       {CITIES.map(city => (
                         <button
                           key={city.name}
@@ -545,17 +583,30 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               {DATE_FILTERS.map(f => (
                 <button
                   key={f.value}
-                  onClick={() => setDateFilter(f.value)}
+                  onClick={() => { setDateFilter(f.value); setCustomDate("") }}
                   className={cn(
-                    "px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all",
-                    dateFilter === f.value
-                      ? "bg-background text-foreground shadow-sm"
+                    "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all",
+                    !customDate && dateFilter === f.value
+                      ? "bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {f.label}
                 </button>
               ))}
+            </div>
+
+            {/* Pick a specific date */}
+            <div className="relative">
+              <input
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className={cn(
+                  "h-8 pl-2.5 pr-2 rounded-lg border text-xs font-medium bg-background transition-all",
+                  customDate ? "border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300" : "border-border text-muted-foreground hover:border-foreground/30"
+                )}
+              />
             </div>
 
             {/* Divider */}
@@ -565,18 +616,18 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
             <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
               {[["all","All"],["free","Free"],["paid","Paid"]].map(([v, l]) => (
                 <button key={v} onClick={() => setPriceFilter(v)}
-                  className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-                    priceFilter === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                    priceFilter === v ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
                   )}>{l}</button>
               ))}
             </div>
 
             {/* Format filter */}
             <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-              {[["all","All formats"],["inperson","In-person"],["online","Online"]].map(([v, l]) => (
+              {[["all","All formats"],["inperson","In-person"],["online","Online"],["hybrid","Hybrid"]].map(([v, l]) => (
                 <button key={v} onClick={() => setFormatFilter(v)}
-                  className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap",
-                    formatFilter === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap",
+                    formatFilter === v ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
                   )}>{l}</button>
               ))}
             </div>
@@ -651,7 +702,12 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   "{search}" <button onClick={() => setSearch("")}><X className="h-3 w-3 ml-0.5" /></button>
                 </span>
               )}
-              {dateFilter !== "all" && (
+              {customDate ? (
+                <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-2 py-0.5 rounded-full">
+                  {new Date(customDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  <button onClick={() => setCustomDate("")}><X className="h-3 w-3 ml-0.5" /></button>
+                </span>
+              ) : dateFilter !== "all" && (
                 <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-2 py-0.5 rounded-full capitalize">
                   {DATE_FILTERS.find(f => f.value === dateFilter)?.label}
                   <button onClick={() => setDateFilter("all")}><X className="h-3 w-3 ml-0.5" /></button>
@@ -664,8 +720,14 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               )}
               {formatFilter !== "all" && (
                 <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-2 py-0.5 rounded-full">
-                  {formatFilter === "online" ? "Online" : "In-person"}
+                  {formatFilter === "online" ? "Online" : formatFilter === "hybrid" ? "Hybrid" : "In-person"}
                   <button onClick={() => setFormatFilter("all")}><X className="h-3 w-3 ml-0.5" /></button>
+                </span>
+              )}
+              {cityFilter !== "All" && (
+                <span className="inline-flex items-center gap-1 text-xs bg-muted text-foreground px-2 py-0.5 rounded-full">
+                  <MapPin className="h-3 w-3" /> {cityFilter}
+                  <button onClick={() => setCityFilter("All")}><X className="h-3 w-3 ml-0.5" /></button>
                 </span>
               )}
               {locationFilter && (
@@ -686,12 +748,12 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
 
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="h-20 w-20 rounded-2xl bg-muted flex items-center justify-center mb-5 text-4xl">🔍</div>
-            <h3 className="text-xl font-semibold mb-2">No events match your filters</h3>
+            <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-fuchsia-100 to-cyan-100 dark:from-fuchsia-950/40 dark:to-cyan-950/40 flex items-center justify-center mb-5 text-4xl shadow-inner">🔍</div>
+            <h3 className="text-xl font-black mb-2">No events match your filters</h3>
             <p className="text-muted-foreground mb-6 max-w-sm text-sm">Try broadening your search or clearing some filters.</p>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={clearAll}>Clear filters</Button>
-              <Button asChild><Link href="/events/new"><Plus className="h-4 w-4 mr-1.5" />Create one</Link></Button>
+              <Button variant="outline" className="rounded-full" onClick={clearAll}>Clear filters</Button>
+              <Button asChild className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 border-0 hover:brightness-110"><Link href="/events/new"><Plus className="h-4 w-4 mr-1.5" />Create one</Link></Button>
             </div>
           </div>
         ) : (
@@ -701,8 +763,10 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
             {spotlight && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="h-4 w-4 text-primary-600" />
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Featured</h2>
+                  <span className="h-6 w-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 text-white" />
+                  </span>
+                  <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-fuchsia-600 to-pink-500 dark:from-fuchsia-400 dark:to-pink-300 bg-clip-text text-transparent")}>🔥 Featured</h2>
                 </div>
                 <SpotlightCard event={spotlight} bookmarks={bookmarks} onBookmark={toggleBookmark} />
               </section>
@@ -715,8 +779,10 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               return (
                 <section>
                   <div className="flex items-center gap-2 mb-4">
-                    <BookmarkCheck className="h-4 w-4 text-amber-500" />
-                    <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Saved</h2>
+                    <span className="h-6 w-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0">
+                      <BookmarkCheck className="h-3.5 w-3.5 text-white" />
+                    </span>
+                    <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent")}>⭐ Saved</h2>
                     <span className="text-xs text-muted-foreground">({saved.length})</span>
                   </div>
                   <div className={cn(view === "grid"
@@ -736,8 +802,10 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
             {gridEvents.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="h-4 w-4 text-primary-600" />
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  <span className="h-6 w-6 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center shrink-0">
+                    <Clock className="h-3.5 w-3.5 text-white" />
+                  </span>
+                  <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text text-transparent")}>
                     {category === "All" ? "All Upcoming" : `${category} Events`}
                   </h2>
                   <span className="text-xs text-muted-foreground">({gridEvents.length})</span>
@@ -775,13 +843,14 @@ function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
 
   return (
     <Link href={`/events/${ev.id}`} className="group block">
-      <div className="relative rounded-2xl overflow-hidden min-h-[340px] lg:min-h-[400px] flex bg-slate-900">
+      <div className="relative rounded-3xl overflow-hidden min-h-[340px] lg:min-h-[400px] flex bg-slate-900 ring-2 ring-transparent group-hover:ring-fuchsia-400/60 transition-all duration-300 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
         {ev.images[0] ? (
-          <Image src={ev.images[0]} alt={ev.title} fill className="object-cover opacity-45 group-hover:opacity-55 transition-opacity duration-500" />
+          <Image src={ev.images[0]} alt={ev.title} fill className="object-cover opacity-45 group-hover:opacity-55 group-hover:scale-105 transition-all duration-500" />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-br ${cc?.gradient ?? "from-slate-700 to-slate-900"} opacity-70`} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-950/20 via-transparent to-cyan-950/20 pointer-events-none" />
 
         {/* Bookmark */}
         <button
@@ -801,9 +870,14 @@ function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
                 <span className={`h-1.5 w-1.5 rounded-full ${cc.dot}`} /> {ev.category}
               </span>
             )}
-            {ev.isOnline && (
+            {ev.format === "ONLINE" && (
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 flex items-center gap-1">
                 <Video className="h-3 w-3" /> Online
+              </span>
+            )}
+            {ev.format === "HYBRID" && (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-500/20 text-violet-300 flex items-center gap-1">
+                <Globe className="h-3 w-3" /> Hybrid
               </span>
             )}
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ev.fee === 0 ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white"}`}>
@@ -811,7 +885,7 @@ function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
             </span>
           </div>
 
-          <h2 className="text-2xl lg:text-3xl font-bold text-white group-hover:text-primary-200 transition-colors leading-tight max-w-2xl">
+          <h2 className={cn(outfit.className, "text-2xl lg:text-3xl font-extrabold tracking-tight text-white group-hover:text-fuchsia-200 transition-colors leading-tight max-w-2xl")}>
             {ev.title}
           </h2>
           <p className="text-slate-300 text-sm mt-2 line-clamp-2 max-w-xl">{ev.description}</p>
@@ -839,7 +913,7 @@ function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
                 {ev.organizer.company && <span className="text-slate-500"> · {ev.organizer.company.name}</span>}
               </span>
             </div>
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-white/15 hover:bg-white/25 transition-colors px-4 py-2 rounded-xl">
+            <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:brightness-110 transition-all px-4 py-2 rounded-full shadow-[0_4px_16px_rgba(217,70,239,0.4)]">
               View details →
             </span>
           </div>
@@ -862,7 +936,7 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
 
   return (
     <Link href={`/events/${ev.id}`} className="group flex flex-col">
-      <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all duration-200">
+      <div className="bg-card border-2 border-border rounded-3xl overflow-hidden flex flex-col h-full hover:border-fuchsia-400/60 hover:shadow-[0_12px_36px_rgba(217,70,239,0.18)] dark:hover:shadow-[0_12px_36px_rgba(217,70,239,0.12)] hover:-translate-y-1 transition-all duration-200">
 
         {/* Image */}
         <div className="relative aspect-[16/9] bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
@@ -877,8 +951,8 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
           )}
 
           {/* Date badge */}
-          <div className="absolute top-3 left-3 bg-white dark:bg-slate-900 rounded-xl shadow-md px-2.5 py-1.5 text-center min-w-[44px]">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground leading-none">{fmtMon(eDate)}</p>
+          <div className="absolute top-3 left-3 bg-white dark:bg-slate-900 rounded-2xl shadow-md px-2.5 py-1.5 text-center min-w-[44px] ring-1 ring-fuchsia-200 dark:ring-fuchsia-900">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-fuchsia-500 leading-none">{fmtMon(eDate)}</p>
             <p className="text-xl font-black text-foreground leading-tight">{fmtDay(eDate)}</p>
           </div>
 
@@ -895,7 +969,7 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
 
           {/* Fee badge */}
           <div className="absolute bottom-3 right-3">
-            <span className={`text-xs font-semibold px-2 py-1 rounded-lg shadow ${ev.fee === 0 ? "bg-emerald-500 text-white" : "bg-slate-900/80 text-white backdrop-blur-sm"}`}>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full shadow ${ev.fee === 0 ? "bg-gradient-to-r from-emerald-400 to-teal-500 text-white" : "bg-slate-900/80 text-white backdrop-blur-sm"}`}>
               {fmtFee(ev.fee)}
             </span>
           </div>
@@ -909,11 +983,14 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
             </div>
           )}
 
-          {/* Online badge */}
-          {ev.isOnline && (
+          {/* Online / Hybrid badge */}
+          {ev.format !== "IN_PERSON" && (
             <div className="absolute top-3 right-12">
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/80 text-white flex items-center gap-1">
-                <Globe className="h-2.5 w-2.5" />Online
+              <span className={cn(
+                "text-[10px] font-semibold px-2 py-0.5 rounded-full text-white flex items-center gap-1",
+                ev.format === "HYBRID" ? "bg-violet-500/80" : "bg-blue-500/80"
+              )}>
+                <Globe className="h-2.5 w-2.5" />{ev.format === "HYBRID" ? "Hybrid" : "Online"}
               </span>
             </div>
           )}
@@ -922,13 +999,13 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
         {/* Body */}
         <div className="flex flex-col flex-1 p-4 gap-3">
           <div>
-            <h3 className="font-semibold text-sm leading-snug group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
+            <h3 className={cn(outfit.className, "font-bold text-sm tracking-tight leading-snug group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors line-clamp-2")}>
               {ev.title}
             </h3>
             {ev.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1.5">
                 {ev.tags.slice(0, 2).map(t => (
-                  <span key={t} className="text-[10px] px-1.5 py-0.5 bg-muted text-muted-foreground rounded-md">{t}</span>
+                  <span key={t} className="text-[10px] font-medium px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full">{t}</span>
                 ))}
               </div>
             )}
@@ -990,7 +1067,7 @@ function ListCard({ event: ev, bookmarks, onBookmark }: {
 
   return (
     <Link href={`/events/${ev.id}`} className="group block">
-      <div className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-md hover:-translate-y-px transition-all duration-200">
+      <div className="bg-card border-2 border-border rounded-2xl overflow-hidden hover:border-fuchsia-400/60 hover:shadow-[0_6px_24px_rgba(217,70,239,0.15)] hover:-translate-y-px transition-all duration-200">
         <div className="flex gap-0">
           {/* Date column */}
           <div className={`w-16 shrink-0 flex flex-col items-center justify-center py-4 bg-gradient-to-b ${cc?.gradient ?? "from-slate-700 to-slate-900"} text-white`}>
@@ -1013,10 +1090,11 @@ function ListCard({ event: ev, bookmarks, onBookmark }: {
                   {ev.category}
                 </span>
               )}
-              {ev.isOnline && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Online</span>}
+              {ev.format === "ONLINE" && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Online</span>}
+              {ev.format === "HYBRID" && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">Hybrid</span>}
               {ev.requiresApproval && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Approval req.</span>}
             </div>
-            <h3 className="font-semibold text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-1">
+            <h3 className={cn(outfit.className, "font-bold text-sm tracking-tight group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors line-clamp-1")}>
               {ev.title}
             </h3>
             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
