@@ -13,7 +13,11 @@ export const metadata: Metadata = {
   authors: [{ name: "Korpo" }],
   creator: "Korpo",
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: [{ url: "/favicon.ico" }],
     apple: [{ url: "/favicon.png" }],
   },
   openGraph: {

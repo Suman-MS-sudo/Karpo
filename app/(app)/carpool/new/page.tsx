@@ -174,25 +174,6 @@ export default function NewCarpoolPage() {
 
           <CarpoolRouteMapPicker onChange={onRouteChange} />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>From — confirmed name</Label>
-              <Input
-                value={routeData.fromLocation ?? ""}
-                onChange={(e) => setRouteData((r) => ({ ...r, fromLocation: e.target.value }))}
-                placeholder="Auto-filled from map"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>To — confirmed name</Label>
-              <Input
-                value={routeData.toLocation ?? ""}
-                onChange={(e) => setRouteData((r) => ({ ...r, toLocation: e.target.value }))}
-                placeholder="Auto-filled from map"
-              />
-            </div>
-          </div>
-
           <div className="space-y-1.5">
             <Label>Landmarks / waypoints <span className="text-muted-foreground text-xs font-normal">optional</span></Label>
             <Input placeholder="e.g. Passes via Cyber Towers, IKEA signal" value={form.landmarks} onChange={(e) => set("landmarks", e.target.value)} />
