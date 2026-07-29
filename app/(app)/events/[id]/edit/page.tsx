@@ -123,7 +123,13 @@ export default function EditEventPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Date & Time *</Label>
-              <Input required type="datetime-local" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+              <Input
+                required
+                type="datetime-local"
+                value={form.date}
+                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                className="rounded-lg hover:border-fuchsia-300 dark:hover:border-fuchsia-800 focus-visible:ring-fuchsia-400 transition-colors"
+              />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -160,15 +166,9 @@ export default function EditEventPage() {
               <Input required type="url" value={form.onlineLink} onChange={(e) => setForm((f) => ({ ...f, onlineLink: e.target.value }))} placeholder="https://meet.google.com/..." />
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Max Participants</Label>
-              <Input type="number" min="2" value={form.maxParticipants} onChange={(e) => setForm((f) => ({ ...f, maxParticipants: e.target.value }))} onWheel={(e) => e.currentTarget.blur()} placeholder="Unlimited" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Entry Fee (₹)</Label>
-              <Input type="number" min="0" value={form.fee} onChange={(e) => setForm((f) => ({ ...f, fee: e.target.value }))} onWheel={(e) => e.currentTarget.blur()} />
-            </div>
+          <div className="space-y-1.5">
+            <Label>Max Participants</Label>
+            <Input type="number" min="2" value={form.maxParticipants} onChange={(e) => setForm((f) => ({ ...f, maxParticipants: e.target.value }))} onWheel={(e) => e.currentTarget.blur()} placeholder="Unlimited" />
           </div>
           <div className="space-y-1.5">
             <Label>Description *</Label>

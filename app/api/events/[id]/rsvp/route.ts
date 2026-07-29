@@ -10,9 +10,6 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   const event = await prisma.event.findUnique({ where: { id: params.id } })
   if (!event || !event.isActive) return NextResponse.json({ error: "Event not found" }, { status: 404 })
-  if (event.fee > 0) {
-    return NextResponse.json({ error: "This event requires payment — use the pay & RSVP option" }, { status: 400 })
-  }
 
   const existing = await prisma.eventRsvp.findUnique({
     where: { eventId_userId: { eventId: params.id, userId: session.user.id } },

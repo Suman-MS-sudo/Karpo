@@ -2,9 +2,12 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
-import { Plus, Users, ExternalLink, Calendar, MapPin, Clock } from "lucide-react"
+import { Outfit } from "next/font/google"
+import { Plus, Users, ExternalLink, Calendar, MapPin, Clock, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { formatCurrency, formatRelativeTime } from "@/lib/utils"
+import { formatCurrency, formatRelativeTime, cn } from "@/lib/utils"
+
+const outfit = Outfit({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" })
 
 export const metadata = { title: "My Events" }
 export const dynamic  = "force-dynamic"
@@ -42,6 +45,14 @@ export default async function MyEventsPage({ searchParams }: PageProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+      {/* Breadcrumb */}
+      <Link
+        href="/events"
+        className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm mb-6 transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to Events
+      </Link>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <div>
@@ -69,24 +80,28 @@ export default async function MyEventsPage({ searchParams }: PageProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-5 bg-muted/50 p-1 rounded-xl w-fit">
+      <div className="flex items-center gap-1 mb-5 bg-muted rounded-lg p-0.5 w-fit">
         {TABS.map((t) => {
           const cnt = t.key === "all" ? totalCount : t.key === "upcoming" ? upcomingCount : pastCount
+          const isActive = tab === t.key
           return (
             <Link
               key={t.key}
               href={`/my-events?tab=${t.key}`}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
-                tab === t.key
-                  ? "bg-background shadow-sm text-foreground"
+              className={cn(
+                outfit.className,
+                "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5",
+                isActive
+                  ? "bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+              )}
             >
               {t.label}
               {cnt > 0 && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  tab === t.key ? "bg-primary-600 text-white" : "bg-muted text-muted-foreground"
-                }`}>{cnt}</span>
+                <span className={cn(
+                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                  isActive ? "bg-white/20 text-white" : "bg-background text-muted-foreground"
+                )}>{cnt}</span>
               )}
             </Link>
           )
@@ -112,14 +127,16 @@ export default async function MyEventsPage({ searchParams }: PageProps) {
             const timeStr = new Date(e.date).toLocaleTimeString("en-IN", {
               hour: "2-digit", minute: "2-digit", hour12: true,
             })
+            let images: string[] = []
+            try { images = JSON.parse(e.images) } catch {}
             return (
               <div key={e.id}
                 className={`group bg-card border border-border rounded-2xl p-4 hover:border-border/60 hover:shadow-sm transition-all ${isPast ? "opacity-70" : ""}`}>
                 <div className="flex gap-4">
                   {/* Thumbnail */}
                   <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 shrink-0 flex items-center justify-center">
-                    {e.images?.[0] ? (
-                      <Image src={e.images[0]} alt={e.title} fill className="object-cover" sizes="64px" />
+                    {images[0] ? (
+                      <Image src={images[0]} alt={e.title} fill className="object-cover" sizes="64px" />
                     ) : (
                       <Users className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                     )}

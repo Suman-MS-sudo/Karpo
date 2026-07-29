@@ -308,20 +308,24 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
                 </span>
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {user.listings.map((listing) => (
-                  <ListingCard
-                    key={listing.id}
-                    id={listing.id}
-                    href={`/marketplace/${listing.id}`}
-                    title={listing.title}
-                    price={listing.price}
-                    images={listing.images}
-                    author={listing.user}
-                    city={listing.city}
-                    createdAt={listing.createdAt}
-                    serviceBorderColor="border-l-blue-400"
-                  />
-                ))}
+                {user.listings.map((listing) => {
+                  let images: string[] = []
+                  try { images = JSON.parse(listing.images) } catch {}
+                  return (
+                    <ListingCard
+                      key={listing.id}
+                      id={listing.id}
+                      href={`/marketplace/${listing.id}`}
+                      title={listing.title}
+                      price={listing.price}
+                      images={images}
+                      author={listing.user}
+                      city={listing.city}
+                      createdAt={listing.createdAt}
+                      serviceBorderColor="border-l-blue-400"
+                    />
+                  )
+                })}
               </div>
             </div>
           )}

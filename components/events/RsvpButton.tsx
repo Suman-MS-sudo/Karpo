@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle, Clock, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { formatCurrency } from "@/lib/utils"
 
 type RsvpStatus = "NONE" | "PENDING" | "CONFIRMED"
 
@@ -17,7 +16,7 @@ interface Props {
   requiresApproval: boolean
 }
 
-export function RsvpButton({ eventId, eventTitle, initialStatus, isFull, fee, requiresApproval }: Props) {
+export function RsvpButton({ eventId, initialStatus, isFull, fee, requiresApproval }: Props) {
   const router = useRouter()
   const [status,  setStatus]  = useState<RsvpStatus>(initialStatus)
   const [loading, setLoading] = useState(false)
@@ -32,47 +31,6 @@ export function RsvpButton({ eventId, eventTitle, initialStatus, isFull, fee, re
       setStatus(data.status === "PENDING" ? "PENDING" : "CONFIRMED")
       router.refresh()
     } finally { setLoading(false) }
-  }
-
-  async function payAndRsvp() {
-    setLoading(true); setError("")
-    try {
-      const res  = await fetch(`/api/events/${eventId}/pay-order`, { method: "POST" })
-      const data = await res.json()
-      if (!res.ok) { setError(data.error ?? "Couldn't start payment"); setLoading(false); return }
-
-      const options = {
-        key:         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount:      data.amount,
-        currency:    "INR",
-        name:        "Korpo Events",
-        description: eventTitle,
-        order_id:    data.orderId,
-        handler:     async (response: Record<string, string>) => {
-          await fetch("/api/payment/verify", {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(response),
-          })
-          setStatus(requiresApproval ? "PENDING" : "CONFIRMED")
-          router.refresh()
-          setLoading(false)
-        },
-        modal: { ondismiss: () => setLoading(false) },
-        theme: { color: "#1E3A5F" },
-      }
-
-      const win = window as Window & { Razorpay?: new (opts: typeof options) => { open(): void } }
-      if (win.Razorpay) {
-        new win.Razorpay(options).open()
-      } else {
-        const script = document.createElement("script")
-        script.src = "https://checkout.razorpay.com/v1/checkout.js"
-        script.onload = () => { new win.Razorpay!(options).open() }
-        document.head.appendChild(script)
-      }
-    } catch {
-      setError("Something went wrong. Please try again.")
-      setLoading(false)
-    }
   }
 
   async function cancel() {
@@ -117,14 +75,15 @@ export function RsvpButton({ eventId, eventTitle, initialStatus, isFull, fee, re
   return (
     <div className="space-y-2">
       <Button
-        onClick={fee > 0 ? payAndRsvp : rsvpFree}
+        onClick={rsvpFree}
         disabled={loading}
         className="w-full h-11 font-bold text-base rounded-full bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 border-0 hover:brightness-110 shadow-[0_4px_20px_rgba(217,70,239,0.35)]"
       >
         {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-        {fee > 0 ? `Pay & RSVP — ${formatCurrency(fee)}` : "RSVP — It's Free"}
+        {fee > 0 ? "I'm Interested" : "RSVP — It's Free"}
         {requiresApproval && <span className="text-xs opacity-70 ml-1">(needs approval)</span>}
       </Button>
+      {fee > 0 && <p className="text-xs text-muted-foreground text-center">Payment will be collected separately by the organizer</p>}
       {error && <p className="text-xs text-red-500 text-center">{error}</p>}
     </div>
   )

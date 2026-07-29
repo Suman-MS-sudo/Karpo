@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import {
   ArrowLeft, Upload, X, Loader2, Plus, Trash2, MapPin, Clock,
-  Users, IndianRupee, Link2, Tag, ListChecks, Image as ImageIcon,
+  Users, Link2, Tag, ListChecks, Image as ImageIcon,
   Mountain, Trophy, Handshake, Palette, MoreHorizontal, Calendar,
   ChevronRight, CheckCircle2, Globe, Lock, Video,
   Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
@@ -299,13 +299,13 @@ export default function NewEventPage() {
                 <div className="space-y-1.5">
                   <Label>Date <span className="text-red-500">*</span></Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fuchsia-500 pointer-events-none z-10" />
                     <Input
                       required
                       type="date"
                       value={form.date}
                       onChange={(e) => set("date", e.target.value)}
-                      className="pl-9"
+                      className="pl-9 rounded-lg hover:border-fuchsia-300 dark:hover:border-fuchsia-800 focus-visible:ring-fuchsia-400 transition-colors"
                     />
                   </div>
                 </div>
@@ -409,37 +409,21 @@ export default function NewEventPage() {
               )}
             </SectionCard>
 
-            {/* Capacity & Fees */}
+            {/* Capacity */}
             <SectionCard>
-              <SectionTitle Icon={Users}>Capacity & Fees</SectionTitle>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>Max Participants</Label>
-                  <div className="relative">
-                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="number" min="2"
-                      placeholder="Unlimited"
-                      value={form.maxParticipants}
-                      onChange={(e) => set("maxParticipants", e.target.value)}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Entry Fee</Label>
-                  <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="number" min="0"
-                      placeholder="0 for free"
-                      value={form.fee}
-                      onChange={(e) => set("fee", e.target.value)}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      className="pl-9"
-                    />
-                  </div>
+              <SectionTitle Icon={Users}>Capacity</SectionTitle>
+              <div className="space-y-1.5">
+                <Label>Max Participants</Label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="number" min="2"
+                    placeholder="Unlimited"
+                    value={form.maxParticipants}
+                    onChange={(e) => set("maxParticipants", e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    className="pl-9"
+                  />
                 </div>
               </div>
               <label className="flex items-start gap-3 p-3 rounded-2xl border border-border hover:bg-muted/40 cursor-pointer transition-colors group">

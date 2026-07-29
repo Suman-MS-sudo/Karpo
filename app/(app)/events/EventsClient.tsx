@@ -170,7 +170,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   const [bookmarks,   setBookmarks]   = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
   const [sortOpen,    setSortOpen]    = useState(false)
-  const [cityFilter,      setCityFilter]      = useState<string>("Bengaluru")
+  const [cityFilter,      setCityFilter]      = useState<string>("All")
   const [cityOpen,        setCityOpen]        = useState(false)
   const [locationFilter, setLocationFilter] = useState<string | null>(null) // detected city/area
   const [locationLoading, setLocationLoading] = useState(false)

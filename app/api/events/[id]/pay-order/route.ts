@@ -27,11 +27,18 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   const amount  = event.fee * 100 // paise
   const receipt = `event_${params.id}_${Date.now()}`
-  const order   = await createOrder(amount, receipt, {
-    userId:  session.user.id,
-    type:    "EVENT_RSVP",
-    eventId: params.id,
-  })
+
+  let order
+  try {
+    order = await createOrder(amount, receipt, {
+      userId:  session.user.id,
+      type:    "EVENT_RSVP",
+      eventId: params.id,
+    })
+  } catch (err) {
+    console.error("Razorpay order creation failed:", err)
+    return NextResponse.json({ error: "Payment gateway is not available right now. Please try again later." }, { status: 502 })
+  }
 
   await prisma.payment.create({
     data: {

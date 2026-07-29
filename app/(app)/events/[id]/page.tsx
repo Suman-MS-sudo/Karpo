@@ -253,7 +253,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
             {/* Attendees */}
             {confirmedRsvps.length > 0 && (
-              <section className="bg-card border-2 border-border rounded-3xl p-6 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors">
+              <section id="attendees" className="bg-card border-2 border-border rounded-3xl p-6 hover:border-fuchsia-300/50 dark:hover:border-fuchsia-800/50 transition-colors scroll-mt-24">
                 <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
                   <span className="h-1.5 w-5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400" /> Who&apos;s going
                   <span className="text-muted-foreground font-normal text-sm">({confirmedCount})</span>
