@@ -91,7 +91,7 @@ export const SERVICES: ServiceConfig[] = [
     route: "/deals",
     model: "Deal",
     isPremium: false,
-    isActive: false,
+    isActive: true,
   },
   {
     id: "events",

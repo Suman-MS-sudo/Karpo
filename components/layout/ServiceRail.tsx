@@ -130,12 +130,14 @@ export function ServiceRail() {
           )}
         >
           <span className="flex items-center justify-center w-[44px] h-full shrink-0">
-            <item.Icon className={cn("h-[18px] w-[18px]", item.isActive ? item.color : "text-muted-foreground")} />
+            <span className={cn("h-8 w-8 rounded-2xl flex items-center justify-center", item.bgColor)}>
+              <item.Icon className={cn("h-4 w-4", item.color)} />
+            </span>
           </span>
           <span className={cn(
             "text-sm font-medium truncate flex-1 min-w-0",
             showLabel ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-100 delay-150",
-            item.isActive ? item.color : "text-muted-foreground"
+            item.color
           )}>
             {item.label}
           </span>

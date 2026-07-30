@@ -1,45 +1,44 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { Outfit } from "next/font/google"
 import {
-  Tag, ExternalLink, Users, AlertCircle, Zap, RefreshCw, Bell, Clock,
-  SlidersHorizontal, TrendingUp, Sparkles, Search, X, Star, Flame,
+  Tag, Users, AlertCircle, Zap, RefreshCw, Bell, Clock,
+  SlidersHorizontal, Sparkles, Search, X, Star, Flame,
   ShoppingBag, Plane, Tv, Shirt, Heart, Landmark, BookOpen, Hotel,
-  Code2, Smile, Shield, Car, Package, Globe, Copy, Check,
+  Code2, Smile, Shield, Car, Package, Globe, Copy, Check, ChevronDown,
+  ArrowUpDown, Building2,
 } from "lucide-react"
 import { Badge }    from "@/components/ui/badge"
 import { Button }  from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Input }   from "@/components/ui/input"
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { formatDate, formatRelativeTime, cn } from "@/lib/utils"
 import { useDeals, type Deal, type DealFilters } from "@/hooks/useDeals"
 import { FREE_LIMITS } from "@/lib/limits"
 
+const outfit = Outfit({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" })
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 export const DEAL_CATEGORIES = [
-  { value: "",              label: "All Deals",        emoji: "🏷️",  icon: Tag       },
-  { value: "FOOD_DINING",   label: "Food & Dining",    emoji: "🍕",  icon: ShoppingBag },
-  { value: "TRAVEL",        label: "Travel",           emoji: "✈️",  icon: Plane      },
-  { value: "SHOPPING",      label: "Shopping",         emoji: "🛍️",  icon: ShoppingBag },
-  { value: "ELECTRONICS",   label: "Electronics",      emoji: "📱",  icon: Tv         },
-  { value: "FASHION",       label: "Fashion",          emoji: "👗",  icon: Shirt      },
-  { value: "ENTERTAINMENT", label: "Entertainment",    emoji: "🎬",  icon: Tv         },
-  { value: "HEALTH_FITNESS",label: "Health & Fitness", emoji: "💪",  icon: Heart      },
-  { value: "BANKING",       label: "Banking & Finance",emoji: "🏦",  icon: Landmark   },
-  { value: "EDUCATION",     label: "Education",        emoji: "📚",  icon: BookOpen   },
-  { value: "HOTELS",        label: "Hotels",           emoji: "🏨",  icon: Hotel      },
-  { value: "SOFTWARE",      label: "Software & SaaS",  emoji: "💻",  icon: Code2      },
-  { value: "LIFESTYLE",     label: "Lifestyle",        emoji: "✨",  icon: Smile      },
-  { value: "INSURANCE",     label: "Insurance",        emoji: "🛡️",  icon: Shield     },
-  { value: "AUTOMOTIVE",    label: "Automotive",       emoji: "🚗",  icon: Car        },
-  { value: "OTHER",         label: "Others",           emoji: "📦",  icon: Package    },
+  { value: "",              label: "All Deals",        emoji: "🏷️",  icon: Tag,         iconBg: "bg-slate-100 dark:bg-white/10",       iconColor: "text-slate-600 dark:text-white"        },
+  { value: "FOOD_DINING",   label: "Food & Dining",    emoji: "🍕",  icon: ShoppingBag, iconBg: "bg-yellow-100 dark:bg-yellow-500/20", iconColor: "text-yellow-600 dark:text-yellow-400"  },
+  { value: "TRAVEL",        label: "Travel",           emoji: "✈️",  icon: Plane,       iconBg: "bg-sky-100 dark:bg-sky-500/20",       iconColor: "text-sky-600 dark:text-sky-400"        },
+  { value: "SHOPPING",      label: "Shopping",         emoji: "🛍️",  icon: ShoppingBag, iconBg: "bg-rose-100 dark:bg-rose-500/20",     iconColor: "text-rose-600 dark:text-rose-400"      },
+  { value: "ELECTRONICS",   label: "Electronics",      emoji: "📱",  icon: Tv,          iconBg: "bg-cyan-100 dark:bg-cyan-500/20",     iconColor: "text-cyan-600 dark:text-cyan-400"      },
+  { value: "FASHION",       label: "Fashion",          emoji: "👗",  icon: Shirt,       iconBg: "bg-pink-100 dark:bg-pink-500/20",     iconColor: "text-pink-600 dark:text-pink-400"      },
+  { value: "ENTERTAINMENT", label: "Entertainment",    emoji: "🎬",  icon: Tv,          iconBg: "bg-red-100 dark:bg-red-500/20",       iconColor: "text-red-600 dark:text-red-400"        },
+  { value: "HEALTH_FITNESS",label: "Health & Fitness", emoji: "💪",  icon: Heart,       iconBg: "bg-lime-100 dark:bg-lime-500/20",     iconColor: "text-lime-600 dark:text-lime-400"      },
+  { value: "BANKING",       label: "Banking & Finance",emoji: "🏦",  icon: Landmark,    iconBg: "bg-emerald-100 dark:bg-emerald-500/20",iconColor: "text-emerald-600 dark:text-emerald-400"},
+  { value: "EDUCATION",     label: "Education",        emoji: "📚",  icon: BookOpen,    iconBg: "bg-indigo-100 dark:bg-indigo-500/20", iconColor: "text-indigo-600 dark:text-indigo-400"  },
+  { value: "HOTELS",        label: "Hotels",           emoji: "🏨",  icon: Hotel,       iconBg: "bg-orange-100 dark:bg-orange-500/20", iconColor: "text-orange-600 dark:text-orange-400"  },
+  { value: "SOFTWARE",      label: "Software & SaaS",  emoji: "💻",  icon: Code2,       iconBg: "bg-violet-100 dark:bg-violet-500/20", iconColor: "text-violet-600 dark:text-violet-400"  },
+  { value: "LIFESTYLE",     label: "Lifestyle",        emoji: "✨",  icon: Smile,       iconBg: "bg-fuchsia-100 dark:bg-fuchsia-500/20",iconColor: "text-fuchsia-600 dark:text-fuchsia-400"},
+  { value: "INSURANCE",     label: "Insurance",        emoji: "🛡️",  icon: Shield,      iconBg: "bg-blue-100 dark:bg-blue-500/20",     iconColor: "text-blue-600 dark:text-blue-400"      },
+  { value: "AUTOMOTIVE",    label: "Automotive",       emoji: "🚗",  icon: Car,         iconBg: "bg-slate-100 dark:bg-slate-500/20",   iconColor: "text-slate-600 dark:text-slate-400"    },
+  { value: "OTHER",         label: "Others",           emoji: "📦",  icon: Package,     iconBg: "bg-amber-100 dark:bg-amber-500/20",   iconColor: "text-amber-600 dark:text-amber-400"    },
 ]
 
 const SORT_OPTIONS = [
@@ -56,6 +55,19 @@ const DISCOUNT_OPTIONS = [
   { value: "30", label: "30% or more"  },
   { value: "50", label: "50% or more"  },
 ]
+
+const RUPEE_OPTIONS = [
+  { value: "0",     label: "Any ₹ off"   },
+  { value: "1000",  label: "₹1,000+ off" },
+  { value: "3000",  label: "₹3,000+ off" },
+  { value: "5000",  label: "₹5,000+ off" },
+  { value: "10000", label: "₹10,000+ off"},
+]
+
+function dealRupeeAmount(deal: Deal): number {
+  const m = deal.title.match(/₹([\d,]+)/)
+  return m ? parseInt(m[1].replace(/,/g, ""), 10) : 0
+}
 
 const BADGE_STYLES: Record<string, string> = {
   NEW:          "bg-primary-600 text-white",
@@ -74,7 +86,7 @@ const BADGE_LABELS: Record<string, string> = {
 
 function DealCardSkeleton() {
   return (
-    <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col animate-pulse">
+    <div className="bg-card border-2 border-border rounded-3xl overflow-hidden flex flex-col animate-pulse">
       <div className="h-36 bg-muted" />
       <div className="p-4 space-y-2.5">
         <div className="h-3 w-20 bg-muted rounded-full" />
@@ -111,19 +123,29 @@ function InlineCopy({ text }: { text: string }) {
 
 // ── Deal card ─────────────────────────────────────────────────────────────────
 
+function dealSavingText(deal: Deal): string {
+  if (deal.discount > 0) return `${deal.discount}% OFF`
+  const rupeeMatch = deal.title.match(/₹[\d,]+/)
+  return rupeeMatch ? rupeeMatch[0] : "SPECIAL OFFER"
+}
+
 function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const isLimitReached = deal.usageLimit != null && deal.usedCount >= deal.usageLimit
   const usedPct = deal.usageLimit ? Math.min(100, (deal.usedCount / deal.usageLimit) * 100) : 0
   const daysLeft = Math.ceil((new Date(deal.validUntil).getTime() - Date.now()) / 86400000)
-  const isExpiringSoon = daysLeft <= 3
+  const isExpiringSoon = mounted && daysLeft <= 3
   const effectiveBadge = isNew ? "NEW" : deal.badge
+  const savingText = dealSavingText(deal)
 
   return (
     <div className={cn(
-      "bg-card border rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 flex flex-col group relative",
-      isNew       ? "border-primary-400 ring-1 ring-primary-400/30" :
-      deal.featured ? "border-amber-300 dark:border-amber-700 ring-1 ring-amber-200/50 dark:ring-amber-700/30" :
-      "border-border"
+      "bg-card border-2 rounded-3xl overflow-hidden flex flex-col group relative transition-all duration-200 hover:-translate-y-1",
+      isNew       ? "border-rose-400 ring-1 ring-rose-400/30 hover:shadow-[0_12px_36px_rgba(244,63,94,0.18)]" :
+      deal.featured ? "border-amber-300 dark:border-amber-700 ring-1 ring-amber-200/50 dark:ring-amber-700/30 hover:shadow-[0_12px_36px_rgba(245,158,11,0.18)]" :
+      "border-border hover:border-rose-400/60 hover:shadow-[0_12px_36px_rgba(244,63,94,0.14)]"
     )}>
 
       {/* Top badges */}
@@ -140,27 +162,26 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
 
       {/* Hero — logo / gradient */}
       <Link href={`/deals/${deal.id}`} className="block shrink-0">
-        <div className="relative h-32 bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/30 flex items-center justify-center overflow-hidden">
+        <div className="relative h-36 bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/30 dark:to-amber-950/30 flex items-center justify-center overflow-hidden">
           {deal.images && deal.images.length > 0 ? (
-            <Image src={deal.images[0]} alt={deal.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+            <Image src={deal.images[0]} alt={deal.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
           ) : deal.companyLogo ? (
             <div className="flex flex-col items-center gap-2 px-4 text-center">
               <div className="h-14 w-14 rounded-2xl bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center p-1.5 border border-border">
                 <Image src={deal.companyLogo} alt={deal.merchantName} width={48} height={48} className="object-contain" />
               </div>
-              <span className="text-2xl font-extrabold text-rose-500 drop-shadow-sm">{deal.discount}% OFF</span>
+              <span className="text-2xl font-extrabold text-rose-500 drop-shadow-sm">{savingText}</span>
             </div>
           ) : (
-            <div className="text-center">
-              <span className="text-4xl font-black text-rose-500 drop-shadow-sm">{deal.discount}%</span>
-              <p className="text-sm font-bold text-rose-400 tracking-widest">OFF</p>
+            <div className="text-center px-3">
+              <span className="text-3xl font-black text-rose-500 drop-shadow-sm">{savingText}</span>
             </div>
           )}
 
           {/* Discount badge overlay */}
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-            <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
-              {deal.discount}% OFF
+            <span className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
+              {savingText}
             </span>
             {isExpiringSoon && !isLimitReached && (
               <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -207,7 +228,7 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
 
         {/* Title + description */}
         <Link href={`/deals/${deal.id}`} className="flex-1 space-y-1.5 group/title">
-          <h3 className="font-semibold text-sm leading-snug group-hover/title:text-primary-600 transition-colors line-clamp-2">
+          <h3 className={cn(outfit.className, "font-bold text-sm tracking-tight leading-snug group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 transition-colors line-clamp-2")}>
             {deal.title}
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{deal.description}</p>
@@ -221,7 +242,7 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
               <span>{deal.usageLimit - deal.usedCount} left</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div className={cn("h-full rounded-full transition-all", isLimitReached ? "bg-red-500" : usedPct > 80 ? "bg-amber-500" : "bg-primary-600")}
+              <div className={cn("h-full rounded-full transition-all", isLimitReached ? "bg-red-500" : usedPct > 80 ? "bg-amber-500" : "bg-gradient-to-r from-rose-500 to-amber-400")}
                 style={{ width: `${usedPct}%` }} />
             </div>
           </div>
@@ -270,25 +291,25 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
         {/* CTA buttons */}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Link href={`/deals/${deal.id}`}>
-            <Button variant="outline" size="sm" className="w-full text-xs h-8 gap-1">
+            <Button variant="outline" size="sm" className="w-full text-xs h-8 gap-1 rounded-full">
               <Tag className="h-3 w-3" /> Details
             </Button>
           </Link>
           {deal.affiliateUrl ? (
             <a href={deal.affiliateUrl} target="_blank" rel="noopener noreferrer sponsored">
-              <Button size="sm" className="w-full text-xs h-8 gap-1 bg-[#FF9900] hover:bg-[#e68a00] text-black font-bold">
+              <Button size="sm" className="w-full text-xs h-8 gap-1 rounded-full bg-[#FF9900] hover:bg-[#e68a00] text-black font-bold">
                 <ShoppingBag className="h-3 w-3" /> Buy Now
               </Button>
             </a>
           ) : (deal.merchantUrl || deal.website) ? (
             <a href={(deal.merchantUrl || deal.website)!} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="w-full text-xs h-8 gap-1 bg-rose-600 hover:bg-rose-700 text-white">
+              <Button size="sm" className="w-full text-xs h-8 gap-1 rounded-full bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white border-0">
                 <Globe className="h-3 w-3" /> Visit Site
               </Button>
             </a>
           ) : (
             <Link href={`/deals/${deal.id}`}>
-              <Button size="sm" className="w-full text-xs h-8 gap-1 bg-rose-600 hover:bg-rose-700 text-white">
+              <Button size="sm" className="w-full text-xs h-8 gap-1 rounded-full bg-gradient-to-r from-rose-500 to-red-600 hover:brightness-110 text-white border-0">
                 <Zap className="h-3 w-3" /> Redeem
               </Button>
             </Link>
@@ -304,7 +325,7 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
 function FeaturedCard({ deal }: { deal: Deal }) {
   return (
     <Link href={`/deals/${deal.id}`}
-      className="relative flex-shrink-0 w-72 rounded-2xl overflow-hidden border border-amber-200 dark:border-amber-700 group shadow-sm hover:shadow-md transition-shadow">
+      className="relative flex-shrink-0 w-72 rounded-3xl overflow-hidden border-2 border-amber-200 dark:border-amber-700 group shadow-sm hover:shadow-[0_12px_36px_rgba(245,158,11,0.2)] hover:-translate-y-1 transition-all duration-200">
       <div className="h-36 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center relative overflow-hidden">
         {deal.companyLogo ? (
           <div className="flex flex-col items-center gap-2">
@@ -316,7 +337,7 @@ function FeaturedCard({ deal }: { deal: Deal }) {
           <Tag className="h-10 w-10 text-amber-400" />
         )}
         <div className="absolute top-2 left-2">
-          <span className="bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded-full shadow">{deal.discount}% OFF</span>
+          <span className="bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded-full shadow">{dealSavingText(deal)}</span>
         </div>
         <div className="absolute top-2 right-2">
           <span className="bg-amber-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Featured</span>
@@ -324,7 +345,7 @@ function FeaturedCard({ deal }: { deal: Deal }) {
       </div>
       <div className="p-3.5 bg-card">
         <p className="text-xs text-muted-foreground font-medium">{deal.merchantName}</p>
-        <p className="text-sm font-semibold mt-0.5 line-clamp-2 group-hover:text-primary-600 transition-colors">{deal.title}</p>
+        <p className={cn(outfit.className, "text-sm font-bold mt-0.5 line-clamp-2 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors")}>{deal.title}</p>
         <p className="text-[10px] text-muted-foreground mt-1">Valid till {formatDate(deal.validUntil)}</p>
       </div>
     </Link>
@@ -333,17 +354,17 @@ function FeaturedCard({ deal }: { deal: Deal }) {
 
 // ── Section header ────────────────────────────────────────────────────────────
 
-function SectionHeader({ icon: Icon, title, iconClass, count }: {
-  icon: any; title: string; iconClass: string; count?: number
+function SectionHeader({ icon: Icon, title, gradient, count }: {
+  icon: any; title: string; gradient: string; count?: number
 }) {
   return (
     <div className="flex items-center gap-2.5 mb-4">
-      <div className={cn("h-7 w-7 rounded-xl flex items-center justify-center", iconClass)}>
-        <Icon className="h-3.5 w-3.5" />
-      </div>
-      <h2 className="font-bold text-base">{title}</h2>
+      <span className={cn("h-6 w-6 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br", gradient)}>
+        <Icon className="h-3.5 w-3.5 text-white" />
+      </span>
+      <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r bg-clip-text text-transparent", gradient)}>{title}</h2>
       {count != null && (
-        <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-0.5 rounded-full">{count}</span>
+        <span className="text-xs text-muted-foreground font-medium">({count})</span>
       )}
     </div>
   )
@@ -371,16 +392,52 @@ export function DealsClient({
     search:      "",
   })
   const [searchInput, setSearchInput] = useState("")
+  const [sortOpen, setSortOpen] = useState(false)
+  const sortRef = useRef<HTMLDivElement>(null)
+  const [brandFilter, setBrandFilter] = useState("")
+  const [brandOpen, setBrandOpen] = useState(false)
+  const [brandQuery, setBrandQuery] = useState("")
+  const brandRef = useRef<HTMLDivElement>(null)
+  const [minRupee, setMinRupee] = useState(0)
+  const [discountOpen, setDiscountOpen] = useState(false)
+  const discountRef = useRef<HTMLDivElement>(null)
+  const [rupeeOpen, setRupeeOpen] = useState(false)
+  const rupeeRef = useRef<HTMLDivElement>(null)
   const [seenIds] = useState(() => new Set(initialDeals.map((d) => d.id)))
 
+  const brands = Array.from(new Set(initialDeals.map((d) => d.merchantName).filter(Boolean))).sort()
+  const filteredBrands = brandQuery
+    ? brands.filter((b) => b.toLowerCase().includes(brandQuery.toLowerCase()))
+    : brands
+
+  useEffect(() => {
+    if (!brandOpen) setBrandQuery("")
+  }, [brandOpen])
+
+  useEffect(() => {
+    if (!sortOpen && !brandOpen && !discountOpen && !rupeeOpen) return
+    const onClickOutside = (e: MouseEvent) => {
+      if (sortOpen && sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false)
+      if (brandOpen && brandRef.current && !brandRef.current.contains(e.target as Node)) setBrandOpen(false)
+      if (discountOpen && discountRef.current && !discountRef.current.contains(e.target as Node)) setDiscountOpen(false)
+      if (rupeeOpen && rupeeRef.current && !rupeeRef.current.contains(e.target as Node)) setRupeeOpen(false)
+    }
+    document.addEventListener("mousedown", onClickOutside)
+    return () => document.removeEventListener("mousedown", onClickOutside)
+  }, [sortOpen, brandOpen, discountOpen, rupeeOpen])
+
   const {
-    deals, loading, newDealsCount, lastFetchedAt, secondsUntilRefresh,
+    deals: fetchedDeals, loading, newDealsCount, lastFetchedAt, secondsUntilRefresh,
     refresh, dismissNewDeals,
   } = useDeals(initialDeals, filters)
 
+  const deals = fetchedDeals
+    .filter((d) => !brandFilter || d.merchantName === brandFilter)
+    .filter((d) => !minRupee || dealRupeeAmount(d) >= minRupee)
+
   const minutesUntilRefresh = Math.ceil(secondsUntilRefresh / 60)
   const isNewDeal = (id: string) => newDealsCount > 0 && !seenIds.has(id)
-  const isFiltered = !!(filters.category || filters.minDiscount || filters.search)
+  const isFiltered = !!(filters.category || filters.minDiscount || filters.search || brandFilter || minRupee)
 
   function setCategory(cat: string) {
     setFilters((f) => ({ ...f, category: cat }))
@@ -399,227 +456,465 @@ export function DealsClient({
 
   function clearAllFilters() {
     setSearchInput("")
+    setBrandFilter("")
+    setMinRupee(0)
     setFilters({ category: "", minDiscount: 0, sortBy: "discount", search: "" })
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  const totalClaims = fetchedDeals.reduce((sum, d) => sum + (d.usedCount ?? 0), 0)
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2.5">
-            <span className="h-8 w-8 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-              <Tag className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-            </span>
-            Employee Deals
-            <Badge className="bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400 text-xs font-normal">
-              Corporate Exclusive
-            </Badge>
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1 ml-0.5">
-            Exclusive discounts &amp; offers for verified corporate professionals
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {!isPremium && (
-            <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-amber-700 dark:text-amber-300 font-medium">
-                {redemptionCount}/{FREE_LIMITS.deals} redeemed this month
-              </span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline">
-                <Zap className="h-3 w-3" />Upgrade
-              </Link>
+  return (
+    <div className="min-h-full bg-background">
+
+      {/* ── Hero header ──────────────────────────────────────────────────────── */}
+      <div className="relative text-white overflow-hidden" style={{ minHeight: 300 }}>
+        <img
+          src="https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=1920&q=85&auto=format&fit=crop"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-rose-950/50 via-transparent to-amber-950/40" />
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-rose-500/30 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-amber-400/20 blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+
+          {/* Top row */}
+          <div className="flex items-start justify-between gap-4 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase text-white border border-white/30 rounded-full px-3 py-1 backdrop-blur-sm bg-gradient-to-r from-rose-500/30 via-red-500/30 to-amber-400/30 shadow-[0_0_20px_rgba(244,63,94,0.35)]">
+                  <Sparkles className="h-3 w-3 text-rose-300" /> Corporate Exclusive
+                </span>
+              </div>
+              <h1 className={cn(outfit.className, "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
+                <span className="bg-gradient-to-r from-white via-rose-200 to-amber-200 bg-clip-text text-transparent">Employee</span>
+                {" "}<span className="bg-gradient-to-r from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent">Deals</span> 🏷️
+              </h1>
+              <p className="text-white/60 mt-2 text-sm">Exclusive discounts &amp; offers for verified corporate professionals.</p>
             </div>
-          )}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {lastFetchedAt && (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3 w-3" />Updated {formatRelativeTime(lastFetchedAt)}
-              </span>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              {!isPremium && (
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs backdrop-blur-sm">
+                  <span className="text-amber-300 font-medium">{redemptionCount}/{FREE_LIMITS.deals} redeemed</span>
+                  <Link href="/membership" className="flex items-center gap-1 text-amber-400 font-bold hover:underline">
+                    <Zap className="h-3 w-3" />Upgrade
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center gap-8 mb-8">
+            <div>
+              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-rose-300 to-red-200 bg-clip-text text-transparent")}>{fetchedDeals.length}</p>
+              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Active Deals</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-amber-300 to-orange-200 bg-clip-text text-transparent")}>{totalClaims.toLocaleString()}</p>
+              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total Claims</p>
+            </div>
+            <div className="w-px h-10 bg-white/15" />
+            <div>
+              <p className={cn(outfit.className, "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
+              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
+            </div>
+          </div>
+
+          {/* Search */}
+          <form onSubmit={submitSearch} className="relative pb-2">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search deals, companies, or offers…"
+              className="w-full h-12 pl-11 pr-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:bg-white/15 transition-all"
+            />
+            {searchInput && (
+              <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+                <X className="h-4 w-4" />
+              </button>
             )}
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1" onClick={refresh} disabled={loading}>
-              <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
-              {loading ? "Refreshing…" : `${minutesUntilRefresh}m`}
-            </Button>
+          </form>
+        </div>
+      </div>
+
+      {/* ── Category strip + filter bar ─────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-background shadow-sm">
+        {/* Category icon strip */}
+        <div className="border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide">
+            <div className="flex">
+              {DEAL_CATEGORIES.map(cat => {
+                const isActive = filters.category === cat.value
+                const count = initialDeals.filter(d => cat.value === "" || d.category === cat.value).length
+                return (
+                  <button
+                    key={cat.value}
+                    onClick={() => setCategory(cat.value)}
+                    className={cn(
+                      "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group shrink-0",
+                      "flex-1 min-w-[84px]",
+                      isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
+                    )}
+                  >
+                    <div className={cn(
+                      "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
+                      isActive ? cn(cat.iconBg, "ring-2 ring-rose-400 scale-110 shadow-[0_0_12px_rgba(244,63,94,0.4)]") : cn(cat.iconBg, "group-hover:scale-105")
+                    )}>
+                      <cat.icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                    </div>
+                    <span className={cn(outfit.className, "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                      {cat.label.split(" ")[0]}
+                    </span>
+                    <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                      {count}
+                    </span>
+                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter bar */}
+        <div className="border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 text-sm text-foreground">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="font-bold">Filters</span>
+              </div>
+
+              {/* Discount % dropdown */}
+              <div className="relative" ref={discountRef}>
+                <button
+                  onClick={() => setDiscountOpen(o => !o)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full border transition-all whitespace-nowrap",
+                    filters.minDiscount > 0 || discountOpen
+                      ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white border-transparent shadow-sm"
+                      : "text-foreground border-border hover:border-rose-400/60 hover:text-rose-600 dark:hover:text-rose-400"
+                  )}
+                >
+                  {DISCOUNT_OPTIONS.find(o => parseInt(o.value) === filters.minDiscount)?.label ?? "Any discount"}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", discountOpen && "rotate-180")} />
+                </button>
+                {discountOpen && (
+                  <div className="absolute left-0 top-full mt-2 z-20 bg-card border-2 border-border rounded-2xl shadow-[0_12px_36px_rgba(244,63,94,0.12)] overflow-hidden min-w-[200px] py-1.5">
+                    {DISCOUNT_OPTIONS.map(o => (
+                      <button
+                        key={o.value}
+                        onClick={() => { setFilters(f => ({ ...f, minDiscount: parseInt(o.value) })); setDiscountOpen(false) }}
+                        className={cn("w-full flex items-center justify-between gap-2 text-left mx-1.5 my-0.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+                          filters.minDiscount === parseInt(o.value) ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white" : "text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {o.label}
+                        {filters.minDiscount === parseInt(o.value) && <Check className="h-4 w-4 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Rupee-off dropdown */}
+              <div className="relative" ref={rupeeRef}>
+                <button
+                  onClick={() => setRupeeOpen(o => !o)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full border transition-all whitespace-nowrap",
+                    minRupee > 0 || rupeeOpen
+                      ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white border-transparent shadow-sm"
+                      : "text-foreground border-border hover:border-rose-400/60 hover:text-rose-600 dark:hover:text-rose-400"
+                  )}
+                >
+                  {RUPEE_OPTIONS.find(o => parseInt(o.value) === minRupee)?.label ?? "Any ₹ off"}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", rupeeOpen && "rotate-180")} />
+                </button>
+                {rupeeOpen && (
+                  <div className="absolute left-0 top-full mt-2 z-20 bg-card border-2 border-border rounded-2xl shadow-[0_12px_36px_rgba(244,63,94,0.12)] overflow-hidden min-w-[200px] py-1.5">
+                    {RUPEE_OPTIONS.map(o => (
+                      <button
+                        key={o.value}
+                        onClick={() => { setMinRupee(parseInt(o.value)); setRupeeOpen(false) }}
+                        className={cn("w-full flex items-center justify-between gap-2 text-left mx-1.5 my-0.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+                          minRupee === parseInt(o.value) ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white" : "text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {o.label}
+                        {minRupee === parseInt(o.value) && <Check className="h-4 w-4 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Brand dropdown */}
+              <div className="relative" ref={brandRef}>
+                <button
+                  onClick={() => setBrandOpen(o => !o)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full border transition-all whitespace-nowrap",
+                    brandFilter || brandOpen
+                      ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white border-transparent shadow-sm"
+                      : "text-foreground border-border hover:border-rose-400/60 hover:text-rose-600 dark:hover:text-rose-400"
+                  )}
+                >
+                  <Building2 className="h-4 w-4" />
+                  {brandFilter || "All Brands"}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", brandOpen && "rotate-180")} />
+                </button>
+                {brandOpen && (
+                  <div className="absolute left-0 top-full mt-2 z-20 bg-card border-2 border-border rounded-2xl shadow-[0_12px_36px_rgba(244,63,94,0.12)] overflow-hidden min-w-[240px] py-1.5">
+                    <div className="px-2 pb-1.5">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                          autoFocus
+                          value={brandQuery}
+                          onChange={(e) => setBrandQuery(e.target.value)}
+                          placeholder="Search brands…"
+                          className="w-full h-8 pl-8 pr-2 rounded-lg bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-400/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {!brandQuery && (
+                        <button
+                          onClick={() => { setBrandFilter(""); setBrandOpen(false) }}
+                          className={cn("w-full flex items-center justify-between gap-2 text-left mx-1.5 my-0.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+                            !brandFilter ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white" : "text-foreground hover:bg-muted"
+                          )}
+                        >
+                          All Brands
+                          {!brandFilter && <Check className="h-4 w-4 shrink-0" />}
+                        </button>
+                      )}
+                      {filteredBrands.length === 0 ? (
+                        <p className="text-center text-xs text-muted-foreground py-4">No brands match "{brandQuery}"</p>
+                      ) : filteredBrands.map(b => (
+                        <button
+                          key={b}
+                          onClick={() => { setBrandFilter(b); setBrandOpen(false) }}
+                          className={cn("w-full flex items-center justify-between gap-2 text-left mx-1.5 my-0.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors truncate",
+                            brandFilter === b ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white" : "text-foreground hover:bg-muted"
+                          )}
+                        >
+                          <span className="truncate">{b}</span>
+                          {brandFilter === b && <Check className="h-4 w-4 shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {isFiltered && (
+                <Button variant="ghost" size="sm" className="h-8 text-sm font-bold gap-1 text-muted-foreground rounded-full" onClick={clearAllFilters}>
+                  <X className="h-3.5 w-3.5" /> Clear all
+                </Button>
+              )}
+
+              <div className="flex-1" />
+
+              {!loading && (
+                <span className="text-sm font-bold text-foreground whitespace-nowrap hidden sm:block">
+                  {deals.length} deal{deals.length !== 1 ? "s" : ""}
+                </span>
+              )}
+
+              {/* Sort dropdown */}
+              <div className="relative" ref={sortRef}>
+                <button
+                  onClick={() => setSortOpen(o => !o)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full border transition-all",
+                    sortOpen
+                      ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white border-transparent shadow-sm"
+                      : "text-foreground border-border hover:border-rose-400/60 hover:text-rose-600 dark:hover:text-rose-400"
+                  )}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  {SORT_OPTIONS.find(s => s.value === filters.sortBy)?.label}
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", sortOpen && "rotate-180")} />
+                </button>
+                {sortOpen && (
+                  <div className="absolute right-0 top-full mt-2 z-20 bg-card border-2 border-border rounded-2xl shadow-[0_12px_36px_rgba(244,63,94,0.12)] overflow-hidden min-w-[200px] py-1.5">
+                    {SORT_OPTIONS.map(opt => (
+                      <button key={opt.value} onClick={() => { setFilters(f => ({ ...f, sortBy: opt.value as DealFilters["sortBy"] })); setSortOpen(false) }}
+                        className={cn("w-full flex items-center justify-between gap-2 text-left mx-1.5 my-0.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+                          filters.sortBy === opt.value
+                            ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white"
+                            : "text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {opt.label}
+                        {filters.sortBy === opt.value && <Check className="h-4 w-4 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Active filter chips */}
+            {isFiltered && (
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <span className="text-sm font-bold text-foreground">Active:</span>
+                {filters.search && (
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full">
+                    "{filters.search}" <button onClick={clearSearch}><X className="h-3.5 w-3.5 ml-0.5" /></button>
+                  </span>
+                )}
+                {filters.category && (
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold bg-muted text-foreground px-2.5 py-1 rounded-full">
+                    {DEAL_CATEGORIES.find(c => c.value === filters.category)?.label}
+                    <button onClick={() => setCategory("")}><X className="h-3.5 w-3.5 ml-0.5" /></button>
+                  </span>
+                )}
+                {filters.minDiscount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold bg-muted text-foreground px-2.5 py-1 rounded-full">
+                    {filters.minDiscount}%+ off
+                    <button onClick={() => setFilters(f => ({ ...f, minDiscount: 0 }))}><X className="h-3.5 w-3.5 ml-0.5" /></button>
+                  </span>
+                )}
+                {minRupee > 0 && (
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold bg-muted text-foreground px-2.5 py-1 rounded-full">
+                    ₹{minRupee.toLocaleString("en-IN")}+ off
+                    <button onClick={() => setMinRupee(0)}><X className="h-3.5 w-3.5 ml-0.5" /></button>
+                  </span>
+                )}
+                {brandFilter && (
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold bg-muted text-foreground px-2.5 py-1 rounded-full">
+                    <Building2 className="h-3.5 w-3.5" /> {brandFilter}
+                    <button onClick={() => setBrandFilter("")}><X className="h-3.5 w-3.5 ml-0.5" /></button>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* ── New deals banner ───────────────────────────────────────────────── */}
-      {newDealsCount > 0 && (
-        <div className="mb-5 flex items-center justify-between bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800 rounded-xl px-4 py-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-primary-700 dark:text-primary-300">
-            <Bell className="h-4 w-4" />
-            {newDealsCount} new deal{newDealsCount > 1 ? "s" : ""} added since your last visit
-          </div>
-          <Button variant="ghost" size="sm" className="text-xs h-7 text-primary-600" onClick={dismissNewDeals}>Dismiss</Button>
-        </div>
-      )}
-
-      {/* ── Featured carousel ──────────────────────────────────────────────── */}
-      {featuredDeals.length > 0 && !isFiltered && (
-        <section className="mb-8">
-          <SectionHeader icon={Star} title="Featured Deals" iconClass="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" count={featuredDeals.length} />
-          <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide snap-x">
-            {featuredDeals.map((d) => (
-              <div key={d.id} className="snap-start">
-                <FeaturedCard deal={d} />
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 h-px bg-gradient-to-r from-amber-200 dark:from-amber-800 via-border to-transparent" />
-        </section>
-      )}
-
-      {/* ── Trending section ───────────────────────────────────────────────── */}
-      {trendingDeals.length > 0 && !isFiltered && (
-        <section className="mb-8">
-          <SectionHeader icon={Flame} title="Trending Now" iconClass="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400" count={trendingDeals.length} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {trendingDeals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} />)}
-          </div>
-          <div className="mt-4 h-px bg-gradient-to-r from-orange-200 dark:from-orange-800 via-border to-transparent" />
-        </section>
-      )}
-
-      {/* ── Expiring Soon section ──────────────────────────────────────────── */}
-      {expiringSoon.length > 0 && !isFiltered && (
-        <section className="mb-8">
-          <SectionHeader icon={Clock} title="Expiring Soon" iconClass="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" count={expiringSoon.length} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {expiringSoon.map((d) => <DealCard key={d.id} deal={d} isNew={false} />)}
-          </div>
-          <div className="mt-4 h-px bg-gradient-to-r from-red-200 dark:from-red-800 via-border to-transparent" />
-        </section>
-      )}
-
-      {/* ── Search + category tabs ─────────────────────────────────────────── */}
-      <div className="space-y-3 mb-5 sticky top-0 z-10 bg-background/95 backdrop-blur-sm pt-2 pb-3 -mx-4 px-4 sm:-mx-6 sm:px-6 border-b border-border/60">
-
-        {/* Search bar */}
-        <form onSubmit={submitSearch} className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search deals, companies, or offers…"
-            className="pl-10 pr-10 h-10 rounded-xl"
-          />
-          {searchInput && (
-            <button type="button" onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </form>
-
-        {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {DEAL_CATEGORIES.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setCategory(tab.value)}
-              className={cn(
-                "flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all border",
-                filters.category === tab.value
-                  ? "bg-foreground text-background border-foreground shadow-sm"
-                  : "bg-background text-foreground border-border hover:bg-muted hover:border-foreground/20"
-              )}
-            >
-              <span>{tab.emoji}</span>
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            <span className="font-medium">Filters</span>
-          </div>
-          <Select
-            value={String(filters.minDiscount)}
-            onValueChange={(v) => setFilters((f) => ({ ...f, minDiscount: parseInt(v) }))}
-          >
-            <SelectTrigger className="h-8 w-36 text-xs rounded-lg">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DISCOUNT_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.sortBy}
-            onValueChange={(v) => setFilters((f) => ({ ...f, sortBy: v as DealFilters["sortBy"] }))}
-          >
-            <SelectTrigger className="h-8 w-40 text-xs rounded-lg">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {isFiltered && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-muted-foreground" onClick={clearAllFilters}>
-              <X className="h-3 w-3" /> Clear all
-            </Button>
-          )}
-          {!loading && (
-            <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-              {deals.length} deal{deals.length !== 1 ? "s" : ""}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        {newDealsCount > 0 && (
+          <div className="mb-5 flex items-center justify-between bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-rose-700 dark:text-rose-300">
+              <Bell className="h-4 w-4" />
+              {newDealsCount} new deal{newDealsCount > 1 ? "s" : ""} added since your last visit
             </div>
-          )}
-        </div>
+            <Button variant="ghost" size="sm" className="text-xs h-7 text-rose-600 dark:text-rose-400" onClick={dismissNewDeals}>Dismiss</Button>
+          </div>
+        )}
       </div>
 
-      {/* ── All deals grid ─────────────────────────────────────────────────── */}
-      {isFiltered && (
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-4 w-4 text-muted-foreground" />
-          <h2 className="font-semibold text-sm">
-            {filters.search ? `Results for "${filters.search}"` :
-             filters.category ? `${DEAL_CATEGORIES.find(c => c.value === filters.category)?.label} Deals` :
-             "Filtered Deals"}
-          </h2>
-        </div>
-      )}
-      {!isFiltered && (
-        <SectionHeader icon={Tag} title="All Deals" iconClass="bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" count={deals.length} />
-      )}
+      {/* ── Content ──────────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-10">
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {Array.from({ length: 8 }).map((_, i) => <DealCardSkeleton key={i} />)}
-        </div>
-      ) : deals.length === 0 ? (
-        <div className="text-center py-24">
-          <div className="text-5xl mb-4">🏷️</div>
-          <h3 className="text-lg font-semibold mb-2">No deals match your filters</h3>
-          <p className="text-muted-foreground text-sm mb-5">
-            {filters.search ? `No results for "${filters.search}".` : "Try a different category or lower the minimum discount."}
-          </p>
-          <Button variant="outline" onClick={clearAllFilters}>Clear filters</Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {deals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} />)}
-        </div>
-      )}
+        {/* Featured carousel */}
+        {featuredDeals.length > 0 && !isFiltered && (
+          <section>
+            <SectionHeader icon={Star} title="Featured Deals" gradient="from-amber-400 to-orange-500" count={featuredDeals.length} />
+            <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide snap-x">
+              {featuredDeals.map((d) => (
+                <div key={d.id} className="snap-start">
+                  <FeaturedCard deal={d} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Footer note */}
-      {deals.length > 0 && (
-        <p className="text-center text-xs text-muted-foreground mt-10 pb-4">
-          Deals refresh automatically every 5 minutes · All offers are exclusively for verified corporate employees
-        </p>
-      )}
+        {/* Trending */}
+        {trendingDeals.length > 0 && !isFiltered && (
+          <section>
+            <SectionHeader icon={Flame} title="Trending Now" gradient="from-orange-500 to-red-500" count={trendingDeals.length} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {trendingDeals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} />)}
+            </div>
+          </section>
+        )}
+
+        {/* Expiring soon */}
+        {expiringSoon.length > 0 && !isFiltered && (
+          <section>
+            <SectionHeader icon={Clock} title="Expiring Soon" gradient="from-red-500 to-rose-600" count={expiringSoon.length} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {expiringSoon.map((d) => <DealCard key={d.id} deal={d} isNew={false} />)}
+            </div>
+          </section>
+        )}
+
+        {/* All deals */}
+        <section>
+          {isFiltered ? (
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-4 w-4 text-muted-foreground" />
+              <h2 className={cn(outfit.className, "font-bold text-sm")}>
+                {filters.search ? `Results for "${filters.search}"` :
+                 brandFilter ? `${brandFilter} Deals` :
+                 filters.category ? `${DEAL_CATEGORIES.find(c => c.value === filters.category)?.label} Deals` :
+                 "Filtered Deals"}
+              </h2>
+            </div>
+          ) : (
+            <SectionHeader icon={Tag} title="All Deals" gradient="from-rose-500 to-amber-400" count={deals.length} />
+          )}
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {Array.from({ length: 8 }).map((_, i) => <DealCardSkeleton key={i} />)}
+            </div>
+          ) : deals.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-rose-100 to-amber-100 dark:from-rose-950/40 dark:to-amber-950/40 flex items-center justify-center mb-5 text-4xl shadow-inner">🏷️</div>
+              <h3 className="text-xl font-black mb-2">No deals match your filters</h3>
+              <p className="text-muted-foreground text-sm mb-5 max-w-sm">
+                {filters.search ? `No results for "${filters.search}".` :
+                 brandFilter ? `No deals from ${brandFilter} right now.` :
+                 "Try a different category, brand, or lower the minimum discount/₹ amount."}
+              </p>
+              <Button variant="outline" className="rounded-full" onClick={clearAllFilters}>Clear filters</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {deals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} />)}
+            </div>
+          )}
+        </section>
+
+        {/* Footer note */}
+        {deals.length > 0 && (
+          <div className="flex flex-col items-center gap-2 pb-4">
+            <p className="text-center text-xs text-muted-foreground">
+              Deals refresh automatically every 5 minutes · All offers are exclusively for verified corporate employees
+            </p>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              {lastFetchedAt && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />Updated {formatRelativeTime(lastFetchedAt)}
+                </span>
+              )}
+              <button
+                onClick={refresh}
+                disabled={loading}
+                className="flex items-center gap-1 h-7 px-2 rounded-full border border-border hover:bg-muted transition-colors"
+              >
+                <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+                {loading ? "Refreshing…" : `${minutesUntilRefresh}m`}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

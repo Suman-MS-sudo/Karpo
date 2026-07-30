@@ -49,7 +49,7 @@ export default async function DealsPage() {
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
 
-  const activeWhere = { isActive: true, validUntil: { gte: now } }
+  const activeWhere = { isActive: true, validUntil: { gte: now }, source: "MANUAL" }
 
   const [rawDeals, rawFeatured, rawTrending, rawExpiringSoon, redemptionCount] = await Promise.all([
     // All active deals — default sort: highest discount

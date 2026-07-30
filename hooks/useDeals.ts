@@ -65,11 +65,19 @@ export function useDeals(initialDeals: Deal[], filters: DealFilters): UseDealsFe
   const [deals,              setDeals]        = useState<Deal[]>(initialDeals)
   const [loading,            setLoading]      = useState(false)
   const [newDealsCount,      setNewDeals]     = useState(0)
-  const [lastFetchedAt,      setLastFetched]  = useState<Date | null>(new Date())
+  const [lastFetchedAt,      setLastFetched]  = useState<Date | null>(null)
   const [secondsUntilRefresh,setSecondsLeft]  = useState(REFRESH_INTERVAL_MS / 1000)
 
-  const lastFetchRef  = useRef<Date>(new Date())
+  const lastFetchRef  = useRef<Date>(new Date(0))
   const isFirstRender = useRef(true)
+
+  // Set the initial "last fetched" timestamp client-side only, after mount —
+  // avoids a hydration mismatch from `new Date()` differing between SSR and hydration.
+  useEffect(() => {
+    const now = new Date()
+    lastFetchRef.current = now
+    setLastFetched(now)
+  }, [])
 
   const buildUrl = useCallback((since?: string) => {
     const p = new URLSearchParams()

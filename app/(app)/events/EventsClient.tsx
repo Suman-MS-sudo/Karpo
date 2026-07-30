@@ -469,7 +469,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
           <button
             onClick={() => scrollCat("left")}
             disabled={!catScrolled.left}
-            className="shrink-0 w-8 self-stretch flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+            className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -513,7 +513,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
           <button
             onClick={() => scrollCat("right")}
             disabled={!catScrolled.right}
-            className="shrink-0 w-8 self-stretch flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+            className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

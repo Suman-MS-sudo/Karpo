@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   const baseWhere: Record<string, unknown> = {
     isActive:  true,
     validUntil: { gte: new Date() },
+    source:    "MANUAL",
   }
   if (category)    baseWhere.category = category
   if (minDiscount) baseWhere.discount = { gte: minDiscount }
