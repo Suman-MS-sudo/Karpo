@@ -92,16 +92,21 @@ export default async function AdminPage() {
 
   return (
     <div className="p-6 space-y-8 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Platform overview and pending actions</p>
+      <div className="flex items-center gap-3">
+        <span className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shrink-0">
+          <Shield className="h-5 w-5 text-white" />
+        </span>
+        <div>
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Platform overview and pending actions</p>
+        </div>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {statCards.map(({ label, value, sub, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-card border border-border rounded-xl p-4 space-y-2">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${bg}`}>
+          <div key={label} className="bg-card border border-border rounded-2xl p-4 space-y-2 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-150">
+            <div className={`h-9 w-9 rounded-xl flex items-center justify-center ${bg}`}>
               <Icon className={`h-4 w-4 ${color}`} />
             </div>
             <p className="text-xl font-bold leading-none">{value}</p>
@@ -116,12 +121,15 @@ export default async function AdminPage() {
       {/* Service activity */}
       <div className="bg-card border border-border rounded-2xl p-5">
         <h2 className="font-semibold mb-4 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4" /> Active Content by Service
+          <span className="h-6 w-6 rounded-lg bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center shrink-0">
+            <TrendingUp className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+          </span>
+          Active Content by Service
         </h2>
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
           {serviceStats.map(({ label, value, href }) => (
             <Link key={label} href={href}
-              className="text-center p-3 rounded-xl border border-border hover:bg-muted transition-colors">
+              className="text-center p-3 rounded-xl border border-border hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all">
               <p className="text-2xl font-bold">{value}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
             </Link>
@@ -238,14 +246,16 @@ export default async function AdminPage() {
       {/* Quick action links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { href: "/admin/users",     label: "Manage Users",    icon: Users,       desc: "Verify, promote, search" },
-          { href: "/admin/companies", label: "Companies",       icon: Building2,   desc: "Approve & manage" },
-          { href: "/admin/deals",     label: "Manage Deals",    icon: Tag,         desc: "Create, edit, activate" },
-          { href: "/admin/concierge", label: "Concierge Leads", icon: Shield,      desc: "Assign & update status" },
-        ].map(({ href, label, icon: Icon, desc }) => (
+          { href: "/admin/users",     label: "Manage Users",    icon: Users,       desc: "Verify, promote, search", color: "text-blue-600 dark:text-blue-400",     bg: "bg-blue-50 dark:bg-blue-950/30"     },
+          { href: "/admin/companies", label: "Companies",       icon: Building2,   desc: "Approve & manage",        color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/30" },
+          { href: "/admin/deals",     label: "Manage Deals",    icon: Tag,         desc: "Create, edit, activate",  color: "text-rose-600 dark:text-rose-400",     bg: "bg-rose-50 dark:bg-rose-950/30"     },
+          { href: "/admin/concierge", label: "Concierge Leads", icon: Shield,      desc: "Assign & update status",  color: "text-cyan-600 dark:text-cyan-400",     bg: "bg-cyan-50 dark:bg-cyan-950/30"     },
+        ].map(({ href, label, icon: Icon, desc, color, bg }) => (
           <Link key={href} href={href}>
-            <div className="bg-card border border-border rounded-xl p-4 hover:shadow-sm hover:border-foreground/20 transition-all">
-              <Icon className="h-5 w-5 text-muted-foreground mb-2" />
+            <div className="bg-card border border-border rounded-2xl p-4 hover:shadow-sm hover:-translate-y-0.5 hover:border-foreground/20 transition-all">
+              <span className={`h-9 w-9 rounded-xl flex items-center justify-center mb-2 ${bg}`}>
+                <Icon className={`h-4 w-4 ${color}`} />
+              </span>
               <p className="font-semibold text-sm">{label}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
             </div>
