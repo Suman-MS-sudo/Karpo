@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
-import { Plus, ArrowRight, Search, Zap } from "lucide-react"
+import { Plus, ArrowRight, Search, Zap, Car } from "lucide-react"
+import { PageTitle } from "@/components/ui/page-title"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
@@ -177,10 +178,12 @@ export default async function CarpoolPage({
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Corporate Carpool</h1>
-          <p className="text-muted-foreground text-sm mt-1">Share your commute with verified colleagues</p>
-        </div>
+        <PageTitle
+          badge="Carpool"
+          badgeIcon={Car}
+          title="Corporate Carpool"
+          subtitle="Share your commute with verified colleagues"
+        />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isPremium && session?.user?.id && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">

@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
-import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap, LayoutGrid } from "lucide-react"
+import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap, LayoutGrid, ShoppingBag } from "lucide-react"
+import { PageTitle } from "@/components/ui/page-title"
 import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
@@ -172,6 +173,15 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const totalPages  = Math.ceil(gridTotal / PAGE_SIZE)
   const totalCount  = featuredListings.length + gridTotal
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
+
+  // ── Category counts (for the chip strip) ──────────────────────────────────
+  const categoryCountRows = await prisma.listing.groupBy({
+    by: ["category"],
+    where: { status: "ACTIVE" },
+    _count: true,
+  })
+  const categoryCounts = Object.fromEntries(categoryCountRows.map((r) => [r.category, r._count]))
+  const allActiveCount = categoryCountRows.reduce((sum, r) => sum + r._count, 0)
   const myListingsCount = session?.user?.id && !isPremium
     ? await prisma.listing.count({ where: { userId: session.user.id, status: "ACTIVE" } })
     : 0
@@ -180,14 +190,16 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-2xl font-bold">Buy &amp; Sell</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            {totalCount > 0
+        <PageTitle
+          badge="Marketplace"
+          badgeIcon={ShoppingBag}
+          title="Buy & Sell"
+          subtitle={
+            totalCount > 0
               ? `${totalCount} listing${totalCount === 1 ? "" : "s"}${searchParams.city ? ` in ${searchParams.city}` : ""}`
-              : "Verified sellers from your corporate network"}
-          </p>
-        </div>
+              : "Verified sellers from your corporate network"
+          }
+        />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isPremium && session?.user?.id && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
@@ -202,7 +214,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       </div>
 
       {/* ── Filters ─────────────────────────────────────────────────────────── */}
-      <MarketplaceFilters current={searchParams} />
+      <MarketplaceFilters current={searchParams} counts={categoryCounts} totalCount={allActiveCount} />
 
       {/* ── Featured / Boosted section ─────────────────────────────────────── */}
       {featuredListings.length > 0 && (

@@ -101,13 +101,12 @@ export function CityAutocomplete({
 
       <div
         className={cn(
-          "flex items-center gap-1.5 h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background",
-          "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-          open && "ring-2 ring-ring ring-offset-2"
+          "flex items-center gap-1.5 h-10 w-full rounded-full border-2 bg-background px-4 text-[15px] font-medium transition-colors",
+          open ? "border-violet-500 ring-2 ring-violet-400/50" : "border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/30"
         )}
         onClick={() => { setOpen(true); inputRef.current?.focus() }}
       >
-        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <MapPin className="h-3.5 w-3.5 text-violet-500 shrink-0" />
         <input
           ref={inputRef}
           id={id}
@@ -133,32 +132,35 @@ export function CityAutocomplete({
             <X className="h-3.5 w-3.5" />
           </button>
         ) : (
-          <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
+          <ChevronDown className={cn("h-3.5 w-3.5 text-violet-500 shrink-0 transition-transform", open && "rotate-180")} />
         )}
       </div>
 
       {open && filtered.length > 0 && (
         <ul
           ref={listRef}
-          className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-popover shadow-xl py-1"
+          className="absolute z-50 w-full mt-2 max-h-60 overflow-y-auto rounded-2xl border border-border bg-popover shadow-xl divide-y divide-border"
           role="listbox"
         >
-          {filtered.map((city, idx) => (
-            <li
-              key={city}
-              role="option"
-              aria-selected={city === value}
-              onMouseDown={(e) => { e.preventDefault(); select(city) }}
-              onMouseEnter={() => setHighlighted(idx)}
-              className={cn(
-                "px-3 py-2 text-sm cursor-pointer transition-colors",
-                highlighted === idx && "bg-muted",
-                city === value && "font-medium text-primary"
-              )}
-            >
-              {city}
-            </li>
-          ))}
+          {filtered.map((city, idx) => {
+            const isActive = city === value
+            return (
+              <li
+                key={city}
+                role="option"
+                aria-selected={isActive}
+                onMouseDown={(e) => { e.preventDefault(); select(city) }}
+                onMouseEnter={() => setHighlighted(idx)}
+                className={cn(
+                  "px-4 py-2.5 text-[15px] cursor-pointer transition-colors",
+                  highlighted === idx && "bg-violet-50 dark:bg-violet-950/30",
+                  isActive ? "font-bold text-violet-600 dark:text-violet-400" : "font-medium text-muted-foreground"
+                )}
+              >
+                {city}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>

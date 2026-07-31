@@ -80,9 +80,8 @@ export function TagAutocomplete({ options, value, onChange, placeholder = "Type 
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "flex items-center gap-1.5 h-9 w-full rounded-lg border border-input bg-background px-3 text-sm",
-          "focus-within:ring-2 focus-within:ring-ring",
-          open && "ring-2 ring-ring"
+          "flex items-center gap-1.5 h-10 w-full rounded-full border-2 bg-background px-4 text-[15px] font-medium transition-colors",
+          open ? "border-violet-500 ring-2 ring-violet-400/50" : "border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-950/30"
         )}
         onClick={() => { setOpen(true); inputRef.current?.focus() }}
       >
@@ -96,15 +95,15 @@ export function TagAutocomplete({ options, value, onChange, placeholder = "Type 
           onFocus={() => setOpen(true)}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlighted(-1) }}
           onKeyDown={handleKeyDown}
-          className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-0 text-sm"
+          className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-0"
         />
-        <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("h-3.5 w-3.5 text-violet-500 shrink-0 transition-transform", open && "rotate-180")} />
       </div>
 
       {open && filtered.length > 0 && (
         <ul
           ref={listRef}
-          className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto rounded-xl border border-border bg-popover shadow-xl py-1"
+          className="absolute z-50 w-full mt-2 max-h-60 overflow-y-auto rounded-2xl border border-border bg-popover shadow-xl divide-y divide-border"
           role="listbox"
         >
           {filtered.map((o, idx) => (
@@ -113,7 +112,10 @@ export function TagAutocomplete({ options, value, onChange, placeholder = "Type 
               role="option"
               onMouseDown={(e) => { e.preventDefault(); add(o) }}
               onMouseEnter={() => setHighlighted(idx)}
-              className={cn("px-3 py-2 text-sm cursor-pointer transition-colors", highlighted === idx && "bg-muted")}
+              className={cn(
+                "px-4 py-2.5 text-[15px] font-medium cursor-pointer transition-colors",
+                highlighted === idx ? "bg-violet-50 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400 font-bold" : "text-muted-foreground"
+              )}
             >
               {o}
             </li>

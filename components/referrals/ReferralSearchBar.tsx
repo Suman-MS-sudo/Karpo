@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TagAutocomplete } from "@/components/ui/tag-autocomplete"
 import { CITIES, DEPARTMENTS } from "@/config/services"
+import { cn } from "@/lib/utils"
 
 const WORK_MODES = [
   { value: "REMOTE",  label: "Remote"   },
@@ -27,7 +28,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all whitespace-nowrap ${
         active
-          ? "bg-violet-600 border-violet-600 text-white"
+          ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent text-white font-bold"
           : "bg-card border-border text-muted-foreground hover:border-violet-400 hover:text-foreground"
       }`}
     >
@@ -94,31 +95,35 @@ export function ReferralSearchBar() {
       {/* Search + company row */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Search by title, department, skills…"
-            className="pl-9"
+            className="pl-10 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
           />
         </div>
         <div className="relative w-44 shrink-0">
-          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
           <Input
             value={company}
             onChange={(e) => setCompany(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Company…"
-            className="pl-9"
+            className="pl-10 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
           />
         </div>
         <Button
-          variant="outline"
           onClick={() => setOpen((o) => !o)}
-          className="gap-2 shrink-0"
+          className={cn(
+            "gap-2 shrink-0 rounded-full font-medium",
+            open
+              ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent text-white hover:from-violet-600 hover:to-fuchsia-600"
+              : "bg-background border-2 border-violet-500 text-foreground hover:bg-violet-50 dark:hover:bg-violet-950/30"
+          )}
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <SlidersHorizontal className={cn("h-4 w-4", !open && "text-violet-500")} />
           Filters
           {activeFilterCount > 0 && (
             <span className="h-5 w-5 rounded-full bg-violet-600 text-white text-[10px] font-bold flex items-center justify-center">
@@ -127,7 +132,7 @@ export function ReferralSearchBar() {
           )}
           {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
-        <Button onClick={handleSearch} className="shrink-0">Search</Button>
+        <Button onClick={handleSearch} className="shrink-0 rounded-full">Search</Button>
       </div>
 
       {/* Filter panel */}
@@ -142,7 +147,7 @@ export function ReferralSearchBar() {
               value={cities}
               onChange={setCities}
               placeholder="Search a city…"
-              icon={<MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+              icon={<MapPin className="h-3.5 w-3.5 text-violet-500 shrink-0" />}
             />
           </div>
 
@@ -182,10 +187,10 @@ export function ReferralSearchBar() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Experience (years)</p>
               <div className="flex items-center gap-2">
                 <Input type="number" min={0} max={30} placeholder="Min"
-                  value={minExp} onChange={(e) => setMinExp(e.target.value)} className="w-20 h-8 text-sm" />
+                  value={minExp} onChange={(e) => setMinExp(e.target.value)} className="w-20 h-9 rounded-full text-[15px] font-medium text-muted-foreground" />
                 <span className="text-muted-foreground text-sm">–</span>
                 <Input type="number" min={0} max={30} placeholder="Max"
-                  value={maxExp} onChange={(e) => setMaxExp(e.target.value)} className="w-20 h-8 text-sm" />
+                  value={maxExp} onChange={(e) => setMaxExp(e.target.value)} className="w-20 h-9 rounded-full text-[15px] font-medium text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">yrs</span>
               </div>
             </div>
@@ -193,10 +198,10 @@ export function ReferralSearchBar() {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Salary (LPA)</p>
               <div className="flex items-center gap-2">
                 <Input type="number" min={0} placeholder="Min"
-                  value={minSalary} onChange={(e) => setMinSalary(e.target.value)} className="w-20 h-8 text-sm" />
+                  value={minSalary} onChange={(e) => setMinSalary(e.target.value)} className="w-20 h-9 rounded-full text-[15px] font-medium text-muted-foreground" />
                 <span className="text-muted-foreground text-sm">–</span>
                 <Input type="number" min={0} placeholder="Max"
-                  value={maxSalary} onChange={(e) => setMaxSalary(e.target.value)} className="w-20 h-8 text-sm" />
+                  value={maxSalary} onChange={(e) => setMaxSalary(e.target.value)} className="w-20 h-9 rounded-full text-[15px] font-medium text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">L</span>
               </div>
             </div>

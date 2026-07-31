@@ -15,6 +15,7 @@ import { SocialShare } from "@/components/shared/SocialShare"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { RentalFilters } from "@/components/rentals/RentalFilters"
 import { fuzzyFilter } from "@/lib/fuzzy"
+import { PageTitle } from "@/components/ui/page-title"
 
 export const dynamic = "force-dynamic"
 
@@ -136,6 +137,16 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
+
+  // ── Type counts (for the chip strip) ───────────────────────────────────────
+  const typeCountRows = await prisma.rentalPost.groupBy({
+    by: ["type"],
+    where: { status: "ACTIVE" },
+    _count: true,
+  })
+  const typeCounts = Object.fromEntries(typeCountRows.map((r) => [r.type, r._count]))
+  const allActiveCount = typeCountRows.reduce((sum, r) => sum + r._count, 0)
+
   const sp = {
     type: searchParams.type,
     city: searchParams.city,
@@ -151,13 +162,12 @@ export default async function RentalsPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Rental &amp; Flatmate Hub</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {total} listing{total !== 1 ? "s" : ""}
-            {searchParams.city ? ` in ${searchParams.city}` : " across all cities"}
-          </p>
-        </div>
+        <PageTitle
+          badge="Rentals"
+          badgeIcon={Home}
+          title="Rental & Flatmate Hub"
+          subtitle={`${total} listing${total !== 1 ? "s" : ""}${searchParams.city ? ` in ${searchParams.city}` : " across all cities"}`}
+        />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isPremium && session?.user?.id && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
@@ -172,7 +182,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
       </div>
 
       {/* Filters */}
-      <RentalFilters current={sp} />
+      <RentalFilters current={sp} counts={typeCounts} totalCount={allActiveCount} />
 
       {/* Premium listings label */}
       {rentals.some((r) => r.isBoosted) && (

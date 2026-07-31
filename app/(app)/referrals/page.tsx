@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { ReferralSearchBar } from "@/components/referrals/ReferralSearchBar"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatRelativeTime } from "@/lib/utils"
 import { fuzzyIncludes } from "@/lib/fuzzy"
 import Image from "next/image"
@@ -166,10 +167,12 @@ export default async function ReferralsPage({ searchParams }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Job Referrals</h1>
-          <p className="text-muted-foreground text-sm mt-1">Get referrals from verified colleagues</p>
-        </div>
+        <PageTitle
+          badge="Referrals"
+          badgeIcon={Briefcase}
+          title="Job Referrals"
+          subtitle="Get referrals from verified colleagues"
+        />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isPremium && myId && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">

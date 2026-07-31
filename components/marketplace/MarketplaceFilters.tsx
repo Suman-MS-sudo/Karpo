@@ -2,33 +2,35 @@
 import { useRouter, usePathname } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  Search, SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight,
+  Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Check,
   LayoutGrid, Cpu, Car, Armchair, Tv, BookOpen,
   Dumbbell, Shirt, UtensilsCrossed, Briefcase,
   Bike, Activity, Palette, Ticket, Package,
+  type LucideIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SortDropdown } from "@/components/ui/sort-dropdown"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { cn } from "@/lib/utils"
 import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
 
-const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  "":           LayoutGrid,
-  ELECTRONICS:  Cpu,
-  VEHICLE:      Car,
-  FURNITURE:    Armchair,
-  APPLIANCE:    Tv,
-  BOOKS:        BookOpen,
-  SPORTS:       Dumbbell,
-  CLOTHING:     Shirt,
-  KITCHEN:      UtensilsCrossed,
-  OFFICE:       Briefcase,
-  BICYCLE:      Bike,
-  HEALTH:       Activity,
-  HOME_DECOR:   Palette,
-  TICKETS:      Ticket,
-  OTHER:        Package,
+const CATEGORY_META: Record<string, { Icon: LucideIcon; iconBg: string; iconColor: string }> = {
+  "":           { Icon: LayoutGrid,       iconBg: "bg-slate-100 dark:bg-white/10",         iconColor: "text-slate-600 dark:text-white"          },
+  ELECTRONICS:  { Icon: Cpu,              iconBg: "bg-cyan-100 dark:bg-cyan-500/20",       iconColor: "text-cyan-600 dark:text-cyan-400"        },
+  VEHICLE:      { Icon: Car,              iconBg: "bg-blue-100 dark:bg-blue-500/20",       iconColor: "text-blue-600 dark:text-blue-400"        },
+  FURNITURE:    { Icon: Armchair,         iconBg: "bg-amber-100 dark:bg-amber-500/20",     iconColor: "text-amber-600 dark:text-amber-400"      },
+  APPLIANCE:    { Icon: Tv,               iconBg: "bg-violet-100 dark:bg-violet-500/20",   iconColor: "text-violet-600 dark:text-violet-400"    },
+  BOOKS:        { Icon: BookOpen,         iconBg: "bg-orange-100 dark:bg-orange-500/20",   iconColor: "text-orange-600 dark:text-orange-400"    },
+  SPORTS:       { Icon: Dumbbell,         iconBg: "bg-lime-100 dark:bg-lime-500/20",       iconColor: "text-lime-600 dark:text-lime-400"        },
+  CLOTHING:     { Icon: Shirt,            iconBg: "bg-pink-100 dark:bg-pink-500/20",       iconColor: "text-pink-600 dark:text-pink-400"        },
+  KITCHEN:      { Icon: UtensilsCrossed,  iconBg: "bg-yellow-100 dark:bg-yellow-500/20",   iconColor: "text-yellow-600 dark:text-yellow-400"    },
+  OFFICE:       { Icon: Briefcase,        iconBg: "bg-slate-100 dark:bg-slate-500/20",     iconColor: "text-slate-600 dark:text-slate-400"      },
+  BICYCLE:      { Icon: Bike,             iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400"  },
+  HEALTH:       { Icon: Activity,         iconBg: "bg-rose-100 dark:bg-rose-500/20",       iconColor: "text-rose-600 dark:text-rose-400"        },
+  HOME_DECOR:   { Icon: Palette,          iconBg: "bg-purple-100 dark:bg-purple-500/20",   iconColor: "text-purple-600 dark:text-purple-400"    },
+  TICKETS:      { Icon: Ticket,           iconBg: "bg-indigo-100 dark:bg-indigo-500/20",   iconColor: "text-indigo-600 dark:text-indigo-400"    },
+  OTHER:        { Icon: Package,          iconBg: "bg-red-100 dark:bg-red-500/20",         iconColor: "text-red-600 dark:text-red-400"          },
 }
 
 interface Filters {
@@ -44,6 +46,8 @@ interface Filters {
 
 interface Props {
   current: Filters
+  counts?: Record<string, number>
+  totalCount?: number
 }
 
 const SORT_OPTIONS = [
@@ -54,7 +58,7 @@ const SORT_OPTIONS = [
   { value: "boosted",    label: "Boosted first" },
 ]
 
-export function MarketplaceFilters({ current }: Props) {
+export function MarketplaceFilters({ current, counts = {}, totalCount = 0 }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
   const pillsRef     = useRef<HTMLDivElement>(null)
@@ -167,13 +171,13 @@ export function MarketplaceFilters({ current }: Props) {
       {/* Search + sort row */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 pointer-events-none" />
           <Input
             placeholder="Search listings — iPhone, sofa, bike…"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") applyFilters() }}
-            className="pl-9 pr-24 h-10"
+            className="pl-10 pr-24 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
           />
           <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchValue && (
@@ -195,27 +199,25 @@ export function MarketplaceFilters({ current }: Props) {
         </div>
 
         {/* Sort */}
-        <div className="relative">
-          <select
-            value={current.sort ?? "newest"}
-            onChange={(e) => push({ sort: e.target.value === "newest" ? undefined : e.target.value })}
-            className="h-10 pl-3 pr-8 rounded-md border border-input bg-background text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        </div>
+        <SortDropdown
+          options={SORT_OPTIONS}
+          value={current.sort ?? "newest"}
+          onChange={(v) => push({ sort: v === "newest" ? undefined : v })}
+        />
 
         {/* Advanced filters toggle */}
         <Button
           variant={showAdvanced ? "default" : "outline"}
           size="sm"
-          className="h-10 gap-2 shrink-0"
+          className={cn(
+            "h-10 gap-2 shrink-0 rounded-full font-medium",
+            showAdvanced
+              ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent text-white hover:from-violet-600 hover:to-fuchsia-600"
+              : "border-2 border-violet-500 text-foreground hover:bg-violet-50 dark:hover:bg-violet-950/30"
+          )}
           onClick={() => setShowAdvanced((v) => !v)}
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <SlidersHorizontal className={cn("h-4 w-4", !showAdvanced && "text-violet-500")} />
           Filters
           {(activeFilterCount > 0 || hasPendingChange) && (
             <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
@@ -245,23 +247,33 @@ export function MarketplaceFilters({ current }: Props) {
           <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
 
-        <div ref={pillsRef} className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide flex-1">
+        <div ref={pillsRef} className="flex flex-1 overflow-x-auto pb-0.5 scrollbar-hide">
           {[{ value: "", label: "All" }, ...LISTING_CATEGORIES].map((cat) => {
             const isActive = (current.category ?? "") === cat.value
-            const Icon = CATEGORY_ICONS[cat.value] ?? Package
+            const meta = CATEGORY_META[cat.value] ?? CATEGORY_META[""]
+            const count = cat.value === "" ? totalCount : (counts[cat.value] ?? 0)
             return (
               <button
                 key={cat.value}
                 onClick={() => push({ category: cat.value || undefined, q: current.q })}
                 className={cn(
-                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all shrink-0 border",
-                  isActive
-                    ? "bg-foreground text-background border-foreground shadow-sm"
-                    : "bg-transparent border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground hover:bg-muted/50"
+                  "flex flex-col items-center gap-1.5 py-2 relative transition-all duration-150 group shrink-0 min-w-[76px]",
+                  isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
                 )}
               >
-                <Icon className="h-3 w-3 shrink-0" />
-                {cat.label}
+                <div className={cn(
+                  "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
+                  isActive ? cn(meta.iconBg, "ring-2 ring-fuchsia-400 scale-110 shadow-[0_0_12px_rgba(217,70,239,0.4)]") : cn(meta.iconBg, "group-hover:scale-105")
+                )}>
+                  <meta.Icon className={cn("h-4.5 w-4.5", meta.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+                <span className={cn("text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                  {cat.label}
+                </span>
+                <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                  {count}
+                </span>
+                <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
               </button>
             )
           })}
@@ -282,52 +294,55 @@ export function MarketplaceFilters({ current }: Props) {
 
       {/* Advanced filter panel */}
       {showAdvanced && (
-        <div className="bg-muted/40 border border-border rounded-xl p-4 space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-background border border-border rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
             {/* Condition */}
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Condition</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2.5 uppercase tracking-wide">Condition</p>
               <div className="space-y-1.5">
-                {LISTING_CONDITIONS.map((c) => (
-                  <button
-                    key={c.value}
-                    onClick={() => setPending((p) => ({ ...p, condition: p.condition === c.value ? "" : c.value }))}
-                    className={cn(
-                      "w-full text-left text-sm px-2.5 py-1.5 rounded-lg border transition-all",
-                      pending.condition === c.value ? c.badge + " font-semibold" : "border-transparent hover:bg-muted"
-                    )}
-                  >
-                    {c.label}
-                  </button>
-                ))}
+                {LISTING_CONDITIONS.map((c) => {
+                  const isActive = pending.condition === c.value
+                  return (
+                    <button
+                      key={c.value}
+                      onClick={() => setPending((p) => ({ ...p, condition: p.condition === c.value ? "" : c.value }))}
+                      className={cn(
+                        "w-full text-left text-[15px] px-2.5 py-1.5 rounded-lg transition-all",
+                        isActive ? "font-bold text-violet-600 dark:text-violet-400" : "font-medium text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {c.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
             {/* Price range */}
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Price Range</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2.5 uppercase tracking-wide">Price Range</p>
               <div className="space-y-2">
                 <Input
                   type="number"
                   placeholder="Min ₹"
                   value={pending.minPrice}
                   onChange={(e) => setPending((p) => ({ ...p, minPrice: e.target.value }))}
-                  className="h-8 text-sm"
+                  className="h-9 text-[15px] rounded-full font-medium text-muted-foreground placeholder:text-muted-foreground"
                 />
                 <Input
                   type="number"
                   placeholder="Max ₹"
                   value={pending.maxPrice}
                   onChange={(e) => setPending((p) => ({ ...p, maxPrice: e.target.value }))}
-                  className="h-8 text-sm"
+                  className="h-9 text-[15px] rounded-full font-medium text-muted-foreground placeholder:text-muted-foreground"
                 />
               </div>
-              <div className="flex flex-wrap gap-1 mt-2">
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
                 {[["Under 5k", "", "5000"], ["5k-25k", "5000", "25000"], ["25k+", "25000", ""]].map(([l, mn, mx]) => (
                   <button
                     key={l}
                     onClick={() => setPending((p) => ({ ...p, minPrice: mn, maxPrice: mx }))}
-                    className="text-xs px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                    className="text-xs font-medium px-2.5 py-1 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
                   >
                     {l}
                   </button>
@@ -337,7 +352,7 @@ export function MarketplaceFilters({ current }: Props) {
 
             {/* City — autocomplete */}
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">City</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2.5 uppercase tracking-wide">City</p>
               <CityAutocomplete
                 value={pending.city}
                 onChange={(city) => setPending((p) => ({ ...p, city }))}
@@ -347,19 +362,19 @@ export function MarketplaceFilters({ current }: Props) {
 
             {/* Negotiable + extras */}
             <div className="sm:col-span-2 lg:col-span-2">
-              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">More options</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-2.5 uppercase tracking-wide">More options</p>
               <button
                 onClick={() => setPending((p) => ({ ...p, negotiable: !p.negotiable }))}
                 className={cn(
-                  "flex items-center gap-2 w-full px-3 py-2 rounded-lg border text-sm transition-all",
+                  "flex items-center gap-2 w-full px-3 py-2 rounded-full border text-[15px] transition-all",
                   pending.negotiable
-                    ? "bg-success/10 border-success/30 text-success font-medium"
-                    : "border-border hover:bg-muted"
+                    ? "bg-violet-50 dark:bg-violet-950/30 border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 font-bold"
+                    : "border-border text-muted-foreground font-medium hover:text-foreground"
                 )}
               >
                 <span className="text-base">🤝</span>
                 Negotiable price only
-                {pending.negotiable && <span className="ml-auto text-success">✓</span>}
+                {pending.negotiable && <Check className="h-4 w-4 ml-auto text-violet-600 dark:text-violet-400" />}
               </button>
             </div>
           </div>
