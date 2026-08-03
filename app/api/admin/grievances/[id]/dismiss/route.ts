@@ -7,5 +7,5 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (session?.user?.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   await prisma.appGrievance.update({ where: { id: params.id }, data: { status: "DISMISSED" } })
-  return NextResponse.redirect(new URL("/admin/reports", req.url), 303)
+  return NextResponse.redirect(new URL("/admin/concerns", req.url), 303)
 }

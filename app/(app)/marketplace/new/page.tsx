@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import {
   ArrowLeft, Upload, X, Loader2, Info, MapPin, Phone, Search, ChevronDown,
   Cpu, Car, Armchair, Tv, BookOpen, Dumbbell, Shirt,
-  UtensilsCrossed, Briefcase, Bike, Activity, Palette, Ticket, Package,
+  UtensilsCrossed, Briefcase, Music, Activity, Palette, Ticket, Package,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ import type { PickedLocation } from "@/components/marketplace/LocationPicker"
 const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ELECTRONICS: Cpu, VEHICLE: Car, FURNITURE: Armchair, APPLIANCE: Tv,
   BOOKS: BookOpen, SPORTS: Dumbbell, CLOTHING: Shirt, KITCHEN: UtensilsCrossed,
-  OFFICE: Briefcase, BICYCLE: Bike, HEALTH: Activity, HOME_DECOR: Palette,
+  OFFICE: Briefcase, MUSIC: Music, HEALTH: Activity, HOME_DECOR: Palette,
   TICKETS: Ticket, OTHER: Package,
 }
 

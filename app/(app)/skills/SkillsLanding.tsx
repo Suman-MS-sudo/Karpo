@@ -4,7 +4,7 @@ import {
   Sparkles, Plus, Wrench, Star, Heart, Users, CheckCircle2, Smile, ArrowRight,
   Code2, Palette, Megaphone, PenTool, Briefcase, TrendingUp, ShieldCheck,
   Database, Cpu, Calculator, Scale, Languages, GraduationCap, HeartPulse,
-  MessageSquareText, Handshake,
+  MessageSquareText, Handshake, Camera,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -27,6 +27,7 @@ const MORE_CATEGORIES = [
   { value: "LANGUAGE",   label: "Languages",  Icon: Languages,     iconBg: "bg-green-100 dark:bg-green-500/20",   iconColor: "text-green-600 dark:text-green-400"   },
   { value: "COACHING",   label: "Coaching",   Icon: GraduationCap, iconBg: "bg-orange-100 dark:bg-orange-500/20", iconColor: "text-orange-600 dark:text-orange-400" },
   { value: "WELLNESS",   label: "Wellness",   Icon: HeartPulse,    iconBg: "bg-rose-100 dark:bg-rose-500/20",     iconColor: "text-rose-600 dark:text-rose-400"     },
+  { value: "PHOTOGRAPHY",label: "Photography",Icon: Camera,        iconBg: "bg-fuchsia-100 dark:bg-fuchsia-500/20", iconColor: "text-fuchsia-600 dark:text-fuchsia-400" },
 ]
 
 const ALL_CATEGORIES = [...PRIMARY_CATEGORIES, ...MORE_CATEGORIES]

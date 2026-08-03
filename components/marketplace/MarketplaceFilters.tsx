@@ -5,7 +5,7 @@ import {
   Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Check,
   LayoutGrid, Cpu, Car, Armchair, Tv, BookOpen,
   Dumbbell, Shirt, UtensilsCrossed, Briefcase,
-  Bike, Activity, Palette, Ticket, Package,
+  Music, Activity, Palette, Ticket, Package,
   type LucideIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,7 @@ const CATEGORY_META: Record<string, { Icon: LucideIcon; iconBg: string; iconColo
   CLOTHING:     { Icon: Shirt,            iconBg: "bg-pink-100 dark:bg-pink-500/20",       iconColor: "text-pink-600 dark:text-pink-400"        },
   KITCHEN:      { Icon: UtensilsCrossed,  iconBg: "bg-yellow-100 dark:bg-yellow-500/20",   iconColor: "text-yellow-600 dark:text-yellow-400"    },
   OFFICE:       { Icon: Briefcase,        iconBg: "bg-slate-100 dark:bg-slate-500/20",     iconColor: "text-slate-600 dark:text-slate-400"      },
-  BICYCLE:      { Icon: Bike,             iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400"  },
+  MUSIC:        { Icon: Music,            iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400"  },
   HEALTH:       { Icon: Activity,         iconBg: "bg-rose-100 dark:bg-rose-500/20",       iconColor: "text-rose-600 dark:text-rose-400"        },
   HOME_DECOR:   { Icon: Palette,          iconBg: "bg-purple-100 dark:bg-purple-500/20",   iconColor: "text-purple-600 dark:text-purple-400"    },
   TICKETS:      { Icon: Ticket,           iconBg: "bg-indigo-100 dark:bg-indigo-500/20",   iconColor: "text-indigo-600 dark:text-indigo-400"    },

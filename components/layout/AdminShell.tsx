@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
   LayoutDashboard, Users, Building2, Tag, Shield, FileWarning, BadgeCheck,
-  LogOut, ChevronRight, Sparkles,
+  LogOut, ChevronRight, Sparkles, MessageSquareWarning,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useOpenConcernsCount } from "@/hooks/useOpenConcernsCount"
 
 const NAV = [
   { href: "/admin",                 label: "Dashboard",         icon: LayoutDashboard, exact: true,  color: "text-sky-400",    bg: "bg-sky-500/15",    topbarColor: "text-sky-600 dark:text-sky-400"       },
@@ -17,11 +18,13 @@ const NAV = [
   { href: "/admin/deals",           label: "Deals",             icon: Tag,             exact: false, color: "text-rose-400",   bg: "bg-rose-500/15",   topbarColor: "text-rose-600 dark:text-rose-400"     },
   { href: "/admin/concierge",       label: "Concierge",         icon: Shield,          exact: false, color: "text-cyan-400",   bg: "bg-cyan-500/15",   topbarColor: "text-cyan-600 dark:text-cyan-400"     },
   { href: "/admin/reports",         label: "Reports",           icon: FileWarning,     exact: false, color: "text-amber-400",  bg: "bg-amber-500/15",  topbarColor: "text-amber-600 dark:text-amber-400"   },
+  { href: "/admin/concerns",        label: "Concerns",          icon: MessageSquareWarning, exact: false, color: "text-orange-400", bg: "bg-orange-500/15", topbarColor: "text-orange-600 dark:text-orange-400" },
 ]
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const active = NAV.find(({ href, exact }) => exact ? pathname === href : pathname === href || pathname.startsWith(href + "/"))
+  const openConcerns = useOpenConcernsCount()
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-[#f7f7fb] dark:bg-[#0b0d14]">
@@ -60,6 +63,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   <Icon className={cn("h-4 w-4", isActive ? color : "text-slate-400")} />
                 </span>
                 {label}
+                {href === "/admin/concerns" && openConcerns > 0 && (
+                  <span className="ml-auto h-5 min-w-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                    {openConcerns > 9 ? "9+" : openConcerns}
+                  </span>
+                )}
                 {isActive && <ChevronRight className="h-3 w-3 ml-auto opacity-60" />}
               </Link>
             )

@@ -10,7 +10,6 @@ import { cn, formatRelativeTime } from "@/lib/utils"
 const CATEGORIES = [
   { id: "BUG",             label: "Bug / something's broken" },
   { id: "FEATURE_REQUEST", label: "Feature request" },
-  { id: "HARASSMENT",      label: "Harassment / inappropriate behavior" },
   { id: "PAYMENT",         label: "Payment / billing issue" },
   { id: "ACCOUNT",         label: "Account / verification issue" },
   { id: "OTHER",           label: "Other" },

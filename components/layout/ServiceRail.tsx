@@ -6,10 +6,11 @@ import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
 import { SERVICES } from "@/config/services"
 import { cn } from "@/lib/utils"
+import { useOpenConcernsCount } from "@/hooks/useOpenConcernsCount"
 import {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users,
   GraduationCap, Shield, Gift, LayoutDashboard, Pin, PinOff,
-  Building2, FileWarning, BadgeCheck,
+  Building2, FileWarning, BadgeCheck, MessageSquareWarning,
 } from "lucide-react"
 
 const ADMIN_SUB_ITEMS = [
@@ -20,6 +21,7 @@ const ADMIN_SUB_ITEMS = [
   { href: "/admin/deals",            label: "Deals",             Icon: Tag,             exact: false },
   { href: "/admin/concierge",        label: "Concierge",         Icon: Shield,          exact: false },
   { href: "/admin/reports",          label: "Reports",           Icon: FileWarning,     exact: false },
+  { href: "/admin/concerns",         label: "Concerns",          Icon: MessageSquareWarning, exact: false },
 ]
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -44,6 +46,7 @@ export function ServiceRail() {
   const cleanPath = pathname.split("?")[0]
   const { data: session } = useSession()
   const isAdminUser = session?.user?.role === "ADMIN"
+  const openConcerns = useOpenConcernsCount(isAdminUser)
 
   const [pinned, setPinned]       = useState<Set<string>>(new Set())
   const [panePinned, setPanePinned] = useState(false)
@@ -248,6 +251,11 @@ export function ServiceRail() {
                                 panePinned ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity duration-100 delay-150",
                                 isSubActive ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
                               )}>{sub.label}</span>
+                              {sub.href === "/admin/concerns" && openConcerns > 0 && (
+                                <span className="h-4 min-w-4 px-1 mr-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                                  {openConcerns > 9 ? "9+" : openConcerns}
+                                </span>
+                              )}
                             </Link>
                           )
                         })}
@@ -304,6 +312,11 @@ export function ServiceRail() {
                           )}>
                             {sub.label}
                           </span>
+                          {sub.href === "/admin/concerns" && openConcerns > 0 && (
+                            <span className="h-4 min-w-4 px-1 mr-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                              {openConcerns > 9 ? "9+" : openConcerns}
+                            </span>
+                          )}
                         </Link>
                       )
                     })}

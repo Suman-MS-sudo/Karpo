@@ -18,6 +18,7 @@ const CATEGORIES = [
   { value: "COACHING",    label: "Coaching" },
   { value: "CREATIVE",    label: "Creative" },
   { value: "WELLNESS",    label: "Wellness" },
+  { value: "PHOTOGRAPHY", label: "Photography" },
 ]
 
 const FORMATS = [

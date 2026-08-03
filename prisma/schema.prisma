@@ -298,7 +298,7 @@ model ListingReport {
 model AppGrievance {
   id        String    @id @default(cuid())
   userId    String
-  category  String    // BUG | FEATURE_REQUEST | HARASSMENT | PAYMENT | ACCOUNT | OTHER
+  category  String    // BUG | FEATURE_REQUEST | PAYMENT | ACCOUNT | OTHER (HARASSMENT retired, may still exist on old rows)
   message   String
   status    String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
   createdAt DateTime  @default(now())
