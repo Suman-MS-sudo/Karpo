@@ -111,6 +111,19 @@ export default function LandingPage() {
           <div className="absolute bottom-0 right-1/4 h-[360px] w-[360px] rounded-full bg-primary/10 blur-[120px]" />
         </div>
 
+        {/* Logo watermark — matches the sign-in page treatment */}
+        <div
+          className="pointer-events-none select-none absolute top-1/2 right-[-4%] -translate-y-1/2 w-[560px] h-[560px] sm:w-[720px] sm:h-[720px] opacity-[0.28] dark:opacity-[0.35] -z-10"
+          aria-hidden="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-transparent.png"
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          />
+        </div>
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 lg:pt-28 lg:pb-20">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-8">
