@@ -2,12 +2,11 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
-import { Outfit } from "next/font/google"
 import { Plus, Users, ExternalLink, Calendar, MapPin, Clock, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime, cn } from "@/lib/utils"
 
-const outfit = Outfit({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" })
 
 export const metadata = { title: "My Events" }
 export const dynamic  = "force-dynamic"
@@ -55,10 +54,7 @@ export default async function MyEventsPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Events</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Events and communities you've created</p>
-        </div>
+        <PageTitle badge="My Events" badgeIcon={Calendar} title="My Events" subtitle="Events and communities you've created" />
         <Button asChild>
           <Link href="/events/new"><Plus className="h-4 w-4" /> Create Event</Link>
         </Button>
@@ -89,7 +85,7 @@ export default async function MyEventsPage({ searchParams }: PageProps) {
               key={t.key}
               href={`/my-events?tab=${t.key}`}
               className={cn(
-                outfit.className,
+                "font-outfit",
                 "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5",
                 isActive
                   ? "bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-sm"

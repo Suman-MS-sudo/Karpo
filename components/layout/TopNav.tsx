@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/shared/NotificationBell"
 import { MessageIcon } from "@/components/shared/MessageIcon"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { ServiceGrid } from "@/components/shared/ServiceGrid"
+import { LocationSwitcher } from "@/components/layout/LocationSwitcher"
 import { getInitials } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { ServiceConfig } from "@/config/services"
@@ -110,6 +111,9 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
 
         {/* Theme toggle */}
         <ThemeToggle />
+
+        {/* Location */}
+        <LocationSwitcher />
 
         {/* User menu */}
         {session?.user && (

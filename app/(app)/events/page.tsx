@@ -78,6 +78,7 @@ export default async function EventsPage() {
         isPremium={isPremium}
         myEventsCount={myEventsCount}
         eventsLimit={FREE_LIMITS.events}
+        initialCity={session?.user?.city ?? undefined}
       />
     </Suspense>
   )

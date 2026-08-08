@@ -3,7 +3,8 @@ import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
 import { Plus, ArrowRight, Search, Zap, Car } from "lucide-react"
-import { PageTitle } from "@/components/ui/page-title"
+import { PageHero } from "@/components/shared/PageHero"
+import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
@@ -110,6 +111,10 @@ const FREQ_COLORS: Record<string, string> = {
   ONCE:     "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800",
 }
 
+const FREQ_ICONS: Record<string, string> = {
+  DAILY: "Repeat", WEEKDAYS: "Briefcase", WEEKENDS: "Home", WEEKLY: "Calendar", ONCE: "Clock",
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function CarpoolPage({
@@ -138,11 +143,20 @@ export default async function CarpoolPage({
   const hasFilters = !!(timeOfDay || freqFilter.length || vehicleFilter.length || acOnly || maxPrice !== null)
   const isFiltered = isSearching || hasFilters
 
+  const session  = await auth()
+  const userCity = session?.user?.city
+  // Default to routes touching the user's own city when they haven't
+  // searched a specific route — mirrors the top-nav location switcher.
+  const cityWhere = !isSearching && userCity
+    ? { OR: [{ fromLocation: { contains: userCity } }, { toLocation: { contains: userCity } }] }
+    : {}
+
   await expireOneTimeCarpoolRoutes()
 
   const allRoutes = await prisma.carpoolRoute.findMany({
     where: {
       isActive: true,
+      ...cityWhere,
       ...(freqFilter.length > 0    ? { frequency:    { in: freqFilter    } } : {}),
       ...(vehicleFilter.length > 0 ? { vehicleType:  { in: vehicleFilter } } : {}),
       ...(acOnly                   ? { acAvailable:  true                  } : {}),
@@ -159,11 +173,17 @@ export default async function CarpoolPage({
     .filter((r) => !isSearching || routeMatchesSearch(r, pickupLat!, pickupLng!, dropoffLat!, dropoffLng!))
     .slice(0, 40)
 
-  const session = await auth()
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
   const myCarpoolCount = session?.user?.id && !isPremium
     ? await prisma.carpoolRoute.count({ where: { userId: session.user.id, isActive: true } })
     : 0
+
+  const [activeRouteCount, seatsAgg, freqCountRows] = await Promise.all([
+    prisma.carpoolRoute.count({ where: { isActive: true } }),
+    prisma.carpoolRoute.aggregate({ where: { isActive: true }, _sum: { seatsAvailable: true } }),
+    prisma.carpoolRoute.groupBy({ by: ["frequency"], where: { isActive: true }, _count: true }),
+  ])
+  const freqCounts = Object.fromEntries(freqCountRows.map((r) => [r.frequency, r._count]))
 
   const boostedCount = routes.filter((r) => r.isBoosted).length
 
@@ -176,24 +196,54 @@ export default async function CarpoolPage({
   if (maxPrice !== null)        filterSummaryParts.push(`≤ ₹${maxPrice}`)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <PageTitle
-          badge="Carpool"
-          badgeIcon={Car}
-          title="Corporate Carpool"
-          subtitle="Share your commute with verified colleagues"
-        />
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {!isPremium && session?.user?.id && (
-            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-amber-700 dark:text-amber-300 font-medium">{myCarpoolCount}/{FREE_LIMITS.carpool} route posted</span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
-            </div>
-          )}
-          <Button asChild><Link href="/carpool/new"><Plus className="h-4 w-4" /> Offer Ride</Link></Button>
+    <div className="min-h-full bg-background">
+      <PageHero
+        imageUrl="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=1920&q=85&auto=format&fit=crop"
+        eyebrow="Corporate Carpool"
+        titleWhite="Share Your"
+        titleAccent="Commute"
+        description="Split the cost and the drive with verified colleagues."
+        overlayFrom="from-orange-950/50" overlayTo="to-amber-950/40"
+        blobFrom="bg-orange-500/30" blobTo="bg-amber-400/20"
+        eyebrowGradient="from-orange-500/30 via-amber-500/30 to-yellow-400/30"
+        ctaGradient="from-orange-500 via-amber-500 to-yellow-400"
+        focusRing="focus:ring-orange-400/50"
+        stats={[
+          { value: activeRouteCount.toLocaleString(), label: "Active Routes", gradient: "from-orange-300 to-amber-200" },
+          { value: (seatsAgg._sum.seatsAvailable ?? 0).toLocaleString(), label: "Seats Available", gradient: "from-emerald-300 to-teal-200" },
+          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+        ]}
+        primaryCta={{ href: "/carpool/new", label: "Offer Ride", icon: Plus }}
+      />
+      <CategoryStrip
+        activeValue={freqFilter[0] ?? "All"}
+        basePath="/carpool"
+        paramName="freq"
+        ringClass="ring-orange-400"
+        glowShadow="shadow-[0_0_12px_rgba(251,146,60,0.4)]"
+        underlineGradient="from-orange-500 to-amber-400"
+        items={[
+          { value: "All", label: "All", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: activeRouteCount },
+          ...Object.entries(FREQ_LABEL).map(([value, label]) => ({
+            value,
+            label,
+            icon: FREQ_ICONS[value] ?? "Calendar",
+            iconBg: "bg-orange-100 dark:bg-orange-500/20",
+            iconColor: "text-orange-600 dark:text-orange-400",
+            count: freqCounts[value] ?? 0,
+          })),
+        ]}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {!isPremium && session?.user?.id && (
+        <div className="flex justify-end mb-4">
+          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+            <span className="text-amber-700 dark:text-amber-300 font-medium">{myCarpoolCount}/{FREE_LIMITS.carpool} route posted</span>
+            <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search + filter bar */}
       <Suspense fallback={<div className="h-24 rounded-2xl bg-muted animate-pulse mb-6" />}>
@@ -241,68 +291,71 @@ export default async function CarpoolPage({
 
       {routes.length === 0 && !isFiltered ? (
         <div className="text-center py-20">
-          <p className="text-4xl mb-4">🚗</p>
+          <Car className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
           <h3 className="text-lg font-semibold mb-2">No carpool routes yet</h3>
           <p className="text-muted-foreground mb-6">Share your commute and split the cost!</p>
           <Button asChild><Link href="/carpool/new">Offer First Ride</Link></Button>
         </div>
       ) : routes.length === 0 && isFiltered ? null : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {routes.map((route) => {
             const isBoosted = route.isBoosted
             return (
-              <Link key={route.id} href={`/carpool/${route.id}`} className="block group">
-                <div className={`bg-card border rounded-xl overflow-hidden hover:shadow-md transition-all ${
+              <Link key={route.id} href={`/carpool/${route.id}`} className="group flex flex-col">
+                <div className={`bg-card border-2 rounded-3xl overflow-hidden flex flex-col h-full transition-all duration-200 hover:-translate-y-1 ${
                   isBoosted
-                    ? "border-amber-300 dark:border-amber-700"
-                    : "border-border border-l-4 border-l-orange-400"
+                    ? "border-amber-300 dark:border-amber-700 hover:shadow-[0_12px_36px_rgba(245,158,11,0.18)]"
+                    : "border-border hover:border-orange-400/60 hover:shadow-[0_12px_36px_rgba(251,146,60,0.15)]"
                 }`}>
                   {isBoosted && <PremiumStrip />}
-                  <div className="p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Route */}
-                      <div className="flex-1 min-w-0">
-                        {isBoosted && <div className="mb-1.5"><PremiumBadge variant="boosted" /></div>}
-                        <div className="flex items-center gap-1.5 text-sm font-semibold flex-wrap">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                          <span className="truncate max-w-[140px]">{route.fromLocation}</span>
-                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
-                          <span className="truncate max-w-[140px]">{route.toLocation}</span>
-                        </div>
-                        {/* Pills row */}
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${FREQ_COLORS[route.frequency] ?? "border-border bg-muted text-muted-foreground"}`}>
-                            {FREQ_LABEL[route.frequency] ?? route.frequency}
-                          </span>
-                          {route.frequency === "ONCE" && route.departureAt && (
-                            <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{formatDate(route.departureAt)}</span>
-                          )}
-                          <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.departureTime}</span>
-                          <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.vehicleType}</span>
-                          {route.acAvailable && (
-                            <span className="text-[11px] bg-sky-100 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded-full">AC</span>
-                          )}
-                        </div>
-                      </div>
-                      {/* Price + seats + share */}
-                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                  <div className="p-5 flex flex-col flex-1">
+                    {isBoosted && <div className="mb-2"><PremiumBadge variant="boosted" /></div>}
+
+                    <div className="flex items-center gap-1.5 text-sm font-semibold flex-wrap">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="truncate">{route.fromLocation}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm font-semibold flex-wrap mt-1">
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 rotate-90" />
+                      <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+                      <span className="truncate">{route.toLocation}</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${FREQ_COLORS[route.frequency] ?? "border-border bg-muted text-muted-foreground"}`}>
+                        {FREQ_LABEL[route.frequency] ?? route.frequency}
+                      </span>
+                      {route.frequency === "ONCE" && route.departureAt && (
+                        <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{formatDate(route.departureAt)}</span>
+                      )}
+                      <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.departureTime}</span>
+                      <span className="text-[11px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{route.vehicleType}</span>
+                      {route.acAvailable && (
+                        <span className="text-[11px] bg-sky-100 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded-full">AC</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-end justify-between mt-3">
+                      <div>
                         <p className={`text-lg font-bold ${isBoosted ? "text-amber-600 dark:text-amber-400" : "text-primary-600"}`}>
                           {formatCurrency(route.pricePerSeat)}
                         </p>
                         <p className="text-[11px] text-muted-foreground">per seat</p>
-                        <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                          {route.seatsAvailable} seat{route.seatsAvailable !== 1 ? "s" : ""}
-                        </p>
+                      </div>
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        {route.seatsAvailable} seat{route.seatsAvailable !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+
+                    <div className="mt-auto pt-4">
+                      <div className="flex items-center justify-between border-t border-border pt-3">
+                        <UserCard user={route.user} size="sm" clickable={false} />
                         <SocialShare
                           title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
                           path={`/carpool/${route.id}`}
                           variant="icon"
                         />
                       </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <UserCard user={route.user} size="sm" clickable={false} />
                     </div>
                   </div>
                 </div>
@@ -311,6 +364,7 @@ export default async function CarpoolPage({
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

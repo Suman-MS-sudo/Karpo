@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Bell, CheckCheck, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatRelativeTime } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
@@ -54,7 +55,7 @@ export default function NotificationsPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-2xl font-bold">Notifications</h1>
+          <PageTitle badge="Notifications" badgeIcon={Bell} title="Notifications" subtitle="Stay on top of activity across Korpo." />
         </div>
         {notifs.some((n) => !n.isRead) && (
           <Button variant="ghost" size="sm" onClick={markAllRead}>

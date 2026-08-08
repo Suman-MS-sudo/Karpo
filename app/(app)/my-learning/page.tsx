@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Plus, GraduationCap, ExternalLink, Clock, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 export const metadata = { title: "My Courses" }
@@ -39,10 +40,7 @@ export default async function MyLearningPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Courses</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Courses and workshops you've created</p>
-        </div>
+        <PageTitle badge="My Courses" badgeIcon={GraduationCap} title="My Courses" subtitle="Courses and workshops you've created" />
         <Button asChild>
           <Link href="/learning/new"><Plus className="h-4 w-4" /> Create Course</Link>
         </Button>

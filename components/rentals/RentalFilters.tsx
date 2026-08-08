@@ -1,7 +1,7 @@
 "use client"
 import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Search, SlidersHorizontal, X, Home, DoorOpen, Users2, Building2, LandPlot, LayoutGrid } from "lucide-react"
+import { Search, SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SortDropdown } from "@/components/ui/sort-dropdown"
@@ -27,19 +27,7 @@ const SORT_OPTIONS = [
 
 interface Props {
   current: Filters
-  counts?: Record<string, number>
-  totalCount?: number
 }
-
-const TYPES = [
-  { value: "",          label: "All",        icon: LayoutGrid, iconBg: "bg-slate-100 dark:bg-white/10",         iconColor: "text-slate-600 dark:text-white"          },
-  { value: "APARTMENT", label: "Apartment",  icon: Building2,  iconBg: "bg-blue-100 dark:bg-blue-500/20",       iconColor: "text-blue-600 dark:text-blue-400"        },
-  { value: "ROOM",      label: "Room",       icon: DoorOpen,   iconBg: "bg-violet-100 dark:bg-violet-500/20",   iconColor: "text-violet-600 dark:text-violet-400"    },
-  { value: "PG",        label: "PG",         icon: Users2,     iconBg: "bg-orange-100 dark:bg-orange-500/20",   iconColor: "text-orange-600 dark:text-orange-400"    },
-  { value: "FLATMATE",  label: "Flatmate",   icon: Users2,     iconBg: "bg-pink-100 dark:bg-pink-500/20",       iconColor: "text-pink-600 dark:text-pink-400"        },
-  { value: "STUDIO",    label: "Studio",     icon: Home,       iconBg: "bg-cyan-100 dark:bg-cyan-500/20",       iconColor: "text-cyan-600 dark:text-cyan-400"        },
-  { value: "VILLA",     label: "Villa",      icon: LandPlot,   iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400"  },
-]
 
 const FURNISHED_OPTS = [
   { value: "",            label: "Any" },
@@ -58,7 +46,7 @@ const RENT_RANGES = [
   { value: "35000-",      label: "₹35k+" },
 ]
 
-export function RentalFilters({ current, counts = {}, totalCount = 0 }: Props) {
+export function RentalFilters({ current }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
 
@@ -116,32 +104,8 @@ export function RentalFilters({ current, counts = {}, totalCount = 0 }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Search + filters toggle row */}
+      {/* Sort + filters toggle row */}
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 pointer-events-none" />
-          <Input
-            placeholder="Search rentals — area, society, landmark…"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") applyFilters() }}
-            className="pl-10 pr-24 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
-          />
-          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchValue && (
-              <button
-                onClick={() => { setSearchValue(""); push({ q: undefined }) }}
-                className="text-muted-foreground hover:text-foreground p-1"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <Button size="sm" className="h-8 px-3 text-xs" onClick={applyFilters}>
-              Search
-            </Button>
-          </div>
-        </div>
-
         {/* Sort */}
         <SortDropdown
           options={SORT_OPTIONS}
@@ -174,39 +138,6 @@ export function RentalFilters({ current, counts = {}, totalCount = 0 }: Props) {
             <X className="h-4 w-4" /> Clear
           </Button>
         )}
-      </div>
-
-      {/* Type chips */}
-      <div className="flex overflow-x-auto pb-0.5 scrollbar-hide">
-        {TYPES.map((t) => {
-          const isActive = (current.type ?? "") === t.value
-          const Icon = t.icon
-          const count = t.value === "" ? totalCount : (counts[t.value] ?? 0)
-          return (
-            <button
-              key={t.value}
-              onClick={() => push({ type: t.value || undefined })}
-              className={cn(
-                "flex flex-col items-center gap-1.5 py-2 relative transition-all duration-150 group shrink-0 min-w-[76px]",
-                isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
-              )}
-            >
-              <div className={cn(
-                "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
-                isActive ? cn(t.iconBg, "ring-2 ring-fuchsia-400 scale-110 shadow-[0_0_12px_rgba(217,70,239,0.4)]") : cn(t.iconBg, "group-hover:scale-105")
-              )}>
-                <Icon className={cn("h-4.5 w-4.5", t.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
-              </div>
-              <span className={cn("text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
-                {t.label}
-              </span>
-              <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
-                {count}
-              </span>
-              <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
-            </button>
-          )
-        })}
       </div>
 
       {/* Advanced filter panel */}

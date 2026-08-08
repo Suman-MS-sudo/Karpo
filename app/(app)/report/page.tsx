@@ -5,6 +5,7 @@ import { ArrowLeft, Flag, Loader2, CheckCircle2, AlertCircle, Clock } from "luci
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { PageTitle } from "@/components/ui/page-title"
 import { cn, formatRelativeTime } from "@/lib/utils"
 
 const CATEGORIES = [
@@ -75,10 +76,7 @@ export default function ReportConcernPage() {
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Flag className="h-5 w-5" /> Report a Concern</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Tell us about a bug, a grievance, or anything about the app that isn't working the way it should. Our team reviews every submission.
-        </p>
+        <PageTitle badge="Report" badgeIcon={Flag} title="Report a Concern" subtitle="Tell us about a bug, grievance, or anything that isn't working right." />
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-5">

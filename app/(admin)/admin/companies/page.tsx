@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Building2, Users, Clock, CheckCircle, XCircle } from "lucide-react"
 import { formatDate, formatRelativeTime } from "@/lib/utils"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 
 export const dynamic = "force-dynamic"
 
@@ -22,13 +23,13 @@ export default async function AdminCompaniesPage() {
   const rejected = pendingRequests.filter((r) => r.status === "REJECTED")
 
   return (
-    <div className="p-6 space-y-8 max-w-5xl">
-      <div>
-        <h1 className="text-xl font-bold flex items-center gap-2"><Building2 className="h-5 w-5" /> Companies</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          {companies.length} approved · {pending.length} pending · {rejected.length} rejected
-        </p>
-      </div>
+    <div className="p-6 space-y-8 max-w-5xl mx-auto">
+      <AdminPageHeader
+        icon={Building2}
+        title="Companies"
+        subtitle={`${companies.length} approved · ${pending.length} pending · ${rejected.length} rejected`}
+        gradient="from-violet-500 to-purple-600"
+      />
 
       {/* Pending approvals */}
       {pending.length > 0 && (

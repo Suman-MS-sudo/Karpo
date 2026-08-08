@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { ReferralSearchBar } from "@/components/referrals/ReferralSearchBar"
-import { PageTitle } from "@/components/ui/page-title"
+import { PageHero } from "@/components/shared/PageHero"
+import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { formatRelativeTime } from "@/lib/utils"
 import { fuzzyIncludes } from "@/lib/fuzzy"
 import Image from "next/image"
@@ -22,6 +23,11 @@ const WORK_MODE_LABELS: Record<string, string> = {
 }
 const JOB_TYPE_LABELS: Record<string, string> = {
   FULL_TIME: "Full-time", PART_TIME: "Part-time", CONTRACT: "Contract", INTERNSHIP: "Internship",
+}
+
+const DEPARTMENT_ICONS: Record<string, string> = {
+  Engineering: "Cpu", Data: "Database", Product: "LayoutDashboard", Design: "Palette",
+  Marketing: "Megaphone", Sales: "TrendingUp", Finance: "Briefcase", HR: "Users", Legal: "Scale",
 }
 
 interface Props {
@@ -54,10 +60,19 @@ export default async function ReferralsPage({ searchParams }: Props) {
   const myReferralsCount = myId && !isPremium
     ? await prisma.jobReferral.count({ where: { userId: myId, status: "OPEN" } })
     : 0
+  const [openCount, hiringCompanies, deptCountRows] = await Promise.all([
+    prisma.jobReferral.count({ where: { status: "OPEN" } }),
+    prisma.jobReferral.findMany({ where: { status: "OPEN" }, select: { companyId: true }, distinct: ["companyId"] }),
+    prisma.jobReferral.groupBy({ by: ["department"], where: { status: "OPEN" }, _count: true }),
+  ])
+  const deptCounts = Object.fromEntries(deptCountRows.map((r) => [r.department, r._count]))
 
   // Build Prisma filters
   const deptFilter     = searchParams.dept    ? searchParams.dept.split(",").filter(Boolean)    : []
   const cityFilter     = searchParams.city    ? searchParams.city.split(",").filter(Boolean)    : []
+  // Default to the user's own city (no explicit filter chip shown) when the
+  // user hasn't picked one themselves — mirrors the top-nav location switcher.
+  const effectiveCityFilter = cityFilter.length ? cityFilter : (session?.user?.city ? [session.user.city] : [])
   const modeFilter     = searchParams.mode    ? searchParams.mode.split(",").filter(Boolean)    : []
   const typeFilter     = searchParams.type    ? searchParams.type.split(",").filter(Boolean)    : []
   const companyQuery   = searchParams.company?.trim()
@@ -81,7 +96,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
     ...(deptFilter.length    ? { department: { in: deptFilter } }                           : {}),
     ...(modeFilter.length    ? { workMode:   { in: modeFilter } }                           : {}),
     ...(typeFilter.length    ? { jobType:    { in: typeFilter } }                           : {}),
-    ...(cityFilter.length    ? { location:   { in: cityFilter } }      : {}),
+    ...(effectiveCityFilter.length ? { location: { in: effectiveCityFilter } } : {}),
     ...(minExp !== undefined ? { experienceMax: { gte: minExp } }                           : {}),
     ...(maxExp !== undefined ? { experienceMin: { lte: maxExp } }                           : {}),
     ...(minSal !== undefined ? { salaryMax: { gte: minSal } }                               : {}),
@@ -165,24 +180,57 @@ export default async function ReferralsPage({ searchParams }: Props) {
     filterParts.push(`${minSal ?? 0}–${maxSal ?? "∞"} LPA`)
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <PageTitle
-          badge="Referrals"
-          badgeIcon={Briefcase}
-          title="Job Referrals"
-          subtitle="Get referrals from verified colleagues"
-        />
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {!isPremium && myId && (
-            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-amber-700 dark:text-amber-300 font-medium">{myReferralsCount}/{FREE_LIMITS.referrals} posted</span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
-            </div>
-          )}
-          <Button asChild><Link href="/referrals/new"><Plus className="h-4 w-4" /> Post Referral</Link></Button>
+    <div className="min-h-full bg-background">
+      <PageHero
+        imageUrl="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1920&q=85&auto=format&fit=crop"
+        eyebrow="Corporate Referrals"
+        titleWhite="Job"
+        titleAccent="Referrals"
+        description="Get referred by verified colleagues at top companies."
+        overlayFrom="from-sky-950/50" overlayTo="to-indigo-950/40"
+        blobFrom="bg-sky-500/30" blobTo="bg-indigo-400/20"
+        eyebrowGradient="from-sky-500/30 via-blue-500/30 to-indigo-400/30"
+        ctaGradient="from-sky-500 via-blue-500 to-indigo-400"
+        focusRing="focus:ring-sky-400/50"
+        stats={[
+          { value: openCount.toLocaleString(), label: "Open Referrals", gradient: "from-sky-300 to-blue-200" },
+          { value: hiringCompanies.length.toLocaleString(), label: "Companies Hiring", gradient: "from-indigo-300 to-violet-200" },
+          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+        ]}
+        primaryCta={{ href: "/referrals/new", label: "Post Referral", icon: Plus }}
+        searchAction="/referrals"
+        searchPlaceholder="Search roles, companies, departments…"
+        defaultQuery={searchParams.q ?? ""}
+      />
+      <CategoryStrip
+        activeValue={deptFilter[0] ?? "All"}
+        basePath="/referrals"
+        paramName="dept"
+        ringClass="ring-sky-400"
+        glowShadow="shadow-[0_0_12px_rgba(56,189,248,0.4)]"
+        underlineGradient="from-sky-500 to-indigo-400"
+        items={[
+          { value: "All", label: "All", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: openCount },
+          ...Object.entries(DEPARTMENT_ICONS).map(([dept, icon]) => ({
+            value: dept,
+            label: dept,
+            icon,
+            iconBg: "bg-sky-100 dark:bg-sky-500/20",
+            iconColor: "text-sky-600 dark:text-sky-400",
+            count: deptCounts[dept] ?? 0,
+          })),
+        ]}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {!isPremium && myId && (
+        <div className="flex justify-end mb-4">
+          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+            <span className="text-amber-700 dark:text-amber-300 font-medium">{myReferralsCount}/{FREE_LIMITS.referrals} posted</span>
+            <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+          </div>
         </div>
-      </div>
+      )}
 
       <SearchBarWrapper />
 
@@ -204,7 +252,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
       {referrals.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-4xl mb-4">💼</p>
+          <Briefcase className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
           <h3 className="text-lg font-semibold mb-2">{hasFilters ? "No referrals match your filters" : "No referrals posted yet"}</h3>
           <p className="text-muted-foreground mb-6">
             {hasFilters ? "Try adjusting your filters or clearing them." : "Be the first to post a referral opportunity!"}
@@ -215,90 +263,90 @@ export default async function ReferralsPage({ searchParams }: Props) {
           }
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {referrals.map((ref) => {
             const isBoosted = ref.isBoosted
             const isOwn     = myId === ref.userId
             const hasApplied = myAppliedIds.has(ref.id)
             return (
-              <Link key={ref.id} href={`/referrals/${ref.id}`} className="block group">
-                <div className={`bg-card border rounded-xl overflow-hidden hover:shadow-md transition-all ${
+              <Link key={ref.id} href={`/referrals/${ref.id}`} className="group flex flex-col">
+                <div className={`bg-card border-2 rounded-3xl overflow-hidden flex flex-col h-full transition-all duration-200 hover:-translate-y-1 ${
                   isOwn
-                    ? "border-violet-400 dark:border-violet-600 shadow-sm shadow-violet-100 dark:shadow-violet-900/20 ring-1 ring-violet-200 dark:ring-violet-800"
+                    ? "border-violet-300 dark:border-violet-700 hover:shadow-[0_12px_36px_rgba(139,92,246,0.18)]"
                     : isBoosted
-                      ? "border-amber-300 dark:border-amber-700 shadow-sm shadow-amber-100 dark:shadow-amber-900/20"
-                      : "border-border border-l-4 border-l-violet-400"
+                      ? "border-amber-300 dark:border-amber-700 hover:shadow-[0_12px_36px_rgba(245,158,11,0.18)]"
+                      : "border-border hover:border-sky-400/60 hover:shadow-[0_12px_36px_rgba(56,189,248,0.15)]"
                 }`}>
                   {isOwn && (
-                    <div className="bg-violet-600 text-white text-[11px] font-semibold px-4 py-1 flex items-center gap-1.5">
+                    <div className="bg-violet-600 text-white text-[11px] font-semibold px-4 py-1.5 flex items-center gap-1.5">
                       <Briefcase className="h-3 w-3" /> Posted by you
                     </div>
                   )}
                   {!isOwn && isBoosted && <PremiumStrip />}
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1 min-w-0">
-                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden ${
-                          isOwn ? "ring-2 ring-violet-400 dark:ring-violet-600 bg-muted" : isBoosted ? "ring-2 ring-amber-300 dark:ring-amber-600 bg-muted" : "bg-muted"
-                        }`}>
-                          {ref.company.logo ? (
-                            <Image src={ref.company.logo} alt={ref.company.name} width={48} height={48} className="object-contain" />
-                          ) : (
-                            <Building2 className="h-6 w-6 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            {!isOwn && isBoosted && <PremiumBadge variant="boosted" />}
-                          </div>
-                          <h3 className={`font-semibold text-lg transition-colors ${
-                            isOwn ? "group-hover:text-violet-600 dark:group-hover:text-violet-400"
-                            : isBoosted ? "group-hover:text-amber-600 dark:group-hover:text-amber-400"
-                            : "group-hover:text-accent-400"
-                          }`}>
-                            {ref.title}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className="text-muted-foreground text-sm font-medium">{ref.company.name}</span>
-                            <span className="text-muted-foreground text-sm">· {ref.department}</span>
-                            <Badge variant="secondary" className="text-xs">{ref.experienceMin}–{ref.experienceMax} yrs</Badge>
-                            {ref.referralBonus && <Badge variant="warning" className="text-xs">₹{ref.referralBonus.toLocaleString()} bonus</Badge>}
-                            {ref.workMode && (
-                              <Badge variant="outline" className="text-xs flex items-center gap-1">
-                                <MonitorSmartphone className="h-2.5 w-2.5" />
-                                {WORK_MODE_LABELS[ref.workMode] ?? ref.workMode}
-                              </Badge>
-                            )}
-                            {ref.jobType && (
-                              <Badge variant="outline" className="text-xs">{JOB_TYPE_LABELS[ref.jobType] ?? ref.jobType}</Badge>
-                            )}
-                            {ref.location && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />{ref.location}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{ref.description}</p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
-                        {hasApplied && <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300">Applied</Badge>}
-                        <Badge variant="success">Open</Badge>
-                        {ref._count.applications > 0 && (
-                          <p className="text-xs text-muted-foreground">{ref._count.applications} applicant{ref._count.applications !== 1 ? "s" : ""}</p>
+
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${
+                        isOwn ? "ring-2 ring-violet-400 dark:ring-violet-600 bg-muted" : isBoosted ? "ring-2 ring-amber-300 dark:ring-amber-600 bg-muted" : "bg-muted"
+                      }`}>
+                        {ref.company.logo ? (
+                          <Image src={ref.company.logo} alt={ref.company.name} width={48} height={48} className="object-contain" />
+                        ) : (
+                          <Building2 className="h-6 w-6 text-muted-foreground" />
                         )}
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
-                          <Clock className="h-3 w-3" /> {formatRelativeTime(ref.createdAt)}
-                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {hasApplied && <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 text-[10px]">Applied</Badge>}
+                        {!isOwn && isBoosted && <PremiumBadge variant="boosted" />}
+                      </div>
+                    </div>
+
+                    <h3 className={`font-semibold text-base leading-snug mt-3 transition-colors ${
+                      isOwn ? "group-hover:text-violet-600 dark:group-hover:text-violet-400"
+                      : isBoosted ? "group-hover:text-amber-600 dark:group-hover:text-amber-400"
+                      : "group-hover:text-sky-600 dark:group-hover:text-sky-400"
+                    }`}>
+                      {ref.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-medium mt-0.5">{ref.company.name} · {ref.department}</p>
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{ref.description}</p>
+
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      <Badge variant="secondary" className="text-[11px]">{ref.experienceMin}–{ref.experienceMax} yrs</Badge>
+                      {ref.referralBonus && <Badge variant="warning" className="text-[11px]">₹{ref.referralBonus.toLocaleString()} bonus</Badge>}
+                      {ref.workMode && (
+                        <Badge variant="outline" className="text-[11px] flex items-center gap-1">
+                          <MonitorSmartphone className="h-2.5 w-2.5" />
+                          {WORK_MODE_LABELS[ref.workMode] ?? ref.workMode}
+                        </Badge>
+                      )}
+                      {ref.jobType && (
+                        <Badge variant="outline" className="text-[11px]">{JOB_TYPE_LABELS[ref.jobType] ?? ref.jobType}</Badge>
+                      )}
+                    </div>
+
+                    {ref.location && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                        <MapPin className="h-3 w-3" />{ref.location}
+                      </span>
+                    )}
+
+                    <div className="mt-auto pt-4">
+                      <div className="flex items-center justify-between border-t border-border pt-3">
+                        <UserCard user={ref.user} size="sm" clickable={false} />
                         <SocialShare
                           title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
                           path={`/referrals/${ref.id}`}
                           variant="icon"
                         />
                       </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <UserCard user={ref.user} size="sm" clickable={false} />
+                      <div className="flex items-center justify-between mt-2">
+                        <Badge variant="success" className="text-[11px]">Open</Badge>
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {formatRelativeTime(ref.createdAt)}
+                          {ref._count.applications > 0 && ` · ${ref._count.applications} applicant${ref._count.applications !== 1 ? "s" : ""}`}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -307,6 +355,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
           })}
         </div>
       )}
+      </div>
     </div>
   )
 }

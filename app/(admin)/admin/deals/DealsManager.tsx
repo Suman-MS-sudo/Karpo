@@ -12,6 +12,7 @@ import { Label }    from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge }    from "@/components/ui/badge"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 import { cn, formatDate } from "@/lib/utils"
 import { DEAL_CATEGORIES } from "@/app/(app)/deals/DealsClient"
 
@@ -187,20 +188,16 @@ export function DealsManager({ deals: initial }: { deals: AdminDeal[] }) {
   const trendingCnt = deals.filter((d) => d.trending).length
 
   return (
-    <div className="p-6 space-y-5 max-w-5xl">
+    <div className="p-6 space-y-5 max-w-5xl mx-auto">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><Tag className="h-5 w-5" />Deals</h1>
-          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-            <span>{deals.length} total · {activeCnt} active</span>
-            <span className="flex items-center gap-1"><Star className="h-3 w-3 text-amber-500" />{featuredCnt} featured</span>
-            <span className="flex items-center gap-1"><Flame className="h-3 w-3 text-orange-500" />{trendingCnt} trending</span>
-          </div>
-        </div>
-        <Button onClick={openCreate} className="gap-1.5"><Plus className="h-4 w-4" />New Deal</Button>
-      </div>
+      <AdminPageHeader
+        icon={Tag}
+        title="Deals"
+        subtitle={`${deals.length} total · ${activeCnt} active`}
+        gradient="from-amber-500 to-rose-600"
+        action={<Button onClick={openCreate} className="gap-1.5"><Plus className="h-4 w-4" />New Deal</Button>}
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">

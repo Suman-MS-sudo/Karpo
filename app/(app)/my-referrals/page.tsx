@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Plus, Briefcase, ExternalLink, Users, ChevronRight, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 export const metadata = { title: "My Referrals" }
@@ -62,10 +63,7 @@ export default async function MyReferralsPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Referrals</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Job referrals you've posted for colleagues</p>
-        </div>
+        <PageTitle badge="My Referrals" badgeIcon={Briefcase} title="My Referrals" subtitle="Job referrals you've posted for colleagues" />
         <Button asChild>
           <Link href="/referrals/new"><Plus className="h-4 w-4" /> Post Referral</Link>
         </Button>

@@ -5,6 +5,8 @@ import { ChevronLeft, Plus, Sparkles, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SkillListRow } from "@/components/skills/SkillListRow"
 import { SkillListFilters } from "@/components/skills/SkillListFilters"
+import { SkillsHero } from "@/components/skills/SkillsHero"
+import { SkillCategoryStrip } from "@/components/skills/SkillCategoryStrip"
 import { SkillsLanding } from "./SkillsLanding"
 import { fuzzyFilter } from "@/lib/fuzzy"
 
@@ -52,7 +54,9 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   if (searchParams.minRating) baseWhere.avgRating   = { gte: parseFloat(searchParams.minRating) }
   if (searchParams.minExp)    baseWhere.yearsExp    = { gte: parseInt(searchParams.minExp) }
   if (searchParams.maxPrice)  baseWhere.hourlyRate  = { lte: parseInt(searchParams.maxPrice) }
-  if (searchParams.location)  baseWhere.location    = { in: searchParams.location.split(",") }
+  // Default to the user's own city when no explicit location filter is set.
+  if (searchParams.location)       baseWhere.location = { in: searchParams.location.split(",") }
+  else if (session?.user?.city)    baseWhere.location = session.user.city
   if (searchParams.skills) {
     baseWhere.AND = searchParams.skills.split(",").map(s => ({ skills: { contains: `"${s}"` } }))
   }
@@ -110,9 +114,13 @@ export default async function SkillsPage({ searchParams }: PageProps) {
     ])
   }
 
-  const [byCategory, locationRows] = await Promise.all([
+  const [byCategory, locationRows, allActiveCount, verifiedUsers, orderAgg, ratingAgg] = await Promise.all([
     prisma.skillListing.groupBy({ by: ["category"], where: { status: "ACTIVE" }, _count: { _all: true } }),
     prisma.skillListing.findMany({ where: { status: "ACTIVE", location: { not: null } }, select: { location: true }, distinct: ["location"] }),
+    prisma.skillListing.count({ where: { status: "ACTIVE" } }),
+    prisma.skillListing.findMany({ where: { status: "ACTIVE" }, select: { userId: true }, distinct: ["userId"] }),
+    prisma.skillListing.aggregate({ where: { status: "ACTIVE" }, _sum: { completedOrders: true } }),
+    prisma.skillListing.aggregate({ where: { status: "ACTIVE", reviewCount: { gt: 0 } }, _avg: { avgRating: true } }),
   ])
 
   const categoryCounts = Object.fromEntries(byCategory.map(c => [c.category, c._count._all]))
@@ -129,7 +137,19 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-full bg-background">
+      <SkillsHero
+        totalListings={allActiveCount}
+        verifiedCount={verifiedUsers.length}
+        completedProjects={orderAgg._sum.completedOrders ?? 0}
+        avgRating={ratingAgg._avg.avgRating}
+        isLoggedIn={!!session}
+        defaultQuery={searchParams.q ?? ""}
+        compact
+      />
+      <SkillCategoryStrip activeCategory={searchParams.category ?? "All"} counts={categoryCounts} total={allActiveCount} />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link href="/skills" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground mb-4 w-fit transition-colors">
         <ChevronLeft className="h-3.5 w-3.5" /> All Categories
       </Link>
@@ -196,6 +216,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
           </Button>
         </div>
       </SkillListFilters>
+      </div>
     </div>
   )
 }

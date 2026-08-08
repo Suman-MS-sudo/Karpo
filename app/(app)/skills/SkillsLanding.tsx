@@ -1,13 +1,15 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import {
-  Sparkles, Plus, Wrench, Star, Heart, Users, CheckCircle2, Smile, ArrowRight,
-  Code2, Palette, Megaphone, PenTool, Briefcase, TrendingUp, ShieldCheck,
-  Database, Cpu, Calculator, Scale, Languages, GraduationCap, HeartPulse,
+  Sparkles, Plus, Wrench, Star, Heart, CheckCircle2, ArrowRight,
+  Code2, Palette, Megaphone, PenTool, Briefcase, TrendingUp,
+  Database, Cpu, Scale, Languages, GraduationCap, HeartPulse,
   MessageSquareText, Handshake, Camera,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { SkillsHero } from "@/components/skills/SkillsHero"
+import { SkillCategoryStrip } from "@/components/skills/SkillCategoryStrip"
 
 // Primary 6 categories, styled and labeled to match the reference design.
 // The remaining real SkillListing categories still exist and are browsable — shown as a second, smaller row.
@@ -55,181 +57,17 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
   const countByCategory = Object.fromEntries(byCategory.map(c => [c.category, c._count._all]))
   const avgRating         = ratingAgg._avg.avgRating
   const completedProjects = orderAgg._sum.completedOrders ?? 0
-  const satisfactionPct   = avgRating ? Math.round((avgRating / 5) * 100) : null
-
-  const heroStats = [
-    { icon: Users,        value: `${verifiedUsers.length.toLocaleString()}+`, label: "Verified Professionals" },
-    { icon: CheckCircle2, value: `${completedProjects.toLocaleString()}+`,    label: "Projects Completed"     },
-    { icon: Star,         value: avgRating ? `${avgRating.toFixed(1)}/5` : "—", label: "Average Rating"      },
-    { icon: Smile,        value: satisfactionPct != null ? `${satisfactionPct}%` : "—", label: "Client Satisfaction" },
-  ]
 
   return (
     <div className="min-h-full bg-background">
-      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden">
-        {/* Soft lavender wash + decorative blobs — the "background things" */}
-        <div className="absolute inset-0 -z-20 bg-gradient-to-b from-primary/[0.07] via-accent/[0.05] to-background" aria-hidden />
-        <div
-          className="absolute inset-0 -z-20 opacity-[0.35] dark:opacity-[0.2]"
-          style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 0)",
-            backgroundSize: "28px 28px",
-            maskImage: "radial-gradient(ellipse 70% 60% at 60% 20%, black 40%, transparent 100%)",
-          }}
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
-          <div className="absolute -top-24 right-0 h-[420px] w-[420px] rounded-full bg-primary/15 blur-[100px]" />
-          <div className="absolute top-1/3 -left-20 h-[320px] w-[320px] rounded-full bg-accent/10 blur-[100px]" />
-          <div className="absolute bottom-0 right-1/4 h-[260px] w-[260px] rounded-full bg-amber-400/10 blur-[100px]" />
-          {/* Floating particles */}
-          <div className="absolute top-16 left-[15%] h-2 w-2 rounded-full bg-primary/40" />
-          <div className="absolute top-40 left-[8%] h-1.5 w-1.5 rounded-full bg-accent/40" />
-          <div className="absolute bottom-24 left-[22%] h-2.5 w-2.5 rounded-full bg-primary/30" />
-          <div className="absolute top-24 right-[38%] h-1.5 w-1.5 rounded-full bg-amber-400/40" />
-        </div>
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-14">
-          <div className="grid lg:grid-cols-[1fr_340px] gap-10 items-center">
-            <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/15 to-accent/15 ring-1 ring-primary/20 px-4 py-1.5 mb-7 shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-primary">AI Powered Marketplace</span>
-              </div>
-              <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.05] drop-shadow-sm">
-                <span className="block">Find the right</span>
-                <span className="block">professionals.</span>
-                <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent bg-[length:200%_auto]">Faster.</span>
-              </h1>
-              <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                Connect with verified experts in minutes. AI matched. Human approved.
-              </p>
-
-              <div className="mt-9 flex flex-wrap items-center gap-3 justify-center lg:justify-start">
-                <Button asChild size="lg" className="h-14 rounded-full px-8 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 hover:scale-105 active:scale-95 transition-all">
-                  <Link href={`/skills?category=${PRIMARY_CATEGORIES[0].value}`}>Browse Professionals</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline" className="h-14 rounded-full px-8 ring-1 ring-border/60 hover:shadow-md transition-all">
-                  <Link href={isLoggedIn ? "/skills/new" : "/auth/signin"}>Offer a Skill</Link>
-                </Button>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" />Verified corporate colleagues only</span>
-                <span className="flex items-center gap-1.5"><Handshake className="h-3.5 w-3.5 text-primary" />Secure in-app hiring &amp; payments</span>
-              </div>
-
-              <p className="mt-5 text-xs text-muted-foreground flex flex-wrap items-center lg:justify-start justify-center gap-x-2 gap-y-1.5">
-                <span className="font-medium text-foreground/70">Popular:</span>
-                {PRIMARY_CATEGORIES.slice(0, 5).map(c => (
-                  <Link key={c.value} href={`/skills?category=${c.value}`} className="px-3 py-1 rounded-full bg-card ring-1 ring-border/60 hover:ring-primary/40 hover:text-primary hover:shadow-sm transition-all">
-                    {c.label}
-                  </Link>
-                ))}
-              </p>
-            </div>
-
-            {/* Decorative abstract mesh-gradient composition */}
-            <div className="hidden lg:block relative h-[380px] -mr-6">
-              {/* Layered mesh-gradient blobs, offset to feel painterly rather than symmetric */}
-              <div className="absolute inset-0" aria-hidden>
-                <div className="absolute top-4 right-0 h-64 w-64 rounded-[40%_60%_60%_40%/50%_40%_60%_50%] bg-gradient-to-br from-primary/70 to-primary/10 dark:from-primary/40 dark:to-primary/5 blur-xl animate-[spin_30s_linear_infinite]" />
-                <div className="absolute bottom-6 left-2 h-56 w-56 rounded-[60%_40%_30%_70%/60%_30%_70%_40%] bg-gradient-to-tr from-accent/60 to-accent/10 dark:from-accent/35 dark:to-accent/5 blur-xl animate-[spin_24s_linear_infinite_reverse]" />
-                <div className="absolute top-1/3 left-1/3 h-40 w-40 rounded-full bg-gradient-to-br from-amber-400/50 dark:from-amber-300/30 to-transparent blur-xl" />
-              </div>
-
-              {/* Fine grid texture, masked to a soft circle */}
-              <div
-                className="absolute inset-0 opacity-70 dark:opacity-20"
-                style={{
-                  backgroundImage: "linear-gradient(hsl(var(--border)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)",
-                  backgroundSize: "22px 22px",
-                  maskImage: "radial-gradient(circle at 55% 45%, black 0%, transparent 65%)",
-                }}
-                aria-hidden
-              />
-
-              {/* Orbit rings around the focal badge */}
-              <div className="absolute inset-0 flex items-center justify-center" aria-hidden>
-                <div className="h-64 w-64 rounded-full border border-dashed border-primary/40 dark:border-primary/25" />
-                <div className="absolute h-48 w-48 rounded-full border border-accent/35 dark:border-accent/20" />
-              </div>
-
-              {/* Central AI badge */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative h-28 w-28 rounded-full bg-card ring-1 ring-primary/20 shadow-[0_20px_50px_-12px_rgba(99,102,241,0.45)] flex items-center justify-center">
-                  <span className="absolute -inset-3 rounded-full border-2 border-primary/30 dark:border-primary/20 animate-pulse" />
-                  <span className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-accent/20" />
-                  <Sparkles className="h-10 w-10 text-primary relative" />
-                </div>
-              </div>
-
-              {/* Floating category icon chips, orbiting the badge */}
-              {[
-                { Icon: Code2,     pos: "top-2 left-6",      bg: "bg-blue-100 dark:bg-blue-500/20",     color: "text-blue-600 dark:text-blue-400" },
-                { Icon: Palette,   pos: "top-8 right-2",     bg: "bg-pink-100 dark:bg-pink-500/20",     color: "text-pink-600 dark:text-pink-400" },
-                { Icon: Megaphone, pos: "bottom-10 left-0",  bg: "bg-purple-100 dark:bg-purple-500/20", color: "text-purple-600 dark:text-purple-400" },
-                { Icon: TrendingUp,pos: "bottom-2 right-8",  bg: "bg-emerald-100 dark:bg-emerald-500/20", color: "text-emerald-600 dark:text-emerald-400" },
-                { Icon: Database,  pos: "top-1/2 left-[-8px] -translate-y-1/2", bg: "bg-indigo-100 dark:bg-indigo-500/20", color: "text-indigo-600 dark:text-indigo-400" },
-                { Icon: Briefcase, pos: "top-1/2 right-[-8px] -translate-y-1/2", bg: "bg-amber-100 dark:bg-amber-500/20", color: "text-amber-700 dark:text-amber-400" },
-              ].map(({ Icon, pos, bg, color }, i) => (
-                <div key={i} className={cn("absolute h-11 w-11 rounded-2xl shadow-lg ring-1 ring-border/50 flex items-center justify-center", bg, pos)}>
-                  <Icon className={cn("h-5 w-5", color)} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Promo widget card */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-accent text-white p-6 sm:p-7 shadow-xl shadow-primary/25 mt-12">
-            <div
-              className="absolute inset-0 opacity-30"
-              style={{ backgroundImage: "radial-gradient(circle at 85% 15%, white 0%, transparent 45%)" }}
-              aria-hidden
-            />
-            <div className="relative flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap">
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold leading-snug">Find the right expert for your next project</h3>
-                <Button asChild size="sm" className="mt-4 bg-white text-primary hover:bg-white/90 rounded-full shadow-lg">
-                  <Link href={`/skills?category=${PRIMARY_CATEGORIES[0].value}`}>Explore Now</Link>
-                </Button>
-              </div>
-              <div className="shrink-0 text-center ml-auto">
-                <div className="flex -space-x-3 justify-center">
-                  {featured.slice(0, 3).map(l => {
-                    const img = l.user.avatarUrl ?? l.user.image
-                    return (
-                      <div key={l.id} className="h-10 w-10 rounded-full ring-2 ring-white overflow-hidden bg-white/20 flex items-center justify-center text-xs font-semibold">
-                        {img ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={img} alt="" className="h-full w-full object-cover" />
-                        ) : initials(l.user.name)}
-                      </div>
-                    )
-                  })}
-                </div>
-                <p className="text-xs font-medium mt-2 whitespace-nowrap">{verifiedUsers.length.toLocaleString()}+ Professionals</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-6 rounded-3xl bg-card/80 backdrop-blur-sm ring-1 ring-border/60 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.08)] grid grid-cols-2 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-border/60">
-            {heroStats.map(stat => (
-              <div key={stat.label} className="group flex flex-col items-center gap-2.5 px-5 py-6 text-center hover:bg-primary/[0.03] transition-colors">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <stat.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold tracking-tight tabular-nums leading-none bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">{stat.value}</p>
-                  <p className="text-muted-foreground text-[11px] mt-2 uppercase tracking-wide">{stat.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <SkillsHero
+        totalListings={total}
+        verifiedCount={verifiedUsers.length}
+        completedProjects={completedProjects}
+        avgRating={avgRating}
+        isLoggedIn={isLoggedIn}
+      />
+      <SkillCategoryStrip activeCategory="All" counts={countByCategory} total={total} />
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-14">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>

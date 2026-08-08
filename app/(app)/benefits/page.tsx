@@ -5,6 +5,7 @@ import Image from "next/image"
 import { ExternalLink, Gift, CheckCircle, Shield, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency } from "@/lib/utils"
 
 const TYPE_TABS: { value: string; label: string; emoji: string }[] = [
@@ -47,15 +48,7 @@ export default async function BenefitsPage({ searchParams }: { searchParams: { t
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-pink-50 dark:bg-pink-950/30 rounded-xl flex items-center justify-center">
-            <Gift className="h-5 w-5 text-pink-600 dark:text-pink-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Employee Benefits</h1>
-            <p className="text-muted-foreground text-sm">Pre-negotiated financial products — browse and apply directly, no expert needed</p>
-          </div>
-        </div>
+        <PageTitle badge="Benefits" badgeIcon={Gift} title="Employee Benefits" subtitle="Pre-negotiated financial products — browse and apply directly, no expert needed" />
       </div>
 
       {/* Type tabs */}

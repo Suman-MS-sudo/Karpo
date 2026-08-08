@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Outfit } from "next/font/google"
 import {
   Tag, Users, AlertCircle, Zap, RefreshCw, Bell, Clock,
   SlidersHorizontal, Sparkles, Search, X, Star, Flame,
@@ -18,7 +17,6 @@ import { formatDate, formatRelativeTime, cn } from "@/lib/utils"
 import { useDeals, type Deal, type DealFilters } from "@/hooks/useDeals"
 import { FREE_LIMITS } from "@/lib/limits"
 
-const outfit = Outfit({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" })
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -40,6 +38,31 @@ export const DEAL_CATEGORIES = [
   { value: "AUTOMOTIVE",    label: "Automotive",       emoji: "🚗",  icon: Car,         iconBg: "bg-slate-100 dark:bg-slate-500/20",   iconColor: "text-slate-600 dark:text-slate-400"    },
   { value: "OTHER",         label: "Others",           emoji: "📦",  icon: Package,     iconBg: "bg-amber-100 dark:bg-amber-500/20",   iconColor: "text-amber-600 dark:text-amber-400"    },
 ]
+
+// Per-category stock photo + gradient — used as the card banner fallback so
+// every deal reflects its own category instead of one repeated orange tone.
+const CATEGORY_VISUALS: Record<string, { image: string; gradient: string }> = {
+  FOOD_DINING:    { image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80", gradient: "from-amber-500 to-orange-500" },
+  TRAVEL:         { image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80", gradient: "from-sky-500 to-blue-600" },
+  SHOPPING:       { image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80", gradient: "from-rose-500 to-orange-500" },
+  ELECTRONICS:    { image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800&q=80", gradient: "from-cyan-500 to-blue-500" },
+  FASHION:        { image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=80", gradient: "from-pink-500 to-rose-500" },
+  ENTERTAINMENT:  { image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=80", gradient: "from-red-500 to-rose-600" },
+  HEALTH_FITNESS: { image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80", gradient: "from-lime-500 to-emerald-500" },
+  BANKING:        { image: "https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=800&q=80", gradient: "from-emerald-500 to-teal-600" },
+  EDUCATION:      { image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80", gradient: "from-indigo-500 to-blue-600" },
+  HOTELS:         { image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80", gradient: "from-orange-500 to-amber-600" },
+  SOFTWARE:       { image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80", gradient: "from-violet-500 to-purple-600" },
+  LIFESTYLE:      { image: "https://images.unsplash.com/photo-1483721310020-03333e577078?w=800&q=80", gradient: "from-fuchsia-500 to-pink-600" },
+  INSURANCE:      { image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80", gradient: "from-blue-500 to-indigo-600" },
+  AUTOMOTIVE:     { image: "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800&q=80", gradient: "from-slate-600 to-slate-800" },
+  OTHER:          { image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80", gradient: "from-rose-500 to-orange-500" },
+}
+const DEFAULT_VISUAL = { image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80", gradient: "from-rose-500 to-orange-500" }
+
+function categoryVisual(category: string) {
+  return CATEGORY_VISUALS[category] ?? DEFAULT_VISUAL
+}
 
 const SORT_OPTIONS = [
   { value: "discount", label: "Highest Discount" },
@@ -139,6 +162,8 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
   const isExpiringSoon = mounted && daysLeft <= 3
   const effectiveBadge = isNew ? "NEW" : deal.badge
   const savingText = dealSavingText(deal)
+  const visual = categoryVisual(deal.category)
+  const bannerImage = deal.images && deal.images.length > 0 ? deal.images[0] : visual.image
 
   return (
     <div className={cn(
@@ -148,47 +173,41 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
       "border-border hover:border-rose-400/60 hover:shadow-[0_12px_36px_rgba(244,63,94,0.14)]"
     )}>
 
-      {/* Top badges */}
-      <div className="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5 items-end">
-        {effectiveBadge && BADGE_STYLES[effectiveBadge] && (
-          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm", BADGE_STYLES[effectiveBadge])}>
-            {BADGE_LABELS[effectiveBadge]}
-          </span>
-        )}
-        {deal.featured && !effectiveBadge && (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-white shadow-sm">⭐ Featured</span>
-        )}
-      </div>
-
-      {/* Hero — logo / gradient */}
+      {/* Hero — category photo + matching gradient tint */}
       <Link href={`/deals/${deal.id}`} className="block shrink-0">
-        <div className="relative h-36 bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/30 dark:to-amber-950/30 flex items-center justify-center overflow-hidden">
-          {deal.images && deal.images.length > 0 ? (
-            <Image src={deal.images[0]} alt={deal.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-          ) : deal.companyLogo ? (
-            <div className="flex flex-col items-center gap-2 px-4 text-center">
-              <div className="h-14 w-14 rounded-2xl bg-white dark:bg-neutral-800 shadow-sm flex items-center justify-center p-1.5 border border-border">
-                <Image src={deal.companyLogo} alt={deal.merchantName} width={48} height={48} className="object-contain" />
-              </div>
-              <span className="text-2xl font-extrabold text-rose-500 drop-shadow-sm">{savingText}</span>
-            </div>
-          ) : (
-            <div className="text-center px-3">
-              <span className="text-3xl font-black text-rose-500 drop-shadow-sm">{savingText}</span>
-            </div>
-          )}
+        <div className={cn("relative h-32 bg-gradient-to-br overflow-hidden", visual.gradient)}>
+          <div className="absolute -top-8 -right-8 h-28 w-28 rounded-full bg-white/15 blur-xl" />
+          <Image src={bannerImage} alt={deal.title} fill className="object-cover opacity-50 group-hover:opacity-60 group-hover:scale-105 transition-all duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
 
-          {/* Discount badge overlay */}
-          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-            <span className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
-              {savingText}
-            </span>
-            {isExpiringSoon && !isLimitReached && (
-              <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Clock className="h-2.5 w-2.5" />{daysLeft}d left
-              </span>
+          {/* Top row: status badge + logo */}
+          <div className="relative flex items-start justify-between p-3">
+            <div className="flex flex-col gap-1.5 items-start">
+              {effectiveBadge && BADGE_STYLES[effectiveBadge] && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white shadow-sm">
+                  {BADGE_LABELS[effectiveBadge]}
+                </span>
+              )}
+              {deal.featured && !effectiveBadge && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white shadow-sm">⭐ Featured</span>
+              )}
+              {isExpiringSoon && !isLimitReached && (
+                <span className="bg-black/30 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5" />{daysLeft}d left
+                </span>
+              )}
+            </div>
+            {deal.companyLogo && (
+              <div className="h-10 w-10 rounded-xl bg-white shadow-md flex items-center justify-center p-1.5 shrink-0">
+                <Image src={deal.companyLogo} alt={deal.merchantName} width={32} height={32} className="object-contain" />
+              </div>
             )}
           </div>
+
+          {/* Discount — single, prominent */}
+          <p className={cn("font-outfit", "relative px-3.5 text-3xl font-extrabold text-white tracking-tight drop-shadow-sm")}>
+            {savingText}
+          </p>
 
           {/* Sold out overlay */}
           {isLimitReached && (
@@ -228,7 +247,7 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
 
         {/* Title + description */}
         <Link href={`/deals/${deal.id}`} className="flex-1 space-y-1.5 group/title">
-          <h3 className={cn(outfit.className, "font-bold text-sm tracking-tight leading-snug group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 transition-colors line-clamp-2")}>
+          <h3 className={cn("font-outfit", "font-bold text-sm tracking-tight leading-snug group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 transition-colors line-clamp-2")}>
             {deal.title}
           </h3>
           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{deal.description}</p>
@@ -320,33 +339,52 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
   )
 }
 
-// ── Featured carousel card ────────────────────────────────────────────────────
+// ── Compact spotlight card — shared by Featured & Trending ───────────────────
 
-function FeaturedCard({ deal }: { deal: Deal }) {
+function SpotlightCard({ deal, variant, rank }: { deal: Deal; variant: "featured" | "trending"; rank?: number }) {
+  const visual     = categoryVisual(deal.category)
+  const bannerImage = deal.images && deal.images.length > 0 ? deal.images[0] : visual.image
+  const hoverGlow  = variant === "featured" ? "hover:shadow-[0_10px_28px_rgba(245,158,11,0.28)]" : "hover:shadow-[0_10px_28px_rgba(249,115,22,0.28)]"
+  const accentText = "text-orange-600"
+
   return (
     <Link href={`/deals/${deal.id}`}
-      className="relative flex-shrink-0 w-72 rounded-3xl overflow-hidden border-2 border-amber-200 dark:border-amber-700 group shadow-sm hover:shadow-[0_12px_36px_rgba(245,158,11,0.2)] hover:-translate-y-1 transition-all duration-200">
-      <div className="h-36 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 flex items-center justify-center relative overflow-hidden">
+      className={cn("group relative block h-32 rounded-3xl overflow-hidden shadow-[0_4px_16px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-200", hoverGlow)}>
+      {/* Category gradient + photo background */}
+      <div className={cn("absolute inset-0 bg-gradient-to-br", visual.gradient)} />
+      <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-white/15 blur-xl" />
+      <Image src={bannerImage} alt="" fill className="object-cover opacity-45 group-hover:opacity-55 group-hover:scale-105 transition-all duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+
+      <div className="relative h-full flex items-center justify-between gap-3 p-3.5 text-white">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            {variant === "featured" ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                <Star className="h-2.5 w-2.5 fill-white" /> Featured
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                <Flame className="h-2.5 w-2.5 fill-white" /> #{rank}
+              </span>
+            )}
+          </div>
+          <p className={cn("font-outfit", "text-lg font-extrabold tracking-tight mt-1 drop-shadow-sm")}>
+            {dealSavingText(deal)}
+          </p>
+          <p className="text-xs font-semibold text-white/85 truncate">{deal.merchantName}</p>
+          <p className="text-[11px] text-white/70 truncate mt-0.5">{deal.title}</p>
+        </div>
+
         {deal.companyLogo ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-14 w-14 rounded-2xl bg-white dark:bg-neutral-800 shadow-md flex items-center justify-center p-1.5 border border-border">
-              <Image src={deal.companyLogo} alt={deal.merchantName} width={48} height={48} className="object-contain" />
-            </div>
+          <div className="h-10 w-10 rounded-xl bg-white shadow-md flex items-center justify-center p-1 shrink-0">
+            <Image src={deal.companyLogo} alt={deal.merchantName} width={32} height={32} className="object-contain" />
           </div>
         ) : (
-          <Tag className="h-10 w-10 text-amber-400" />
+          <span className={cn("h-10 w-10 rounded-xl bg-white shadow-md flex items-center justify-center shrink-0 font-black text-sm", accentText)}>
+            {deal.merchantName.slice(0, 1)}
+          </span>
         )}
-        <div className="absolute top-2 left-2">
-          <span className="bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded-full shadow">{dealSavingText(deal)}</span>
-        </div>
-        <div className="absolute top-2 right-2">
-          <span className="bg-amber-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Featured</span>
-        </div>
-      </div>
-      <div className="p-3.5 bg-card">
-        <p className="text-xs text-muted-foreground font-medium">{deal.merchantName}</p>
-        <p className={cn(outfit.className, "text-sm font-bold mt-0.5 line-clamp-2 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors")}>{deal.title}</p>
-        <p className="text-[10px] text-muted-foreground mt-1">Valid till {formatDate(deal.validUntil)}</p>
       </div>
     </Link>
   )
@@ -362,7 +400,7 @@ function SectionHeader({ icon: Icon, title, gradient, count }: {
       <span className={cn("h-6 w-6 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br", gradient)}>
         <Icon className="h-3.5 w-3.5 text-white" />
       </span>
-      <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r bg-clip-text text-transparent", gradient)}>{title}</h2>
+      <h2 className={cn("font-outfit", "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r bg-clip-text text-transparent", gradient)}>{title}</h2>
       {count != null && (
         <span className="text-xs text-muted-foreground font-medium">({count})</span>
       )}
@@ -489,7 +527,7 @@ export function DealsClient({
                   <Sparkles className="h-3 w-3 text-rose-300" /> Corporate Exclusive
                 </span>
               </div>
-              <h1 className={cn(outfit.className, "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
+              <h1 className={cn("font-outfit", "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
                 <span className="bg-gradient-to-r from-white via-rose-200 to-amber-200 bg-clip-text text-transparent">Employee</span>
                 {" "}<span className="bg-gradient-to-r from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent">Deals</span> 🏷️
               </h1>
@@ -510,17 +548,17 @@ export function DealsClient({
           {/* Stats */}
           <div className="flex items-center gap-8 mb-8">
             <div>
-              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-rose-300 to-red-200 bg-clip-text text-transparent")}>{fetchedDeals.length}</p>
+              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-rose-300 to-red-200 bg-clip-text text-transparent")}>{fetchedDeals.length}</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Active Deals</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
-              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-amber-300 to-orange-200 bg-clip-text text-transparent")}>{totalClaims.toLocaleString()}</p>
+              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-amber-300 to-orange-200 bg-clip-text text-transparent")}>{totalClaims.toLocaleString()}</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total Claims</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
-              <p className={cn(outfit.className, "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
+              <p className={cn("font-outfit", "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
             </div>
           </div>
@@ -569,7 +607,7 @@ export function DealsClient({
                     )}>
                       <cat.icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
                     </div>
-                    <span className={cn(outfit.className, "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                    <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
                       {cat.label.split(" ")[0]}
                     </span>
                     <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
@@ -823,12 +861,8 @@ export function DealsClient({
         {featuredDeals.length > 0 && !isFiltered && (
           <section>
             <SectionHeader icon={Star} title="Featured Deals" gradient="from-amber-400 to-orange-500" count={featuredDeals.length} />
-            <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide snap-x">
-              {featuredDeals.map((d) => (
-                <div key={d.id} className="snap-start">
-                  <FeaturedCard deal={d} />
-                </div>
-              ))}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {featuredDeals.map((d) => <SpotlightCard key={d.id} deal={d} variant="featured" />)}
             </div>
           </section>
         )}
@@ -837,8 +871,8 @@ export function DealsClient({
         {trendingDeals.length > 0 && !isFiltered && (
           <section>
             <SectionHeader icon={Flame} title="Trending Now" gradient="from-orange-500 to-red-500" count={trendingDeals.length} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {trendingDeals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} />)}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {trendingDeals.map((d, i) => <SpotlightCard key={d.id} deal={d} variant="trending" rank={i + 1} />)}
             </div>
           </section>
         )}
@@ -858,7 +892,7 @@ export function DealsClient({
           {isFiltered ? (
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-4 w-4 text-muted-foreground" />
-              <h2 className={cn(outfit.className, "font-bold text-sm")}>
+              <h2 className={cn("font-outfit", "font-bold text-sm")}>
                 {filters.search ? `Results for "${filters.search}"` :
                  brandFilter ? `${brandFilter} Deals` :
                  filters.category ? `${DEAL_CATEGORIES.find(c => c.value === filters.category)?.label} Deals` :

@@ -6,6 +6,7 @@ import { Plus, Award, Globe, MapPin, GraduationCap, Clock, Zap } from "lucide-re
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PageTitle } from "@/components/ui/page-title"
 import { UserCard } from "@/components/shared/UserCard"
 import { formatCurrency } from "@/lib/utils"
 import { FREE_LIMITS } from "@/lib/limits"
@@ -43,10 +44,7 @@ export default async function LearningPage({ searchParams }: { searchParams: { c
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Learning Hub</h1>
-          <p className="text-muted-foreground text-sm mt-1">Workshops, mentoring and certification prep from peer professionals</p>
-        </div>
+        <PageTitle badge="Learning" badgeIcon={GraduationCap} title="Learning Hub" subtitle="Workshops, mentoring and certification prep from peer professionals" />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isPremium && session?.user?.id && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">

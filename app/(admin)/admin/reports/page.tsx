@@ -5,6 +5,7 @@ import { FileWarning, ExternalLink, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "@/lib/utils"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 
 export const dynamic = "force-dynamic"
 
@@ -23,11 +24,13 @@ export default async function AdminReportsPage() {
   const resolved = reports.filter((r) => r.status !== "PENDING")
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-xl font-bold flex items-center gap-2"><FileWarning className="h-5 w-5" /> Reports</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">{pending.length} pending · {resolved.length} resolved</p>
-      </div>
+    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+      <AdminPageHeader
+        icon={FileWarning}
+        title="Reports"
+        subtitle={`${pending.length} pending · ${resolved.length} resolved`}
+        gradient="from-rose-500 to-pink-600"
+      />
 
       {pending.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl py-16 text-center">

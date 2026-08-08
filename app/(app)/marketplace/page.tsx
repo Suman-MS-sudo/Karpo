@@ -3,12 +3,13 @@ export const dynamic = "force-dynamic"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
-import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap, LayoutGrid, ShoppingBag } from "lucide-react"
-import { PageTitle } from "@/components/ui/page-title"
+import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap, LayoutGrid } from "lucide-react"
 import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { MarketplaceFilters } from "@/components/marketplace/MarketplaceFilters"
+import { PageHero } from "@/components/shared/PageHero"
+import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { LISTING_CATEGORIES } from "@/config/services"
 import { fuzzyFilter } from "@/lib/fuzzy"
 
@@ -40,6 +41,10 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const session = await auth()
   const now     = new Date()
   const page    = Math.max(1, parseInt(searchParams.page ?? "1"))
+  // Default to the user's own city (set via the top-nav location switcher)
+  // when no explicit ?city= filter is present, so switching location scopes
+  // results here just like it does on the dashboard.
+  const effectiveCity = searchParams.city || session?.user?.city || undefined
 
   // ── Build base where clause ───────────────────────────────────────────────
   const baseWhere = {
@@ -52,7 +57,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     } : {}),
     ...(searchParams.category ? { category: searchParams.category } : {}),
     ...(searchParams.condition ? { condition: searchParams.condition } : {}),
-    ...(searchParams.city ? { city: searchParams.city } : {}),
+    ...(effectiveCity ? { city: effectiveCity } : {}),
     ...(searchParams.negotiable ? { isNegotiable: true } : {}),
     ...(searchParams.minPrice || searchParams.maxPrice ? {
       price: {
@@ -113,7 +118,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     const rows = await Promise.all(
       categoryValues.map((cat) =>
         prisma.listing.findFirst({
-          where: { status: "ACTIVE", category: cat, NOT: { id: { in: featuredIds } } },
+          where: { status: "ACTIVE", category: cat, ...(effectiveCity ? { city: effectiveCity } : {}), NOT: { id: { in: featuredIds } } },
           orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
           select: {
             id: true, title: true, description: true, price: true, images: true,
@@ -187,34 +192,60 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     : 0
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-5">
-        <PageTitle
-          badge="Marketplace"
-          badgeIcon={ShoppingBag}
-          title="Buy & Sell"
-          subtitle={
-            totalCount > 0
-              ? `${totalCount} listing${totalCount === 1 ? "" : "s"}${searchParams.city ? ` in ${searchParams.city}` : ""}`
-              : "Verified sellers from your corporate network"
-          }
-        />
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {!isPremium && session?.user?.id && (
-            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-amber-700 dark:text-amber-300 font-medium">{myListingsCount}/{FREE_LIMITS.marketplace} listed</span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
-            </div>
-          )}
-          <Button asChild>
-            <Link href="/marketplace/new"><Plus className="h-4 w-4" /> Post Item</Link>
-          </Button>
+    <div className="min-h-full bg-background">
+      <PageHero
+        imageUrl="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=85&auto=format&fit=crop"
+        eyebrow="Corporate Marketplace"
+        titleWhite="Buy &"
+        titleAccent="Sell"
+        description="Verified sellers from your corporate network."
+        overlayFrom="from-blue-950/50" overlayTo="to-cyan-950/40"
+        blobFrom="bg-blue-500/30" blobTo="bg-cyan-400/20"
+        eyebrowGradient="from-blue-500/30 via-cyan-500/30 to-teal-400/30"
+        ctaGradient="from-blue-500 via-cyan-500 to-teal-400"
+        focusRing="focus:ring-blue-400/50"
+        stats={[
+          { value: allActiveCount.toLocaleString(), label: "Live Listings", gradient: "from-blue-300 to-cyan-200" },
+          { value: `${myListingsCount}/${FREE_LIMITS.marketplace}`, label: "You've Posted", gradient: "from-emerald-300 to-teal-200" },
+          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+        ]}
+        primaryCta={{ href: "/marketplace/new", label: "Post Item", icon: Plus }}
+        searchAction="/marketplace"
+        searchPlaceholder="Search listings, brands, categories…"
+        defaultQuery={searchParams.q ?? ""}
+      />
+      <CategoryStrip
+        activeValue={searchParams.category ?? "All"}
+        basePath="/marketplace"
+        paramName="category"
+        ringClass="ring-blue-400"
+        glowShadow="shadow-[0_0_12px_rgba(59,130,246,0.4)]"
+        underlineGradient="from-blue-500 to-cyan-400"
+        items={[
+          { value: "All", label: "All", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: allActiveCount },
+          ...LISTING_CATEGORIES.map((c) => ({
+            value: c.value,
+            label: c.label,
+            icon: c.icon,
+            iconBg: "bg-blue-100 dark:bg-blue-500/20",
+            iconColor: "text-blue-600 dark:text-blue-400",
+            count: categoryCounts[c.value] ?? 0,
+          })),
+        ]}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {!isPremium && session?.user?.id && (
+        <div className="flex justify-end mb-4">
+          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+            <span className="text-amber-700 dark:text-amber-300 font-medium">{myListingsCount}/{FREE_LIMITS.marketplace} listed</span>
+            <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Filters ─────────────────────────────────────────────────────────── */}
-      <MarketplaceFilters current={searchParams} counts={categoryCounts} totalCount={allActiveCount} />
+      <MarketplaceFilters current={searchParams} />
 
       {/* ── Featured / Boosted section ─────────────────────────────────────── */}
       {featuredListings.length > 0 && (
@@ -406,6 +437,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         <Button asChild variant="outline" className="shrink-0 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50">
           <Link href="/marketplace/new">Post &amp; Boost →</Link>
         </Button>
+      </div>
       </div>
     </div>
   )

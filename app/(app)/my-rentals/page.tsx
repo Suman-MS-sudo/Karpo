@@ -8,6 +8,7 @@ import {
   CheckCircle2, Clock, TrendingUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 export const metadata = { title: "My Rentals" }
@@ -81,10 +82,7 @@ export default async function MyRentalsPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Rentals</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Properties you've listed for rent</p>
-        </div>
+        <PageTitle badge="My Rentals" badgeIcon={Home} title="My Rentals" subtitle="Properties you've listed for rent" />
         <Button asChild>
           <Link href="/rentals/new"><Plus className="h-4 w-4" /> Post Rental</Link>
         </Button>

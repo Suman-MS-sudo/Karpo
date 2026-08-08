@@ -11,11 +11,11 @@ const db = createClient({
 })
 
 const USERS = [
-  "cmqaegcjk0000nwuwz3kvohry",  // Suman
-  "cmqaeng0b0006nwuwf7llpxir",  // Lyra Suman
-  "cmqdnhj9400116rxzwymg32l3",  // Charan Kumar
-  "cmqcc7h6r00161098rlza1iiz",  // Charan
-  "cmqaeu6ar000046rkynd9itly",  // Admin
+  "cmqaeu6ar000046rkynd9itly",  // Suman
+  "cmqz9yf960009rzhoobuky0rl",  // testckb
+  "cmrhyv3ms0001973xteal5h5w",  // lyrasuman
+  "cmri121jb000642qxo71ptaix",  // charan
+  "cmrrz9vrk000e74czpokw0282",  // Kannappa
 ]
 
 function id()         { return "evt_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9) }

@@ -6,10 +6,11 @@ import { useTheme } from "next-themes"
 import Image from "next/image"
 import {
   User, Phone, MapPin, Briefcase, Tag, FileText,
-  LogOut, Shield, Sun, Moon, Monitor, Check, Loader2, Camera,
+  LogOut, Shield, Sun, Moon, Monitor, Check, Loader2, Camera, Settings,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageTitle } from "@/components/ui/page-title"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { getInitials } from "@/lib/utils"
 
@@ -79,8 +80,13 @@ export default function SettingsPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        // city is intentionally omitted — it's managed exclusively by the
+        // top-nav location switcher, which is the single source of truth.
+        // This form used to also PATCH city from a form snapshot taken at
+        // page load, which could silently revert a location change made via
+        // the switcher after this page had already loaded.
         name: form.name, bio: form.bio, phone: form.phone,
-        city: form.city, department: form.department,
+        department: form.department,
         jobTitle: form.jobTitle, avatarUrl: form.avatarUrl,
       }),
     })
@@ -111,10 +117,7 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground text-sm mt-1">Manage your profile and preferences</p>
-      </div>
+      <PageTitle badge="Settings" badgeIcon={Settings} title="Settings" subtitle="Manage your profile and preferences" />
 
       {/* ── Profile card ─────────────────────────────────────────────────── */}
       <section className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -181,7 +184,12 @@ export default function SettingsPage() {
               <label className={LABEL}>
                 <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> City</span>
               </label>
-              <input className={INPUT} placeholder="Mumbai" value={form.city} onChange={set("city")} />
+              <div className={`${INPUT} opacity-60 cursor-not-allowed flex items-center justify-between`}>
+                <span>{form.city || "Not set"}</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Change your city from the location picker in the top navigation.
+              </p>
             </div>
           </div>
 

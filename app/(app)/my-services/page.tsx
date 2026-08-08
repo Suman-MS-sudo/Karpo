@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Plus, Wrench, ExternalLink, MapPin, Clock, Star, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 export const metadata = { title: "My Services" }
@@ -44,10 +45,7 @@ export default async function MyServicesPage({ searchParams }: { searchParams: {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Services</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Skills and services you've offered</p>
-        </div>
+        <PageTitle badge="My Services" badgeIcon={Wrench} title="My Services" subtitle="Skills and services you've offered" />
         <Button asChild>
           <Link href="/skills/new"><Plus className="h-4 w-4" /> Offer a Service</Link>
         </Button>

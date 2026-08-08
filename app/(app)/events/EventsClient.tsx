@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Outfit } from "next/font/google"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -21,7 +20,6 @@ import { cn } from "@/lib/utils"
 
 // A bold, rounded display font for headings/labels — gives the Events section
 // a distinct, friendly identity (Zepto-style) separate from the app's default UI font.
-const outfit = Outfit({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap" })
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -154,9 +152,10 @@ interface Props {
   isPremium:       boolean
   myEventsCount:   number
   eventsLimit:     number
+  initialCity?:    string
 }
 
-export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEventsCount, eventsLimit }: Props) {
+export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEventsCount, eventsLimit, initialCity }: Props) {
   const searchParams = useSearchParams()
   const router       = useRouter()
   const [search,      setSearch]      = useState("")
@@ -170,7 +169,9 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   const [bookmarks,   setBookmarks]   = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
   const [sortOpen,    setSortOpen]    = useState(false)
-  const [cityFilter,      setCityFilter]      = useState<string>("All")
+  // Default to the user's own city (set via the top-nav location switcher)
+  // so switching location scopes Events too, unless they pick a different one.
+  const [cityFilter,      setCityFilter]      = useState<string>(() => initialCity && CITIES.some(c => c.name === initialCity) ? initialCity : "All")
   const [cityOpen,        setCityOpen]        = useState(false)
   const [locationFilter, setLocationFilter] = useState<string | null>(null) // detected city/area
   const [locationLoading, setLocationLoading] = useState(false)
@@ -358,9 +359,9 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   <Sparkles className="h-3 w-3 text-fuchsia-300" /> Corporate Events
                 </span>
               </div>
-              <h1 className={cn(outfit.className, "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
+              <h1 className={cn("font-outfit", "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
                 <span className="bg-gradient-to-r from-white via-fuchsia-200 to-cyan-200 bg-clip-text text-transparent">Events</span>
-                {" "}<span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">&amp; Communities</span> 🎉
+                {" "}<span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">&amp; Communities</span>
               </h1>
               <p className="text-white/60 mt-2 text-sm">Treks, sports, networking &amp; hobby clubs — only verified professionals.</p>
             </div>
@@ -391,17 +392,17 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
           {/* Stats */}
           <div className="flex items-center gap-8 mb-8">
             <div>
-              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-fuchsia-300 to-pink-200 bg-clip-text text-transparent")}>{totalEvents}</p>
+              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-fuchsia-300 to-pink-200 bg-clip-text text-transparent")}>{totalEvents}</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Upcoming</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
-              <p className={cn(outfit.className, "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent")}>{totalRsvps.toLocaleString()}</p>
+              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent")}>{totalRsvps.toLocaleString()}</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total RSVPs</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
-              <p className={cn(outfit.className, "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
+              <p className={cn("font-outfit", "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
               <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
             </div>
           </div>
@@ -496,7 +497,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                     )}>
                       <cat.Icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
                     </div>
-                    <span className={cn(outfit.className, "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                    <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
                       {cat.label}
                     </span>
                     <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
@@ -766,7 +767,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   <span className="h-6 w-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center shrink-0">
                     <TrendingUp className="h-3.5 w-3.5 text-white" />
                   </span>
-                  <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-fuchsia-600 to-pink-500 dark:from-fuchsia-400 dark:to-pink-300 bg-clip-text text-transparent")}>🔥 Featured</h2>
+                  <h2 className={cn("font-outfit", "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-fuchsia-600 to-pink-500 dark:from-fuchsia-400 dark:to-pink-300 bg-clip-text text-transparent")}>🔥 Featured</h2>
                 </div>
                 <SpotlightCard event={spotlight} bookmarks={bookmarks} onBookmark={toggleBookmark} />
               </section>
@@ -782,7 +783,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                     <span className="h-6 w-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0">
                       <BookmarkCheck className="h-3.5 w-3.5 text-white" />
                     </span>
-                    <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent")}>⭐ Saved</h2>
+                    <h2 className={cn("font-outfit", "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent")}>⭐ Saved</h2>
                     <span className="text-xs text-muted-foreground">({saved.length})</span>
                   </div>
                   <div className={cn(view === "grid"
@@ -805,7 +806,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                   <span className="h-6 w-6 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center shrink-0">
                     <Clock className="h-3.5 w-3.5 text-white" />
                   </span>
-                  <h2 className={cn(outfit.className, "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text text-transparent")}>
+                  <h2 className={cn("font-outfit", "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-cyan-500 to-violet-500 bg-clip-text text-transparent")}>
                     {category === "All" ? "All Upcoming" : `${category} Events`}
                   </h2>
                   <span className="text-xs text-muted-foreground">({gridEvents.length})</span>
@@ -885,7 +886,7 @@ function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
             </span>
           </div>
 
-          <h2 className={cn(outfit.className, "text-2xl lg:text-3xl font-extrabold tracking-tight text-white group-hover:text-fuchsia-200 transition-colors leading-tight max-w-2xl")}>
+          <h2 className={cn("font-outfit", "text-2xl lg:text-3xl font-extrabold tracking-tight text-white group-hover:text-fuchsia-200 transition-colors leading-tight max-w-2xl")}>
             {ev.title}
           </h2>
           <p className="text-slate-300 text-sm mt-2 line-clamp-2 max-w-xl">{ev.description}</p>
@@ -999,7 +1000,7 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
         {/* Body */}
         <div className="flex flex-col flex-1 p-4 gap-3">
           <div>
-            <h3 className={cn(outfit.className, "font-bold text-sm tracking-tight leading-snug group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors line-clamp-2")}>
+            <h3 className={cn("font-outfit", "font-bold text-sm tracking-tight leading-snug group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors line-clamp-2")}>
               {ev.title}
             </h3>
             {ev.tags.length > 0 && (
@@ -1094,7 +1095,7 @@ function ListCard({ event: ev, bookmarks, onBookmark }: {
               {ev.format === "HYBRID" && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300">Hybrid</span>}
               {ev.requiresApproval && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Approval req.</span>}
             </div>
-            <h3 className={cn(outfit.className, "font-bold text-sm tracking-tight group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors line-clamp-1")}>
+            <h3 className={cn("font-outfit", "font-bold text-sm tracking-tight group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors line-clamp-1")}>
               {ev.title}
             </h3>
             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">

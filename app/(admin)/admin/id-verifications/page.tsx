@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { BadgeCheck, Clock, CheckCircle, XCircle, Phone, Mail, Briefcase, RefreshCw } from "lucide-react"
 import { formatRelativeTime } from "@/lib/utils"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 
 export const dynamic = "force-dynamic"
 
@@ -26,13 +27,13 @@ export default async function AdminIdVerificationsPage() {
   const rejected = requests.filter((r) => r.status === "REJECTED")
 
   return (
-    <div className="p-6 space-y-8 max-w-5xl">
-      <div>
-        <h1 className="text-xl font-bold flex items-center gap-2"><BadgeCheck className="h-5 w-5" /> ID Card Verifications</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          {pending.length} pending · {approved.length} approved · {rejected.length} rejected
-        </p>
-      </div>
+    <div className="p-6 space-y-8 max-w-5xl mx-auto">
+      <AdminPageHeader
+        icon={BadgeCheck}
+        title="ID Card Verifications"
+        subtitle={`${pending.length} pending · ${approved.length} approved · ${rejected.length} rejected`}
+        gradient="from-emerald-500 to-teal-600"
+      />
 
       {pending.length > 0 && (
         <div className="bg-card border border-amber-200 dark:border-amber-800 rounded-2xl p-5">

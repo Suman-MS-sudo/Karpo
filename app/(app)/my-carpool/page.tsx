@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Plus, Car, ExternalLink, Users, Clock, ArrowRight, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime, formatDate } from "@/lib/utils"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
@@ -55,10 +56,7 @@ export default async function MyCarpoolPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Carpool Routes</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Routes you've offered for colleagues</p>
-        </div>
+        <PageTitle badge="My Carpool" badgeIcon={Car} title="My Carpool Routes" subtitle="Routes you've offered for colleagues" />
         <Button asChild>
           <Link href="/carpool/new"><Plus className="h-4 w-4" /> Offer a Ride</Link>
         </Button>

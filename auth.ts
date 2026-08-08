@@ -246,6 +246,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async jwt({ token, user, trigger }) {
+      if (trigger === "update") {
+        console.log("[auth.jwt] trigger=update — refetching from DB", { tokenSub: token.sub, tokenCityBefore: token.city })
+      }
       if (user?.id || trigger === "update") {
         const id = user?.id ?? (token.sub as string)
         const dbUser = await prisma.user.findUnique({
@@ -276,6 +279,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.avatarUrl    = dbUser.avatarUrl ?? undefined
           token.membershipPlan = dbUser.membership?.plan ?? "FREE"
           token.company      = dbUser.company ?? undefined
+          if (trigger === "update") {
+            console.log("[auth.jwt] trigger=update — refetched city", { tokenSub: token.sub, cityAfter: token.city })
+          }
+        } else if (trigger === "update") {
+          console.log("[auth.jwt] trigger=update — dbUser NOT FOUND", { id })
         }
       }
       return token
@@ -293,6 +301,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.avatarUrl      = token.avatarUrl as string | undefined
         session.user.membershipPlan = token.membershipPlan as string | undefined
         session.user.company        = token.company as typeof session.user.company
+
+        // The city the user picks via the top-nav location switcher must be
+        // reflected immediately everywhere. next-auth's client-side
+        // `update()` (which is supposed to re-run the jwt() callback with
+        // trigger:"update" and re-sign the cookie) has proven unreliable in
+        // this app's next-auth v5 beta setup — confirmed via logging that
+        // trigger:"update" sometimes never fires. So rather than depend on
+        // that, always read the current city fresh from the DB here — a
+        // single indexed lookup, cheap enough to run on every request — so
+        // it can never go stale regardless of whether the JWT refresh path
+        // actually ran.
+        if (session.user.id) {
+          try {
+            const fresh = await prisma.user.findUnique({
+              where:  { id: session.user.id },
+              select: { city: true },
+            })
+            if (fresh) session.user.city = fresh.city ?? undefined
+          } catch {
+            // DB hiccup — fall back to whatever the token already had.
+          }
+        }
       }
       return session
     },

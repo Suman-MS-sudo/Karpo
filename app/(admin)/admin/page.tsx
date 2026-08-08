@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 import { formatDate, formatRelativeTime } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -91,16 +92,8 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="p-6 space-y-8 max-w-6xl">
-      <div className="flex items-center gap-3">
-        <span className="h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm shrink-0">
-          <Shield className="h-5 w-5 text-white" />
-        </span>
-        <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Platform overview and pending actions</p>
-        </div>
-      </div>
+    <div className="p-6 space-y-8 max-w-6xl mx-auto">
+      <AdminPageHeader icon={Shield} title="Admin Dashboard" subtitle="Platform overview and pending actions" />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

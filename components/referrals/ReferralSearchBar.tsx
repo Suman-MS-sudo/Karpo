@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Search, SlidersHorizontal, ChevronDown, ChevronUp, X, Building2, MapPin } from "lucide-react"
+import { SlidersHorizontal, ChevronDown, ChevronUp, X, Building2, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TagAutocomplete } from "@/components/ui/tag-autocomplete"
@@ -92,19 +92,9 @@ export function ReferralSearchBar() {
 
   return (
     <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
-      {/* Search + company row */}
+      {/* Company + filters row */}
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search by title, department, skills…"
-            className="pl-10 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
-          />
-        </div>
-        <div className="relative w-44 shrink-0">
+        <div className="relative flex-1 sm:flex-none sm:w-56 shrink-0">
           <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
           <Input
             value={company}

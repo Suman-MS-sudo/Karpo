@@ -8,6 +8,7 @@ import { TopNav } from "./TopNav"
 import { MobileNav } from "./MobileNav"
 import { ChatProvider } from "@/components/chat/ChatContext"
 import { FloatingChatContainer } from "@/components/chat/FloatingChatContainer"
+import { LocationPromptModal } from "./LocationPromptModal"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -61,6 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* ── Floating Chat Windows ────────────────────────────────── */}
         <FloatingChatContainer />
       </div>
+      <LocationPromptModal />
     </ChatProvider>
   )
 }

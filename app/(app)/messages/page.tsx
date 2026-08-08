@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { MessageSquare } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageTitle } from "@/components/ui/page-title"
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 import { MessagesBackButton } from "@/components/shared/MessagesBackButton"
@@ -39,7 +40,7 @@ export default async function MessagesPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-3 mb-6">
         <MessagesBackButton />
-        <h1 className="text-2xl font-bold">Messages</h1>
+        <PageTitle badge="Messages" badgeIcon={MessageSquare} title="Messages" subtitle="Your conversations with colleagues." />
       </div>
 
       {conversations.length === 0 ? (

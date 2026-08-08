@@ -4,6 +4,7 @@ import { UserActions } from "./UserActions"
 import { formatDate } from "@/lib/utils"
 import { Users, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 
 export const dynamic = "force-dynamic"
 
@@ -65,13 +66,8 @@ export default async function AdminUsersPage({ searchParams }: Props) {
   ]
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><Users className="h-5 w-5" /> Users</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{total.toLocaleString()} users</p>
-        </div>
-      </div>
+    <div className="p-6 space-y-6 max-w-6xl mx-auto">
+      <AdminPageHeader icon={Users} title="Users" subtitle={`${total.toLocaleString()} users`} gradient="from-blue-500 to-indigo-600" />
 
       {/* Search + filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -99,64 +95,79 @@ export default async function AdminUsersPage({ searchParams }: Props) {
       </div>
 
       {/* Table */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">User</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground hidden md:table-cell">Company</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground hidden lg:table-cell">Joined</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground hidden lg:table-cell">Posts</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Actions</th>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">User</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell">Company</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Joined</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Activity</th>
+                <th className="text-right px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {users.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">No users found</td></tr>
+                <tr><td colSpan={6} className="text-center py-16 text-muted-foreground text-sm">No users found</td></tr>
               ) : users.map((user) => (
-                <tr key={user.id} className="hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-xs font-bold text-primary-700 dark:text-primary-300 shrink-0">
-                        {user.name?.[0]?.toUpperCase() ?? "?"}
-                      </div>
+                <tr key={user.id} className="hover:bg-muted/20 transition-colors group">
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-3">
+                      {user.avatarUrl || user.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={user.avatarUrl ?? user.image ?? ""}
+                          alt=""
+                          className="h-9 w-9 rounded-full object-cover shrink-0 ring-1 ring-border"
+                        />
+                      ) : (
+                        <div className="h-9 w-9 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-xs font-bold text-primary-700 dark:text-primary-300 shrink-0">
+                          {user.name?.[0]?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{user.name ?? "—"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        <p className="font-semibold truncate leading-tight">{user.name ?? "—"}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
+                  <td className="px-4 py-3.5 hidden md:table-cell">
                     <p className="text-sm truncate">{user.company?.name ?? <span className="text-muted-foreground">—</span>}</p>
-                    {user.company?.domain && <p className="text-xs text-muted-foreground">@{user.company.domain}</p>}
+                    {user.company?.domain && <p className="text-xs text-muted-foreground mt-0.5">@{user.company.domain}</p>}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
+                  <td className="px-4 py-3.5">
+                    <div className="flex flex-wrap items-center gap-1">
                       {user.isVerified
-                        ? <Badge variant="verified" className="text-[10px] w-fit">Verified</Badge>
-                        : <Badge variant="secondary" className="text-[10px] w-fit">Unverified</Badge>}
+                        ? <Badge variant="verified" className="text-[10px]">Verified</Badge>
+                        : <Badge variant="secondary" className="text-[10px]">Unverified</Badge>}
                       {user.membership?.plan === "PREMIUM" && (
-                        <Badge className="text-[10px] w-fit bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300">Premium</Badge>
+                        <Badge className="text-[10px] bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300">Premium</Badge>
                       )}
                       {user.role === "ADMIN" && (
-                        <Badge className="text-[10px] w-fit bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300">Admin</Badge>
+                        <Badge className="text-[10px] bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300">Admin</Badge>
                       )}
                       {user.isDisabled && (
-                        <Badge variant="destructive" className="text-[10px] w-fit">Disabled</Badge>
+                        <Badge variant="destructive" className="text-[10px]">Disabled</Badge>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
+                  <td className="px-4 py-3.5 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
                     {formatDate(user.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">
+                  <td className="px-4 py-3.5 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
                     {user._count.listings} listings · {user._count.jobReferrals} referrals
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-5 py-3.5 text-right">
                     <UserActions
                       userId={user.id}
+                      name={user.name}
+                      email={user.email}
+                      department={user.department}
+                      jobTitle={user.jobTitle}
+                      city={user.city}
+                      phone={user.phone}
                       isVerified={user.isVerified}
                       role={user.role}
                       isDisabled={user.isDisabled}

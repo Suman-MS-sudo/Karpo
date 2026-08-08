@@ -1,8 +1,9 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Shield, FileText, Scale, Heart, TrendingUp, Clock, ChevronRight, Plus, Zap } from "lucide-react"
+import { Shield, FileText, Scale, Heart, TrendingUp, Clock, ChevronRight, Plus, Zap, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatRelativeTime } from "@/lib/utils"
 import { FREE_LIMITS } from "@/lib/limits"
 
@@ -47,15 +48,7 @@ export default async function ConciergePage() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center">
-            <Shield className="h-5 w-5 text-sky-600 dark:text-sky-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Concierge Services</h1>
-            <p className="text-muted-foreground text-sm">Submit a request → get connected with a vetted expert who assists you personally</p>
-          </div>
-        </div>
+        <PageTitle badge="Concierge" badgeIcon={Sparkles} title="Concierge Services" subtitle="Submit a request → get connected with a vetted expert who assists you personally" />
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {!isPremium && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">

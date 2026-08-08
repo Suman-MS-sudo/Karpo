@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Search, ShoppingBag, Home, Briefcase, Car, Users, Wrench } from "lucide-react"
+import { PageTitle } from "@/components/ui/page-title"
 
 export const dynamic = "force-dynamic"
 
@@ -17,12 +18,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
           <Search className="h-8 w-8 text-muted-foreground" />
         </div>
-        <div>
-          <h1 className="text-xl font-bold">Search across Korpo</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Find listings, jobs, rentals, events, and more
-          </p>
-        </div>
+        <PageTitle badge="Search" badgeIcon={Search} title="Search across Korpo" subtitle="Find listings, jobs, rentals, events, and more" />
       </div>
     )
   }
@@ -73,12 +69,12 @@ export default async function SearchPage({ searchParams }: PageProps) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold">
-          {total > 0 ? `${total}+ results for "${q}"` : `No results for "${q}"`}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Showing across all Korpo services</p>
-      </div>
+      <PageTitle
+        badge="Search"
+        badgeIcon={Search}
+        title={total > 0 ? `${total}+ results for "${q}"` : `No results for "${q}"`}
+        subtitle="Showing across all Korpo services"
+      />
 
       {total === 0 && (
         <div className="text-center py-12 text-muted-foreground">

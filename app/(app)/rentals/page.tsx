@@ -15,7 +15,17 @@ import { SocialShare } from "@/components/shared/SocialShare"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { RentalFilters } from "@/components/rentals/RentalFilters"
 import { fuzzyFilter } from "@/lib/fuzzy"
-import { PageTitle } from "@/components/ui/page-title"
+import { PageHero } from "@/components/shared/PageHero"
+import { CategoryStrip } from "@/components/shared/CategoryStrip"
+
+const TYPE_META: Record<string, { label: string; icon: string }> = {
+  APARTMENT: { label: "Apartment", icon: "Building2" },
+  ROOM:      { label: "Room",      icon: "BedDouble" },
+  PG:        { label: "PG",        icon: "Home" },
+  FLATMATE:  { label: "Flatmate",  icon: "Users2" },
+  STUDIO:    { label: "Studio",    icon: "Warehouse" },
+  VILLA:     { label: "Villa",     icon: "Home" },
+}
 
 export const dynamic = "force-dynamic"
 
@@ -61,6 +71,8 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   const session = await auth()
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
   const userCity = session?.user?.city
+  // Default to the user's own city when no explicit ?city= filter is present.
+  const effectiveCity = searchParams.city || userCity || undefined
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10))
   const myRentalsCount = session?.user?.id && !isPremium
     ? await prisma.rentalPost.count({ where: { userId: session.user.id, status: "ACTIVE" } })
@@ -77,7 +89,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   const baseWhere = {
     status: "ACTIVE",
     ...(searchParams.type ? { type: searchParams.type } : {}),
-    ...(searchParams.city ? { city: searchParams.city } : {}),
+    ...(effectiveCity ? { city: effectiveCity } : {}),
     ...(searchParams.furnished ? { furnished: searchParams.furnished } : {}),
     ...(searchParams.bhk       ? { bhk:       searchParams.bhk }       : {}),
     ...((budgetMin || budgetMax) ? {
@@ -158,31 +170,61 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="min-h-full bg-background">
+      <PageHero
+        imageUrl="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1920&q=85&auto=format&fit=crop"
+        eyebrow="Rentals & Flatmates"
+        titleWhite="Rental &"
+        titleAccent="Flatmate Hub"
+        description="Apartments, PGs, studios & flatmates — from verified colleagues."
+        overlayFrom="from-emerald-950/50" overlayTo="to-teal-950/40"
+        blobFrom="bg-emerald-500/30" blobTo="bg-teal-400/20"
+        eyebrowGradient="from-emerald-500/30 via-teal-500/30 to-lime-400/30"
+        ctaGradient="from-emerald-500 via-teal-500 to-lime-400"
+        focusRing="focus:ring-emerald-400/50"
+        stats={[
+          { value: allActiveCount.toLocaleString(), label: "Live Listings", gradient: "from-emerald-300 to-teal-200" },
+          { value: `${myRentalsCount}/${FREE_LIMITS.rentals}`, label: "You've Posted", gradient: "from-cyan-300 to-blue-200" },
+          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+        ]}
+        primaryCta={{ href: "/rentals/new", label: "Post Listing", icon: Plus }}
+        searchAction="/rentals"
+        searchPlaceholder="Search area, society, landmark…"
+        defaultQuery={searchParams.q ?? ""}
+      />
+      <CategoryStrip
+        activeValue={searchParams.type ?? "All"}
+        basePath="/rentals"
+        paramName="type"
+        ringClass="ring-emerald-400"
+        glowShadow="shadow-[0_0_12px_rgba(16,185,129,0.4)]"
+        underlineGradient="from-emerald-500 to-teal-400"
+        items={[
+          { value: "All", label: "All", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: allActiveCount },
+          ...Object.entries(TYPE_META).map(([value, meta]) => ({
+            value,
+            label: meta.label,
+            icon: meta.icon,
+            iconBg: "bg-emerald-100 dark:bg-emerald-500/20",
+            iconColor: "text-emerald-600 dark:text-emerald-400",
+            count: typeCounts[value] ?? 0,
+          })),
+        ]}
+      />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <PageTitle
-          badge="Rentals"
-          badgeIcon={Home}
-          title="Rental & Flatmate Hub"
-          subtitle={`${total} listing${total !== 1 ? "s" : ""}${searchParams.city ? ` in ${searchParams.city}` : " across all cities"}`}
-        />
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {!isPremium && session?.user?.id && (
-            <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-amber-700 dark:text-amber-300 font-medium">{myRentalsCount}/{FREE_LIMITS.rentals} posted</span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
-            </div>
-          )}
-          <Button asChild>
-            <Link href="/rentals/new"><Plus className="h-4 w-4 mr-1" />Post Listing</Link>
-          </Button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+      {!isPremium && session?.user?.id && (
+        <div className="flex justify-end">
+          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+            <span className="text-amber-700 dark:text-amber-300 font-medium">{myRentalsCount}/{FREE_LIMITS.rentals} posted</span>
+            <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Filters */}
-      <RentalFilters current={sp} counts={typeCounts} totalCount={allActiveCount} />
+      <RentalFilters current={sp} />
 
       {/* Premium listings label */}
       {rentals.some((r) => r.isBoosted) && (
@@ -326,6 +368,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
           </Link>
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Shield, ChevronDown, Loader2, Calendar } from "lucide-react"
 import { formatRelativeTime } from "@/lib/utils"
 import Link from "next/link"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 
 interface Lead {
   id: string; serviceType: string; description: string; status: string
@@ -51,11 +52,8 @@ export function ConciergeManager({ leads: initial, activeStatus }: { leads: Lead
   const visible = activeStatus === "all" ? leads : leads.filter((l) => l.status === activeStatus)
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-xl font-bold flex items-center gap-2"><Shield className="h-5 w-5" /> Concierge Leads</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">{leads.length} total leads</p>
-      </div>
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <AdminPageHeader icon={Shield} title="Concierge Leads" subtitle={`${leads.length} total leads`} gradient="from-cyan-500 to-sky-600" />
 
       {/* Status tabs */}
       <div className="flex gap-1.5 flex-wrap">

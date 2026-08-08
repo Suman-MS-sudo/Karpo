@@ -2,9 +2,10 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
-import { Plus, Eye, Pencil, ExternalLink, Package, TrendingUp, BadgeCheck, Wallet, Home } from "lucide-react"
+import { Plus, Eye, Pencil, ExternalLink, Package, TrendingUp, BadgeCheck, Wallet, Home, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 import { LISTING_CATEGORIES } from "@/config/services"
 
@@ -66,10 +67,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Listings</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">All items you&apos;ve posted for sale</p>
-        </div>
+        <PageTitle badge="My Listings" badgeIcon={ShoppingBag} title="My Listings" subtitle="All items you&apos;ve posted for sale" />
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
             <Link href="/my-rentals"><Home className="h-4 w-4" /> My Rentals</Link>

@@ -1,37 +1,13 @@
 "use client"
 import { useRouter, usePathname } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
-import {
-  Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, Check,
-  LayoutGrid, Cpu, Car, Armchair, Tv, BookOpen,
-  Dumbbell, Shirt, UtensilsCrossed, Briefcase,
-  Music, Activity, Palette, Ticket, Package,
-  type LucideIcon,
-} from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { Search, SlidersHorizontal, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SortDropdown } from "@/components/ui/sort-dropdown"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { cn } from "@/lib/utils"
-import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
-
-const CATEGORY_META: Record<string, { Icon: LucideIcon; iconBg: string; iconColor: string }> = {
-  "":           { Icon: LayoutGrid,       iconBg: "bg-slate-100 dark:bg-white/10",         iconColor: "text-slate-600 dark:text-white"          },
-  ELECTRONICS:  { Icon: Cpu,              iconBg: "bg-cyan-100 dark:bg-cyan-500/20",       iconColor: "text-cyan-600 dark:text-cyan-400"        },
-  VEHICLE:      { Icon: Car,              iconBg: "bg-blue-100 dark:bg-blue-500/20",       iconColor: "text-blue-600 dark:text-blue-400"        },
-  FURNITURE:    { Icon: Armchair,         iconBg: "bg-amber-100 dark:bg-amber-500/20",     iconColor: "text-amber-600 dark:text-amber-400"      },
-  APPLIANCE:    { Icon: Tv,               iconBg: "bg-violet-100 dark:bg-violet-500/20",   iconColor: "text-violet-600 dark:text-violet-400"    },
-  BOOKS:        { Icon: BookOpen,         iconBg: "bg-orange-100 dark:bg-orange-500/20",   iconColor: "text-orange-600 dark:text-orange-400"    },
-  SPORTS:       { Icon: Dumbbell,         iconBg: "bg-lime-100 dark:bg-lime-500/20",       iconColor: "text-lime-600 dark:text-lime-400"        },
-  CLOTHING:     { Icon: Shirt,            iconBg: "bg-pink-100 dark:bg-pink-500/20",       iconColor: "text-pink-600 dark:text-pink-400"        },
-  KITCHEN:      { Icon: UtensilsCrossed,  iconBg: "bg-yellow-100 dark:bg-yellow-500/20",   iconColor: "text-yellow-600 dark:text-yellow-400"    },
-  OFFICE:       { Icon: Briefcase,        iconBg: "bg-slate-100 dark:bg-slate-500/20",     iconColor: "text-slate-600 dark:text-slate-400"      },
-  MUSIC:        { Icon: Music,            iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400"  },
-  HEALTH:       { Icon: Activity,         iconBg: "bg-rose-100 dark:bg-rose-500/20",       iconColor: "text-rose-600 dark:text-rose-400"        },
-  HOME_DECOR:   { Icon: Palette,          iconBg: "bg-purple-100 dark:bg-purple-500/20",   iconColor: "text-purple-600 dark:text-purple-400"    },
-  TICKETS:      { Icon: Ticket,           iconBg: "bg-indigo-100 dark:bg-indigo-500/20",   iconColor: "text-indigo-600 dark:text-indigo-400"    },
-  OTHER:        { Icon: Package,          iconBg: "bg-red-100 dark:bg-red-500/20",         iconColor: "text-red-600 dark:text-red-400"          },
-}
+import { LISTING_CONDITIONS } from "@/config/services"
 
 interface Filters {
   q?: string
@@ -46,8 +22,6 @@ interface Filters {
 
 interface Props {
   current: Filters
-  counts?: Record<string, number>
-  totalCount?: number
 }
 
 const SORT_OPTIONS = [
@@ -58,11 +32,9 @@ const SORT_OPTIONS = [
   { value: "boosted",    label: "Boosted first" },
 ]
 
-export function MarketplaceFilters({ current, counts = {}, totalCount = 0 }: Props) {
+export function MarketplaceFilters({ current }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
-  const pillsRef     = useRef<HTMLDivElement>(null)
-  const scrollRafRef = useRef<number | null>(null)
 
   // Committed (URL-level) search input
   const [searchValue, setSearchValue] = useState(current.q ?? "")
@@ -96,19 +68,6 @@ export function MarketplaceFilters({ current, counts = {}, totalCount = 0 }: Pro
     setSearchValue(current.q ?? "")
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current.condition, current.minPrice, current.maxPrice, current.city, current.negotiable, current.q])
-
-  const startScroll = (dir: -1 | 1) => {
-    const el = pillsRef.current
-    if (!el) return
-    const tick = () => {
-      el.scrollLeft += dir * 6
-      scrollRafRef.current = requestAnimationFrame(tick)
-    }
-    scrollRafRef.current = requestAnimationFrame(tick)
-  }
-  const stopScroll = () => {
-    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current)
-  }
 
   // Count pending filter changes relative to URL
   const pendingFilterCount = [
@@ -168,36 +127,8 @@ export function MarketplaceFilters({ current, counts = {}, totalCount = 0 }: Pro
 
   return (
     <div className="space-y-3 mb-6">
-      {/* Search + sort row */}
+      {/* Sort + advanced filters row */}
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 pointer-events-none" />
-          <Input
-            placeholder="Search listings — iPhone, sofa, bike…"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") applyFilters() }}
-            className="pl-10 pr-24 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
-          />
-          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            {searchValue && (
-              <button
-                onClick={() => { setSearchValue(""); push({ q: undefined }) }}
-                className="text-muted-foreground hover:text-foreground p-1"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-            <Button
-              size="sm"
-              className="h-8 px-3 text-xs"
-              onClick={applyFilters}
-            >
-              Search
-            </Button>
-          </div>
-        </div>
-
         {/* Sort */}
         <SortDropdown
           options={SORT_OPTIONS}
@@ -231,65 +162,6 @@ export function MarketplaceFilters({ current, counts = {}, totalCount = 0 }: Pro
             <X className="h-4 w-4" /> Clear
           </Button>
         )}
-      </div>
-
-      {/* Category chips — horizontal scroll with arrow buttons */}
-      <div className="relative flex items-center gap-1">
-        <button
-          type="button"
-          aria-label="Scroll categories left"
-          onMouseDown={() => startScroll(-1)}
-          onMouseUp={stopScroll}
-          onMouseLeave={stopScroll}
-          onClick={() => { const el = pillsRef.current; if (el) el.scrollBy({ left: -200, behavior: "smooth" }) }}
-          className="shrink-0 h-7 w-7 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors shadow-sm"
-        >
-          <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
-
-        <div ref={pillsRef} className="flex flex-1 overflow-x-auto pb-0.5 scrollbar-hide">
-          {[{ value: "", label: "All" }, ...LISTING_CATEGORIES].map((cat) => {
-            const isActive = (current.category ?? "") === cat.value
-            const meta = CATEGORY_META[cat.value] ?? CATEGORY_META[""]
-            const count = cat.value === "" ? totalCount : (counts[cat.value] ?? 0)
-            return (
-              <button
-                key={cat.value}
-                onClick={() => push({ category: cat.value || undefined, q: current.q })}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 py-2 relative transition-all duration-150 group shrink-0 min-w-[76px]",
-                  isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
-                )}
-              >
-                <div className={cn(
-                  "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
-                  isActive ? cn(meta.iconBg, "ring-2 ring-fuchsia-400 scale-110 shadow-[0_0_12px_rgba(217,70,239,0.4)]") : cn(meta.iconBg, "group-hover:scale-105")
-                )}>
-                  <meta.Icon className={cn("h-4.5 w-4.5", meta.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
-                </div>
-                <span className={cn("text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
-                  {cat.label}
-                </span>
-                <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
-                  {count}
-                </span>
-                <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
-              </button>
-            )
-          })}
-        </div>
-
-        <button
-          type="button"
-          aria-label="Scroll categories right"
-          onMouseDown={() => startScroll(1)}
-          onMouseUp={stopScroll}
-          onMouseLeave={stopScroll}
-          onClick={() => { const el = pillsRef.current; if (el) el.scrollBy({ left: 200, behavior: "smooth" }) }}
-          className="shrink-0 h-7 w-7 flex items-center justify-center rounded-full border border-border bg-background hover:bg-muted transition-colors shadow-sm"
-        >
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
       </div>
 
       {/* Advanced filter panel */}

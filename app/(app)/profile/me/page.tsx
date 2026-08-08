@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { PageTitle } from "@/components/ui/page-title"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { ReverifyWorkEmail } from "@/components/profile/ReverifyWorkEmail"
 import { getInitials, cn } from "@/lib/utils"
@@ -200,8 +201,7 @@ export default function EditProfilePage() {
 
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Edit Profile</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">How colleagues see you across Korpo</p>
+        <PageTitle badge="Edit Profile" badgeIcon={User} title="Edit Profile" subtitle="How colleagues see you across Korpo" />
       </div>
 
       {/* Profile card */}

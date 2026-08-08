@@ -9,6 +9,7 @@ import {
   TrendingUp, LayoutGrid, ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime, formatDate } from "@/lib/utils"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
@@ -503,10 +504,7 @@ export default async function MyPostingsPage({ searchParams }: { searchParams: {
 
       {/* Page header */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">My Postings</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">All your posts across every service</p>
-        </div>
+        <PageTitle badge="My Postings" badgeIcon={LayoutGrid} title="My Postings" subtitle="All your posts across every service" />
         {newRoute && (
           <Button asChild className="gap-1.5">
             <Link href={newRoute}><Plus className="h-4 w-4" /> New {activeTab.label}</Link>

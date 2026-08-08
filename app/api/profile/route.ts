@@ -35,8 +35,19 @@ export async function PATCH(req: Request) {
     data["username"] = u || null
   }
 
+  if ("city" in body) {
+    console.log("[api/profile PATCH] updating city", {
+      userId: session.user.id,
+      from: session.user.city,
+      to: body.city,
+    })
+  }
+
   try {
     const user = await prisma.user.update({ where: { id: session.user.id }, data })
+    if ("city" in body) {
+      console.log("[api/profile PATCH] city update committed", { userId: user.id, city: user.city })
+    }
     return NextResponse.json(user)
   } catch (e: any) {
     if (e?.code === "P2002") {

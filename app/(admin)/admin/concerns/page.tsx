@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { formatRelativeTime } from "@/lib/utils"
 import { ConcernsFilterBar } from "./ConcernsFilterBar"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader"
 
 export const dynamic = "force-dynamic"
 
@@ -58,15 +59,13 @@ export default async function AdminConcernsPage({
   const closed     = grievances.filter((g) => g.status === "RESOLVED" || g.status === "DISMISSED")
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <MessageSquareWarning className="h-5 w-5" /> Concerns
-        </h1>
-        <p className="text-muted-foreground text-sm mt-0.5">
-          {open.length} open · {inProgress.length} in progress · {closed.length} resolved/dismissed in view
-        </p>
-      </div>
+    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+      <AdminPageHeader
+        icon={MessageSquareWarning}
+        title="Concerns"
+        subtitle={`${open.length} open · ${inProgress.length} in progress · ${closed.length} resolved/dismissed in view`}
+        gradient="from-orange-500 to-red-600"
+      />
 
       <ConcernsFilterBar
         category={searchParams.category ?? "ALL"}
