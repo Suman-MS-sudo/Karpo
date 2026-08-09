@@ -16,6 +16,8 @@ import { ServiceHeroCards } from "@/components/dashboard/ServiceHeroCards"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar"
 import { ActivityChart } from "@/components/dashboard/ActivityChart"
+import { MobileDashboardHeader } from "@/components/dashboard/MobileDashboardHeader"
+import { ServiceIconGrid } from "@/components/dashboard/ServiceIconGrid"
 
 
 export default async function DashboardPage() {
@@ -109,8 +111,18 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-full bg-background">
 
-      {/* ── Photographic hero ───────────────────────────────────── */}
-      <div className="relative text-white overflow-hidden" style={{ minHeight: 320 }}>
+      {/* ── Mobile compact header ───────────────────────────────── */}
+      <div className="md:hidden">
+        <MobileDashboardHeader
+          name={session?.user?.name}
+          avatarUrl={session?.user?.avatarUrl ?? session?.user?.image}
+          city={userCity}
+          greeting={greeting}
+        />
+      </div>
+
+      {/* ── Photographic hero (desktop) ─────────────────────────── */}
+      <div className="hidden md:block relative text-white overflow-hidden" style={{ minHeight: 320 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=85&auto=format&fit=crop"
@@ -224,6 +236,16 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
+        {/* Service icon grid (mobile) */}
+        <div className="md:hidden -mt-2">
+          <ServiceIconGrid
+            tiles={SERVICE_TILES.map((s) => ({
+              id: s.id, name: s.name, icon: s.icon, route: s.route,
+              color: s.color, bgColor: s.bgColor, count: s.count, countLabel: s.countLabel,
+            }))}
+          />
+        </div>
+
         {/* Activity chart */}
         <div className="rounded-3xl bg-card shadow-md p-5 sm:p-6">
           <div className="flex items-center justify-between mb-5">
@@ -244,8 +266,8 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Services hero cards */}
-        <div>
+        {/* Services hero cards (desktop) */}
+        <div className="hidden md:block">
           <h2 className="text-base font-semibold mb-4">
             Top Services{userCity && <span className="text-muted-foreground font-normal text-sm ml-2">in {userCity}</span>}
           </h2>
