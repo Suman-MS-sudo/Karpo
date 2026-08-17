@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
+import { assignUserCode } from "@/lib/user-codes"
 
 const DEV_DOMAINS: Record<string, string> = {
   "testcorp.com": "Test Corp",
@@ -61,6 +62,8 @@ export async function provisionUser(
       membership: { create: { plan: opts.isAdmin ? "PREMIUM" : "FREE" } },
     },
   })
+
+  if (!isExisting) await assignUserCode(dbUser.id)
 
   // Only file a review request for real, uncatalogued corporate domains —
   // personal/disposable domains (allowed in via LinkedIn) aren't companies.

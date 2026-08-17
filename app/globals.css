@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Legal document pages (Terms / Privacy) — matches PublicHeader/Footer typography ── */
+.legal-content h2 {
+  @apply text-xl sm:text-2xl font-bold text-[#1E3A5F] mt-10 mb-4 scroll-mt-24;
+}
+.legal-content h2:first-of-type { @apply mt-0; }
+.legal-content p {
+  @apply text-gray-600 leading-relaxed mb-4;
+}
+.legal-content ul {
+  @apply list-disc pl-5 space-y-2 mb-4 text-gray-600;
+}
+.legal-content li { @apply leading-relaxed; }
+.legal-content strong { @apply font-semibold text-gray-800; }
+.legal-content a { @apply text-[#2E86AB] underline underline-offset-2 hover:text-[#1E3A5F] transition-colors; }
+
 /* ── Leaflet overrides ──────────────────────────────────────────────────── */
 .leaflet-container img   { max-width: none !important; }
 .leaflet-container:focus { outline: none; }

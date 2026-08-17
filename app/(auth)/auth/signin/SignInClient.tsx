@@ -8,6 +8,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { LegalModal } from "@/components/legal/LegalModal"
 
 type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp"
 
@@ -1007,8 +1008,12 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
       <p className="text-center text-xs text-muted-foreground mt-5">
         By continuing, you agree to our{" "}
-        <Link href="/terms" className="underline hover:text-foreground">Terms</Link> and{" "}
-        <Link href="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+        <LegalModal doc="terms">
+          <button type="button" className="underline hover:text-foreground">Terms</button>
+        </LegalModal>{" "}and{" "}
+        <LegalModal doc="privacy">
+          <button type="button" className="underline hover:text-foreground">Privacy Policy</button>
+        </LegalModal>
       </p>
     </div>
   )

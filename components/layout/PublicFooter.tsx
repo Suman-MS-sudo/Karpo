@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { SERVICES } from "@/config/services"
+import { LegalModal } from "@/components/legal/LegalModal"
 
 export function PublicFooter() {
   return (
@@ -44,8 +45,16 @@ export function PublicFooter() {
             <ul className="space-y-2 text-sm text-blue-200">
               <li><Link href="/about"   className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link></li>
-              <li><Link href="#"        className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#"        className="hover:text-white transition-colors">Terms of Service</Link></li>
+              <li>
+                <LegalModal doc="privacy">
+                  <button type="button" className="hover:text-white transition-colors">Privacy Policy</button>
+                </LegalModal>
+              </li>
+              <li>
+                <LegalModal doc="terms">
+                  <button type="button" className="hover:text-white transition-colors">Terms of Service</button>
+                </LegalModal>
+              </li>
             </ul>
           </div>
         </div>

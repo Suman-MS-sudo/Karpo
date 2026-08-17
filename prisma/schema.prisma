@@ -88,6 +88,9 @@ model User {
   companyId       String?
   workEmail       String?   @unique
   passwordHash    String?
+  userCode        String?   @unique  // KP00001, KP00002, ... — assigned sequentially on signup
+  batchCode       String?             // 4-digit cohort code, e.g. "0001" for the first 100 users
+  referralCode    String?   @unique  // referral code users can share to invite others (currently first 100 users only)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

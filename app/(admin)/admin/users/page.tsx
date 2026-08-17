@@ -102,6 +102,8 @@ export default async function AdminUsersPage({ searchParams }: Props) {
               <tr className="border-b border-border bg-muted/40">
                 <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">User</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell">Company</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell">User Code</th>
+                <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Referral Code</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Joined</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Activity</th>
@@ -110,7 +112,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
             </thead>
             <tbody className="divide-y divide-border">
               {users.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-16 text-muted-foreground text-sm">No users found</td></tr>
+                <tr><td colSpan={8} className="text-center py-16 text-muted-foreground text-sm">No users found</td></tr>
               ) : users.map((user) => (
                 <tr key={user.id} className="hover:bg-muted/20 transition-colors group">
                   <td className="px-5 py-3.5">
@@ -136,6 +138,13 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                   <td className="px-4 py-3.5 hidden md:table-cell">
                     <p className="text-sm truncate">{user.company?.name ?? <span className="text-muted-foreground">—</span>}</p>
                     {user.company?.domain && <p className="text-xs text-muted-foreground mt-0.5">@{user.company.domain}</p>}
+                  </td>
+                  <td className="px-4 py-3.5 hidden md:table-cell">
+                    <p className="text-sm font-mono">{user.userCode ?? <span className="text-muted-foreground">—</span>}</p>
+                    {user.batchCode && <p className="text-xs text-muted-foreground mt-0.5">Batch {user.batchCode}</p>}
+                  </td>
+                  <td className="px-4 py-3.5 hidden lg:table-cell">
+                    <p className="text-sm font-mono">{user.referralCode ?? <span className="text-muted-foreground">—</span>}</p>
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex flex-wrap items-center gap-1">
