@@ -6,7 +6,7 @@ import loadDynamic from "next/dynamic"
 import {
   ArrowLeft, ArrowRight, Clock, Users, Car, MapPin, Repeat,
   CheckCircle2, Volume2, VolumeX, Luggage, Wind, Calendar,
-  CreditCard, Shield, RotateCcw, ChevronDown,
+  CreditCard, Shield, RotateCcw, ChevronDown, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Badge } from "@/components/ui/badge"
@@ -57,7 +57,24 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
     },
   })
 
-  if (!route || !route.isActive) notFound()
+  if (!route) notFound()
+
+  if (!route.isActive) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-md mx-auto text-center bg-card border border-border rounded-2xl p-10">
+          <PackageX className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-lg font-semibold mb-1.5">This ride is no longer available</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            The driver has deactivated this route since you were notified.
+          </p>
+          <Button asChild>
+            <Link href="/carpool">Back to Carpool</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const isOwner = session?.user?.id === route.userId
 

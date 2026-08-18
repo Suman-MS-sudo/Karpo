@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LegalModal } from "@/components/legal/LegalModal"
+import { isDomainBlocked } from "@/lib/domains"
 
 type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp"
 
@@ -32,6 +33,12 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [regPassword, setRegPassword] = useState("")
   const [regPasswordConfirm, setRegPasswordConfirm] = useState("")
   const [registering, setRegistering] = useState(false)
+
+  const trimmedRegEmail = email.trim().toLowerCase()
+  const regEmailLooksComplete = trimmedRegEmail.includes("@") && trimmedRegEmail.split("@")[1]?.includes(".")
+  const regEmailCheck = regEmailLooksComplete ? isDomainBlocked(trimmedRegEmail) : undefined
+  const regEmailBlockedReason = regEmailCheck?.blocked ? regEmailCheck.reason : undefined
+  const passwordMismatch = regPassword.length > 0 && regPasswordConfirm.length > 0 && regPassword !== regPasswordConfirm
 
   // ── WhatsApp OTP login (returning users) ────────────────────────────────────
   const [waPhone, setWaPhone]   = useState("")
@@ -804,6 +811,15 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <Label htmlFor="reg-email">Corporate email</Label>
             <Input id="reg-email" type="email" autoComplete="email" placeholder="you@yourcompany.com"
               value={email} onChange={(e) => setEmail(e.target.value)} required />
+            {regEmailBlockedReason && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                {regEmailBlockedReason === "personal"
+                  ? "Personal email providers (Gmail, Yahoo, Outlook, etc.) are not allowed. Please use your corporate email."
+                  : regEmailBlockedReason === "temp"
+                  ? "Temporary or disposable email addresses are not allowed."
+                  : "Please enter a valid corporate email address."}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -823,11 +839,14 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
               <Label htmlFor="reg-password-confirm">Confirm password</Label>
               <Input id="reg-password-confirm" type="password" autoComplete="new-password"
                 value={regPasswordConfirm} onChange={(e) => setRegPasswordConfirm(e.target.value)} required />
+              {passwordMismatch && (
+                <p className="text-xs text-red-600 dark:text-red-400">Passwords do not match</p>
+              )}
             </div>
           </div>
 
           <Button type="submit" className="w-full" size="lg"
-            disabled={loading || !regName || !email.includes("@") || !regPhone || !regPassword || !regPasswordConfirm}>
+            disabled={loading || !regName || !email.includes("@") || !!regEmailBlockedReason || !regPhone || !regPassword || !regPasswordConfirm || passwordMismatch}>
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Verify email & create account →"}
           </Button>
 

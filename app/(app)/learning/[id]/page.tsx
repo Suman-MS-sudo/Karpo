@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   ArrowLeft, Clock, Calendar, Globe, MapPin, Award, Users,
-  BookOpen, CheckCircle, GraduationCap, Pencil, Languages,
+  BookOpen, CheckCircle, GraduationCap, Pencil, Languages, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
@@ -39,7 +39,24 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     },
   })
 
-  if (!course || !course.isActive) notFound()
+  if (!course) notFound()
+
+  if (!course.isActive) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-md mx-auto text-center bg-card border border-border rounded-2xl p-10">
+          <PackageX className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-lg font-semibold mb-1.5">This course is no longer available</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            It has been closed by the instructor since you were notified.
+          </p>
+          <Button asChild>
+            <Link href="/learning">Back to Learning Hub</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const isOwner = userId === course.instructorId
   const isEnrolled = Array.isArray((course as any).enrollments) && (course as any).enrollments.length > 0

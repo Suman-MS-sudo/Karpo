@@ -10,7 +10,7 @@ import {
   MapPin, Calendar, Eye, Handshake, ShieldCheck,
   Package, Phone, MessageSquare, Tag, Star, CheckCircle2,
   Info, Truck, Users, ChevronRight, ExternalLink,
-  Clock, Award, Zap, AlertTriangle,
+  Clock, Award, Zap, AlertTriangle, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
@@ -128,7 +128,24 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   // A buyer whose visit led to CLOSE_DEAL is also an accepted buyer
   const isEngagementDealBuyer = isSold && myEngagement?.type === "VISIT" && myEngagement?.status === "ACCEPTED"
   const isAcceptedBuyer = isSold && (acceptedDeal?.buyer.id === session?.user?.id || isEngagementDealBuyer)
-  if ((isSold || isExpired) && !isOwner && !isAcceptedBuyer) notFound()
+  const isUnavailable = (isSold || isExpired) && !isOwner && !isAcceptedBuyer
+
+  if (isUnavailable) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-md mx-auto text-center bg-card border border-border rounded-2xl p-10">
+          <PackageX className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-lg font-semibold mb-1.5">This listing is no longer available</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            It may have been sold or has expired since you were notified.
+          </p>
+          <Button asChild>
+            <Link href="/marketplace">Back to Marketplace</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const [existingOffer, offerCount, engagementCount, engagementDealBuyer, similarListings] = await Promise.all([
     session?.user?.id && !isOwner && !isSold

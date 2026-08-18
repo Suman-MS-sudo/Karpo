@@ -1,12 +1,14 @@
 "use client"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { User, MapPin, Briefcase, ArrowRight, Droplet } from "lucide-react"
+import { User, MapPin, Briefcase, ArrowRight, Droplet, LocateFixed, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
+import { detectCityFromBrowser, matchCity } from "@/lib/geolocation"
+import { CITIES } from "@/config/services"
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
@@ -14,6 +16,7 @@ export default function OnboardPage() {
   const { data: session, update } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [locating, setLocating] = useState(false)
   const [form, setForm] = useState({
     name: session?.user?.name ?? "",
     city: "",
@@ -23,6 +26,20 @@ export default function OnboardPage() {
     bloodGroup: "",
     bloodDonationOptIn: false,
   })
+
+  const useCurrentLocation = async () => {
+    setLocating(true)
+    setError("")
+    try {
+      const detected = await detectCityFromBrowser()
+      const matched = matchCity(detected, CITIES)
+      setForm((f) => ({ ...f, city: matched }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not get your location.")
+    } finally {
+      setLocating(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,6 +92,17 @@ export default function OnboardPage() {
 
         <div className="space-y-1.5">
           <Label className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> City</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full mb-1.5"
+            onClick={useCurrentLocation}
+            disabled={locating}
+          >
+            {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+            Use my current location
+          </Button>
           <CityAutocomplete
             value={form.city}
             onChange={(city) => setForm((f) => ({ ...f, city }))}

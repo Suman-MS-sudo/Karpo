@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, ExternalLink, CheckCircle, Shield, AlertCircle, Clock, ChevronRight } from "lucide-react"
+import { ArrowLeft, ExternalLink, CheckCircle, Shield, AlertCircle, Clock, ChevronRight, PackageX } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -27,7 +27,24 @@ export default async function BenefitDetailPage({ params }: { params: { id: stri
     include: { provider: { select: { name: true, logo: true, domain: true } } },
   })
 
-  if (!product || !product.isActive) notFound()
+  if (!product) notFound()
+
+  if (!product.isActive) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-md mx-auto text-center bg-card border border-border rounded-2xl p-10">
+          <PackageX className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-lg font-semibold mb-1.5">This benefit is no longer available</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            It has been discontinued by the provider since you were notified.
+          </p>
+          <Button asChild>
+            <Link href="/benefits">Back to Benefits</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

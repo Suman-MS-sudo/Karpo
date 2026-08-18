@@ -6,7 +6,7 @@ import {
   ArrowLeft, Star, Globe, MapPin, Clock, Users, BadgeCheck,
   CheckCircle2, Calendar, ExternalLink, Shield, Award,
   TrendingUp, Repeat2, Package, ChevronRight, MessageCircle,
-  AlertCircle, Briefcase,
+  AlertCircle, Briefcase, PackageX,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SocialShare } from "@/components/shared/SocialShare"
@@ -58,7 +58,24 @@ export default async function SkillDetailPage({ params }: { params: { id: string
     },
   })
 
-  if (!listing || listing.status === "ARCHIVED") notFound()
+  if (!listing) notFound()
+
+  if (listing.status === "ARCHIVED") {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-md mx-auto text-center bg-card border border-border rounded-2xl p-10">
+          <PackageX className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h1 className="text-lg font-semibold mb-1.5">This skill listing is no longer available</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            It has been archived by the seller since you were notified.
+          </p>
+          <Button asChild>
+            <Link href="/skills">Back to Skills</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   const isOwner  = session?.user?.id === listing.userId
   const isSeller = isOwner

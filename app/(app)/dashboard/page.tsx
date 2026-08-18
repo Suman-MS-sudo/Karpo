@@ -27,9 +27,16 @@ export default async function DashboardPage() {
   const isPremium = session!.user!.membershipPlan === "PREMIUM"
 
   const cityFilter = userCity ? { city: userCity } : {}
+  const locationFilter = userCity ? { location: userCity } : {}
+
+  const authorSelect = {
+    id: true, name: true, image: true, avatarUrl: true, isVerified: true,
+    jobTitle: true, department: true,
+    company: { select: { name: true, logo: true, domain: true } },
+  } as const
 
   const [
-    recentListings,
+    recentListingsRaw,
     myListingsCount,
     myMessages,
     viewsAgg,
@@ -39,6 +46,11 @@ export default async function DashboardPage() {
     carpoolCount,
     skillCount,
     eventCount,
+    recentRentals,
+    recentReferrals,
+    recentCarpools,
+    recentSkills,
+    recentEvents,
   ] = await Promise.all([
     prisma.listing.findMany({
       where: { status: "ACTIVE", ...cityFilter },
@@ -55,7 +67,85 @@ export default async function DashboardPage() {
     prisma.carpoolRoute.count({ where: { isActive: true, ...(userCity ? { fromLocation: userCity } : {}) } }),
     prisma.skillListing.count({ where: { status: "ACTIVE", ...(userCity ? { location: userCity } : {}) } }),
     prisma.event.count({ where: { isActive: true, date: { gte: new Date() }, ...(userCity ? { location: userCity } : {}) } }),
+    prisma.rentalPost.findMany({
+      where: { status: "ACTIVE", ...cityFilter },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { user: { select: authorSelect } },
+    }),
+    prisma.jobReferral.findMany({
+      where: { status: "OPEN", ...locationFilter },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { user: { select: authorSelect } },
+    }),
+    prisma.carpoolRoute.findMany({
+      where: { isActive: true, ...(userCity ? { fromLocation: userCity } : {}) },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { user: { select: authorSelect } },
+    }),
+    prisma.skillListing.findMany({
+      where: { status: "ACTIVE", ...locationFilter },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { user: { select: authorSelect } },
+    }),
+    prisma.event.findMany({
+      where: { isActive: true, date: { gte: new Date() }, ...locationFilter },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { organizer: { select: authorSelect } },
+    }),
   ])
+
+  function parseImages(raw: string | null | undefined): string[] {
+    if (!raw) return []
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [] } catch { return [] }
+  }
+
+  type RecentItem = {
+    id: string; href: string; title: string; subtitle?: string
+    price?: number; priceLabel?: string; images: string[]
+    author: typeof recentRentals[number]["user"]
+    badge: string; city: string | null; createdAt: Date
+  }
+
+  const recentListings: RecentItem[] = [
+    ...recentListingsRaw.map((l): RecentItem => ({
+      id: l.id, href: `/marketplace/${l.id}`, title: l.title, subtitle: l.description,
+      price: l.price, images: parseImages(l.images),
+      author: { id: l.user.id, name: l.user.name, image: l.user.image, avatarUrl: l.user.avatarUrl, isVerified: l.user.isVerified, jobTitle: l.user.jobTitle, department: l.user.department, company: l.user.company },
+      badge: l.category, city: l.city, createdAt: l.createdAt,
+    })),
+    ...recentRentals.map((r): RecentItem => ({
+      id: r.id, href: `/rentals/${r.id}`, title: r.title, subtitle: r.description ?? undefined,
+      price: r.rent, priceLabel: "/mo", images: parseImages(r.images), author: r.user,
+      badge: "RENTAL", city: r.city, createdAt: r.createdAt,
+    })),
+    ...recentReferrals.map((j): RecentItem => ({
+      id: j.id, href: `/referrals/${j.id}`, title: j.title, subtitle: j.description,
+      price: j.salaryMin ?? undefined, priceLabel: j.salaryMin ? "+/yr" : undefined, images: [],
+      author: j.user, badge: "REFERRAL", city: j.location ?? null, createdAt: j.createdAt,
+    })),
+    ...recentCarpools.map((c): RecentItem => ({
+      id: c.id, href: `/carpool/${c.id}`, title: `${c.fromLocation} → ${c.toLocation}`,
+      subtitle: `Departs ${c.departureTime}`, price: c.pricePerSeat, priceLabel: "/seat",
+      images: [], author: c.user, badge: "CARPOOL", city: c.fromLocation, createdAt: c.createdAt,
+    })),
+    ...recentSkills.map((s): RecentItem => ({
+      id: s.id, href: `/skills/${s.id}`, title: s.title, subtitle: s.tagline ?? s.description,
+      price: s.hourlyRate ?? undefined, priceLabel: s.hourlyRate ? "/hr" : undefined, images: [],
+      author: s.user, badge: "SKILL", city: s.location ?? null, createdAt: s.createdAt,
+    })),
+    ...recentEvents.map((e): RecentItem => ({
+      id: e.id, href: `/events/${e.id}`, title: e.title, subtitle: e.description,
+      price: e.fee > 0 ? e.fee : undefined, images: parseImages(e.images), author: e.organizer,
+      badge: "EVENT", city: e.location, createdAt: e.createdAt,
+    })),
+  ]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 6)
 
   const totalViews = viewsAgg._sum.viewCount ?? 0
 
@@ -362,36 +452,35 @@ export default async function DashboardPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base font-semibold">Recent in {userCity ?? "your area"}</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">Latest from your colleagues</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Latest across all services from your colleagues</p>
                 </div>
-                <Link href="/marketplace" className="flex items-center gap-1 text-sm text-accent-400 hover:underline">
+                <Link href="/dashboard" className="flex items-center gap-1 text-sm text-accent-400 hover:underline">
                   View all <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recentListings.map((listing) => (
+                {recentListings.map((item) => (
                   <ListingCard
-                    key={listing.id}
-                    id={listing.id}
-                    href={`/marketplace/${listing.id}`}
-                    title={listing.title}
-                    subtitle={listing.description}
-                    price={listing.price}
-                    images={listing.images}
-                    author={listing.user}
-                    badge={listing.category}
-                    city={listing.city}
-                    createdAt={listing.createdAt}
+                    key={item.id}
+                    id={item.id}
+                    href={item.href}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    price={item.price}
+                    priceLabel={item.priceLabel}
+                    images={item.images}
+                    author={item.author}
+                    badge={item.badge}
+                    city={item.city}
+                    createdAt={item.createdAt}
                     serviceBorderColor="border-l-blue-400"
-                    isOwn={listing.userId === userId}
-                    listingId={listing.id}
                   />
                 ))}
               </div>
             </div>
           ) : (
             <div className="text-center py-16 rounded-3xl bg-card shadow-md">
-              <p className="text-muted-foreground text-sm">No listings in {userCity ?? "your area"} yet.</p>
+              <p className="text-muted-foreground text-sm">Nothing posted in {userCity ?? "your area"} yet.</p>
               <Button asChild size="sm" className="mt-4">
                 <Link href="/marketplace/new"><Plus className="h-4 w-4" /> Be the first to post</Link>
               </Button>
