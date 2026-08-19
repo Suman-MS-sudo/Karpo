@@ -132,12 +132,38 @@ const config: Config = {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
+        "blob-float": {
+          "0%, 100%":  { transform: "translate(0, 0) scale(1)" },
+          "33%":       { transform: "translate(4%, -6%) scale(1.08)" },
+          "66%":       { transform: "translate(-3%, 4%) scale(0.95)" },
+        },
+        "blob-float-slow": {
+          "0%, 100%":  { transform: "translate(0, 0) scale(1)" },
+          "50%":       { transform: "translate(-5%, 5%) scale(1.1)" },
+        },
+        "grid-pan": {
+          from: { backgroundPosition: "0 0" },
+          to:   { backgroundPosition: "64px 64px" },
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%":      { backgroundPosition: "100% 50%" },
+        },
+        "pulse-ring": {
+          "0%":   { transform: "scale(0.8)", opacity: "0.6" },
+          "70%":  { transform: "scale(1.7)", opacity: "0" },
+          "100%": { transform: "scale(1.7)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
         "count-up": "count-up 0.6s ease-out",
+        "blob-float": "blob-float 14s ease-in-out infinite",
+        "blob-float-slow": "blob-float-slow 20s ease-in-out infinite",
+        "grid-pan": "grid-pan 18s linear infinite",
+        "pulse-ring": "pulse-ring 2.5s cubic-bezier(0,0,0.2,1) infinite",
       },
     },
   },

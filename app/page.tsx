@@ -1,29 +1,84 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, ShieldCheck, Users, MapPin, Star, CheckCircle2, Sparkles, Quote, FolderCheck, Gauge } from "lucide-react"
+import {
+  ArrowRight, ShieldCheck, Users, MapPin, Star, Sparkles, Quote,
+  FolderCheck, Gauge, Download, UserPlus, Compass, TrendingUp, Lock, Search,
+  Bell, MessageSquare, BadgeCheck, Clock, Building2, Play, PlugZap, Zap,
+  Layers, MessageCircle, Briefcase, Home as HomeIcon, Car, GraduationCap,
+  Gift, ShoppingBag, Wrench, Tag,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SERVICES } from "@/config/services"
-import {
-  ShoppingBag, Home, Briefcase, Car, Wrench, Tag,
-  GraduationCap, Shield, Gift,
-} from "lucide-react"
+import { HeroNetworkBackground } from "@/components/home/HeroNetworkBackground"
+import { ThemeToggle } from "@/components/shared/ThemeToggle"
+
+const trustedLogos = ["Infosys", "TCS", "Wipro", "HCL", "Accenture", "Capgemini"]
 
 const heroStats = [
-  { icon: Users,       value: "50,000+", label: "Verified Employees" },
-  { icon: FolderCheck, value: "200+",    label: "Companies Onboarded" },
-  { icon: Star,        value: "4",       label: "Cities Active" },
-  { icon: Gauge,        value: "100%",   label: "Verified Network" },
+  { value: "50,000+", label: "Verified employees" },
+  { value: "200+",    label: "Companies onboarded" },
+  { value: "4",       label: "Cities active" },
 ]
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users,
-  GraduationCap, Shield, Gift,
-}
+const quickSteps = [
+  { icon: Download,   label: "Verify corp email" },
+  { icon: UserPlus,   label: "Get instant access" },
+  { icon: Compass,    label: "Explore services" },
+  { icon: TrendingUp, label: "Connect & transact" },
+]
 
-const howItWorks = [
-  { step: "01", title: "Verify your corp email", desc: "We send a 6-digit OTP to your work inbox. No passwords, no OAuth — just your email." },
-  { step: "02", title: "Get auto-verified", desc: "Your corporate domain is matched against our approved company list. Instant trust." },
-  { step: "03", title: "Access everything", desc: "Buy/sell, find flatmates, get referrals, share rides and more — with verified colleagues." },
+const showcaseSections = [
+  {
+    eyebrow: "Buy & Sell",
+    title: "Stay focused, wherever you work",
+    desc: "List electronics, furniture, vehicles and more. Every buyer and seller is a verified colleague — no scammers, no strangers off the street.",
+    cta: "Browse marketplace",
+    img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    eyebrow: "Rentals & Referrals",
+    title: "Share what matters at the right time",
+    desc: "Search PGs and flats near your office, or get your resume in front of an employee already on the inside. Same trusted network, both ways.",
+    cta: "See open listings",
+    img: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    eyebrow: "Carpool & Community",
+    title: "Collaborate from anywhere",
+    desc: "Share a ride with coworkers heading your way, join events, and build a network that follows you across every company on Korpo.",
+    cta: "Join the network",
+    img: "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=1200&q=80&auto=format&fit=crop",
+  },
+]
+
+const featureGrid = [
+  { icon: Lock,        title: "Protect your data",     desc: "OTP-only auth, no passwords stored, ever." },
+  { icon: Search,      title: "Super smart search",    desc: "Typo-tolerant search across every module." },
+  { icon: ShieldCheck, title: "Control everything",    desc: "Approve, hide or report any listing instantly." },
+  { icon: Users,       title: "Work better together",  desc: "Reputation scores keep every interaction honest." },
+  { icon: Clock,       title: "24/7 live support",     desc: "Reports reviewed and actioned within a day." },
+  { icon: Compass,     title: "City-first discovery",  desc: "See what's near your office, not just your inbox." },
+  { icon: Layers,      title: "Workflow builder",      desc: "Post once, manage every reply from one inbox." },
+  { icon: MessageCircle, title: "Bring your team in",  desc: "Invite coworkers and grow the network together." },
+]
+
+const integrations = [
+  { icon: Briefcase,      color: "text-violet-600 dark:text-violet-400" },
+  { icon: HomeIcon,       color: "text-emerald-600 dark:text-emerald-400" },
+  { icon: ShoppingBag,    color: "text-blue-600 dark:text-blue-400" },
+  { icon: Car,            color: "text-orange-600 dark:text-orange-400" },
+  { icon: GraduationCap,  color: "text-pink-600 dark:text-pink-400" },
+  { icon: Gift,           color: "text-rose-600 dark:text-rose-400" },
+  { icon: Wrench,         color: "text-cyan-600 dark:text-cyan-400" },
+  { icon: Tag,            color: "text-amber-600 dark:text-amber-400" },
+  { icon: ShieldCheck,    color: "text-indigo-600 dark:text-indigo-400" },
+  { icon: Bell,           color: "text-lime-600 dark:text-lime-400" },
+]
+
+const productivitySteps = [
+  { icon: Zap,     title: "Use a simple way",       desc: "One sign-in for every service on Korpo." },
+  { icon: Layers,  title: "A productivity platform", desc: "Six modules, one verified network." },
+  { icon: Clock,   title: "Save your time",         desc: "Verified colleagues only — no vetting needed." },
 ]
 
 const testimonials = [
@@ -32,17 +87,9 @@ const testimonials = [
   { name: "Anjali S.", role: "Product Manager", text: "Sold my laptop in 4 hours. Verified buyers only — zero scammers, zero stress." },
 ]
 
-const trustPoints = [
-  "Every user verifies via OTP sent to their corporate inbox — no fake signups possible",
-  "Domain whitelist ensures only approved companies get access",
-  "No phone numbers or emails shown publicly — all contact via in-app messaging",
-  "Reputation scores and reviews after every transaction",
-  "Reported listings reviewed within 24 hours",
-]
-
-function Eyebrow({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
   return (
-    <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground/80 mb-4">
+    <p className={`inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] mb-4 ${dark ? "text-white/70" : "text-muted-foreground/80"}`}>
       <span className="h-px w-6 bg-gradient-to-r from-primary to-accent" />
       {children}
     </p>
@@ -62,123 +109,173 @@ export default function LandingPage() {
           <nav className="hidden md:flex items-center gap-1 text-sm">
             {[
               { href: "#services", label: "Services" },
-              { href: "#how-it-works", label: "How it works" },
-              { href: "#cities", label: "Cities" },
+              { href: "#showcase", label: "What you can do" },
+              { href: "#integrations", label: "Integrations" },
               { href: "/about", label: "About" },
               { href: "/contact", label: "Contact" },
             ].map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="group relative px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
+              <Link key={l.href} href={l.href} className="group relative px-3 py-2 text-muted-foreground hover:text-foreground transition-colors">
                 {l.label}
                 <span className="absolute left-3 right-3 -bottom-px h-px bg-foreground scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
               </Link>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/auth/signin?callbackUrl=/admin" className="hidden sm:block text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1">
-              Admin
+            <ThemeToggle />
+            <Link href="/auth/signin" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5">
+              Login
             </Link>
-            <Button asChild size="sm" className="rounded-full bg-green-600 hover:bg-green-700 text-white">
-              <Link href="/auth/signin?mode=register">Register</Link>
-            </Button>
             <Button asChild size="sm" className="rounded-full shadow-sm">
-              <Link href="/auth/signin">Sign in <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/auth/signin?mode=register">Sign up</Link>
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-background">
-        {/* Fine grid texture */}
+      {/* Hero copy */}
+      <section className="relative overflow-hidden bg-slate-950 pt-16 pb-10 sm:pt-20">
+        {/* Full-bleed background photo */}
+        <div className="absolute inset-0 -z-30" aria-hidden="true">
+          <Image
+            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=2400&q=80&auto=format&fit=crop"
+            alt=""
+            fill
+            priority
+            className="object-cover opacity-[0.55]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/60" />
+        </div>
+        {/* Animated background mesh, faded into the page */}
         <div
-          className="pointer-events-none absolute inset-0 -z-20 opacity-[0.4] dark:opacity-[0.25]"
+          className="pointer-events-none absolute inset-0 -z-20 opacity-[0.25] animate-grid-pan"
           style={{
             backgroundImage:
-              "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
+              "linear-gradient(to right, rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.15) 1px, transparent 1px)",
             backgroundSize: "64px 64px",
             maskImage: "radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%)",
           }}
           aria-hidden="true"
         />
-        {/* Ambient gradient mesh */}
+        {/* Ambient gradient glow, slowly drifting */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-          <div className="absolute -top-40 -right-32 h-[520px] w-[520px] rounded-full bg-primary/15 blur-[130px]" />
-          <div className="absolute top-1/3 -left-32 h-[420px] w-[420px] rounded-full bg-accent/10 blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 h-[360px] w-[360px] rounded-full bg-primary/10 blur-[120px]" />
+          <div className="absolute -top-40 -right-32 h-[520px] w-[520px] rounded-full bg-primary/25 blur-[130px] animate-blob-float" />
+          <div className="absolute top-1/3 -left-32 h-[420px] w-[420px] rounded-full bg-accent/20 blur-[120px] animate-blob-float-slow" />
+        </div>
+        {/* Connected-network canvas — nodes drift and link, echoing "verified network" */}
+        <div className="pointer-events-none absolute inset-0 -z-10 h-[560px]" aria-hidden="true">
+          <HeroNetworkBackground />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-950" />
         </div>
 
-        {/* Logo watermark — matches the sign-in page treatment */}
-        <div
-          className="pointer-events-none select-none absolute top-1/2 right-[-4%] -translate-y-1/2 w-[560px] h-[560px] sm:w-[720px] sm:h-[720px] opacity-[0.28] dark:opacity-[0.35] -z-10"
-          aria-hidden="true"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-transparent.png"
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "contain" }}
-          />
-        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm px-4 py-1.5 mb-7">
+            <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-white/90">Your work ID. Your pass to everything else.</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-balance text-white">
+            The best way to{" "}
+            <span className="bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent animate-[gradient-x_6s_ease_infinite]">
+              organize your network
+            </span>.
+          </h1>
+          <p className="mt-6 text-lg text-white/70 max-w-xl mx-auto leading-relaxed">
+            Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild size="lg" className="h-12 rounded-xl px-7 shadow-sm hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
+              <Link href="/auth/signin?mode=register">Try it free</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-7 bg-white text-slate-900 hover:bg-white/90 hover:text-slate-900 border-white hover:-translate-y-0.5 transition-all">
+              <Link href="#showcase">
+                <Play className="h-4 w-4 fill-current" />
+                Watch it works
+              </Link>
+            </Button>
+          </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 lg:pt-28 lg:pb-20">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 mb-8">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-primary">Your work ID. Your pass to everything else.</span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.05] tracking-tight text-balance text-foreground">
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Verified Corporate Employees Marketplace
-              </span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="h-12 rounded-xl px-6 shadow-sm">
-                <Link href="/auth/signin">
-                  <ShieldCheck className="h-5 w-5" />
-                  Sign in
-                </Link>
-              </Button>
-              <Button asChild size="lg" className="h-12 rounded-xl px-6 bg-green-600 hover:bg-green-700 text-white shadow-sm">
-                <Link href="/auth/signin?mode=register">Register</Link>
-              </Button>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground flex items-center gap-2">
-              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-              OTP verification · Gmail, Yahoo &amp; temp addresses blocked
-            </p>
+          <p className="mt-14 text-xs font-medium uppercase tracking-wide text-white/40">Thousands of verified employees are using Korpo</p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            {trustedLogos.map((name) => (
+              <span key={name} className="text-sm font-semibold text-white/35">{name}</span>
+            ))}
           </div>
         </div>
 
-        {/* Stats bar */}
-        <div className="relative border-t border-border/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="rounded-2xl border border-border bg-card shadow-sm grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-border">
-              {heroStats.map((stat) => (
-                <div key={stat.label} className="flex items-center gap-3 px-6 py-5">
-                  <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <stat.icon className="h-4.5 w-4.5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-foreground tracking-tight tabular-nums leading-none">{stat.value}</p>
-                    <p className="text-muted-foreground text-xs mt-1">{stat.label}</p>
-                  </div>
-                </div>
-              ))}
+        {/* Dark hero banner */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-14">
+          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-primary/40 shadow-2xl shadow-primary/10 min-h-[340px] sm:min-h-[420px]">
+            <Image
+              src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80&auto=format&fit=crop"
+              alt="Modern office workspace"
+              fill
+              priority
+              className="object-cover opacity-60 mix-blend-luminosity"
+            />
+            <div className="absolute -top-16 right-0 h-72 w-72 rounded-full bg-primary/30 blur-[110px] animate-blob-float" aria-hidden="true" />
+            <div className="absolute -bottom-20 right-1/4 h-80 w-80 rounded-full bg-accent/25 blur-[120px] animate-blob-float-slow" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/50 to-transparent" />
+            <div className="relative flex flex-col justify-center h-full p-8 sm:p-14 max-w-md">
+              <p className="text-white font-bold text-2xl sm:text-3xl tracking-tight">Keeping it all together</p>
+              <p className="text-white/70 text-sm sm:text-base mt-3 leading-relaxed">
+                One verified network for everything you need at work — and outside it. No fake profiles, no strangers, ever.
+              </p>
+              <Button asChild size="lg" className="mt-7 rounded-xl w-fit bg-white text-slate-900 hover:bg-white/90">
+                <Link href="/auth/signin?mode=register">Schedule a demo</Link>
+              </Button>
             </div>
+            <div className="absolute top-8 right-8 hidden sm:flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-lg animate-blob-float-slow">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">OTP Verified</span>
+            </div>
+            <div className="absolute bottom-8 right-8 hidden sm:flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-lg animate-blob-float-slow" style={{ animationDelay: "-6s" }}>
+              <Users className="h-4 w-4 text-accent" />
+              <span className="text-xs font-semibold text-foreground">50,000+ members</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Split-color stat band */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <div className="rounded-2xl overflow-hidden shadow-sm grid grid-cols-1 sm:grid-cols-3">
+            {heroStats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`px-8 py-8 text-center ${i === 1 ? "bg-primary text-primary-foreground" : "bg-slate-900 text-white"}`}
+              >
+                <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">{stat.value}</p>
+                <p className="text-xs sm:text-sm mt-1.5 opacity-70">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Icon strip: fast, simple, effortless */}
+      <section className="py-20 sm:py-24 bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex justify-center"><Eyebrow>Get set up in minutes</Eyebrow></div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-12">Fast, simple &amp; effortless.</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+            {quickSteps.map((s, i) => (
+              <div key={s.label} className="flex flex-col items-center gap-3">
+                <div className="h-14 w-14 rounded-2xl bg-surface border border-border flex items-center justify-center">
+                  <s.icon className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">{s.label}</p>
+                <span className="text-[10px] font-semibold text-muted-foreground/50 tracking-widest">STEP {i + 1}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Services Grid */}
-      <section id="services" className="py-24 sm:py-28 bg-background">
+      <section id="services" className="relative py-20 sm:py-24 bg-surface overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute top-0 left-1/4 h-[380px] w-[380px] rounded-full bg-primary/10 blur-[120px] animate-blob-float-slow" />
+          <div className="absolute bottom-0 right-1/4 h-[320px] w-[320px] rounded-full bg-accent/10 blur-[110px] animate-blob-float" />
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="flex justify-center"><Eyebrow>What&apos;s inside</Eyebrow></div>
@@ -186,102 +283,259 @@ export default function LandingPage() {
             <p className="mt-3 text-muted-foreground text-lg">Everything you need, with people you can trust.</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
-            {SERVICES.filter((s) => s.isActive).map((service) => {
-              const Icon = iconMap[service.icon] ?? ShoppingBag
-              return (
-                <Link key={service.id} href="/auth/signin" className="group h-full block">
-                  <div className="relative flex h-full flex-col items-center gap-3 p-6 rounded-2xl border border-border bg-card text-center overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.15)]">
-                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-b from-transparent to-black/[0.02] dark:to-white/[0.03]" />
-                    {service.badge && (
-      <span className="absolute top-3 right-3 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {service.badge}
-                      </span>
-                    )}
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-surface to-border/40 flex items-center justify-center group-hover:scale-105 group-hover:bg-primary group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground transition-all duration-300">
-                      <Icon className={`h-6 w-6 ${service.color} group-hover:text-inherit`} />
-                    </div>
-                    <div className="flex flex-col flex-1 justify-start">
-                      <p className="font-semibold text-sm text-foreground leading-tight">{service.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1 leading-snug hidden sm:block line-clamp-2">{service.description}</p>
-                    </div>
+            {SERVICES.filter((s) => s.isActive).map((service) => (
+              <Link key={service.id} href="/auth/signin" className="group h-full block">
+                <div className="relative flex h-full flex-col items-center gap-3 p-6 rounded-2xl border border-border bg-card text-center overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.15)]">
+                  {service.badge && (
+                    <span className="absolute top-3 right-3 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {service.badge}
+                    </span>
+                  )}
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-surface to-border/40 flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 group-hover:bg-primary group-hover:from-primary group-hover:to-accent group-hover:text-primary-foreground transition-all duration-300">
+                    <BadgeCheck className={`h-6 w-6 ${service.color} group-hover:text-inherit`} />
                   </div>
-                </Link>
-              )
-            })}
+                  <div className="flex flex-col flex-1 justify-start">
+                    <p className="font-semibold text-sm text-foreground leading-tight">{service.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-snug hidden sm:block line-clamp-2">{service.description}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="py-24 sm:py-28 bg-surface">
+      {/* Showcase — 3 stacked photo(left)/text(right) rows */}
+      <section id="showcase" className="relative py-24 sm:py-28 bg-background overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute top-1/4 -left-20 h-[420px] w-[420px] rounded-full bg-primary/10 blur-[130px] animate-blob-float" />
+          <div className="absolute bottom-1/4 -right-20 h-[420px] w-[420px] rounded-full bg-accent/10 blur-[130px] animate-blob-float-slow" />
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="flex justify-center"><Eyebrow>The process</Eyebrow></div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">How Korpo works</h2>
-            <p className="mt-3 text-muted-foreground">Zero fake profiles. Maximum trust. Always.</p>
+            <div className="flex justify-center"><Eyebrow>Inside the app</Eyebrow></div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">See what you can do in one app</h2>
           </div>
-          <div className="relative grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-            <div className="hidden md:block absolute top-[27px] left-[16.5%] right-[16.5%] h-px bg-border" aria-hidden="true" />
-            {howItWorks.map((item, i) => {
-              const stepColor = ["bg-primary", "bg-accent", "bg-primary"][i]
-              return (
-                <div key={item.step} className="relative h-full rounded-2xl bg-card border border-border p-8 text-center hover:shadow-lg transition-shadow duration-300">
-                  <div className={`relative z-10 h-14 w-14 rounded-2xl ${stepColor} text-white flex items-center justify-center text-lg font-bold mx-auto mb-5 shadow-lg`}>
-                    {item.step}
+          <div className="space-y-20 lg:space-y-28">
+            {showcaseSections.map((s) => (
+              <div key={s.title} className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+                <div className="group relative rounded-[1.75rem] overflow-hidden bg-slate-900 aspect-[5/4] shadow-xl">
+                  <Image src={s.img} alt={s.title} fill className="object-cover opacity-80 transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
+                  <div className="absolute top-5 left-5 flex items-center gap-2 rounded-xl bg-white/95 backdrop-blur-md px-3 py-2 shadow-lg">
+                    <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">Verified colleagues only</span>
                   </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">{item.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
                 </div>
-              )
-            })}
+                <div>
+                  <Eyebrow>{s.eyebrow}</Eyebrow>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4">{s.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed mb-7 max-w-md">{s.desc}</p>
+                  <Button asChild variant="outline" className="rounded-full">
+                    <Link href="/auth/signin">{s.cta} <ArrowRight className="h-4 w-4" /></Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Trust section */}
+      {/* History / search — light card, image right */}
+      <section className="py-16 sm:py-20 bg-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-[2rem] bg-card border border-border shadow-sm overflow-hidden grid lg:grid-cols-2 items-center">
+            <div className="p-10 sm:p-14">
+              <Eyebrow>Full history</Eyebrow>
+              <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4">History you can see and search</h3>
+              <p className="text-muted-foreground leading-relaxed mb-6 max-w-md">
+                Every listing, referral, ride and message stays searchable — so you never lose track of a conversation or a deal.
+              </p>
+              <Link href="/auth/signin" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all">
+                Learn more <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="group relative aspect-[5/3] lg:aspect-auto lg:h-full min-h-[260px] overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&q=80&auto=format&fit=crop"
+                alt="Searchable history"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature grid */}
       <section className="py-24 sm:py-28 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-14 items-center">
+          <div className="text-center mb-16">
+            <div className="flex justify-center"><Eyebrow>Why Korpo</Eyebrow></div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Trust is the product</h2>
+            <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">Every feature exists to keep the network honest, fast and useful.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {featureGrid.map((f) => (
+              <div key={f.title} className="rounded-2xl bg-card border border-border p-6 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <f.icon className="h-5 w-5 text-primary" />
+                </div>
+                <p className="font-semibold text-sm text-foreground mb-1.5">{f.title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Integrations */}
+      <section id="integrations" className="relative py-24 sm:py-28 bg-surface overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute top-0 right-0 h-[360px] w-[360px] rounded-full bg-primary/10 blur-[120px] animate-blob-float" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <Eyebrow>Everything connects</Eyebrow>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-4">Powerful integrations</h2>
+            <p className="text-muted-foreground leading-relaxed max-w-md">
+              Every module on Korpo shares one verified identity — sign in once and every service just works.
+            </p>
+          </div>
+          <div className="grid grid-cols-5 gap-4 max-w-md lg:ml-auto">
+            {integrations.map((it, i) => (
+              <div key={i} className="aspect-square rounded-2xl bg-card border border-border shadow-sm flex items-center justify-center hover:-translate-y-1.5 hover:scale-110 hover:shadow-md transition-all duration-300">
+                <it.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${it.color}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Your busy life deserves this */}
+      <section className="py-24 sm:py-28 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="group relative rounded-[1.75rem] overflow-hidden bg-slate-900 aspect-[5/4] shadow-xl order-2 lg:order-1">
+            <Image
+              src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&q=80&auto=format&fit=crop"
+              alt="Desk workspace"
+              fill
+              className="object-cover opacity-80 transition-transform duration-700 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
+          </div>
+          <div className="order-1 lg:order-2">
+            <Eyebrow>Wherever you are</Eyebrow>
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4">Your busy life deserves this</h3>
+            <p className="text-muted-foreground leading-relaxed mb-7 max-w-md">
+              We're a growing family of 50,000+ designers and makers from around the world, always ready to help.
+            </p>
+            <Button asChild className="rounded-full">
+              <Link href="/auth/signin"><PlugZap className="h-4 w-4" />Launch Korpo now</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Never forget anything */}
+      <section className="py-24 sm:py-28 bg-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="group relative rounded-[1.75rem] overflow-hidden bg-slate-900 aspect-[5/4] shadow-xl">
+            <Image
+              src="https://images.unsplash.com/photo-1512314889357-e157c22f938d?w=1200&q=80&auto=format&fit=crop"
+              alt="Notebook and calendar on desk"
+              fill
+              className="object-cover opacity-80 transition-transform duration-700 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
+          </div>
+          <div>
+            <Eyebrow>Always in reach</Eyebrow>
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4">Never forget anything, ever again</h3>
+            <p className="text-muted-foreground leading-relaxed mb-7 max-w-md">
+              Notifications, reminders and saved listings keep every deal, ride and referral on track — even weeks later.
+            </p>
+            <Link href="/auth/signin" className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:gap-2.5 transition-all">
+              Read more <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Productivity ring */}
+      <section className="py-16 sm:py-20 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="rounded-[2rem] bg-card border border-border shadow-sm p-10 sm:p-14 grid md:grid-cols-[auto,1fr] gap-10 md:gap-16 items-center">
+            <div
+              className="mx-auto h-40 w-40 rounded-full shrink-0"
+              style={{ background: "conic-gradient(hsl(var(--primary)) 0% 78%, hsl(var(--border)) 78% 100%)" }}
+            >
+              <div className="h-full w-full flex items-center justify-center">
+                <div className="h-28 w-28 rounded-full bg-card flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-foreground">78%</span>
+                  <span className="text-[10px] text-muted-foreground">faster hiring</span>
+                </div>
+              </div>
+            </div>
             <div>
-              <Eyebrow>Why Korpo</Eyebrow>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-7 tracking-tight">Trust is the product</h2>
-              <div className="space-y-5">
-                {trustPoints.map((point) => (
-                  <div key={point} className="flex items-start gap-3.5">
-                    <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              <Eyebrow>Do more, worry less</Eyebrow>
+              <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-6">Increase productivity</h3>
+              <div className="grid sm:grid-cols-3 gap-6 mb-8">
+                {productivitySteps.map((p) => (
+                  <div key={p.title} className="flex items-start gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <p.icon className="h-4.5 w-4.5 text-primary" />
                     </div>
-                    <p className="text-muted-foreground leading-relaxed">{point}</p>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{p.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
+              <Button asChild className="rounded-full">
+                <Link href="/auth/signin?mode=register">Sign up now</Link>
+              </Button>
             </div>
-            <div className="grid grid-cols-1 gap-4">
-              {testimonials.map((t) => (
-                <div key={t.name} className="relative bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow">
-                  <Quote className="absolute top-5 right-5 h-8 w-8 text-border" />
-                  <div className="flex gap-1 mb-3">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="relative py-24 sm:py-28 bg-surface overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute bottom-0 left-1/3 h-[360px] w-[360px] rounded-full bg-accent/10 blur-[120px] animate-blob-float-slow" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <div className="flex justify-center"><Eyebrow>Voices from the network</Eyebrow></div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">What people are saying</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {testimonials.map((t) => (
+              <div key={t.name} className="relative bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow">
+                <Quote className="absolute top-5 right-5 h-8 w-8 text-border" />
+                <div className="flex gap-1 mb-3">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-foreground/85 text-sm mb-4 leading-relaxed max-w-[90%]">&ldquo;{t.text}&rdquo;</p>
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                    {t.name.charAt(0)}
                   </div>
-                  <p className="text-foreground/85 text-sm mb-4 leading-relaxed max-w-[90%]">&ldquo;{t.text}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                      {t.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{t.name}</p>
-                      <p className="text-muted-foreground text-xs">{t.role}</p>
-                    </div>
+                  <div>
+                    <p className="font-semibold text-sm text-foreground">{t.name}</p>
+                    <p className="text-muted-foreground text-xs">{t.role}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Cities */}
-      <section id="cities" className="py-16 bg-surface">
+      <section className="py-16 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl font-bold text-foreground mb-4 tracking-tight">Active across most Indian cities</h2>
           <div className="inline-flex items-center gap-2 bg-card border border-border rounded-full px-5 py-2.5 text-sm font-medium text-foreground shadow-sm">
@@ -291,25 +545,36 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="relative py-24 sm:py-28 bg-background overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[900px] rounded-full bg-primary/10 blur-[140px]" />
-        </div>
-        <div className="max-w-2xl mx-auto px-4 text-center">
-          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-sm shadow-sm p-10 sm:p-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4 tracking-tight">
-              Ready to join?
-            </h2>
-            <p className="text-muted-foreground text-lg mb-9">
-              Verify your corporate email and get instant access. Zero fake profiles, zero scammers — just verified colleagues.
-            </p>
-            <Button asChild size="xl" className="rounded-full shadow-xl shadow-primary/20">
-              <Link href="/auth/signin?mode=register">
-                Get started <ArrowRight className="h-5 w-5" />
-              </Link>
-            </Button>
-            <p className="mt-5 text-muted-foreground text-sm">Free forever for core services · Premium from ₹99/month</p>
+      {/* CTA — dark banner */}
+      <section className="py-16 sm:py-20 bg-surface">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-primary/50 shadow-2xl">
+            <Image
+              src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1600&q=80&auto=format&fit=crop"
+              alt="City skyline"
+              fill
+              className="object-cover opacity-25 mix-blend-luminosity"
+            />
+            <div className="absolute -top-20 left-0 h-72 w-72 rounded-full bg-primary/30 blur-[110px] animate-blob-float" aria-hidden="true" />
+            <div className="absolute -bottom-24 right-0 h-80 w-80 rounded-full bg-accent/25 blur-[120px] animate-blob-float-slow" aria-hidden="true" />
+            <div className="relative grid md:grid-cols-[1.3fr,1fr] gap-8 items-center p-10 sm:p-14">
+              <div>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight mb-4">
+                  Get started with Korpo today
+                </h2>
+                <p className="text-white/70 text-lg max-w-md">
+                  Verify your corporate email and get instant access. Zero fake profiles, zero scammers — just verified colleagues.
+                </p>
+                <p className="mt-5 text-white/50 text-sm">Free forever for core services · Premium from ₹99/month</p>
+              </div>
+              <div className="flex md:justify-end">
+                <Button asChild size="xl" className="rounded-full shadow-xl bg-white text-slate-900 hover:bg-white/90 hover:-translate-y-0.5 hover:shadow-2xl transition-all">
+                  <Link href="/auth/signin?mode=register">
+                    Get started <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>

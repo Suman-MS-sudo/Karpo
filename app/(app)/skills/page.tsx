@@ -54,12 +54,25 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   if (searchParams.minRating) baseWhere.avgRating   = { gte: parseFloat(searchParams.minRating) }
   if (searchParams.minExp)    baseWhere.yearsExp    = { gte: parseInt(searchParams.minExp) }
   if (searchParams.maxPrice)  baseWhere.hourlyRate  = { lte: parseInt(searchParams.maxPrice) }
-  // Default to the user's own city when no explicit location filter is set.
-  if (searchParams.location)       baseWhere.location = { in: searchParams.location.split(",") }
-  else if (session?.user?.city)    baseWhere.location = session.user.city
-  if (searchParams.skills) {
-    baseWhere.AND = searchParams.skills.split(",").map(s => ({ skills: { contains: `"${s}"` } }))
+  // Collect extra AND-conditions here instead of assigning `baseWhere.OR` /
+  // `baseWhere.AND` directly — the text-search branch below also needs its
+  // own top-level `OR`, and a second assignment would silently clobber it.
+  const andConditions: any[] = []
+
+  // Default to the user's own city when no explicit location filter is set —
+  // but skills listings are frequently remote/unlocated (location: null),
+  // unlike marketplace/rentals which are always tied to a physical city, so
+  // a strict equality match would silently hide every remote professional.
+  // Include null-location rows alongside the city match.
+  if (searchParams.location) {
+    baseWhere.location = { in: searchParams.location.split(",") }
+  } else if (session?.user?.city) {
+    andConditions.push({ OR: [{ location: session.user.city }, { location: null }] })
   }
+  if (searchParams.skills) {
+    andConditions.push(...searchParams.skills.split(",").map(s => ({ skills: { contains: `"${s}"` } })))
+  }
+  if (andConditions.length) baseWhere.AND = andConditions
 
   const q = searchParams.q?.trim()
   const where: any = q ? {
