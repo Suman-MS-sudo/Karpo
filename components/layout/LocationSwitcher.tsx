@@ -116,7 +116,9 @@ export function LocationSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-72 bg-card border border-border rounded-2xl shadow-xl p-3">
+        <>
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden" onClick={() => setOpen(false)} />
+        <div className="fixed sm:absolute left-1/2 top-1/2 sm:left-auto sm:top-11 -translate-x-1/2 -translate-y-1/2 sm:translate-x-0 sm:translate-y-0 sm:right-0 z-50 w-[calc(100vw-2rem)] max-w-xs sm:w-72 bg-card border border-border rounded-2xl shadow-xl p-3">
           <input
             ref={inputRef}
             type="text"
@@ -148,6 +150,7 @@ export function LocationSwitcher() {
             )}
           </ul>
         </div>
+        </>
       )}
 
       {transition && <LocationChangeModal from={transition.from} to={transition.to} />}

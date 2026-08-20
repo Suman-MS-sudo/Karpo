@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
 import {
@@ -58,7 +58,7 @@ export default async function SkillDetailPage({ params }: { params: { id: string
     },
   })
 
-  if (!listing) notFound()
+  if (!listing) return <GoneNotice backHref="/skills" backLabel="Back to Skills" />
 
   if (listing.status === "ARCHIVED") {
     return (

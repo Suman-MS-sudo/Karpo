@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
-import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Image from "next/image"
 import Link from "next/link"
@@ -95,7 +95,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     },
   })
 
-  if (!raw) notFound()
+  if (!raw) return <GoneNotice backHref="/marketplace" backLabel="Back to Marketplace" />
 
   const isOwner   = session?.user?.id === raw.userId
   const isSold    = raw.status === "SOLD"

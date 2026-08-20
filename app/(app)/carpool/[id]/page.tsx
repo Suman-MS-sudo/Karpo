@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
 import loadDynamic from "next/dynamic"
@@ -57,7 +57,7 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
     },
   })
 
-  if (!route) notFound()
+  if (!route) return <GoneNotice backHref="/carpool" backLabel="Back to Carpool" />
 
   if (!route.isActive) {
     return (

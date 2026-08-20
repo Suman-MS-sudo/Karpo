@@ -109,11 +109,11 @@
 
   h1, h2, h3, h4, h5, h6 { @apply font-semibold tracking-tight; }
 
-  /* Scrollbar styling — thin, matches theme */
-  ::-webkit-scrollbar       { width: 5px; height: 5px; }
+  /* Scrollbar styling — matches theme */
+  ::-webkit-scrollbar       { width: 10px; height: 10px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/40; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/40; background-clip: padding-box; }
 }
 
 /* ── Utilities ──────────────────────────────────────────────────────────── */
@@ -129,5 +129,14 @@
   /* Glass card utility */
   .glass {
     @apply bg-card/80 backdrop-blur-md border border-border/60;
+  }
+
+  /* Gentle continuous float for launchpad-style icon popups */
+  @keyframes icon-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .animate-icon-bob {
+    animation: icon-bob 2.4s ease-in-out infinite;
   }
 }

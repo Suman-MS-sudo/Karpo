@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
@@ -41,7 +41,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
     },
   })
 
-  if (!event) notFound()
+  if (!event) return <GoneNotice backHref="/events" backLabel="Back to Events" />
 
   if (!event.isActive) {
     return (

@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
@@ -41,7 +41,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
     },
   })
 
-  if (!ref) notFound()
+  if (!ref) return <GoneNotice backHref="/referrals" backLabel="Back to Referrals" />
 
   const isOwner  = session?.user?.id === ref.userId
   const isClosed = ref.status !== "OPEN"

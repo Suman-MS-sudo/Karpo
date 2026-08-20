@@ -106,7 +106,7 @@ export default function MessageThreadPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100dvh-4rem-5rem)] lg:h-[calc(100dvh-4rem)]">
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
         <button

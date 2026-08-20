@@ -8,7 +8,7 @@ import {
   Activity, Palette, Ticket, Music, Package,
   Building2, BedDouble, Home, Users2, Warehouse,
   Database, Megaphone, TrendingUp, Users, Scale,
-  Repeat, Calendar, Clock, Wrench,
+  Repeat, Calendar, Clock, Wrench, Tag,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -21,7 +21,7 @@ const ICON_REGISTRY: Record<string, React.ComponentType<any>> = {
   Briefcase, Activity, Palette, Ticket, Music, Package,
   Building2, BedDouble, Home, Users2, Warehouse,
   Database, Megaphone, TrendingUp, Users, Scale,
-  Repeat, Calendar, Clock, Wrench,
+  Repeat, Calendar, Clock, Wrench, Tag,
 }
 
 export interface StripItem {

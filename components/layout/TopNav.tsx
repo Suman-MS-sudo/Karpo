@@ -143,18 +143,10 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
         )}
       </form>
 
-      {/* Mobile: search icon button */}
-      <button
-        onClick={() => router.push("/search")}
-        className="sm:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-muted text-foreground transition-colors ml-auto"
-      >
-        <Search className="h-5 w-5" />
-      </button>
-
       {/* Right actions */}
-      <div className="flex items-center gap-1">
-        {/* Quick Post */}
-        <div className="relative" ref={quickPostRef}>
+      <div className="flex items-center gap-1 ml-auto sm:ml-0">
+        {/* Quick Post — desktop only, mobile uses the bottom nav Post option */}
+        <div className="relative hidden sm:block" ref={quickPostRef}>
           <Button size="sm" onClick={() => setQuickPostOpen((o) => !o)} className="gap-1.5 h-8 px-3 text-xs">
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Post</span>
@@ -168,11 +160,11 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
           )}
         </div>
 
-        {/* Messages */}
-        <MessageIcon />
+        {/* Messages — desktop only, mobile uses the bottom nav */}
+        <div className="hidden sm:block"><MessageIcon /></div>
 
-        {/* Notifications */}
-        <NotificationBell />
+        {/* Notifications — desktop only, mobile uses the bottom nav */}
+        <div className="hidden sm:block"><NotificationBell /></div>
 
         {/* Theme toggle */}
         <ThemeToggle />

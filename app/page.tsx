@@ -12,8 +12,6 @@ import { SERVICES } from "@/config/services"
 import { HeroNetworkBackground } from "@/components/home/HeroNetworkBackground"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 
-const trustedLogos = ["Infosys", "TCS", "Wipro", "HCL", "Accenture", "Capgemini"]
-
 const heroStats = [
   { value: "50,000+", label: "Verified employees" },
   { value: "200+",    label: "Companies onboarded" },
@@ -122,7 +120,7 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Link href="/auth/signin" className="hidden sm:block text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5">
+            <Link href="/auth/signin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2 sm:px-3 py-1.5">
               Login
             </Link>
             <Button asChild size="sm" className="rounded-full shadow-sm">
@@ -133,7 +131,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero copy */}
-      <section className="relative overflow-hidden bg-slate-950 pt-16 pb-10 sm:pt-20">
+      <section className="relative overflow-hidden bg-background pt-16 pb-10 sm:pt-20">
         {/* Full-bleed background photo */}
         <div className="absolute inset-0 -z-30" aria-hidden="true">
           <Image
@@ -141,10 +139,10 @@ export default function LandingPage() {
             alt=""
             fill
             priority
-            className="object-cover opacity-[0.55]"
+            className="object-cover opacity-[0.12]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/90 to-slate-950" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/60" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
         </div>
         {/* Animated background mesh, faded into the page */}
         <div
@@ -165,63 +163,58 @@ export default function LandingPage() {
         {/* Connected-network canvas — nodes drift and link, echoing "verified network" */}
         <div className="pointer-events-none absolute inset-0 -z-10 h-[560px]" aria-hidden="true">
           <HeroNetworkBackground />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-slate-950" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
         </div>
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 backdrop-blur-sm px-4 py-1.5 mb-7">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 backdrop-blur-sm px-4 py-1.5 mb-7">
             <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
-            <span className="text-xs font-semibold uppercase tracking-wide text-white/90">Your work ID. Your pass to everything else.</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-foreground/90">Your work ID. Your pass to everything else.</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-balance text-white">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight text-balance text-foreground">
             The best way to{" "}
             <span className="bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_auto] bg-clip-text text-transparent animate-[gradient-x_6s_ease_infinite]">
               organize your network
             </span>.
           </h1>
-          <p className="mt-6 text-lg text-white/70 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
             Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="h-12 rounded-xl px-7 shadow-sm hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
-              <Link href="/auth/signin?mode=register">Try it free</Link>
+              <Link href="/auth/signin?mode=register">Signup</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-7 bg-white text-slate-900 hover:bg-white/90 hover:text-slate-900 border-white hover:-translate-y-0.5 transition-all">
-              <Link href="#showcase">
+            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-7 hover:-translate-y-0.5 transition-all">
+              <Link href="/auth/signin">
                 <Play className="h-4 w-4 fill-current" />
-                Watch it works
+                Login
               </Link>
             </Button>
           </div>
 
-          <p className="mt-14 text-xs font-medium uppercase tracking-wide text-white/40">Thousands of verified employees are using Korpo</p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            {trustedLogos.map((name) => (
-              <span key={name} className="text-sm font-semibold text-white/35">{name}</span>
-            ))}
-          </div>
+          <p className="mt-14 text-xs font-medium uppercase tracking-wide text-muted-foreground">Number of verified employees are using Korpo</p>
         </div>
 
         {/* Dark hero banner */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-14">
-          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-primary/40 shadow-2xl shadow-primary/10 min-h-[340px] sm:min-h-[420px]">
+          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-primary/10 via-muted to-primary/20 border border-border shadow-2xl shadow-primary/5 min-h-[340px] sm:min-h-[420px]">
             <Image
               src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1600&q=80&auto=format&fit=crop"
               alt="Modern office workspace"
               fill
               priority
-              className="object-cover opacity-60 mix-blend-luminosity"
+              className="object-cover opacity-30"
             />
             <div className="absolute -top-16 right-0 h-72 w-72 rounded-full bg-primary/30 blur-[110px] animate-blob-float" aria-hidden="true" />
             <div className="absolute -bottom-20 right-1/4 h-80 w-80 rounded-full bg-accent/25 blur-[120px] animate-blob-float-slow" aria-hidden="true" />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/50 to-transparent" />
             <div className="relative flex flex-col justify-center h-full p-8 sm:p-14 max-w-md">
-              <p className="text-white font-bold text-2xl sm:text-3xl tracking-tight">Keeping it all together</p>
-              <p className="text-white/70 text-sm sm:text-base mt-3 leading-relaxed">
+              <p className="text-foreground font-bold text-2xl sm:text-3xl tracking-tight">Keeping it all together</p>
+              <p className="text-muted-foreground text-sm sm:text-base mt-3 leading-relaxed">
                 One verified network for everything you need at work — and outside it. No fake profiles, no strangers, ever.
               </p>
-              <Button asChild size="lg" className="mt-7 rounded-xl w-fit bg-white text-slate-900 hover:bg-white/90">
-                <Link href="/auth/signin?mode=register">Schedule a demo</Link>
+              <Button asChild size="lg" className="mt-7 rounded-xl w-fit">
+                <Link href="/auth/signin?mode=register">Register</Link>
               </Button>
             </div>
             <div className="absolute top-8 right-8 hidden sm:flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-lg animate-blob-float-slow">
@@ -241,7 +234,7 @@ export default function LandingPage() {
             {heroStats.map((stat, i) => (
               <div
                 key={stat.label}
-                className={`px-8 py-8 text-center ${i === 1 ? "bg-primary text-primary-foreground" : "bg-slate-900 text-white"}`}
+                className={`px-8 py-8 text-center ${i === 1 ? "bg-primary text-primary-foreground" : "bg-card text-foreground border border-border"}`}
               >
                 <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">{stat.value}</p>
                 <p className="text-xs sm:text-sm mt-1.5 opacity-70">{stat.label}</p>
@@ -548,27 +541,27 @@ export default function LandingPage() {
       {/* CTA — dark banner */}
       <section className="py-16 sm:py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-primary/50 shadow-2xl">
+          <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-br from-primary/10 via-muted to-primary/25 border border-border shadow-2xl">
             <Image
               src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1600&q=80&auto=format&fit=crop"
               alt="City skyline"
               fill
-              className="object-cover opacity-25 mix-blend-luminosity"
+              className="object-cover opacity-15"
             />
             <div className="absolute -top-20 left-0 h-72 w-72 rounded-full bg-primary/30 blur-[110px] animate-blob-float" aria-hidden="true" />
             <div className="absolute -bottom-24 right-0 h-80 w-80 rounded-full bg-accent/25 blur-[120px] animate-blob-float-slow" aria-hidden="true" />
             <div className="relative grid md:grid-cols-[1.3fr,1fr] gap-8 items-center p-10 sm:p-14">
               <div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight mb-4">
+                <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight leading-tight mb-4">
                   Get started with Korpo today
                 </h2>
-                <p className="text-white/70 text-lg max-w-md">
+                <p className="text-muted-foreground text-lg max-w-md">
                   Verify your corporate email and get instant access. Zero fake profiles, zero scammers — just verified colleagues.
                 </p>
-                <p className="mt-5 text-white/50 text-sm">Free forever for core services · Premium from ₹99/month</p>
+                <p className="mt-5 text-muted-foreground/70 text-sm">Free forever for core services · Premium from ₹99/month</p>
               </div>
               <div className="flex md:justify-end">
-                <Button asChild size="xl" className="rounded-full shadow-xl bg-white text-slate-900 hover:bg-white/90 hover:-translate-y-0.5 hover:shadow-2xl transition-all">
+                <Button asChild size="xl" className="rounded-full shadow-xl hover:-translate-y-0.5 hover:shadow-2xl transition-all">
                   <Link href="/auth/signin?mode=register">
                     Get started <ArrowRight className="h-5 w-5" />
                   </Link>

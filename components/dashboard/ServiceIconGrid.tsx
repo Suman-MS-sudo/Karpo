@@ -1,11 +1,11 @@
 import Link from "next/link"
 import {
-  ShoppingBag, Home, Briefcase, Car, Wrench, Users, Package,
+  ShoppingBag, Home, Briefcase, Car, Wrench, Users, Tag, Package,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const ICON_REGISTRY: Record<string, React.ComponentType<{ className?: string }>> = {
-  ShoppingBag, Home, Briefcase, Car, Wrench, Users,
+  ShoppingBag, Home, Briefcase, Car, Wrench, Users, Tag,
 }
 
 export interface ServiceTile {

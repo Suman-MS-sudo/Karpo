@@ -33,10 +33,10 @@ export function PublicHeader() {
           <Link href="/about"         className="hover:text-foreground transition-colors">For Business</Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Button asChild variant="ghost" size="sm">
             <Link href="/auth/signin">Log in</Link>
           </Button>
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link href="/auth/signin">Sign up <ArrowRight className="h-4 w-4" /></Link>
           </Button>
         </div>

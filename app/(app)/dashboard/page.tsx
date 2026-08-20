@@ -15,7 +15,6 @@ import { getInitials, cn } from "@/lib/utils"
 import { ServiceHeroCards } from "@/components/dashboard/ServiceHeroCards"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar"
-import { ActivityChart } from "@/components/dashboard/ActivityChart"
 import { MobileDashboardHeader } from "@/components/dashboard/MobileDashboardHeader"
 import { ServiceIconGrid } from "@/components/dashboard/ServiceIconGrid"
 
@@ -45,6 +44,7 @@ export default async function DashboardPage() {
     referralCount,
     carpoolCount,
     skillCount,
+    dealCount,
     eventCount,
     recentRentals,
     recentReferrals,
@@ -66,6 +66,7 @@ export default async function DashboardPage() {
     prisma.jobReferral.count({ where: { status: "OPEN", ...(userCity ? { location: userCity } : {}) } }),
     prisma.carpoolRoute.count({ where: { isActive: true, ...(userCity ? { fromLocation: userCity } : {}) } }),
     prisma.skillListing.count({ where: { status: "ACTIVE", ...(userCity ? { location: userCity } : {}) } }),
+    prisma.deal.count({ where: { isActive: true, validUntil: { gte: new Date() } } }),
     prisma.event.count({ where: { isActive: true, date: { gte: new Date() }, ...(userCity ? { location: userCity } : {}) } }),
     prisma.rentalPost.findMany({
       where: { status: "ACTIVE", ...cityFilter },
@@ -191,6 +192,12 @@ export default async function DashboardPage() {
       count: skillCount, countLabel: "professionals", isPremium: false,
     },
     {
+      id: "deals", name: "Deals", icon: "Tag", route: "/deals", newHref: "/deals/new",
+      color: "text-rose-600 dark:text-rose-400", bgColor: "bg-rose-100 dark:bg-rose-500/15",
+      borderColor: "border-rose-200 dark:border-rose-800",
+      count: dealCount, countLabel: "active deals", isPremium: false,
+    },
+    {
       id: "events", name: "Events", icon: "Users", route: "/events", newHref: "/events/new",
       color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-500/15",
       borderColor: "border-amber-200 dark:border-amber-800",
@@ -312,7 +319,7 @@ export default async function DashboardPage() {
         glowShadow="shadow-[0_0_12px_rgba(99,102,241,0.4)]"
         underlineGradient="from-indigo-500 to-violet-400"
         items={[
-          { value: "All", label: "Home", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: marketplaceCount + rentalCount + referralCount + carpoolCount + skillCount + eventCount },
+          { value: "All", label: "Home", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: marketplaceCount + rentalCount + referralCount + carpoolCount + skillCount + dealCount + eventCount },
           ...SERVICE_TILES.map((service) => ({
             value: service.route,
             label: service.name,
@@ -333,26 +340,6 @@ export default async function DashboardPage() {
               id: s.id, name: s.name, icon: s.icon, route: s.route,
               color: s.color, bgColor: s.bgColor, count: s.count, countLabel: s.countLabel,
             }))}
-          />
-        </div>
-
-        {/* Activity chart */}
-        <div className="rounded-3xl bg-card shadow-md p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-sm font-semibold">Activity{userCity && ` in ${userCity}`}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Live listings by category</p>
-            </div>
-          </div>
-          <ActivityChart
-            stats={[
-              { label: "Buy & Sell", value: marketplaceCount, href: "/marketplace", icon: "ShoppingBag", iconBg: "bg-blue-100 dark:bg-blue-500/15", iconColor: "text-blue-600 dark:text-blue-400" },
-              { label: "Rentals", value: rentalCount, href: "/rentals", icon: "Home", iconBg: "bg-emerald-100 dark:bg-emerald-500/15", iconColor: "text-emerald-600 dark:text-emerald-400" },
-              { label: "Referrals", value: referralCount, href: "/referrals", icon: "Briefcase", iconBg: "bg-violet-100 dark:bg-violet-500/15", iconColor: "text-violet-600 dark:text-violet-400" },
-              { label: "Carpool", value: carpoolCount, href: "/carpool", icon: "Car", iconBg: "bg-orange-100 dark:bg-orange-500/15", iconColor: "text-orange-600 dark:text-orange-400" },
-              { label: "Skills", value: skillCount, href: "/skills", icon: "Wrench", iconBg: "bg-cyan-100 dark:bg-cyan-500/15", iconColor: "text-cyan-600 dark:text-cyan-400" },
-              { label: "Events", value: eventCount, href: "/events", icon: "Users", iconBg: "bg-amber-100 dark:bg-amber-500/15", iconColor: "text-amber-600 dark:text-amber-400" },
-            ]}
           />
         </div>
 

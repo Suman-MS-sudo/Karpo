@@ -100,7 +100,7 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
 
       {open && (
         <div
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-foreground"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-foreground"
           style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
           <div className="w-full max-w-sm bg-card border border-border rounded-2xl shadow-xl p-6">

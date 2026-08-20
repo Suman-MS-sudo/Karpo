@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Image from "next/image"
 import Link from "next/link"
@@ -124,7 +124,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
     },
   })
 
-  if (!rental) notFound()
+  if (!rental) return <GoneNotice backHref="/rentals" backLabel="Back to Rentals" />
 
   const isOwner   = userId === rental.userId
   const isFilled  = rental.status === "FILLED"

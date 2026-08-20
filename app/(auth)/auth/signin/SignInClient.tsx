@@ -45,6 +45,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [waOtp, setWaOtp]       = useState(["", "", "", "", "", ""])
   const [waResendIn, setWaResendIn] = useState(0)
   const waOtpRefs = useRef<(HTMLInputElement | null)[]>([])
+  const waVerifyingRef = useRef(false)
 
   useEffect(() => {
     if (waResendIn <= 0) return
@@ -53,6 +54,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   }, [waResendIn])
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
+  const verifyingRef = useRef(false)
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -124,6 +126,12 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const handleVerifyOTP = useCallback(async (code?: string) => {
     const finalCode = code ?? otp.join("")
     if (finalCode.length !== 6) return
+    // Mobile browsers can fire both per-digit onChange events AND a paste
+    // event for the same autofilled code, double-invoking this handler —
+    // the second call finds the token already consumed by the first and
+    // incorrectly reports "invalid code" even though sign-in succeeded.
+    if (verifyingRef.current) return
+    verifyingRef.current = true
     setError("")
     setLoading(true)
     try {
@@ -134,12 +142,16 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword } : {}),
       })
       if (result?.error) {
+        verifyingRef.current = false
         setError("Invalid or expired code. Please try again.")
         setOtp(["", "", "", "", "", ""])
         otpRefs.current[0]?.focus()
         return
       }
-      // Check session role to handle admin bypass onboarding
+      // Check session role to handle admin bypass onboarding — the
+      // verifyingRef lock deliberately stays set past success so a
+      // trailing duplicate call (see comment above) is dropped instead
+      // of clobbering the just-succeeded sign-in with a stale error.
       const sessionRes = await fetch("/api/auth/session")
       const sessionData = sessionRes.ok ? await sessionRes.json() : null
       const isAdmin = sessionData?.user?.role === "ADMIN"
@@ -219,6 +231,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const handleVerifyWhatsAppOTP = useCallback(async (code?: string) => {
     const finalCode = code ?? waOtp.join("")
     if (finalCode.length !== 6) return
+    if (waVerifyingRef.current) return
+    waVerifyingRef.current = true
     setError("")
     setLoading(true)
     try {
@@ -228,6 +242,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         whatsappOtp: finalCode,
       })
       if (result?.error) {
+        waVerifyingRef.current = false
         setError("Invalid or expired code. Please try again.")
         setWaOtp(["", "", "", "", "", ""])
         waOtpRefs.current[0]?.focus()
