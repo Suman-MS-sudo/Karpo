@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, Component, type ReactNode } from "react"
 import Image from "next/image"
 import {
   Tag, Plus, Pencil, ToggleLeft, ToggleRight, Trash2, X, Loader2,
@@ -48,6 +48,19 @@ const EMPTY = {
   validUntil: "", category: "OTHER", merchantName: "", merchantUrl: "",
   companyLogo: "", terms: "", usageLimit: "", redemptionSteps: "",
   featured: false, trending: false, badge: "", source: "MANUAL",
+}
+
+class LogoErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children
+  }
 }
 
 function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -250,7 +263,9 @@ export function DealsManager({ deals: initial }: { deals: AdminDeal[] }) {
             {/* Logo */}
             <div className="h-11 w-11 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0 overflow-hidden">
               {deal.companyLogo ? (
-                <Image src={deal.companyLogo} alt={deal.merchantName} width={36} height={36} className="object-contain p-0.5" />
+                <LogoErrorBoundary fallback={<Tag className="h-5 w-5 text-muted-foreground" />}>
+                  <Image src={deal.companyLogo} alt={deal.merchantName} width={36} height={36} className="object-contain p-0.5" />
+                </LogoErrorBoundary>
               ) : (
                 <Tag className="h-5 w-5 text-muted-foreground" />
               )}
@@ -374,7 +389,9 @@ export function DealsManager({ deals: initial }: { deals: AdminDeal[] }) {
                     <Input value={form.companyLogo} onChange={(e) => field("companyLogo", e.target.value)} placeholder="https://…/logo.png" />
                     {form.companyLogo && (
                       <div className="h-9 w-9 rounded-lg border border-border flex items-center justify-center bg-muted shrink-0 overflow-hidden">
-                        <Image src={form.companyLogo} alt="" width={28} height={28} className="object-contain" />
+                        <LogoErrorBoundary fallback={<ImageIcon className="h-4 w-4 text-muted-foreground" />}>
+                          <Image src={form.companyLogo} alt="" width={28} height={28} className="object-contain" />
+                        </LogoErrorBoundary>
                       </div>
                     )}
                   </div>

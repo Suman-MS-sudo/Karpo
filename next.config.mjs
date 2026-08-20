@@ -26,6 +26,7 @@ const nextConfig = {
       { protocol: "https", hostname: "rukminim2.flixcart.com" },
       { protocol: "https", hostname: "static-assets-web.flixcart.com" },
       { protocol: "https", hostname: "img-c.udemycdn.com" },
+      { protocol: "https", hostname: "www.udemy.com" },
       { protocol: "https", hostname: "d3njjcbhbojbot.cloudfront.net" },
       { protocol: "https", hostname: "gos3.ibcdn.com" },
       { protocol: "https", hostname: "www.hdfcbank.com" },

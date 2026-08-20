@@ -126,11 +126,11 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                         />
                       ) : (
                         <div className="h-9 w-9 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-xs font-bold text-primary-700 dark:text-primary-300 shrink-0">
-                          {user.name?.[0]?.toUpperCase() ?? "?"}
+                          {(user.name ?? user.email)?.[0]?.toUpperCase() ?? "?"}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="font-semibold truncate leading-tight">{user.name ?? "—"}</p>
+                        <p className="font-semibold truncate leading-tight">{user.name ?? user.email?.split("@")[0] ?? "Unnamed user"}</p>
                         <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email}</p>
                       </div>
                     </div>

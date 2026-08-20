@@ -15,15 +15,56 @@ import { getInitials } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import type { ServiceConfig } from "@/config/services"
 
+interface SearchSuggestion {
+  type: string
+  href: string
+  title: string
+  subtitle: string
+}
+
 export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [userMenuOpen,  setUserMenuOpen]  = useState(false)
   const [quickPostOpen, setQuickPostOpen] = useState(false)
   const [searchQuery,   setSearchQuery]   = useState("")
+  const [searchOpen,    setSearchOpen]    = useState(false)
+  const [suggestions,   setSuggestions]   = useState<SearchSuggestion[]>([])
   const searchRef = useRef<HTMLInputElement>(null)
+  const searchBoxRef = useRef<HTMLFormElement>(null)
   const quickPostRef = useRef<HTMLDivElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
+
+  useEffect(() => {
+    if (!searchOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target as Node)) {
+        setSearchOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [searchOpen])
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const query = searchQuery.trim()
+    if (query.length < 2) {
+      setSuggestions([])
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(query)}`)
+        const data = await res.json()
+        setSuggestions(data.results ?? [])
+      } catch {
+        setSuggestions([])
+      }
+    }, 250)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchQuery])
 
   useEffect(() => {
     if (!quickPostOpen) return
@@ -64,7 +105,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
       </Link>
 
       {/* Global search — desktop centered, mobile full width */}
-      <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-auto hidden sm:block">
+      <form ref={searchBoxRef} onSubmit={handleSearch} className="relative flex-1 max-w-xl mx-auto hidden sm:block">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <input
@@ -72,10 +113,34 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchOpen(true)}
             placeholder="Search listings, jobs, rentals, events…"
             className="w-full h-9 pl-9 pr-4 text-sm bg-muted/60 hover:bg-muted focus:bg-background border border-transparent focus:border-border rounded-xl outline-none transition-all placeholder:text-muted-foreground text-foreground"
           />
         </div>
+        {searchOpen && searchQuery.trim().length >= 2 && suggestions.length > 0 && (
+          <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-card border border-border rounded-2xl shadow-xl overflow-hidden max-h-96 overflow-y-auto">
+            <ul className="divide-y divide-border">
+              {suggestions.map((r, i) => (
+                <li key={`${r.type}-${r.href}-${i}`}>
+                  <Link
+                    href={r.href}
+                    onClick={() => setSearchOpen(false)}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/60 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{r.title}</p>
+                      {r.subtitle && <p className="text-xs text-muted-foreground truncate mt-0.5">{r.subtitle}</p>}
+                    </div>
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 px-2 py-1 rounded-full">
+                      {r.type}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </form>
 
       {/* Mobile: search icon button */}

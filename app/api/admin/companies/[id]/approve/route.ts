@@ -12,7 +12,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   // Create or update company
   const company = await prisma.company.upsert({
     where: { domain: request.domain },
-    update: { isApproved: true },
+    update: { isApproved: true, ...(request.city ? { city: request.city } : {}) },
     create: { name: request.name, domain: request.domain, city: request.city, isApproved: true },
   })
 

@@ -896,6 +896,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
+                  aria-label={`Digit ${i + 1} of 6`}
                   value={digit}
                   onChange={(e) => handleWaOtpChange(i, e.target.value)}
                   onKeyDown={(e) => handleWaOtpKeyDown(i, e)}
@@ -961,6 +962,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
+                  aria-label={`Digit ${i + 1} of 6`}
                   value={digit}
                   onChange={(e) => handleOtpChange(i, e.target.value)}
                   onKeyDown={(e) => handleOtpKeyDown(i, e)}
