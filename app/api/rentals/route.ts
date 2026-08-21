@@ -95,6 +95,8 @@ export async function POST(req: Request) {
       data: { ...coreData(session.user.id, body), ...extendedData(body), isBoosted: isPremium },
     })
     revalidatePath("/dashboard")
+    revalidatePath("/rentals")
+    revalidatePath("/my-rentals")
     return NextResponse.json(rental, { status: 201 })
   } catch (err: any) {
     // P2022 = column doesn't exist yet (db push pending) — fall back to core fields only

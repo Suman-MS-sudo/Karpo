@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
@@ -10,5 +11,8 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   if (!listing || listing.userId !== session.user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   await prisma.listing.update({ where: { id: params.id }, data: { status: "SOLD" } })
+  revalidatePath(`/marketplace/${params.id}`)
+  revalidatePath("/marketplace")
+  revalidatePath("/my-postings")
   return NextResponse.json({ ok: true })
 }

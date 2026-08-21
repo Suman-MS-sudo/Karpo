@@ -2,7 +2,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Home, MessageSquare, Plus, LayoutGrid, Bell, User,
 } from "lucide-react"
@@ -37,60 +37,63 @@ function LaunchpadSheet({
   mode: "post" | "view"
 }) {
   const services = SERVICES.filter((s) => s.isActive)
+  const [counts, setCounts] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    fetch("/api/services/counts")
+      .then((res) => (res.ok ? res.json() : {}))
+      .then(setCounts)
+      .catch(() => {})
+  }, [])
 
   return (
     <div
       className="fixed inset-0 z-[60] bg-black/35 backdrop-blur-[2px] animate-in fade-in duration-150 lg:hidden"
       onClick={onClose}
     >
-      {/* A single horizontal strip that pops up out of the tab bar — quick-commerce
-          app style (Blinkit/Zepto category rows): one row of icon bubbles, each
-          bouncing in left-to-right, no boxed card behind the row. */}
+      {/* A wrapping, centered grid — not a horizontal scroller — so every
+          icon (including the last row) is fully visible and centered
+          within the screen width, regardless of how many services there are. */}
       <div
-        className="absolute bottom-16 left-0 right-0 flex items-end justify-start gap-3 px-4 pb-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory animate-in slide-in-from-bottom-8 duration-300"
+        className="absolute bottom-16 left-0 right-0 bg-card/95 backdrop-blur-md rounded-t-3xl shadow-2xl px-4 pt-5 pb-4 animate-in slide-in-from-bottom-8 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* justify-start (not center) — centering a flex row inside an
-            overflow-x scroller clips the leading/trailing items off-screen
-            with no way to scroll to them in Chrome. A leading spacer keeps
-            the row visually centered when it's narrower than the viewport. */}
-        <div className="shrink-0 grow basis-0" aria-hidden="true" />
-        {services.map((service, i) => {
-          const imageSrc = serviceImageMap[service.id]
-          // Gentle arc — icons rise toward the middle of the row and settle
-          // back down at the edges, like a shallow dock/rainbow curve.
-          const t = services.length > 1 ? i / (services.length - 1) : 0.5
-          const arcLift = Math.sin(t * Math.PI) * 16
-          return (
-            <button
-              key={service.id}
-              onClick={() => onSelect(service)}
-              className="flex flex-col items-center gap-1 shrink-0 snap-center group animate-in zoom-in-50 fade-in"
-              style={{
-                marginBottom: arcLift,
-                animationDelay: `${i * 60}ms`,
-                animationDuration: "280ms",
-                animationFillMode: "backwards",
-              }}
-            >
-              <div
-                className={cn(
-                  "rounded-2xl overflow-hidden flex items-center justify-center shadow-xl transition-transform duration-150 group-active:scale-90 animate-icon-bob",
-                  service.bgColor
-                )}
-                style={{ height: 68, width: 68, animationDelay: `${300 + i * 90}ms` }}
+        <div className="flex flex-wrap justify-center gap-x-3 gap-y-4">
+          {services.map((service, i) => {
+            const imageSrc = serviceImageMap[service.id]
+            const count = counts[service.id]
+            return (
+              <button
+                key={service.id}
+                onClick={() => onSelect(service)}
+                className="flex flex-col items-center gap-1 group animate-in zoom-in-50 fade-in"
+                style={{
+                  width: 76,
+                  animationDelay: `${i * 60}ms`,
+                  animationDuration: "280ms",
+                  animationFillMode: "backwards",
+                }}
               >
-                {imageSrc ? (
-                  <Image src={imageSrc} alt={service.name} width={68} height={68} className="h-full w-full object-cover" />
-                ) : null}
-              </div>
-              <span className="text-[9px] font-semibold text-foreground bg-background/90 px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap">
-                {service.name}
-              </span>
-            </button>
-          )
-        })}
-        <div className="shrink-0 grow basis-0" aria-hidden="true" />
+                <div
+                  className={cn(
+                    "h-16 w-16 rounded-2xl overflow-hidden flex items-center justify-center shadow-md transition-transform duration-150 group-active:scale-90",
+                    service.bgColor
+                  )}
+                >
+                  {imageSrc ? (
+                    <Image src={imageSrc} alt={service.name} width={160} height={160} quality={90} className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <span className="text-[11px] font-semibold text-foreground text-center leading-tight">
+                  {service.name}
+                </span>
+                {count !== undefined && (
+                  <span className="text-[10px] text-muted-foreground tabular-nums">{count}</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -110,7 +113,10 @@ export function MobileNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border lg:hidden safe-area-inset-bottom">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border lg:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="flex">
           {TABS.map(({ key, href, icon: Icon, label }) => {
             const isActive = href === null ? sheet === key : (pathname === href || pathname.startsWith(href + "/"))

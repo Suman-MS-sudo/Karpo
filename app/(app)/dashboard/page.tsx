@@ -16,7 +16,18 @@ import { ServiceHeroCards } from "@/components/dashboard/ServiceHeroCards"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar"
 import { MobileDashboardHeader } from "@/components/dashboard/MobileDashboardHeader"
+import { DashboardRefresh } from "@/components/dashboard/DashboardRefresh"
 import { ServiceIconGrid } from "@/components/dashboard/ServiceIconGrid"
+
+const SERVICE_IMAGE_MAP: Record<string, string> = {
+  "buy-sell": "/images/services/marketplace.jpeg",
+  rentals: "/images/services/rentals.jpeg",
+  "job-referrals": "/images/services/job-referrals.jpeg",
+  carpool: "/images/services/carpool.jpeg",
+  services: "/images/services/skills.jpeg",
+  deals: "/images/services/deals.png",
+  events: "/images/services/events.png",
+}
 
 
 export default async function DashboardPage() {
@@ -207,6 +218,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-full bg-background">
+      <DashboardRefresh />
 
       {/* ── Mobile compact header ───────────────────────────────── */}
       <div className="md:hidden">
@@ -310,35 +322,39 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Services category strip ─────────────────────────────── */}
-      <CategoryStrip
-        activeValue="All"
-        basePath="/dashboard"
-        paramName="service"
-        ringClass="ring-indigo-400"
-        glowShadow="shadow-[0_0_12px_rgba(99,102,241,0.4)]"
-        underlineGradient="from-indigo-500 to-violet-400"
-        items={[
-          { value: "All", label: "Home", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: marketplaceCount + rentalCount + referralCount + carpoolCount + skillCount + dealCount + eventCount },
-          ...SERVICE_TILES.map((service) => ({
-            value: service.route,
-            label: service.name,
-            icon: service.icon,
-            iconBg: service.bgColor,
-            iconColor: service.color,
-            count: service.count,
-          })),
-        ]}
-      />
+      {/* ── Services category strip (desktop only — mobile uses the icon grid below) ── */}
+      <div className="hidden md:block">
+        <CategoryStrip
+          activeValue="All"
+          basePath="/dashboard"
+          paramName="service"
+          ringClass="ring-indigo-400"
+          glowShadow="shadow-[0_0_12px_rgba(99,102,241,0.4)]"
+          underlineGradient="from-indigo-500 to-violet-400"
+          items={[
+            { value: "All", label: "Home", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: marketplaceCount + rentalCount + referralCount + carpoolCount + skillCount + dealCount + eventCount },
+            ...SERVICE_TILES.map((service) => ({
+              value: service.route,
+              label: service.name,
+              icon: service.icon,
+              iconBg: service.bgColor,
+              iconColor: service.color,
+              count: service.count,
+              image: SERVICE_IMAGE_MAP[service.id],
+            })),
+          ]}
+        />
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
-        {/* Service icon grid (mobile) */}
+        {/* Service icon grid (mobile) — same real images as the desktop strip */}
         <div className="md:hidden -mt-2">
           <ServiceIconGrid
             tiles={SERVICE_TILES.map((s) => ({
               id: s.id, name: s.name, icon: s.icon, route: s.route,
               color: s.color, bgColor: s.bgColor, count: s.count, countLabel: s.countLabel,
+              image: SERVICE_IMAGE_MAP[s.id],
             }))}
           />
         </div>
@@ -390,47 +406,29 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Premium + report */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {!isPremium && (
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 dark:from-amber-950 dark:to-zinc-900 p-5 text-white">
-              <div className="pointer-events-none absolute -top-4 -right-4 h-24 w-24 bg-amber-500/20 rounded-full blur-lg" />
-              <div className="relative flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Crown className="h-4 w-4 text-amber-400" />
-                    <span className="font-semibold text-sm">Go Premium</span>
-                  </div>
-                  <p className="text-xs text-white/60 leading-snug max-w-xs">
-                    Unlimited listings, carpool routes &amp; deal redemptions. Priority matching + boosts.
-                  </p>
-                </div>
-                <Link
-                  href="/membership"
-                  className="shrink-0 flex items-center gap-1.5 text-xs font-bold bg-amber-400 text-zinc-900 hover:bg-amber-300 px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap"
-                >
-                  <Zap className="h-3.5 w-3.5" /> ₹99/mo
-                </Link>
-              </div>
-            </div>
-          )}
-
-          <Link
-            href="/report"
-            className="flex items-center justify-between gap-3 rounded-3xl bg-card shadow-md p-5 hover:shadow-lg transition-shadow group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                <Flag className="h-4 w-4 text-muted-foreground" />
-              </div>
+        {/* Premium */}
+        {!isPremium && (
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 dark:from-amber-950 dark:to-zinc-900 p-5 text-white">
+            <div className="pointer-events-none absolute -top-4 -right-4 h-24 w-24 bg-amber-500/20 rounded-full blur-lg" />
+            <div className="relative flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium">Report a concern</p>
-                <p className="text-xs text-muted-foreground">Flag a bug or issue.</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <Crown className="h-4 w-4 text-amber-400" />
+                  <span className="font-semibold text-sm">Go Premium</span>
+                </div>
+                <p className="text-xs text-white/60 leading-snug max-w-xs">
+                  Unlimited listings, carpool routes &amp; deal redemptions. Priority matching + boosts.
+                </p>
               </div>
+              <Link
+                href="/membership"
+                className="shrink-0 flex items-center gap-1.5 text-xs font-bold bg-amber-400 text-zinc-900 hover:bg-amber-300 px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap"
+              >
+                <Zap className="h-3.5 w-3.5" /> ₹99/mo
+              </Link>
             </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
-          </Link>
-        </div>
+          </div>
+        )}
 
         {/* Recent listings */}
         <div>
@@ -474,6 +472,23 @@ export default async function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Report a concern */}
+        <Link
+          href="/report"
+          className="flex items-center justify-between gap-3 rounded-3xl bg-card shadow-md p-5 hover:shadow-lg transition-shadow group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <Flag className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Report a concern</p>
+              <p className="text-xs text-muted-foreground">Flag a bug or issue.</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+        </Link>
       </div>
     </div>
   )

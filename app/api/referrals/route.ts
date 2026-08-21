@@ -84,5 +84,7 @@ export async function POST(req: Request) {
   })
 
   revalidatePath("/dashboard")
+  revalidatePath("/referrals")
+  revalidatePath("/my-referrals")
   return NextResponse.json(referral, { status: 201 })
 }

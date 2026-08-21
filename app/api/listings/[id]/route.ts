@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
@@ -38,6 +39,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       phone:        body.phone     ?? null,
     },
   })
+  revalidatePath(`/marketplace/${params.id}`)
+  revalidatePath("/marketplace")
+  revalidatePath("/my-postings")
   return NextResponse.json(updated)
 }
 
@@ -49,5 +53,8 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
   await prisma.listing.update({ where: { id: params.id }, data: { status: "EXPIRED" } })
+  revalidatePath(`/marketplace/${params.id}`)
+  revalidatePath("/marketplace")
+  revalidatePath("/my-postings")
   return NextResponse.json({ success: true })
 }

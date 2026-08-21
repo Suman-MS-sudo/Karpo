@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useRef, useState } from "react"
 import {
   ChevronLeft, ChevronRight, LayoutDashboard,
@@ -31,6 +32,7 @@ export interface StripItem {
   iconBg:    string
   iconColor: string
   count:     number
+  image?:    string // real logo/photo — takes priority over the lucide icon when set
 }
 
 interface Props {
@@ -81,18 +83,33 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
                   key={item.value}
                   href={href}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group",
-                    "flex-1 min-w-[84px]",
-                    isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
+                    "flex flex-col items-center gap-2 py-3 relative transition-all duration-150 group",
+                    "flex-1 min-w-[104px] sm:min-w-[136px]"
                   )}
                 >
                   <div className={cn(
-                    "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
-                    isActive ? cn(item.iconBg, "ring-2 scale-110", ringClass, glowShadow) : cn(item.iconBg, "group-hover:scale-105")
+                    "h-16 w-16 sm:h-24 sm:w-24 rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                    isActive
+                      ? cn(item.iconBg, "ring-2 scale-110", ringClass, glowShadow)
+                      : cn(item.iconBg, "group-hover:scale-105 group-hover:ring-2", ringClass)
                   )}>
-                    <Icon className={cn("h-4.5 w-4.5", item.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                    {item.image ? (
+                      // Requested well above display size (2.5x+) so the CSS
+                      // scale-110 on active/hover doesn't upsample an
+                      // already-rasterized image and turn it soft.
+                      <Image
+                        src={item.image}
+                        alt={item.label}
+                        width={260}
+                        height={260}
+                        quality={95}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Icon className={cn("h-7 w-7 sm:h-10 sm:w-10", item.iconColor)} strokeWidth={isActive ? 2.5 : 2} />
+                    )}
                   </div>
-                  <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                  <span className={cn("font-outfit", "text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
                     {item.label}
                   </span>
                   <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>

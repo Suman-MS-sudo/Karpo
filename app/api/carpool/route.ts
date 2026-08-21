@@ -65,5 +65,7 @@ export async function POST(req: Request) {
   })
 
   revalidatePath("/dashboard")
+  revalidatePath("/carpool")
+  revalidatePath("/my-carpool")
   return NextResponse.json(route, { status: 201 })
 }

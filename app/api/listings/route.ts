@@ -95,5 +95,7 @@ export async function POST(req: Request) {
     },
   })
   revalidatePath("/dashboard")
+  revalidatePath("/marketplace")
+  revalidatePath("/my-postings")
   return NextResponse.json(listing, { status: 201 })
 }
