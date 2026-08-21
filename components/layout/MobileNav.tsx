@@ -1,16 +1,22 @@
 "use client"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { useState } from "react"
 import {
   Home, MessageSquare, Plus, LayoutGrid, Bell, User,
-  ShoppingBag, Briefcase, Car, Wrench, Tag, Users, GraduationCap, Shield, Gift,
 } from "lucide-react"
 import { SERVICES, type ServiceConfig } from "@/config/services"
 import { cn } from "@/lib/utils"
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users, GraduationCap, Shield, Gift,
+const serviceImageMap: Record<string, string> = {
+  "buy-sell": "/images/services/marketplace.jpeg",
+  rentals: "/images/services/rentals.jpeg",
+  "job-referrals": "/images/services/job-referrals.jpeg",
+  carpool: "/images/services/carpool.jpeg",
+  services: "/images/services/skills.jpeg",
+  deals: "/images/services/deals.png",
+  events: "/images/services/events.png",
 }
 
 const TABS = [
@@ -41,11 +47,16 @@ function LaunchpadSheet({
           app style (Blinkit/Zepto category rows): one row of icon bubbles, each
           bouncing in left-to-right, no boxed card behind the row. */}
       <div
-        className="absolute bottom-16 left-0 right-0 flex items-end justify-center gap-3 px-4 pb-3 overflow-x-auto scrollbar-hide animate-in slide-in-from-bottom-8 duration-300"
+        className="absolute bottom-16 left-0 right-0 flex items-end justify-start gap-3 px-4 pb-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory animate-in slide-in-from-bottom-8 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* justify-start (not center) — centering a flex row inside an
+            overflow-x scroller clips the leading/trailing items off-screen
+            with no way to scroll to them in Chrome. A leading spacer keeps
+            the row visually centered when it's narrower than the viewport. */}
+        <div className="shrink-0 grow basis-0" aria-hidden="true" />
         {services.map((service, i) => {
-          const Icon = iconMap[service.icon] ?? ShoppingBag
+          const imageSrc = serviceImageMap[service.id]
           // Gentle arc — icons rise toward the middle of the row and settle
           // back down at the edges, like a shallow dock/rainbow curve.
           const t = services.length > 1 ? i / (services.length - 1) : 0.5
@@ -54,7 +65,7 @@ function LaunchpadSheet({
             <button
               key={service.id}
               onClick={() => onSelect(service)}
-              className="flex flex-col items-center gap-1 shrink-0 group animate-in zoom-in-50 fade-in"
+              className="flex flex-col items-center gap-1 shrink-0 snap-center group animate-in zoom-in-50 fade-in"
               style={{
                 marginBottom: arcLift,
                 animationDelay: `${i * 60}ms`,
@@ -64,12 +75,14 @@ function LaunchpadSheet({
             >
               <div
                 className={cn(
-                  "rounded-2xl flex items-center justify-center shadow-xl transition-transform duration-150 group-active:scale-90 animate-icon-bob",
+                  "rounded-2xl overflow-hidden flex items-center justify-center shadow-xl transition-transform duration-150 group-active:scale-90 animate-icon-bob",
                   service.bgColor
                 )}
                 style={{ height: 68, width: 68, animationDelay: `${300 + i * 90}ms` }}
               >
-                <Icon className={cn("h-7 w-7", service.color)} />
+                {imageSrc ? (
+                  <Image src={imageSrc} alt={service.name} width={68} height={68} className="h-full w-full object-cover" />
+                ) : null}
               </div>
               <span className="text-[9px] font-semibold text-foreground bg-background/90 px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap">
                 {service.name}
@@ -77,6 +90,7 @@ function LaunchpadSheet({
             </button>
           )
         })}
+        <div className="shrink-0 grow basis-0" aria-hidden="true" />
       </div>
     </div>
   )
