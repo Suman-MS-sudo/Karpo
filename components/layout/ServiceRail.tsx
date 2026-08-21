@@ -28,6 +28,16 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users, GraduationCap, Shield, Gift,
 }
 
+const serviceImageMap: Record<string, string> = {
+  "buy-sell": "/images/services/marketplace.jpeg",
+  rentals: "/images/services/rentals.jpeg",
+  "job-referrals": "/images/services/job-referrals.jpeg",
+  carpool: "/images/services/carpool.jpeg",
+  services: "/images/services/skills.jpeg",
+  deals: "/images/services/deals.png",
+  events: "/images/services/events.png",
+}
+
 const MY_ROUTE_MAP: Record<string, string> = {
   "/my-listings":  "buy-sell",
   "/my-rentals":   "rentals",
@@ -86,6 +96,7 @@ export function ServiceRail() {
       href: "/dashboard",
       label: "Dashboard",
       Icon: LayoutDashboard,
+      image: undefined as string | undefined,
       isActive: pathname === "/dashboard",
       bgColor: "bg-muted",
       color: "text-foreground",
@@ -96,6 +107,7 @@ export function ServiceRail() {
       href: s.route,
       label: s.name,
       Icon: iconMap[s.icon] ?? ShoppingBag,
+      image: serviceImageMap[s.id] as string | undefined,
       isActive: pathname.startsWith(s.route) || MY_ROUTE_MAP[cleanPath] === s.id,
       bgColor: s.bgColor,
       color: s.color,
@@ -106,6 +118,7 @@ export function ServiceRail() {
       href: "/admin",
       label: "Admin",
       Icon: Shield,
+      image: undefined as string | undefined,
       isActive: pathname.startsWith("/admin"),
       bgColor: "bg-blue-100 dark:bg-blue-950/40",
       color: "text-blue-600 dark:text-blue-400",
@@ -133,8 +146,12 @@ export function ServiceRail() {
           )}
         >
           <span className="flex items-center justify-center w-[44px] h-full shrink-0">
-            <span className={cn("h-8 w-8 rounded-2xl flex items-center justify-center", item.bgColor)}>
-              <item.Icon className={cn("h-4 w-4", item.color)} />
+            <span className={cn("h-9 w-9 rounded-2xl flex items-center justify-center overflow-hidden", item.bgColor)}>
+              {item.image ? (
+                <Image src={item.image} alt={item.label} width={90} height={90} quality={90} className="h-full w-full object-cover" />
+              ) : (
+                <item.Icon className={cn("h-4 w-4", item.color)} />
+              )}
             </span>
           </span>
           <span className={cn(
