@@ -3,14 +3,16 @@ import Image from "next/image"
 import {
   ArrowRight, ShieldCheck, Users, MapPin, Star, Sparkles, Quote,
   FolderCheck, Gauge, Download, UserPlus, Compass, TrendingUp, Lock, Search,
-  Bell, MessageSquare, BadgeCheck, Clock, Building2, Play, PlugZap, Zap,
+  Bell, MessageSquare, BadgeCheck, Clock, Building2, PlugZap, Zap,
   Layers, MessageCircle, Briefcase, Home as HomeIcon, Car, GraduationCap,
-  Gift, ShoppingBag, Wrench, Tag,
+  Gift, ShoppingBag, Wrench, Tag, Heart, Target, ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SERVICES } from "@/config/services"
 import { HeroNetworkBackground } from "@/components/home/HeroNetworkBackground"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
+import { ContactForm } from "@/components/shared/ContactForm"
+import { prisma } from "@/lib/prisma"
 
 const heroStats = [
   { value: "50,000+", label: "Verified employees" },
@@ -79,6 +81,33 @@ const productivitySteps = [
   { icon: Clock,   title: "Save your time",         desc: "Verified colleagues only — no vetting needed." },
 ]
 
+const aboutStats = [
+  { value: "50,000+", label: "Verified employees" },
+  { value: "200+",    label: "Companies onboarded" },
+  { value: "10+",     label: "Services on platform" },
+  { value: "0",       label: "Fake profiles" },
+]
+
+const aboutValues = [
+  { icon: ShieldCheck, title: "Trust first",        desc: "Every member is verified via their corporate email. No exceptions, no shortcuts." },
+  { icon: Users,       title: "Community driven",   desc: "We build the features our members ask for, and measure success by their satisfaction." },
+  { icon: Heart,       title: "Privacy respected",  desc: "Phone numbers and personal details stay private — all contact happens in-app." },
+  { icon: Target,      title: "Quality over quantity", desc: "A smaller, verified network beats a massive, fake one every time." },
+]
+
+const contactMethods = [
+  { icon: MessageSquare, title: "Email us",       desc: "General enquiries & partnerships", value: "collaboration@korpo.in" },
+  { icon: Bell,          title: "Support",        desc: "Account issues & technical help",  value: "support@korpo.in" },
+  { icon: Clock,         title: "Response time",  desc: "We typically respond within",      value: "24 business hours" },
+  { icon: MapPin,        title: "Based in",       desc: "Built and operated from",          value: "Chennai, India" },
+]
+
+const contactFaqs = [
+  { q: "How do I get my company added to Korpo?", a: "Request it from the sign-in page. We review company domain requests within 1–2 business days." },
+  { q: "Can I use a personal Gmail or Yahoo account?", a: "No — Korpo is exclusively for verified corporate emails. Free email providers are blocked by design." },
+  { q: "How do I report a listing or a user?", a: "Every listing has a Report button for signed-in users. Reports are reviewed within 24 hours." },
+]
+
 const testimonials = [
   { name: "Priya K.", role: "Software Engineer", text: "Found my flatmate in 2 days. Knowing they're a verified colleague made all the difference." },
   { name: "Rahul M.", role: "Analyst", text: "Got 3 referral requests within a week of posting. The quality is just better here." },
@@ -94,7 +123,15 @@ function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?:
   )
 }
 
-export default function LandingPage() {
+// Public marketing page — keep it statically served for anonymous visitors.
+// Re-fetch the verified-user count at most once an hour instead of on every
+// request (force-dynamic would hit Prisma on every anonymous page view).
+export const revalidate = 3600
+
+export default async function LandingPage() {
+  const verifiedUserCount = await prisma.user.count({ where: { isVerified: true } })
+  const verifiedEmployeesLabel = verifiedUserCount > 0 ? `${verifiedUserCount.toLocaleString("en-IN")}+` : "0"
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -109,8 +146,8 @@ export default function LandingPage() {
               { href: "#services", label: "Services" },
               { href: "#showcase", label: "What you can do" },
               { href: "#integrations", label: "Integrations" },
-              { href: "/about", label: "About" },
-              { href: "/contact", label: "Contact" },
+              { href: "#about", label: "About" },
+              { href: "#contact", label: "Contact" },
             ].map((l) => (
               <Link key={l.href} href={l.href} className="group relative px-3 py-2 text-muted-foreground hover:text-foreground transition-colors">
                 {l.label}
@@ -184,9 +221,8 @@ export default function LandingPage() {
             <Button asChild size="lg" className="h-12 rounded-xl px-7 shadow-sm hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
               <Link href="/auth/signin?mode=register">Signup</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-7 hover:-translate-y-0.5 transition-all">
+            <Button asChild size="lg" variant="outline" className="h-14 rounded-xl px-9 text-base bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:-translate-y-0.5 transition-all">
               <Link href="/auth/signin">
-                <Play className="h-4 w-4 fill-current" />
                 Login
               </Link>
             </Button>
@@ -223,7 +259,7 @@ export default function LandingPage() {
             </div>
             <div className="absolute bottom-8 right-8 hidden sm:flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-lg animate-blob-float-slow" style={{ animationDelay: "-6s" }}>
               <Users className="h-4 w-4 text-accent" />
-              <span className="text-xs font-semibold text-foreground">50,000+ members</span>
+              <span className="text-xs font-semibold text-foreground">{verifiedEmployeesLabel} members</span>
             </div>
           </div>
         </div>
@@ -236,7 +272,9 @@ export default function LandingPage() {
                 key={stat.label}
                 className={`px-8 py-8 text-center ${i === 1 ? "bg-primary text-primary-foreground" : "bg-card text-foreground border border-border"}`}
               >
-                <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">{stat.value}</p>
+                <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
+                  {stat.label === "Verified employees" ? verifiedEmployeesLabel : stat.value}
+                </p>
                 <p className="text-xs sm:text-sm mt-1.5 opacity-70">{stat.label}</p>
               </div>
             ))}
@@ -405,6 +443,45 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* About — condensed on-page version of the story, mirrors the /about page */}
+      <section id="about" className="relative py-24 sm:py-28 bg-background overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute top-0 left-1/3 h-[380px] w-[380px] rounded-full bg-primary/10 blur-[120px] animate-blob-float-slow" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <div className="flex justify-center"><Eyebrow>Our story</Eyebrow></div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">Built for people who show up with a badge every day</h2>
+            <p className="mt-3 text-muted-foreground text-lg max-w-2xl mx-auto">
+              Korpo started with a simple question: why trust a stranger online when you already trust the colleague sitting two floors above you?
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto mb-16">
+            {aboutStats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                  {stat.label === "Verified employees" ? verifiedEmployeesLabel : stat.value}
+                </p>
+                <p className="text-muted-foreground text-xs sm:text-sm mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {aboutValues.map((v) => (
+              <div key={v.title} className="rounded-2xl bg-card border border-border p-6">
+                <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <v.icon className="h-5 w-5 text-primary" />
+                </div>
+                <p className="font-semibold text-sm text-foreground mb-1.5">{v.title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{v.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Your busy life deserves this */}
       <section className="py-24 sm:py-28 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -538,6 +615,58 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Contact — condensed on-page version of the /contact page */}
+      <section id="contact" className="relative py-24 sm:py-28 bg-background overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute bottom-0 left-1/4 h-[360px] w-[360px] rounded-full bg-accent/10 blur-[120px] animate-blob-float" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <div className="flex justify-center"><Eyebrow>Get in touch</Eyebrow></div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">A question, a problem, or just want to say hi?</h2>
+            <p className="mt-3 text-muted-foreground text-lg max-w-xl mx-auto">We read every message and respond within one business day.</p>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto mb-14">
+            {contactMethods.map((m) => (
+              <div key={m.title} className="rounded-2xl bg-card border border-border p-5">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                  <m.icon className="h-5 w-5 text-primary" />
+                </div>
+                <p className="font-semibold text-foreground text-sm">{m.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">{m.desc}</p>
+                <p className="text-sm font-medium text-primary">{m.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-14 max-w-5xl mx-auto">
+            <div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Send us a message</h3>
+              <p className="text-muted-foreground text-sm mb-6">Fill in the form and we&apos;ll get back to you at the email you provide.</p>
+              <ContactForm />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Frequently asked questions</h3>
+              <p className="text-muted-foreground text-sm mb-6">Quick answers to the most common questions.</p>
+              <div className="space-y-3">
+                {contactFaqs.map((faq) => (
+                  <details key={faq.q} className="group border border-border rounded-2xl bg-card overflow-hidden">
+                    <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none font-medium text-foreground text-sm hover:bg-muted transition-colors">
+                      {faq.q}
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-3 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="px-5 pb-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA — dark banner */}
       <section className="py-16 sm:py-20 bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -602,8 +731,8 @@ export default function LandingPage() {
             <div>
               <p className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground/80">Company</p>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                <li><Link href="/about"   className="hover:text-foreground transition-colors">About Us</Link></li>
-                <li><Link href="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
+                <li><Link href="#about"   className="hover:text-foreground transition-colors">About Us</Link></li>
+                <li><Link href="#contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
                 <li><Link href="#"        className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
                 <li><Link href="#"        className="hover:text-foreground transition-colors">Terms of Service</Link></li>
                 <li><Link href="/auth/signin?callbackUrl=/admin" className="hover:text-foreground transition-colors opacity-50 hover:opacity-100 text-xs">Admin Login</Link></li>

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { LegalDocLink } from "@/components/legal/LegalModal"
 
 export function PrivacyContent() {
   return (
@@ -17,7 +18,7 @@ export function PrivacyContent() {
         (&quot;<strong>DPDP Act</strong>&quot;).
       </p>
       <p>
-        This Policy should be read together with our <Link href="/terms">Terms and Conditions</Link>. By
+        This Policy should be read together with our <LegalDocLink doc="terms">Terms and Conditions</LegalDocLink>. By
         accessing or using the Platform, you consent to the collection, use, storage, disclosure and processing
         of your information as described in this Policy. If you do not agree with this Policy, please do not
         use the Platform.
@@ -218,7 +219,7 @@ export function PrivacyContent() {
         If you have any questions, concerns, or requests regarding this Privacy Policy or your Personal Data,
         please contact us at: <a href="mailto:privacy@korpo.in">privacy@korpo.in</a> or{" "}
         <a href="mailto:hello@korpo.in">hello@korpo.in</a>, or via our{" "}
-        <Link href="/contact">Contact page</Link>. Korpo is built and operated from Chennai, Tamil Nadu, India.
+        <Link href="/#contact">Contact page</Link>. Korpo is built and operated from Chennai, Tamil Nadu, India.
       </p>
     </>
   )

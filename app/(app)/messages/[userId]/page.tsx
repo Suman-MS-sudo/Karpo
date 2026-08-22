@@ -168,7 +168,6 @@ export default function MessageThreadPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message…"
             className="flex-1"
-            autoFocus
           />
           <Button type="submit" disabled={!input.trim() || sending} size="icon">
             <Send className="h-4 w-4" />

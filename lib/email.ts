@@ -14,9 +14,10 @@ interface EmailPayload {
   to: string | string[]
   subject: string
   html: string
+  replyTo?: string
 }
 
-export async function sendEmail({ to, subject, html }: EmailPayload) {
+export async function sendEmail({ to, subject, html, replyTo }: EmailPayload) {
   const resend = getResend()
   if (!resend) {
     console.warn("RESEND_API_KEY not set — skipping email")
@@ -28,6 +29,7 @@ export async function sendEmail({ to, subject, html }: EmailPayload) {
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     })
     if (error) throw error
   } catch (err) {

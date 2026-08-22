@@ -430,7 +430,7 @@ export function TermsContent() {
         If you have any questions about these Terms, please contact us at:{" "}
         <a href="mailto:legal@korpo.in">legal@korpo.in</a> or{" "}
         <a href="mailto:hello@korpo.in">hello@korpo.in</a>, or via our{" "}
-        <Link href="/contact">Contact page</Link>. Korpo is built and operated from Chennai, Tamil Nadu, India.
+        <Link href="/#contact">Contact page</Link>. Korpo is built and operated from Chennai, Tamil Nadu, India.
       </p>
     </>
   )
