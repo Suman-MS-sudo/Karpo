@@ -106,7 +106,14 @@ export default function MessageThreadPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-4rem-5rem)] lg:h-[calc(100dvh-4rem)]">
+    // svh (small viewport height), not dvh — dvh actively resizes as the mobile
+    // keyboard opens, and while it's transitioning the chat container can end up
+    // taller than the visible viewport. Since this page sits inside AppShell's
+    // scrollable <main>, that triggers the browser's "scroll focused input into
+    // view" behavior on that ancestor, dragging the header and messages off
+    // screen above the keyboard. svh is fixed to the keyboard-open worst case,
+    // so the layout never needs that auto-scroll to happen.
+    <div className="flex flex-col h-[calc(100svh-4rem-5rem)] lg:h-[calc(100svh-4rem)]">
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
         <button
