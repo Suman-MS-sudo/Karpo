@@ -45,6 +45,7 @@ export default function MessageThreadPage() {
   const [canGoBack, setCanGoBack] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
+  const inputRef  = useRef<HTMLInputElement>(null)
 
   // Detect whether the browser has history to go back to
   useEffect(() => {
@@ -158,6 +159,12 @@ export default function MessageThreadPage() {
       setInput(content)
     } finally {
       setSending(false)
+      // The send button briefly becomes the focused element on tap (disabled
+      // the instant `input` clears, which drops focus to nothing) — on
+      // mobile that's exactly what dismisses the keyboard for a beat before
+      // it slides back up. Returning focus to the text input keeps the
+      // keyboard open and in place through a send instead of it dipping.
+      inputRef.current?.focus()
     }
   }
 
@@ -234,12 +241,23 @@ export default function MessageThreadPage() {
       >
         <form onSubmit={sendMessage} className="flex gap-2">
           <Input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message…"
             className="flex-1"
           />
-          <Button type="submit" disabled={!input.trim() || sending} size="icon">
+          {/* onMouseDown/onTouchStart preventDefault stops the button from
+              stealing focus away from the input on tap — without this, focus
+              moving to the (mobile) button, even for an instant, is what
+              triggers the keyboard to dismiss and slide back up on send. */}
+          <Button
+            type="submit"
+            disabled={!input.trim() || sending}
+            size="icon"
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>
