@@ -144,7 +144,11 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       })
       if (result?.error) {
         verifyingRef.current = false
-        setError("Invalid or expired code. Please try again.")
+        setError(
+          result.code === "account_disabled"
+            ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+            : "Invalid or expired code. Please try again."
+        )
         setOtp(["", "", "", "", "", ""])
         otpRefs.current[0]?.focus()
         return
@@ -245,7 +249,11 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       })
       if (result?.error) {
         waVerifyingRef.current = false
-        setError("Invalid or expired code. Please try again.")
+        setError(
+          result.code === "account_disabled"
+            ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+            : "Invalid or expired code. Please try again."
+        )
         setWaOtp(["", "", "", "", "", ""])
         waOtpRefs.current[0]?.focus()
         return
@@ -288,7 +296,11 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         password,
       })
       if (result?.error) {
-        setError("Incorrect email or password.")
+        setError(
+          result.code === "account_disabled"
+            ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+            : "Incorrect email or password."
+        )
         return
       }
       const sessionRes = await fetch("/api/auth/session")

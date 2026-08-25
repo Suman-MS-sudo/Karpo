@@ -1,4 +1,4 @@
-import NextAuth from "next-auth"
+import NextAuth, { CredentialsSignin } from "next-auth"
 import type { Provider } from "next-auth/providers"
 import Credentials from "next-auth/providers/credentials"
 import LinkedIn from "next-auth/providers/linkedin"
@@ -15,6 +15,14 @@ import { normalizePhone } from "@/lib/phone"
 const AUTO_OTP_ADMIN_EMAILS = [
   "testckb@korpo.com",
 ]
+
+// Thrown instead of returning null from authorize() when the account is
+// disabled, so the client can show "Your account has been disabled" instead
+// of the generic "incorrect email/password" or "invalid code" message —
+// signIn()'s result.code carries this string through to the client.
+class AccountDisabledError extends CredentialsSignin {
+  code = "account_disabled"
+}
 
 function isAdminEmail(email: string) {
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase())
@@ -55,7 +63,8 @@ const providers: Provider[] = [
           if (!token) return null
 
           const dbUser = await prisma.user.findUnique({ where: { phone } })
-          if (!dbUser || !dbUser.isVerified || dbUser.isDisabled) return null
+          if (!dbUser || !dbUser.isVerified) return null
+          if (dbUser.isDisabled) throw new AccountDisabledError()
 
           await prisma.verificationToken.deleteMany({ where: { identifier: `wa:${phone}` } })
 
@@ -81,7 +90,7 @@ const providers: Provider[] = [
           const dbUser = await prisma.user.findUnique({ where: { email } })
           if (!dbUser?.passwordHash) return null
           if (!(await verifyPassword(password, dbUser.passwordHash))) return null
-          if (dbUser.isDisabled) return null
+          if (dbUser.isDisabled) throw new AccountDisabledError()
 
           if (!isAdmin) {
             const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
@@ -109,7 +118,7 @@ const providers: Provider[] = [
         // Reject a disabled account outright — its OTP stays valid (send-otp
         // doesn't know about disable status) but sign-in must not proceed.
         const existingUser = await prisma.user.findUnique({ where: { email }, select: { isDisabled: true } })
-        if (existingUser?.isDisabled) return null
+        if (existingUser?.isDisabled) throw new AccountDisabledError()
 
         // Block login while an org ID card verification is outstanding, even if an
         // OTP was already issued before the request was filed (see send-otp route).
