@@ -14,20 +14,42 @@ const DEV_DOMAINS: Record<string, string> = {
 // verify the user immediately.
 export async function provisionUser(
   email: string,
-  opts: { isAdmin: boolean; name?: string | null; phone?: string | null; passwordHash?: string | null; workEmail?: string | null }
+  opts: {
+    isAdmin: boolean
+    name?: string | null
+    phone?: string | null
+    passwordHash?: string | null
+    workEmail?: string | null
+    // Callers that already know whether a User row exists for this email
+    // (e.g. the OTP credentials flow, which has to look this up itself
+    // beforehand anyway) can pass it through here to skip a redundant
+    // findUnique — every round trip to this remote (Turso) DB adds real,
+    // noticeable latency to sign-in/registration.
+    isExisting?: boolean
+  }
 ) {
   const domain = email.split("@")[1]
-  const company = await prisma.company.findFirst({ where: { domain, isApproved: true } })
-  const isExisting = !!(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
+
+  // These lookups are all independent of each other — run them together
+  // instead of one-after-another to cut this function's DB round trips.
+  const [company, isExisting, workEmailOwner, phoneOwner] = await Promise.all([
+    prisma.company.findFirst({ where: { domain, isApproved: true } }),
+    opts.isExisting !== undefined
+      ? Promise.resolve(opts.isExisting)
+      : prisma.user.findUnique({ where: { email }, select: { id: true } }).then(Boolean),
+    opts.workEmail
+      ? prisma.user.findUnique({ where: { workEmail: opts.workEmail }, select: { email: true } })
+      : Promise.resolve(null),
+    opts.phone
+      ? prisma.user.findUnique({ where: { phone: opts.phone }, select: { email: true } })
+      : Promise.resolve(null),
+  ])
 
   // A caller-supplied workEmail (e.g. LinkedIn's own verified corporate email)
   // is only trustworthy to attach if it isn't already claimed by someone else —
   // the unique constraint would otherwise throw and abort the whole sign-in.
   let workEmail = opts.workEmail ?? undefined
-  if (workEmail) {
-    const workEmailOwner = await prisma.user.findUnique({ where: { workEmail }, select: { email: true } })
-    if (workEmailOwner && workEmailOwner.email !== email) workEmail = undefined
-  }
+  if (workEmail && workEmailOwner && workEmailOwner.email !== email) workEmail = undefined
 
   // `User.phone` has its own unique constraint independent of the `email`
   // upsert key — if this phone is already linked to a *different* account,
@@ -35,10 +57,7 @@ export async function provisionUser(
   // error. Drop it instead so the email verification/registration can still
   // succeed; the caller keeps their existing phone link untouched.
   let phone = opts.phone ?? null
-  if (phone) {
-    const phoneOwner = await prisma.user.findUnique({ where: { phone }, select: { email: true } })
-    if (phoneOwner && phoneOwner.email !== email) phone = null
-  }
+  if (phone && phoneOwner && phoneOwner.email !== email) phone = null
 
   const dbUser = await prisma.user.upsert({
     where: { email },

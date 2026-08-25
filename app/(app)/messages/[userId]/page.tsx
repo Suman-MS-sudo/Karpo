@@ -56,20 +56,27 @@ export default function MessageThreadPage() {
   // div below) so it's completely independent of AppShell's scrollable
   // <main> — that's what stops the browser's "scroll the focused input into
   // view" behavior from dragging the header/messages off-screen when the
-  // keyboard opens. `viewportHeight` tracks window.visualViewport, which
-  // mobile browsers shrink to the visible area (excluding the keyboard) —
-  // driving the overlay's height off that keeps the input pinned directly
-  // above the keyboard instead of guessing with dvh/svh, which several
-  // mobile browsers don't actually resize when the keyboard appears.
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
+  // keyboard opens.
+  //
+  // `position: fixed` pins to the LAYOUT viewport, not the VISUAL one — on
+  // iOS Safari in particular, opening the keyboard can shift the layout
+  // viewport's scroll position without visualViewport.height changing by the
+  // same amount (most noticeable the *second* time the keyboard opens, once
+  // the page has already been scrolled once). Tracking only `height` left
+  // the container's top edge pinned to a layout position that no longer
+  // matched what was actually visible, so it (and the header/messages inside
+  // it) drifted upward off-screen again. Tracking `offsetTop` too and
+  // applying it as the container's `top` keeps it pinned to the visual
+  // viewport exactly, however it's shifted, every time.
+  const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null)
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
-    // Only drive height off visualViewport below the lg breakpoint — on
+    // Only drive position off visualViewport below the lg breakpoint — on
     // desktop the page is back to a normal in-flow panel (see the `lg:`
-    // classes below) and must NOT have an inline height fighting them.
+    // classes below) and must NOT have inline top/height fighting them.
     const mq = window.matchMedia("(min-width: 1024px)")
-    const update = () => setViewportHeight(mq.matches ? null : vv.height)
+    const update = () => setViewport(mq.matches ? null : { height: vv.height, top: vv.offsetTop })
     update()
     vv.addEventListener("resize", update)
     vv.addEventListener("scroll", update)
@@ -78,6 +85,25 @@ export default function MessageThreadPage() {
       vv.removeEventListener("resize", update)
       vv.removeEventListener("scroll", update)
       mq.removeEventListener("change", update)
+    }
+  }, [])
+
+  // Belt-and-braces: also stop the document itself from scrolling while this
+  // full-screen overlay is mounted. It shouldn't need to (the overlay is
+  // `fixed` and its own message list scrolls internally), but if anything
+  // ever does trigger a document scroll behind it (e.g. a focus-scroll that
+  // escapes the fixed container), a scrolled document is exactly what
+  // desyncs the layout viewport from the visual one on iOS and reproduces
+  // this bug — so just make that scroll impossible.
+  useEffect(() => {
+    const { style } = document.body
+    const prevOverflow = style.overflow
+    const prevPosition = style.position
+    style.overflow = "hidden"
+    style.position = "fixed"
+    return () => {
+      style.overflow = prevOverflow
+      style.position = prevPosition
     }
   }, [])
 
@@ -136,17 +162,17 @@ export default function MessageThreadPage() {
   }
 
   return (
-    // Mobile: a `fixed inset-0` overlay, height driven by visualViewport —
-    // deliberately taken OUT of AppShell's scrollable <main> and above the
-    // fixed MobileNav (z-[60]), so the browser's "scroll focused input into
-    // view" behavior has no scrollable ancestor to act on and can't drag the
-    // header/messages off-screen when the keyboard opens; the container just
-    // shrinks to the visible viewport instead.
+    // Mobile: a `fixed inset-0` overlay, position + height pinned to
+    // visualViewport (see the effect above) — deliberately taken OUT of
+    // AppShell's scrollable <main> and above the fixed MobileNav (z-[60]),
+    // so the browser's "scroll focused input into view" behavior has no
+    // scrollable ancestor to act on and can't drag the header/messages
+    // off-screen when the keyboard opens.
     // Desktop (lg): back to a normal in-flow panel inside <main>, no keyboard
     // to account for.
     <div
       className="fixed inset-0 z-[60] flex flex-col bg-background lg:static lg:z-auto lg:h-[calc(100svh-4rem)]"
-      style={viewportHeight != null ? { height: viewportHeight } : undefined}
+      style={viewport != null ? { top: viewport.top, height: viewport.height } : undefined}
     >
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0">

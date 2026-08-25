@@ -107,7 +107,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Joined</th>
                 <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hidden lg:table-cell">Activity</th>
-                <th className="text-right px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Actions</th>
+                <th className="text-right px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sticky right-0 bg-muted/40">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -168,7 +168,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
                   <td className="px-4 py-3.5 text-xs text-muted-foreground hidden lg:table-cell whitespace-nowrap">
                     {user._count.listings} listings · {user._count.jobReferrals} referrals
                   </td>
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-5 py-3.5 text-right sticky right-0 bg-card group-hover:bg-muted/20 border-l border-border transition-colors">
                     <UserActions
                       userId={user.id}
                       name={user.name}

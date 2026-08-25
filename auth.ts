@@ -105,23 +105,29 @@ const providers: Provider[] = [
           }
         }
 
-        // Validate OTP against VerificationToken
-        const token = await prisma.verificationToken.findFirst({
-          where: {
-            identifier: email,
-            token: otp,
-            expires: { gt: new Date() },
-          },
-        })
+        // Validate OTP against VerificationToken. Fetched alongside the
+        // existing-user row (independent lookups — both are keyed off inputs
+        // already in hand) instead of one-after-another; each Turso round
+        // trip on this remote DB adds real latency, and this flow used to
+        // pay for the same "does a User row exist for this email" lookup
+        // three separate times (here, again below, and again inside
+        // provisionUser), which is most of why registration/sign-in felt slow.
+        const [token, existingUser] = await Promise.all([
+          prisma.verificationToken.findFirst({
+            where: { identifier: email, token: otp, expires: { gt: new Date() } },
+          }),
+          prisma.user.findUnique({ where: { email }, select: { id: true, isDisabled: true, passwordHash: true } }),
+        ])
         if (!token) return null
 
         // Reject a disabled account outright — its OTP stays valid (send-otp
         // doesn't know about disable status) but sign-in must not proceed.
-        const existingUser = await prisma.user.findUnique({ where: { email }, select: { isDisabled: true } })
         if (existingUser?.isDisabled) throw new AccountDisabledError()
 
         // Block login while an org ID card verification is outstanding, even if an
         // OTP was already issued before the request was filed (see send-otp route).
+        // Deliberately sequential: the token must stay unconsumed if this blocks,
+        // so the same OTP still works once the request is approved.
         if (!isAdmin) {
           const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
           if (idRequest && idRequest.status !== "APPROVED") return null
@@ -136,14 +142,13 @@ const providers: Provider[] = [
         // without ever collecting these fields (no passwordHash yet). A
         // returning, already-registered user's phone/password aren't
         // overwritten by a plain re-login OTP that happens not to carry these.
-        const existingAccount = await prisma.user.findUnique({ where: { email }, select: { id: true, passwordHash: true } })
-        const needsRegistration = !existingAccount || !existingAccount.passwordHash
+        const needsRegistration = !existingUser || !existingUser.passwordHash
         const regProvision =
           needsRegistration && regName && regPhone && newPassword
             ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword) }
             : {}
 
-        const { dbUser } = await provisionUser(email, { isAdmin, ...regProvision })
+        const { dbUser } = await provisionUser(email, { isAdmin, isExisting: !!existingUser, ...regProvision })
 
         return {
           id: dbUser.id,

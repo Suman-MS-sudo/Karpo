@@ -41,14 +41,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  // ── Rate limit: max 3 OTPs per email in 10 minutes ─────────────────────────
-  // Tokens are stamped with a 5-minute expiry, so a token whose expiry falls within
-  // the last 10 minutes was created within the last ~15 minutes — comfortably covers
-  // the request window without needing a separate createdAt column.
+  // ── Rate limit, ID-verification, existing-user, and phone-owner lookups ────
+  // These four checks are all independent of each other (none needs another's
+  // result to run), so fire them together instead of one round trip after
+  // another — each is a network hop to the remote Turso DB, and running them
+  // serially was most of why this endpoint felt slow. They're still applied
+  // in the same priority order as before once all the results are in.
   const since = new Date(Date.now() - 10 * 60 * 1000)
-  const recentCount = await prisma.verificationToken.count({
-    where: { identifier: normalized, expires: { gt: since } },
-  })
+  const [recentCount, idRequest, existingUser, phoneOwner] = await Promise.all([
+    // Tokens are stamped with a 5-minute expiry, so a token whose expiry falls
+    // within the last 10 minutes was created within the last ~15 minutes —
+    // comfortably covers the request window without a separate createdAt column.
+    prisma.verificationToken.count({ where: { identifier: normalized, expires: { gt: since } } }),
+    isAdmin ? Promise.resolve(null) : prisma.idVerificationRequest.findUnique({ where: { corpEmail: normalized } }),
+    prisma.user.findUnique({ where: { email: normalized } }),
+    phone ? prisma.user.findUnique({ where: { phone }, select: { id: true } }) : Promise.resolve(null),
+  ])
+
+  // ── Rate limit: max 3 OTPs per email in 10 minutes ─────────────────────────
   if (recentCount >= 3) {
     return NextResponse.json(
       { error: "Too many requests. Please wait 10 minutes before requesting a new code." },
@@ -59,19 +69,13 @@ export async function POST(req: Request) {
   // ── Block OTP login while an org ID card verification is outstanding ───────
   // Once approved, the request's email now has a real User row (created by the
   // approve route) so this lookup no longer blocks it.
-  if (!isAdmin) {
-    const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: normalized } })
-    if (idRequest && idRequest.status !== "APPROVED") {
-      const message =
-        idRequest.status === "REJECTED"
-          ? "Your ID card verification was rejected. Please resubmit for review."
-          : "Your ID card verification is still pending admin approval."
-      return NextResponse.json({ error: message }, { status: 403 })
-    }
+  if (idRequest && idRequest.status !== "APPROVED") {
+    const message =
+      idRequest.status === "REJECTED"
+        ? "Your ID card verification was rejected. Please resubmit for review."
+        : "Your ID card verification is still pending admin approval."
+    return NextResponse.json({ error: message }, { status: 403 })
   }
-
-  // ── Check if new or existing user ─────────────────────────────────────────
-  const existingUser = await prisma.user.findUnique({ where: { email: normalized } })
 
   // `phone` is only present when this call comes from the registration form
   // (send-otp is also used bare, with just an email, for OTP resend) — so it
@@ -89,7 +93,6 @@ export async function POST(req: Request) {
         { status: 409 }
       )
     }
-    const phoneOwner = await prisma.user.findUnique({ where: { phone }, select: { id: true } })
     if (phoneOwner && phoneOwner.id !== existingUser?.id) {
       return NextResponse.json(
         { error: "This phone number is already registered. Please sign in instead." },
@@ -102,12 +105,14 @@ export async function POST(req: Request) {
   const otp = String(randomInt(100000, 999999))
   const expires = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes — single-use, consumed on first successful verify
 
-  // Delete any previous tokens for this email
-  await prisma.verificationToken.deleteMany({ where: { identifier: normalized } })
-
-  await prisma.verificationToken.create({
-    data: { identifier: normalized, token: otp, expires },
-  })
+  // Delete any previous tokens for this email, and insert the new one, together
+  // — they touch disjoint rows (the delete targets the old token(s) by
+  // identifier, the create inserts a brand-new row), so there's no ordering
+  // dependency between them.
+  await Promise.all([
+    prisma.verificationToken.deleteMany({ where: { identifier: normalized } }),
+    prisma.verificationToken.create({ data: { identifier: normalized, token: otp, expires } }),
+  ])
 
   // ── Send OTP email ─────────────────────────────────────────────────────────
   const { success, error } = await sendOTPEmail({
