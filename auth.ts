@@ -122,12 +122,15 @@ const providers: Provider[] = [
         await prisma.verificationToken.deleteMany({ where: { identifier: email } })
 
         // Registration form (Name/Phone/Password) collected upfront on the
-        // "register" step — only applied when creating a brand-new account;
-        // a returning user's existing phone/password aren't overwritten by a
-        // plain re-login OTP that happens not to carry these fields.
-        const isNewAccount = !(await prisma.user.findUnique({ where: { email }, select: { id: true } }))
+        // "register" step — only applied when creating a brand-new account,
+        // or completing a bare account that a plain OTP sign-in provisioned
+        // without ever collecting these fields (no passwordHash yet). A
+        // returning, already-registered user's phone/password aren't
+        // overwritten by a plain re-login OTP that happens not to carry these.
+        const existingAccount = await prisma.user.findUnique({ where: { email }, select: { id: true, passwordHash: true } })
+        const needsRegistration = !existingAccount || !existingAccount.passwordHash
         const regProvision =
-          isNewAccount && regName && regPhone && newPassword
+          needsRegistration && regName && regPhone && newPassword
             ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword) }
             : {}
 

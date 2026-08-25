@@ -77,14 +77,20 @@ export async function POST(req: Request) {
   // (send-otp is also used bare, with just an email, for OTP resend) — so it
   // doubles as a signal that this must be a brand-new account.
   if (phone) {
-    if (existingUser) {
+    // A row can exist without ever completing registration — e.g. a bare
+    // account provisioned by a plain sign-in OTP that never carried the
+    // name/phone/password fields. Only a passwordHash proves the account
+    // actually finished the registration (or ID-card) flow; anything short
+    // of that must still be able to (re)register instead of getting stuck
+    // behind "already registered" forever.
+    if (existingUser?.passwordHash) {
       return NextResponse.json(
         { error: "This email is already registered. Please sign in instead." },
         { status: 409 }
       )
     }
     const phoneOwner = await prisma.user.findUnique({ where: { phone }, select: { id: true } })
-    if (phoneOwner) {
+    if (phoneOwner && phoneOwner.id !== existingUser?.id) {
       return NextResponse.json(
         { error: "This phone number is already registered. Please sign in instead." },
         { status: 409 }

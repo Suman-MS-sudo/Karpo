@@ -51,6 +51,36 @@ export default function MessageThreadPage() {
     setCanGoBack(window.history.length > 1)
   }, [])
 
+  // ── Mobile keyboard handling ────────────────────────────────────────────
+  // On mobile this page renders as a `fixed inset-0` overlay (see the root
+  // div below) so it's completely independent of AppShell's scrollable
+  // <main> — that's what stops the browser's "scroll the focused input into
+  // view" behavior from dragging the header/messages off-screen when the
+  // keyboard opens. `viewportHeight` tracks window.visualViewport, which
+  // mobile browsers shrink to the visible area (excluding the keyboard) —
+  // driving the overlay's height off that keeps the input pinned directly
+  // above the keyboard instead of guessing with dvh/svh, which several
+  // mobile browsers don't actually resize when the keyboard appears.
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    // Only drive height off visualViewport below the lg breakpoint — on
+    // desktop the page is back to a normal in-flow panel (see the `lg:`
+    // classes below) and must NOT have an inline height fighting them.
+    const mq = window.matchMedia("(min-width: 1024px)")
+    const update = () => setViewportHeight(mq.matches ? null : vv.height)
+    update()
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    mq.addEventListener("change", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+      mq.removeEventListener("change", update)
+    }
+  }, [])
+
   useEffect(() => {
     fetch(`/api/profile/${partnerId}`).then((r) => r.json()).then((d) => setPartner(d))
 
@@ -106,16 +136,20 @@ export default function MessageThreadPage() {
   }
 
   return (
-    // svh (small viewport height), not dvh — dvh actively resizes as the mobile
-    // keyboard opens, and while it's transitioning the chat container can end up
-    // taller than the visible viewport. Since this page sits inside AppShell's
-    // scrollable <main>, that triggers the browser's "scroll focused input into
-    // view" behavior on that ancestor, dragging the header and messages off
-    // screen above the keyboard. svh is fixed to the keyboard-open worst case,
-    // so the layout never needs that auto-scroll to happen.
-    <div className="flex flex-col h-[calc(100svh-4rem-5rem)] lg:h-[calc(100svh-4rem)]">
+    // Mobile: a `fixed inset-0` overlay, height driven by visualViewport —
+    // deliberately taken OUT of AppShell's scrollable <main> and above the
+    // fixed MobileNav (z-[60]), so the browser's "scroll focused input into
+    // view" behavior has no scrollable ancestor to act on and can't drag the
+    // header/messages off-screen when the keyboard opens; the container just
+    // shrinks to the visible viewport instead.
+    // Desktop (lg): back to a normal in-flow panel inside <main>, no keyboard
+    // to account for.
+    <div
+      className="fixed inset-0 z-[60] flex flex-col bg-background lg:static lg:z-auto lg:h-[calc(100svh-4rem)]"
+      style={viewportHeight != null ? { height: viewportHeight } : undefined}
+    >
       {/* Header */}
-      <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3">
+      <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0">
         <button
           onClick={handleBack}
           className="text-muted-foreground hover:text-foreground transition-colors p-0.5 -ml-0.5 rounded-lg hover:bg-muted"
@@ -168,7 +202,10 @@ export default function MessageThreadPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-card border-t border-border p-4">
+      <div
+        className="bg-card border-t border-border p-4 shrink-0"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
         <form onSubmit={sendMessage} className="flex gap-2">
           <Input
             value={input}
