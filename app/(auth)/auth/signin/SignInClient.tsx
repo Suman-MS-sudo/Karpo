@@ -33,6 +33,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [regPassword, setRegPassword] = useState("")
   const [regPasswordConfirm, setRegPasswordConfirm] = useState("")
   const [registering, setRegistering] = useState(false)
+  const [regAgreed, setRegAgreed]     = useState(false)
 
   const trimmedRegEmail = email.trim().toLowerCase()
   const regEmailLooksComplete = trimmedRegEmail.includes("@") && trimmedRegEmail.split("@")[1]?.includes(".")
@@ -174,6 +175,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     setError("")
     if (regPassword.length < 8) { setError("Password must be at least 8 characters."); return }
     if (regPassword !== regPasswordConfirm) { setError("Passwords don't match."); return }
+    if (!regAgreed) { setError("Please agree to the Terms and Conditions and Privacy Policy to continue."); return }
     setLoading(true)
     try {
       const res  = await fetch("/api/auth/send-otp", {
@@ -197,7 +199,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setLoading(false)
     }
-  }, [email, regPhone, regPassword, regPasswordConfirm, handleVerifyOTP])
+  }, [email, regPhone, regPassword, regPasswordConfirm, regAgreed, handleVerifyOTP])
 
   // ── WhatsApp OTP login: step 1, send code ───────────────────────────────────
   const handleSendWhatsAppOTP = useCallback(async (e?: React.FormEvent) => {
@@ -317,6 +319,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [idEmployeeId, setIdEmployeeId]   = useState("")
   const [idPassword, setIdPassword]       = useState("")
   const [idPasswordConfirm, setIdPasswordConfirm] = useState("")
+  const [idAgreed, setIdAgreed] = useState(false)
   const [idFront, setIdFront] = useState<{ file: File; url: string } | null>(null)
   const [idBack, setIdBack]   = useState<{ file: File; url: string } | null>(null)
   const [idUploading, setIdUploading] = useState<"front" | "back" | null>(null)
@@ -347,6 +350,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     if (!idFront || !idBack) { setError("Please upload both sides of your ID card."); return }
     if (idPassword.length < 8) { setError("Password must be at least 8 characters."); return }
     if (idPassword !== idPasswordConfirm) { setError("Passwords don't match."); return }
+    if (!idAgreed) { setError("Please agree to the Terms and Conditions and Privacy Policy to continue."); return }
     setIdSubmitting(true)
     try {
       const res = await fetch("/api/id-verification", {
@@ -371,7 +375,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setIdSubmitting(false)
     }
-  }, [idFullName, idCorpEmail, idPhone, idDesignation, idEmployeeId, idFront, idBack, idPassword, idPasswordConfirm])
+  }, [idFullName, idCorpEmail, idPhone, idDesignation, idEmployeeId, idFront, idBack, idPassword, idPasswordConfirm, idAgreed])
 
   const urlError = params.get("error")
 
@@ -784,7 +788,26 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </label>
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={idSubmitting || idUploading !== null || !idFront || !idBack || !idPassword || !idPasswordConfirm}>
+          <label className="flex items-start gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={idAgreed}
+              onChange={(e) => setIdAgreed(e.target.checked)}
+              required
+            />
+            <span>
+              I agree to Korpo&apos;s{" "}
+              <LegalModal doc="terms">
+                <button type="button" className="underline hover:text-foreground">Terms and Conditions</button>
+              </LegalModal>{" "}and{" "}
+              <LegalModal doc="privacy">
+                <button type="button" className="underline hover:text-foreground">Privacy Policy</button>
+              </LegalModal>
+            </span>
+          </label>
+
+          <Button type="submit" className="w-full" size="lg" disabled={idSubmitting || idUploading !== null || !idFront || !idBack || !idPassword || !idPasswordConfirm || !idAgreed}>
             {idSubmitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Submitting…</> : "Submit for review →"}
           </Button>
 
@@ -860,8 +883,27 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </div>
           </div>
 
+          <label className="flex items-start gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={regAgreed}
+              onChange={(e) => setRegAgreed(e.target.checked)}
+              required
+            />
+            <span>
+              I agree to Korpo&apos;s{" "}
+              <LegalModal doc="terms">
+                <button type="button" className="underline hover:text-foreground">Terms and Conditions</button>
+              </LegalModal>{" "}and{" "}
+              <LegalModal doc="privacy">
+                <button type="button" className="underline hover:text-foreground">Privacy Policy</button>
+              </LegalModal>
+            </span>
+          </label>
+
           <Button type="submit" className="w-full" size="lg"
-            disabled={loading || !regName || !email.includes("@") || !!regEmailBlockedReason || !regPhone || !regPassword || !regPasswordConfirm || passwordMismatch}>
+            disabled={loading || !regName || !email.includes("@") || !!regEmailBlockedReason || !regPhone || !regPassword || !regPasswordConfirm || passwordMismatch || !regAgreed}>
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Verify email & create account →"}
           </Button>
 
