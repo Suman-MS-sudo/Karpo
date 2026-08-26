@@ -21,6 +21,7 @@ export async function POST(req: Request) {
   // real email needed) regardless of ADMIN_EMAIL/DEV_EMAILS env config.
   const AUTO_OTP_ADMIN_EMAILS = [
     "testckb@korpo.com",
+    "mssworlz@gmail.com",
   ]
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())
   const isAdmin = adminEmails.includes(normalized) || AUTO_OTP_ADMIN_EMAILS.includes(normalized)
@@ -115,14 +116,19 @@ export async function POST(req: Request) {
   ])
 
   // ── Send OTP email ─────────────────────────────────────────────────────────
-  const { success, error } = await sendOTPEmail({
-    to: normalized,
-    otp,
-    isNewUser: !existingUser,
-  })
+  // Auto-OTP admin/dev emails don't need a real email — the code is handed
+  // back in the response below, so skip the send (and don't fail login if
+  // the email provider is down/misconfigured).
+  if (!isDevEmail) {
+    const { success, error } = await sendOTPEmail({
+      to: normalized,
+      otp,
+      isNewUser: !existingUser,
+    })
 
-  if (!success) {
-    return NextResponse.json({ error: error ?? "Failed to send code" }, { status: 500 })
+    if (!success) {
+      return NextResponse.json({ error: error ?? "Failed to send code" }, { status: 500 })
+    }
   }
 
   return NextResponse.json({

@@ -14,6 +14,7 @@ import { normalizePhone } from "@/lib/phone"
 // with the AUTO_OTP_ADMIN_EMAILS list in app/api/auth/send-otp/route.ts.
 const AUTO_OTP_ADMIN_EMAILS = [
   "testckb@korpo.com",
+  "mssworlz@gmail.com",
 ]
 
 // Thrown instead of returning null from authorize() when the account is
