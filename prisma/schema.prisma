@@ -850,8 +850,8 @@ model SkillOrder {
   updatedAt    DateTime @updatedAt
 
   listing SkillListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  buyer   User         @relation("SkillBuyer",  fields: [buyerId],  references: [id])
-  seller  User         @relation("SkillSeller", fields: [sellerId], references: [id])
+  buyer   User         @relation("SkillBuyer",  fields: [buyerId],  references: [id], onDelete: Cascade)
+  seller  User         @relation("SkillSeller", fields: [sellerId], references: [id], onDelete: Cascade)
   review  SkillReview?
 
   @@index([listingId])
@@ -884,8 +884,8 @@ model SkillReview {
 
   listing  SkillListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   order    SkillOrder   @relation(fields: [orderId],   references: [id], onDelete: Cascade)
-  reviewer User         @relation("SkillReviewer",      fields: [reviewerId], references: [id])
-  seller   User         @relation("SkillSellerReviews", fields: [sellerId],   references: [id])
+  reviewer User         @relation("SkillReviewer",      fields: [reviewerId], references: [id], onDelete: Cascade)
+  seller   User         @relation("SkillSellerReviews", fields: [sellerId],   references: [id], onDelete: Cascade)
 
   @@index([listingId])
   @@index([sellerId])
