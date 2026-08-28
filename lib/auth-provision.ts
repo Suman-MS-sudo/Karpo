@@ -82,7 +82,16 @@ export async function provisionUser(
     },
   })
 
-  if (!isExisting) await assignUserCode(dbUser.id)
+  // Non-critical: the account itself is already created above. Losing the
+  // sequential userCode/referralCode assignment (e.g. retries exhausted
+  // under heavy concurrent signups) must never fail the sign-in itself.
+  if (!isExisting) {
+    try {
+      await assignUserCode(dbUser.id)
+    } catch (err) {
+      console.error("[provisionUser] assignUserCode failed", err)
+    }
+  }
 
   // Only file a review request for real, uncatalogued corporate domains —
   // personal/disposable domains (allowed in via LinkedIn) aren't companies.
