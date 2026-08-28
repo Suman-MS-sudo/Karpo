@@ -39,7 +39,7 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "@libsql/client", "@prisma/adapter-libsql"],
+    serverComponentsExternalPackages: ["@prisma/client", "@libsql/client", "@prisma/adapter-libsql", "firebase-admin"],
   },
 };
 
