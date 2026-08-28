@@ -15,6 +15,10 @@ import type { ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType } f
 
 type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp" | "forgot-password" | "reset-password" | "fb-phone" | "fb-phone-otp"
 
+// Temporarily disabled — matching FIREBASE_PHONE_AUTH_ENABLED in auth.ts.
+// Flip both back on once Firebase prod config is sorted.
+const FIREBASE_PHONE_AUTH_ENABLED = false
+
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
   const router      = useRouter()
@@ -828,20 +832,22 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
 
-          <button
-            type="button"
-            onClick={() => { setError(""); setStep("fb-phone") }}
-            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
-          >
-            <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-              <ShieldCheck className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground">Phone OTP</p>
-              <p className="text-xs text-muted-foreground">Code sent to your registered number via SMS</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          {FIREBASE_PHONE_AUTH_ENABLED && (
+            <button
+              type="button"
+              onClick={() => { setError(""); setStep("fb-phone") }}
+              className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+            >
+              <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                <ShieldCheck className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">Phone OTP</p>
+                <p className="text-xs text-muted-foreground">Code sent to your registered number via SMS</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          )}
 
           {/* Admin-only: reached via the footer's "Admin Login" link (callbackUrl=/admin) */}
           {callbackUrl.startsWith("/admin") && (

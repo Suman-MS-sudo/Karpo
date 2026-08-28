@@ -9,7 +9,13 @@ import { provisionUser } from "@/lib/auth-provision"
 import { getLinkedInVerificationReport } from "@/lib/linkedin-verification"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
-import { verifyFirebasePhoneToken } from "@/lib/firebase-admin"
+
+// Firebase phone-auth login is temporarily disabled (see FIREBASE_PHONE_AUTH_ENABLED
+// below) — importing firebase-admin lazily, only when actually needed, so a
+// bundling/env issue with it can never break every other login method by
+// crashing this whole module at load time. Flip the flag back on once Firebase
+// prod config is sorted.
+const FIREBASE_PHONE_AUTH_ENABLED = false
 
 // Always-admin accounts, independent of ADMIN_EMAIL env config — kept in sync
 // with the AUTO_OTP_ADMIN_EMAILS list in app/api/auth/send-otp/route.ts.
@@ -84,7 +90,8 @@ const providers: Provider[] = [
         // The phone number comes from the verified Firebase ID token itself
         // (not from client-supplied input) — Firebase already ran the SMS OTP
         // challenge, so a valid token is proof of phone ownership on its own.
-        if (!email && firebaseIdToken) {
+        if (!email && firebaseIdToken && FIREBASE_PHONE_AUTH_ENABLED) {
+          const { verifyFirebasePhoneToken } = await import("@/lib/firebase-admin")
           const phone = await verifyFirebasePhoneToken(firebaseIdToken)
           if (!phone) return null
 
