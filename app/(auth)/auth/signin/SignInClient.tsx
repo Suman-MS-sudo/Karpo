@@ -186,10 +186,16 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         // signed in already. account_disabled is a real, definitive error and
         // skips this check.
         if (result.code !== "account_disabled") {
-          const checkRes = await fetch("/api/auth/session")
-          const checkData = checkRes.ok ? await checkRes.json() : null
-          if (checkData?.user?.email?.toLowerCase() === email.trim().toLowerCase()) {
-            sessionData = checkData
+          // The winning duplicate call may not have finished setting its
+          // session cookie yet at the exact instant this one's error comes
+          // back — poll briefly rather than checking only once.
+          for (let attempt = 0; attempt < 4 && !sessionData; attempt++) {
+            if (attempt > 0) await new Promise((r) => setTimeout(r, 400))
+            const checkRes = await fetch("/api/auth/session")
+            const checkData = checkRes.ok ? await checkRes.json() : null
+            if (checkData?.user?.email?.toLowerCase() === email.trim().toLowerCase()) {
+              sessionData = checkData
+            }
           }
         }
         if (!sessionData) {
