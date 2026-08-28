@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET() {
   const { error } = await requireVerified()
@@ -27,6 +28,11 @@ export async function POST(req: Request) {
   if (error) return error
 
   const body = await req.json()
+
+  const violatingField = findContactInfoField({ landmarks: body.landmarks, notes: body.notes })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
 
   const isPremium = session.user.membershipPlan === "PREMIUM"
   const route = await prisma.carpoolRoute.create({

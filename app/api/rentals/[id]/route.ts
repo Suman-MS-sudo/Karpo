@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 type Ctx = { params: { id: string } }
 
@@ -39,6 +40,11 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const data: Record<string, unknown> = {}
   for (const key of allowed) {
     if (key in body) data[key] = body[key]
+  }
+
+  const violatingField = findContactInfoField({ title: data.title as string, description: data.description as string })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
   }
 
   const updated = await prisma.rentalPost.update({ where: { id: params.id }, data })

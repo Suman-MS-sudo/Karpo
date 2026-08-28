@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
@@ -37,6 +38,11 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { packageName, packageIdx, agreedPrice, requirements, buyerNote, paymentMode } = body
 
   if (!agreedPrice) return NextResponse.json({ error: "agreedPrice is required" }, { status: 400 })
+
+  const violatingField = findContactInfoField({ requirements, buyerNote })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
 
   const order = await prisma.skillOrder.create({
     data: {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const listing = await prisma.listing.findUnique({
@@ -18,6 +19,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const listing = await prisma.listing.findUnique({ where: { id: params.id } })
   if (!listing || listing.userId !== session.user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   const body = await req.json()
+
+  const violatingField = findContactInfoField({ title: body.title, description: body.description, brand: body.brand, warranty: body.warranty })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
+
   const updated = await prisma.listing.update({
     where: { id: params.id },
     data: {

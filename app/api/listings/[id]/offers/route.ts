@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
 import { pushNotification } from "@/lib/notify"
+import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
@@ -10,6 +11,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { amount, message } = await req.json()
   if (!amount || typeof amount !== "number" || amount < 1) {
     return NextResponse.json({ error: "Invalid offer amount" }, { status: 400 })
+  }
+  if (message && findContactInfo(message)) {
+    return NextResponse.json({ error: contactInfoError("message") }, { status: 400 })
   }
 
   const listing = await prisma.listing.findUnique({

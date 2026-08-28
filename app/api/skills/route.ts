@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(req: NextRequest) {
   const { error } = await requireVerified()
@@ -61,6 +62,11 @@ export async function POST(req: NextRequest) {
 
   if (!title || !category || !subcategory || !description || !format) {
     return NextResponse.json({ error: "title, category, subcategory, description, format are required" }, { status: 400 })
+  }
+
+  const violatingField = findContactInfoField({ title, tagline, description, requirements })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
   }
 
   const isPremium = session.user.membershipPlan === "PREMIUM"

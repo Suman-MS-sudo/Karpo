@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 import { emitNewMessage } from "@/lib/message-events"
+import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(_req: Request, { params }: { params: { userId: string } }) {
   const { session, error } = await requireVerified()
@@ -32,6 +33,9 @@ export async function POST(req: Request, { params }: { params: { userId: string 
   if (error) return error
 
   const body = await req.json()
+  if (findContactInfo(body.content)) {
+    return NextResponse.json({ error: contactInfoError("message") }, { status: 400 })
+  }
   const message = await prisma.message.create({
     data: {
       senderId:    session.user.id,

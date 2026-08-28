@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
@@ -60,6 +61,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
                    "yearsExp","certifications","portfolioUrl","linkedIn","status"]
   const data: any = {}
   for (const k of allowed) { if (k in body) data[k] = body[k] }
+
+  const violatingField = findContactInfoField({ title: data.title, tagline: data.tagline, description: data.description, requirements: data.requirements })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
 
   const updated = await prisma.skillListing.update({ where: { id: params.id }, data })
   return NextResponse.json(updated)

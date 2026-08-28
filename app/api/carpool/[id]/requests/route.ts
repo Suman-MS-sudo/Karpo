@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
   if (error) return error
 
   const { pickupPoint, pickupLat, pickupLng, dropoffPoint, dropoffLat, dropoffLng, seatsNeeded = 1, paymentMode, message } = await req.json()
+
+  const violatingField = findContactInfoField({ pickupPoint, dropoffPoint, message })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
 
   const route = await prisma.carpoolRoute.findUnique({
     where: { id: params.id },

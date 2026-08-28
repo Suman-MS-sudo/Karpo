@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(req: Request) {
   const { error } = await requireVerified()
@@ -88,6 +89,14 @@ export async function POST(req: Request) {
 
   const isPremium = session.user.membershipPlan === "PREMIUM"
   const body = await req.json()
+
+  const violatingField = findContactInfoField({
+    title: body.title, description: body.description,
+    societyName: body.societyName, landmark: body.landmark, fullAddress: body.fullAddress,
+  })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
 
   try {
     // Full create — works once db push has run

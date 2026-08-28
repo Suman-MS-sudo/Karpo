@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(req: Request) {
   const { error } = await requireVerified()
@@ -24,6 +25,12 @@ export async function POST(req: Request) {
   if (error) return error
 
   const body = await req.json()
+
+  const violatingField = findContactInfoField({ title: body.title, description: body.description, prerequisites: body.prerequisites })
+  if (violatingField) {
+    return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })
+  }
+
   const course = await prisma.course.create({
     data: {
       instructorId: session.user.id,

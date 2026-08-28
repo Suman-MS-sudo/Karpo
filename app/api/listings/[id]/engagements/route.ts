@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
 import { pushNotification } from "@/lib/notify"
+import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
 
 const TYPE_RANK: Record<string, number> = { INTEREST: 1, VISIT: 2 }
 
@@ -10,6 +11,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (error) return error
 
   const { type = "INTEREST", visitDate, visitTime, message } = await req.json()
+  if (message && findContactInfo(message)) {
+    return NextResponse.json({ error: contactInfoError("message") }, { status: 400 })
+  }
 
   const listing = await prisma.listing.findUnique({
     where: { id: params.id },

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 import { emitNotification } from "@/lib/notification-events"
+import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
 
 type Ctx = { params: { id: string } }
 
@@ -44,6 +45,10 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   const body = await req.json()
   const { type = "INQUIRY", message, moveInDate, visitDate, visitTime } = body as {
     type?: string; message?: string; moveInDate?: string; visitDate?: string; visitTime?: string
+  }
+
+  if (message && findContactInfo(message)) {
+    return NextResponse.json({ error: contactInfoError("message") }, { status: 400 })
   }
 
   const existing = await prisma.rentalInquiry.findUnique({

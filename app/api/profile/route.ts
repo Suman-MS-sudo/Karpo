@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET() {
   const session = await auth()
@@ -33,6 +34,10 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Username must be 3–30 characters: letters, numbers, underscores only." }, { status: 400 })
     }
     data["username"] = u || null
+  }
+
+  if (typeof data.bio === "string" && findContactInfo(data.bio)) {
+    return NextResponse.json({ error: contactInfoError("bio") }, { status: 400 })
   }
 
   if ("city" in body) {
