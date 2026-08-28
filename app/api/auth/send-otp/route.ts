@@ -106,11 +106,11 @@ export async function POST(req: Request) {
   const otp = String(randomInt(100000, 999999))
   const expires = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes — single-use, consumed on first successful verify
 
-  // Delete any previous tokens for this email, and insert the new one, together
-  // — they touch disjoint rows (the delete targets the old token(s) by
-  // identifier, the create inserts a brand-new row), so there's no ordering
-  // dependency between them.
-  await Promise.all([
+  // Delete any previous tokens for this email, then insert the new one — must
+  // run in this order (not Promise.all): deleteMany matches on identifier
+  // alone, not token, so if it raced the create instead of preceding it, it
+  // could wipe out the code that was just issued.
+  await prisma.$transaction([
     prisma.verificationToken.deleteMany({ where: { identifier: normalized } }),
     prisma.verificationToken.create({ data: { identifier: normalized, token: otp, expires } }),
   ])

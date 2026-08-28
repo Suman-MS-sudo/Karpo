@@ -31,7 +31,10 @@ export async function POST(req: Request) {
       const otp = String(randomInt(100000, 999999))
       const expires = new Date(Date.now() + 5 * 60 * 1000)
 
-      await Promise.all([
+      // Must run in this order — deleteMany matches on identifier alone (not
+      // token), so if it raced the create instead of preceding it, it could
+      // wipe out the code that was just issued.
+      await prisma.$transaction([
         prisma.verificationToken.deleteMany({ where: { identifier } }),
         prisma.verificationToken.create({ data: { identifier, token: otp, expires } }),
       ])
