@@ -740,7 +740,7 @@ export default async function LandingPage() {
             </div>
           </div>
           <div className="border-t border-border pt-8 text-center text-muted-foreground text-sm">
-            <p>© 2024 Korpo. All rights reserved. Made with ❤️ for India&apos;s corporate community.</p>
+            <p>© 2026 Arka India Technology Solutions LLP. All rights reserved. Made with ❤️ for India&apos;s corporate community.</p>
           </div>
         </div>
       </footer>

@@ -60,7 +60,7 @@ export function PublicFooter() {
         </div>
 
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-blue-300 text-sm">
-          <p>© 2025 Korpo. All rights reserved.</p>
+          <p>© 2026 Arka India Technology Solutions LLP. All rights reserved.</p>
           <p>Made with ❤️ for India&apos;s corporate community.</p>
         </div>
       </div>
