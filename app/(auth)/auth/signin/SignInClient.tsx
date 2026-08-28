@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { LegalModal } from "@/components/legal/LegalModal"
 import { isDomainBlocked } from "@/lib/domains"
+import { normalizePhone } from "@/lib/phone"
+import type { ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType } from "firebase/auth"
 
-type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp" | "forgot-password" | "reset-password"
+type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp" | "forgot-password" | "reset-password" | "fb-phone" | "fb-phone-otp"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
@@ -71,6 +73,21 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const verifyingRef = useRef(false)
+
+  // ── Firebase phone OTP login (returning users) ──────────────────────────────
+  const [fbPhone, setFbPhone]   = useState("")
+  const [fbOtp, setFbOtp]       = useState(["", "", "", "", "", ""])
+  const [fbResendIn, setFbResendIn] = useState(0)
+  const fbOtpRefs = useRef<(HTMLInputElement | null)[]>([])
+  const fbVerifyingRef = useRef(false)
+  const fbConfirmationRef = useRef<ConfirmationResult | null>(null)
+  const fbRecaptchaRef = useRef<RecaptchaVerifierType | null>(null)
+
+  useEffect(() => {
+    if (fbResendIn <= 0) return
+    const t = setTimeout(() => setFbResendIn((n) => n - 1), 1000)
+    return () => clearTimeout(t)
+  }, [fbResendIn])
 
   // Countdown timer for resend button
   useEffect(() => {
@@ -299,6 +316,91 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     if (e.key === "ArrowRight" && index < 5) waOtpRefs.current[index + 1]?.focus()
   }
 
+  // ── Firebase phone OTP login: step 1, send code via SMS ─────────────────────
+  const handleSendFirebaseOTP = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    setLoading(true)
+    try {
+      const { RecaptchaVerifier, signInWithPhoneNumber } = await import("firebase/auth")
+      const { firebaseAuth } = await import("@/lib/firebase-client")
+
+      if (!fbRecaptchaRef.current) {
+        fbRecaptchaRef.current = new RecaptchaVerifier(firebaseAuth, "fb-recaptcha-container", { size: "invisible" })
+      }
+
+      const phone = normalizePhone(fbPhone)
+      const confirmation = await signInWithPhoneNumber(firebaseAuth, phone, fbRecaptchaRef.current)
+      fbConfirmationRef.current = confirmation
+      setStep("fb-phone-otp")
+      setFbResendIn(60)
+      setTimeout(() => fbOtpRefs.current[0]?.focus(), 50)
+    } catch (err) {
+      console.error("[firebase send otp]", err)
+      setError("Failed to send code. Please check the phone number and try again.")
+      fbRecaptchaRef.current?.clear()
+      fbRecaptchaRef.current = null
+    } finally {
+      setLoading(false)
+    }
+  }, [fbPhone])
+
+  // ── Firebase phone OTP login: step 2, verify code & sign in ─────────────────
+  const handleVerifyFirebaseOTP = useCallback(async (code?: string) => {
+    const finalCode = code ?? fbOtp.join("")
+    if (finalCode.length !== 6) return
+    if (fbVerifyingRef.current) return
+    fbVerifyingRef.current = true
+    setError("")
+    setLoading(true)
+    try {
+      if (!fbConfirmationRef.current) { setError("Session expired. Please request a new code."); return }
+      const credential = await fbConfirmationRef.current.confirm(finalCode)
+      const idToken = await credential.user.getIdToken()
+
+      const result = await signIn("credentials", { redirect: false, firebaseIdToken: idToken })
+      if (result?.error) {
+        setError(
+          result.code === "account_disabled"
+            ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+            : "This phone number isn't linked to a Korpo account yet."
+        )
+        setFbOtp(["", "", "", "", "", ""])
+        fbOtpRefs.current[0]?.focus()
+        return
+      }
+      const sessionRes = await fetch("/api/auth/session")
+      const sessionData = sessionRes.ok ? await sessionRes.json() : null
+      const isAdmin = sessionData?.user?.role === "ADMIN"
+      router.push(isAdmin ? (callbackUrl.startsWith("/admin") ? callbackUrl : "/admin") : callbackUrl)
+    } catch (err) {
+      console.error("[firebase verify otp]", err)
+      setError("Invalid or expired code. Please try again.")
+      setFbOtp(["", "", "", "", "", ""])
+      fbOtpRefs.current[0]?.focus()
+    } finally {
+      fbVerifyingRef.current = false
+      setLoading(false)
+    }
+  }, [fbOtp, callbackUrl, router])
+
+  const handleFbOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1)
+    const next  = [...fbOtp]
+    next[index] = digit
+    setFbOtp(next)
+    if (digit && index < 5) fbOtpRefs.current[index + 1]?.focus()
+    if (digit && index === 5 && next.every(Boolean)) {
+      handleVerifyFirebaseOTP(next.join(""))
+    }
+  }
+
+  const handleFbOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !fbOtp[index] && index > 0) fbOtpRefs.current[index - 1]?.focus()
+    if (e.key === "ArrowLeft" && index > 0) fbOtpRefs.current[index - 1]?.focus()
+    if (e.key === "ArrowRight" && index < 5) fbOtpRefs.current[index + 1]?.focus()
+  }
+
   // ── Password sign-in (alternative to OTP, set up post-verification) ────────
   const handlePasswordSignIn = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -518,6 +620,22 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
+        {step === "fb-phone" && (
+          <>
+            <h1 className="text-2xl font-bold">Sign in with Phone OTP</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              Enter the phone number you registered with
+            </p>
+          </>
+        )}
+        {step === "fb-phone-otp" && (
+          <>
+            <h1 className="text-2xl font-bold">Enter your code</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              We sent a 6-digit code via SMS to <span className="font-medium text-foreground">{fbPhone}</span>
+            </p>
+          </>
+        )}
         {step === "forgot-password" && (
           <>
             <h1 className="text-2xl font-bold">Reset your password</h1>
@@ -696,6 +814,21 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-foreground">Password</p>
               <p className="text-xs text-muted-foreground">Sign in with your saved password</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setError(""); setStep("fb-phone") }}
+            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+          >
+            <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5 text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">Phone OTP</p>
+              <p className="text-xs text-muted-foreground">Code sent to your registered number via SMS</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
           </button>
@@ -1312,6 +1445,95 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           )}
         </div>
       )}
+
+      {/* ── Step: Firebase phone OTP sign-in — phone entry ───────────────────── */}
+      {step === "fb-phone" && (
+        <form onSubmit={handleSendFirebaseOTP} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="fb-phone-input">Phone number</Label>
+            <Input id="fb-phone-input" type="tel" placeholder="+91 98765 43210"
+              value={fbPhone} onChange={(e) => setFbPhone(e.target.value)} required autoFocus />
+          </div>
+
+          <Button type="submit" className="w-full" size="lg" disabled={loading || !fbPhone}>
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send code →"}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => { setStep("signin"); setError("") }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+          </button>
+        </form>
+      )}
+
+      {/* ── Step: Firebase phone OTP sign-in — code entry ────────────────────── */}
+      {step === "fb-phone-otp" && (
+        <div className="space-y-5">
+          <div>
+            <Label className="block text-center mb-3">Enter the 6-digit code</Label>
+            <div className="flex gap-2 justify-center">
+              {fbOtp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => { fbOtpRefs.current[i] = el }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  aria-label={`Digit ${i + 1} of 6`}
+                  value={digit}
+                  onChange={(e) => handleFbOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleFbOtpKeyDown(i, e)}
+                  disabled={loading}
+                  className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-xl
+                    focus:border-primary-600 focus:ring-2 focus:ring-primary-200 focus:outline-none
+                    bg-background transition-all
+                    ${digit ? "border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300" : "border-border"}
+                    ${loading ? "opacity-50 cursor-not-allowed" : ""}
+                  `}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={loading || fbOtp.join("").length !== 6}
+            onClick={() => handleVerifyFirebaseOTP()}
+          >
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying…</> : "Verify & Sign in →"}
+          </Button>
+
+          <div className="flex items-center justify-between text-sm pt-1">
+            <button
+              type="button"
+              onClick={() => { setStep("fb-phone"); setFbOtp(["","","","","",""]); setError("") }}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Change number
+            </button>
+            {fbResendIn > 0 ? (
+              <span className="text-muted-foreground">Resend in {fbResendIn}s</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSendFirebaseOTP()}
+                disabled={loading}
+                className="flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Resend code
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Invisible reCAPTCHA host for Firebase phone auth — must stay mounted
+          for the lifetime of the widget, so it lives outside the conditional steps. */}
+      <div id="fb-recaptcha-container" />
 
       {/* Trust badge */}
       <div className="mt-6 flex items-start gap-3 bg-surface rounded-xl p-4 border border-border">

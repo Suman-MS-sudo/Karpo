@@ -9,6 +9,7 @@ import { provisionUser } from "@/lib/auth-provision"
 import { getLinkedInVerificationReport } from "@/lib/linkedin-verification"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
+import { verifyFirebasePhoneToken } from "@/lib/firebase-admin"
 
 // Always-admin accounts, independent of ADMIN_EMAIL env config — kept in sync
 // with the AUTO_OTP_ADMIN_EMAILS list in app/api/auth/send-otp/route.ts.
@@ -45,15 +46,17 @@ const providers: Provider[] = [
         phone: { type: "tel" },
         newPassword: { type: "password" },
         whatsappOtp: { type: "text" },
+        firebaseIdToken: { type: "text" },
       },
       async authorize(credentials) {
-        const email       = (credentials?.email as string | undefined)?.trim().toLowerCase()
-        const otp         = credentials?.otp as string | undefined
-        const password    = credentials?.password as string | undefined
-        const regName     = credentials?.name as string | undefined
-        const regPhone    = credentials?.phone as string | undefined
-        const newPassword = credentials?.newPassword as string | undefined
-        const whatsappOtp = credentials?.whatsappOtp as string | undefined
+        const email           = (credentials?.email as string | undefined)?.trim().toLowerCase()
+        const otp             = credentials?.otp as string | undefined
+        const password        = credentials?.password as string | undefined
+        const regName         = credentials?.name as string | undefined
+        const regPhone        = credentials?.phone as string | undefined
+        const newPassword     = credentials?.newPassword as string | undefined
+        const whatsappOtp     = credentials?.whatsappOtp as string | undefined
+        const firebaseIdToken = credentials?.firebaseIdToken as string | undefined
 
         // ── WhatsApp OTP login (returning users, phone-based, no email) ────────
         if (!email && regPhone && whatsappOtp) {
@@ -68,6 +71,26 @@ const providers: Provider[] = [
           if (dbUser.isDisabled) throw new AccountDisabledError()
 
           await prisma.verificationToken.deleteMany({ where: { identifier: `wa:${phone}` } })
+
+          return {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            image: dbUser.image ?? dbUser.avatarUrl,
+          }
+        }
+
+        // ── Firebase phone OTP login (returning users, phone-based, no email) ──
+        // The phone number comes from the verified Firebase ID token itself
+        // (not from client-supplied input) — Firebase already ran the SMS OTP
+        // challenge, so a valid token is proof of phone ownership on its own.
+        if (!email && firebaseIdToken) {
+          const phone = await verifyFirebasePhoneToken(firebaseIdToken)
+          if (!phone) return null
+
+          const dbUser = await prisma.user.findUnique({ where: { phone } })
+          if (!dbUser || !dbUser.isVerified) return null
+          if (dbUser.isDisabled) throw new AccountDisabledError()
 
           return {
             id: dbUser.id,
