@@ -32,6 +32,17 @@ class AccountDisabledError extends CredentialsSignin {
   code = "account_disabled"
 }
 
+// Short in-process cache for the session callback's city/name freshness
+// check (see below) — a single page load typically fires several requests
+// (layout, page, multiple API calls) that all land on the same warm
+// serverless instance in quick succession. Without this, each one paid its
+// own remote Turso round trip for the exact same data; a few seconds of
+// staleness here is a non-issue (nothing else depends on sub-second
+// propagation) but resets fast enough that a real change still shows up
+// almost immediately.
+const SESSION_FRESHNESS_TTL_MS = 5000
+const sessionFreshnessCache = new Map<string, { city: string | null; name: string | null; expiresAt: number }>()
+
 function isAdminEmail(email: string) {
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map((e) => e.trim().toLowerCase())
   return adminEmails.includes(email) || AUTO_OTP_ADMIN_EMAILS.includes(email)
@@ -359,18 +370,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // fires. That left onboarding's saved name stuck behind a stale JWT
         // until the next full login (dashboard greeting falling back to
         // "there" even though the DB had the right name). So rather than
-        // depend on that, always read both fresh from the DB here — a single
-        // indexed lookup, cheap enough to run on every request — so neither
+        // depend on that, always read both fresh from the DB here — so neither
         // can go stale regardless of whether the JWT refresh path actually ran.
+        // Cached for a few seconds (see SESSION_FRESHNESS_TTL_MS above) so the
+        // handful of requests one page load fires don't each pay their own
+        // remote DB round trip for identical data.
         if (session.user.id) {
           try {
-            const fresh = await prisma.user.findUnique({
-              where:  { id: session.user.id },
-              select: { city: true, name: true },
-            })
+            const cached = sessionFreshnessCache.get(session.user.id)
+            const fresh = cached && cached.expiresAt > Date.now()
+              ? { city: cached.city, name: cached.name }
+              : await prisma.user.findUnique({
+                  where:  { id: session.user.id },
+                  select: { city: true, name: true },
+                })
             if (fresh) {
               session.user.city = fresh.city ?? undefined
               session.user.name = fresh.name ?? session.user.name
+              if (!cached || cached.expiresAt <= Date.now()) {
+                sessionFreshnessCache.set(session.user.id, {
+                  city: fresh.city ?? null,
+                  name: fresh.name ?? null,
+                  expiresAt: Date.now() + SESSION_FRESHNESS_TTL_MS,
+                })
+              }
             }
           } catch {
             // DB hiccup — fall back to whatever the token already had.
@@ -386,3 +409,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error:  "/auth/signin",
   },
 })
+
+// Call after directly updating a user's city or name (profile settings, city
+// switcher, admin edit) so the session callback's short-lived cache doesn't
+// serve stale data for the remainder of its TTL.
+export function invalidateSessionFreshnessCache(userId: string) {
+  sessionFreshnessCache.delete(userId)
+}

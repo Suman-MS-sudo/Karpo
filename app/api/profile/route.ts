@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { auth } from "@/auth"
+import { auth, invalidateSessionFreshnessCache } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
 
@@ -53,6 +53,7 @@ export async function PATCH(req: Request) {
     if ("city" in body) {
       console.log("[api/profile PATCH] city update committed", { userId: user.id, city: user.city })
     }
+    if ("city" in data || "name" in data) invalidateSessionFreshnessCache(session.user.id)
     return NextResponse.json(user)
   } catch (e: any) {
     if (e?.code === "P2002") {

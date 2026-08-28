@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { auth } from "@/auth"
+import { auth, invalidateSessionFreshnessCache } from "@/auth"
 
 async function requireAdmin() {
   const session = await auth()
@@ -33,6 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   try {
     const user = await prisma.user.update({ where: { id: params.id }, data })
+    if ("city" in data || "name" in data) invalidateSessionFreshnessCache(params.id)
     return NextResponse.json(user)
   } catch (e: any) {
     if (e?.code === "P2002") {
