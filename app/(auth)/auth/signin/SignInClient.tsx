@@ -178,23 +178,40 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         otp: finalCode,
         ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword } : {}),
       })
+      let sessionData: any = null
       if (result?.error) {
-        verifyingRef.current = false
-        setError(
-          result.code === "account_disabled"
-            ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
-            : "Invalid or expired code. Please try again."
-        )
-        setOtp(["", "", "", "", "", ""])
-        otpRefs.current[0]?.focus()
-        return
+        // A duplicate/late call can lose the race against an earlier one that
+        // already succeeded with this same code (see comment above) — before
+        // showing a false "invalid code" error, check whether we're actually
+        // signed in already. account_disabled is a real, definitive error and
+        // skips this check.
+        if (result.code !== "account_disabled") {
+          const checkRes = await fetch("/api/auth/session")
+          const checkData = checkRes.ok ? await checkRes.json() : null
+          if (checkData?.user?.email?.toLowerCase() === email.trim().toLowerCase()) {
+            sessionData = checkData
+          }
+        }
+        if (!sessionData) {
+          verifyingRef.current = false
+          setError(
+            result.code === "account_disabled"
+              ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+              : "Invalid or expired code. Please try again."
+          )
+          setOtp(["", "", "", "", "", ""])
+          otpRefs.current[0]?.focus()
+          return
+        }
       }
       // Check session role to handle admin bypass onboarding — the
       // verifyingRef lock deliberately stays set past success so a
       // trailing duplicate call (see comment above) is dropped instead
       // of clobbering the just-succeeded sign-in with a stale error.
-      const sessionRes = await fetch("/api/auth/session")
-      const sessionData = sessionRes.ok ? await sessionRes.json() : null
+      if (!sessionData) {
+        const sessionRes = await fetch("/api/auth/session")
+        sessionData = sessionRes.ok ? await sessionRes.json() : null
+      }
       const isAdmin = sessionData?.user?.role === "ADMIN"
 
       if (isAdmin) {
