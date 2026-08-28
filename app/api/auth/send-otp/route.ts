@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
   // ── Dev/test emails — get auto-OTP returned in response ──────────────────
   const devEmails = (process.env.DEV_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)
-  const isDevEmail = isAdmin || devEmails.includes(normalized)
+  const isDevEmail = AUTO_OTP_ADMIN_EMAILS.includes(normalized) || devEmails.includes(normalized)
 
   // ── Domain validation ──────────────────────────────────────────────────────
   const { blocked, reason } = isAdmin ? { blocked: false, reason: undefined } : isDomainBlocked(normalized)

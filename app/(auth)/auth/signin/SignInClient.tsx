@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { LegalModal } from "@/components/legal/LegalModal"
 import { isDomainBlocked } from "@/lib/domains"
 
-type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp"
+type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idcard-submitted" | "register" | "phone" | "phone-otp" | "email-otp" | "forgot-password" | "reset-password"
 
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
@@ -26,6 +26,21 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [error, setError]     = useState("")
   const [resendIn, setResendIn] = useState(0)
   const [password, setPassword] = useState("")
+  const [notice, setNotice]     = useState("")
+
+  // ── Forgot password ─────────────────────────────────────────────────────────
+  const [resetOtp, setResetOtp]         = useState(["", "", "", "", "", ""])
+  const [resetNewPassword, setResetNewPassword]               = useState("")
+  const [resetNewPasswordConfirm, setResetNewPasswordConfirm] = useState("")
+  const [resetResendIn, setResetResendIn] = useState(0)
+  const resetOtpRefs = useRef<(HTMLInputElement | null)[]>([])
+  const resetPasswordMismatch = resetNewPassword.length > 0 && resetNewPasswordConfirm.length > 0 && resetNewPassword !== resetNewPasswordConfirm
+
+  useEffect(() => {
+    if (resetResendIn <= 0) return
+    const t = setTimeout(() => setResetResendIn((n) => n - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resetResendIn])
 
   // ── Registration (Name/Corp email/Phone/Password, upfront) ─────────────────
   const [regName, setRegName]         = useState("")
@@ -317,6 +332,78 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     }
   }, [email, password, callbackUrl, router])
 
+  // ── Forgot password: step 1, send reset code ────────────────────────────────
+  const handleSendResetCode = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    setNotice("")
+    setLoading(true)
+    try {
+      const res  = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Failed to send code"); return }
+      setStep("reset-password")
+      setResetResendIn(60)
+      setTimeout(() => resetOtpRefs.current[0]?.focus(), 50)
+    } finally {
+      setLoading(false)
+    }
+  }, [email])
+
+  // ── Forgot password: step 2, verify code & set new password ─────────────────
+  const handleResetPassword = useCallback(async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    setError("")
+    const code = resetOtp.join("")
+    if (code.length !== 6) { setError("Enter the 6-digit code."); return }
+    if (resetNewPassword.length < 8) { setError("Password must be at least 8 characters."); return }
+    if (resetNewPassword !== resetNewPasswordConfirm) { setError("Passwords don't match."); return }
+    setLoading(true)
+    try {
+      const res  = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), code, newPassword: resetNewPassword }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? "Failed to reset password"); return }
+      setResetOtp(["", "", "", "", "", ""])
+      setResetNewPassword("")
+      setResetNewPasswordConfirm("")
+      setPassword("")
+      setNotice("Password reset. Sign in with your new password.")
+      setStep("password")
+    } finally {
+      setLoading(false)
+    }
+  }, [email, resetOtp, resetNewPassword, resetNewPasswordConfirm])
+
+  const handleResetOtpChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1)
+    const next  = [...resetOtp]
+    next[index] = digit
+    setResetOtp(next)
+    if (digit && index < 5) resetOtpRefs.current[index + 1]?.focus()
+  }
+
+  const handleResetOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !resetOtp[index] && index > 0) resetOtpRefs.current[index - 1]?.focus()
+    if (e.key === "ArrowLeft" && index > 0) resetOtpRefs.current[index - 1]?.focus()
+    if (e.key === "ArrowRight" && index < 5) resetOtpRefs.current[index + 1]?.focus()
+  }
+
+  const handleResetOtpPaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)
+    if (pasted.length !== 6) return
+    e.preventDefault()
+    setResetOtp(pasted.split(""))
+    resetOtpRefs.current[5]?.focus()
+  }
+
   const [linkedinLoading, setLinkedinLoading] = useState(false)
   const handleLinkedInSignIn = useCallback(() => {
     setLinkedinLoading(true)
@@ -431,6 +518,22 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
+        {step === "forgot-password" && (
+          <>
+            <h1 className="text-2xl font-bold">Reset your password</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              We'll send a 6-digit code to your email
+            </p>
+          </>
+        )}
+        {step === "reset-password" && (
+          <>
+            <h1 className="text-2xl font-bold">Enter your code</h1>
+            <p className="text-muted-foreground mt-1.5 text-sm">
+              We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
+            </p>
+          </>
+        )}
         {step === "email-otp" && (
           <>
             <h1 className="text-2xl font-bold">Sign in with Corp email</h1>
@@ -480,6 +583,13 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           </>
         )}
       </div>
+
+      {/* Success banner */}
+      {notice && !error && !urlError && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-xl px-4 py-3 mb-5 text-sm">
+          {notice}
+        </div>
+      )}
 
       {/* Error banner */}
       {(error || urlError) && (
@@ -675,13 +785,129 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Signing in…</> : "Sign in →"}
           </Button>
 
+          <div className="flex items-center justify-between text-sm">
+            <button
+              type="button"
+              onClick={() => { setStep("signin"); setPassword(""); setError(""); setNotice("") }}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+            <button
+              type="button"
+              onClick={() => { setError(""); setNotice(""); setPassword(""); setStep("forgot-password") }}
+              className="text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              Forgot password?
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ── Forgot password: request reset code ──────────────────────────────── */}
+      {step === "forgot-password" && (
+        <form onSubmit={handleSendResetCode} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="fp-email">Corporate email</Label>
+            <Input
+              id="fp-email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@yourcompany.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
+          </div>
+
+          <Button type="submit" className="w-full" size="lg" disabled={loading || !email.includes("@")}>
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Send reset code →"}
+          </Button>
+
           <button
             type="button"
-            onClick={() => { setStep("signin"); setPassword(""); setError("") }}
+            onClick={() => { setStep("password"); setError(""); setNotice("") }}
             className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
+        </form>
+      )}
+
+      {/* ── Forgot password: enter code + new password ───────────────────────── */}
+      {step === "reset-password" && (
+        <form onSubmit={handleResetPassword} className="space-y-5">
+          <div>
+            <Label className="block text-center mb-3">Enter the 6-digit code</Label>
+            <div className="flex gap-2 justify-center" onPaste={handleResetOtpPaste}>
+              {resetOtp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => { resetOtpRefs.current[i] = el }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  aria-label={`Digit ${i + 1} of 6`}
+                  value={digit}
+                  onChange={(e) => handleResetOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleResetOtpKeyDown(i, e)}
+                  disabled={loading}
+                  className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-xl
+                    focus:border-primary-600 focus:ring-2 focus:ring-primary-200 focus:outline-none
+                    bg-background transition-all
+                    ${digit ? "border-primary-400 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300" : "border-border"}
+                    ${loading ? "opacity-50 cursor-not-allowed" : ""}
+                  `}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="reset-new-password">New password</Label>
+            <Input id="reset-new-password" type="password" autoComplete="new-password"
+              value={resetNewPassword} onChange={(e) => setResetNewPassword(e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="reset-new-password-confirm">Confirm new password</Label>
+            <Input id="reset-new-password-confirm" type="password" autoComplete="new-password"
+              value={resetNewPasswordConfirm} onChange={(e) => setResetNewPasswordConfirm(e.target.value)} required />
+            {resetPasswordMismatch && (
+              <p className="text-xs text-red-600 dark:text-red-400">Passwords do not match</p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={loading || resetOtp.join("").length !== 6 || resetNewPassword.length < 8 || resetPasswordMismatch}
+          >
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Resetting…</> : "Reset password →"}
+          </Button>
+
+          <div className="flex items-center justify-between text-sm pt-1">
+            <button
+              type="button"
+              onClick={() => { setStep("forgot-password"); setResetOtp(["","","","","",""]); setError("") }}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Change email
+            </button>
+            {resetResendIn > 0 ? (
+              <span className="text-muted-foreground">Resend in {resetResendIn}s</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSendResetCode()}
+                disabled={loading}
+                className="flex items-center gap-1 text-primary-600 hover:text-primary-700 font-medium transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Resend code
+              </button>
+            )}
+          </div>
         </form>
       )}
 

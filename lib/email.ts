@@ -105,6 +105,66 @@ export async function sendOTPEmail({ to, otp, isNewUser }: OTPEmailOptions): Pro
   }
 }
 
+// ── Password reset code ──────────────────────────────────────────────────────
+
+interface PasswordResetEmailOptions {
+  to: string
+  otp: string
+}
+
+export async function sendPasswordResetEmail({ to, otp }: PasswordResetEmailOptions): Promise<{ success: boolean; error?: string }> {
+  const subject = "Reset your Korpo password"
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fff;margin:0;padding:32px 16px">
+  <div style="max-width:480px;margin:0 auto">
+    <h2 style="margin:0 0 24px;font-size:20px;font-weight:700;color:#111827">Korpo</h2>
+    <p style="margin:0 0 24px;color:#111827;font-size:16px;line-height:1.5">
+      Use this code to reset your Korpo password.
+    </p>
+    <p style="margin:0 0 24px;font-size:32px;font-weight:700;letter-spacing:.2em;color:#111827">${otp}</p>
+    <p style="margin:0 0 24px;color:#6b7280;font-size:14px;line-height:1.5">
+      This code expires in 5 minutes. If you didn't request a password reset, you can ignore this email — your password won't change.
+    </p>
+    <p style="margin:0;color:#9ca3af;font-size:13px">Korpo — corporate employee marketplace</p>
+  </div>
+</body>
+</html>`
+
+  const text = `Korpo\n\nUse this code to reset your Korpo password.\n\nYour code: ${otp}\n\nThis code expires in 5 minutes. If you didn't request a password reset, you can ignore this email — your password won't change.\n\nKorpo — corporate employee marketplace`
+
+  const resend = getResend()
+  if (!resend) {
+    console.log(`\n${"─".repeat(50)}`)
+    console.log(`[KORPO DEV] Password reset OTP Email`)
+    console.log(`To:  ${to}`)
+    console.log(`OTP: ${otp}`)
+    console.log(`${"─".repeat(50)}\n`)
+    return { success: true }
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: [to],
+      subject,
+      html,
+      text,
+    })
+    if (error) {
+      console.error("[Password Reset Email] Resend error:", error)
+      return { success: false, error: "Failed to send email" }
+    }
+    return { success: true }
+  } catch (err) {
+    console.error("[Password Reset Email] Resend error:", err)
+    return { success: false, error: "Failed to send email" }
+  }
+}
+
 // ── ID card verification approval notice ───────────────────────────────────────
 
 export async function sendIdVerificationApprovedEmail(to: string): Promise<{ success: boolean; error?: string }> {
