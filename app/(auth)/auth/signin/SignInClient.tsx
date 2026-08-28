@@ -337,7 +337,17 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       setTimeout(() => fbOtpRefs.current[0]?.focus(), 50)
     } catch (err) {
       console.error("[firebase send otp]", err)
-      setError("Failed to send code. Please check the phone number and try again.")
+      const code = (err as { code?: string })?.code
+      setError(
+        code === "auth/invalid-phone-number" ? "That doesn't look like a valid phone number. Use the format +91 98765 43210."
+        : code === "auth/too-many-requests" ? "Too many attempts from this device. Please wait a while and try again."
+        : code === "auth/quota-exceeded" ? "SMS quota exceeded for this project. Please try again later."
+        : code === "auth/operation-not-allowed" ? "Phone sign-in isn't enabled for this project yet."
+        : code === "auth/billing-not-enabled" ? "This Firebase project needs to be on the Blaze plan to send SMS codes."
+        : code === "auth/unauthorized-domain" ? "This domain isn't authorized for Firebase phone sign-in."
+        : code ? `Failed to send code (${code}). Please try again.`
+        : "Failed to send code. Please check the phone number and try again."
+      )
       fbRecaptchaRef.current?.clear()
       fbRecaptchaRef.current = null
     } finally {
