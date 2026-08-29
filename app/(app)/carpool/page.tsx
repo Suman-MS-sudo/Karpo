@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -15,6 +16,11 @@ import { FREE_LIMITS } from "@/lib/limits"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Carpool",
+  description: "Find or offer a daily commute carpool with verified colleagues in your city and split the cost of your ride.",
+}
 
 // ── Geo helpers (server-side) ─────────────────────────────────────────────────
 

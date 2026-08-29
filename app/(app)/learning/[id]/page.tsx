@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
@@ -14,6 +15,32 @@ import { UserCard } from "@/components/shared/UserCard"
 import { formatCurrency } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const course = await prisma.course.findUnique({
+    where: { id: params.id },
+    select: { title: true, description: true, images: true },
+  })
+
+  if (!course) {
+    return { title: "Course not found" }
+  }
+
+  const description = course.description.replace(/\s+/g, " ").trim().slice(0, 155)
+  // `images` is stored as a JSON string in SQLite but transparently parsed
+  // to string[] by the prisma middleware in lib/prisma.ts.
+  const images = (course.images as unknown as string[]) ?? []
+
+  return {
+    title: course.title,
+    description,
+    openGraph: {
+      title: course.title,
+      description,
+      ...(images.length > 0 ? { images: images.map((url) => ({ url })) } : {}),
+    },
+  }
+}
 
 const LEVEL_COLOR: Record<string, string> = {
   BEGINNER:     "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",

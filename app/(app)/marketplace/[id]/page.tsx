@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
@@ -76,6 +77,27 @@ function SectionCard({ title, icon: Icon, children, className = "" }: {
       <div className="p-5">{children}</div>
     </div>
   )
+}
+
+// ─── Metadata ──────────────────────────────────────────────────────────────
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const listing = await prisma.listing.findUnique({
+    where: { id: params.id },
+    select: { title: true, description: true, images: true },
+  })
+  if (!listing) return { title: "Listing not found" }
+
+  const description = listing.description.replace(/\s+/g, " ").trim().slice(0, 155)
+  const images = Array.isArray(listing.images)
+    ? listing.images
+    : (() => { try { return JSON.parse(listing.images as unknown as string) } catch { return [] } })()
+
+  return {
+    title: listing.title,
+    description,
+    openGraph: images[0] ? { images: [{ url: images[0] }] } : undefined,
+  }
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────

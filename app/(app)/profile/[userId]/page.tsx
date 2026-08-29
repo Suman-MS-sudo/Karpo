@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
@@ -16,6 +17,8 @@ import { RatingStars } from "@/components/shared/RatingStars"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { PROFILE_SOCIAL_PLATFORMS } from "@/lib/socialPlatforms"
 import { formatDate, getInitials } from "@/lib/utils"
+
+export const metadata: Metadata = { title: "Profile" }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 

@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -12,6 +13,11 @@ import { PageHero } from "@/components/shared/PageHero"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { LISTING_CATEGORIES } from "@/config/services"
 import { fuzzyFilter } from "@/lib/fuzzy"
+
+export const metadata: Metadata = {
+  title: "Marketplace",
+  description: "Buy and sell electronics, furniture, vehicles and more with verified colleagues on Korpo's corporate marketplace.",
+}
 
 const PAGE_SIZE = 24
 

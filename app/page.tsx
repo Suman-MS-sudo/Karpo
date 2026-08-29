@@ -173,7 +173,7 @@ export default async function LandingPage() {
         <div className="absolute inset-0 -z-30" aria-hidden="true">
           <Image
             src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=2400&q=80&auto=format&fit=crop"
-            alt=""
+            alt="Abstract office workspace background"
             fill
             priority
             className="object-cover opacity-[0.12]"
@@ -215,7 +215,7 @@ export default async function LandingPage() {
             </span>.
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Buy and sell, find flatmates, share rides, get referrals — exclusively with verified colleagues from IT, MNC, banking and consulting firms.
+            Organize your whole professional network in one place — buy and sell, find flatmates, share rides, and get referrals, exclusively with verified colleagues from IT, MNC, banking and consulting firms.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="h-12 rounded-xl px-7 shadow-sm hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
@@ -733,9 +733,8 @@ export default async function LandingPage() {
               <ul className="space-y-2.5 text-sm text-muted-foreground">
                 <li><Link href="#about"   className="hover:text-foreground transition-colors">About Us</Link></li>
                 <li><Link href="#contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
-                <li><Link href="#"        className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-                <li><Link href="#"        className="hover:text-foreground transition-colors">Terms of Service</Link></li>
-                <li><Link href="/auth/signin?callbackUrl=/admin" className="hover:text-foreground transition-colors opacity-50 hover:opacity-100 text-xs">Admin Login</Link></li>
+                <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms"   className="hover:text-foreground transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>

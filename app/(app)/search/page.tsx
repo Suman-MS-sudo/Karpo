@@ -1,9 +1,11 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { Search, ShoppingBag, Home, Briefcase, Car, Users, Wrench } from "lucide-react"
 import { PageTitle } from "@/components/ui/page-title"
 
 export const dynamic = "force-dynamic"
+export const metadata: Metadata = { title: "Search" }
 
 interface PageProps {
   searchParams: { q?: string }

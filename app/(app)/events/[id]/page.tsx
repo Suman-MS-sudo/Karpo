@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
@@ -29,6 +30,29 @@ function formatEventDate(date: Date) {
 }
 function formatEventTime(date: Date) {
   return date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+}
+
+function truncate(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim()
+  return clean.length > max ? clean.slice(0, max - 1).trimEnd() + "…" : clean
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const event = await prisma.event.findUnique({
+    where:  { id: params.id },
+    select: { title: true, description: true, images: true },
+  })
+
+  if (!event) return { title: "Event not found" }
+
+  const description = truncate(event.description, 155)
+  const images = Array.isArray(event.images) ? event.images : []
+
+  return {
+    title: event.title,
+    description,
+    openGraph: images.length > 0 ? { images: [{ url: images[0] }] } : undefined,
+  }
 }
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {

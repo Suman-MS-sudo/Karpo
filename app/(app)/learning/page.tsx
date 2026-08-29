@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -12,6 +13,11 @@ import { formatCurrency } from "@/lib/utils"
 import { FREE_LIMITS } from "@/lib/limits"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Learning Hub",
+  description: "Discover courses and workshops taught by experts, or create your own course to teach others on Korpo's Learning Hub.",
+}
 
 const LEVEL_BADGE: Record<string, string> = {
   BEGINNER:     "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",

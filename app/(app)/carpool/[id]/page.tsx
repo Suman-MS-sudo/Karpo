@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
@@ -42,6 +43,33 @@ const LUGGAGE_LABELS: Record<string, string> = {
   ANY:        "Any luggage",
   SMALL:      "Small bags only",
   NO_LUGGAGE: "No extra luggage",
+}
+
+function truncate(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim()
+  return clean.length > max ? clean.slice(0, max - 1).trimEnd() + "…" : clean
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const route = await prisma.carpoolRoute.findUnique({
+    where:  { id: params.id },
+    select: { fromLocation: true, toLocation: true, departureTime: true, frequency: true, pricePerSeat: true, vehiclePhoto: true },
+  })
+
+  if (!route) return { title: "Carpool route not found" }
+
+  const freqLabel = FREQUENCY_LABELS[route.frequency] ?? route.frequency
+  const title = `${route.fromLocation} → ${route.toLocation}`
+  const description = truncate(
+    `Carpool from ${route.fromLocation} to ${route.toLocation}, departing ${route.departureTime} · ${freqLabel} · ₹${route.pricePerSeat} per seat.`,
+    155
+  )
+
+  return {
+    title,
+    description,
+    openGraph: route.vehiclePhoto ? { images: [{ url: route.vehiclePhoto }] } : undefined,
+  }
 }
 
 export default async function CarpoolDetailPage({ params }: { params: { id: string } }) {

@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic"
 
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
@@ -19,6 +20,8 @@ import { MobileDashboardHeader } from "@/components/dashboard/MobileDashboardHea
 import { DashboardRefresh } from "@/components/dashboard/DashboardRefresh"
 import { PostPickerButton } from "@/components/shared/PostPickerButton"
 import { ServiceIconGrid } from "@/components/dashboard/ServiceIconGrid"
+
+export const metadata: Metadata = { title: "Dashboard" }
 
 const SERVICE_IMAGE_MAP: Record<string, string> = {
   "buy-sell": "/images/services/marketplace.jpeg",

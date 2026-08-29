@@ -11,19 +11,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { fetchAllAffiliateDeals } from "@/lib/affiliates"
+import { isAuthorizedCronRequest } from "@/lib/cron-auth"
 
 const VALID_DAYS = 1  // affiliate deals expire daily; refreshed each sync
 
 export async function POST(req: Request) {
-  // Auth check — accepts either Vercel cron header or manual Bearer token
-  const authHeader      = req.headers.get("Authorization") ?? ""
-  const vercelCronToken = req.headers.get("x-vercel-cron-token") ?? ""
-  const cronSecret      = process.env.CRON_SECRET ?? ""
-
-  const isVercelCron = vercelCronToken !== "" // Vercel injects this automatically
-  const isBearerAuth = cronSecret && authHeader === `Bearer ${cronSecret}`
-
-  if (!isVercelCron && !isBearerAuth) {
+  if (!isAuthorizedCronRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

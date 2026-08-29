@@ -12,12 +12,23 @@ import "./globals.css"
 import "leaflet/dist/leaflet.css"
 import { Providers } from "./providers"
 
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://korpo.in"
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "Korpo — Your work ID. Your pass to everything else.", template: "%s | Korpo" },
-  description: "India's first verified corporate employee marketplace. Buy/sell, find flatmates, get referrals, share rides and more — exclusively for IT, MNC and banking professionals.",
+  description: "India's first verified corporate employee marketplace — buy/sell, find flatmates, get referrals and share rides with verified professionals.",
   keywords: ["corporate marketplace", "employee benefits", "verified professionals", "IT professionals", "job referrals", "corporate carpool"],
   authors: [{ name: "Korpo" }],
   creator: "Korpo",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -26,21 +37,43 @@ export const metadata: Metadata = {
     shortcut: [{ url: "/favicon.ico" }],
     apple: [{ url: "/favicon.png" }],
   },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://korpo.in",
+    url: SITE_URL,
     siteName: "Korpo",
     title: "Korpo — Your work ID. Your pass to everything else.",
     description: "India's first verified corporate employee marketplace",
     images: [{ url: "/logo.png", width: 512, height: 512, alt: "Korpo" }],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Korpo — Your work ID. Your pass to everything else.",
+    description: "India's first verified corporate employee marketplace — buy/sell, find flatmates, get referrals and share rides with verified professionals.",
+    images: ["/logo.png"],
+  },
+}
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Korpo",
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo.png`,
+  description: "India's first verified corporate employee marketplace.",
+  sameAs: [] as string[],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

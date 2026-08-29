@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
@@ -20,6 +21,26 @@ import { SkillReviewForm } from "@/components/skills/SkillReviewForm"
 import { SkillDetailTabs } from "@/components/skills/SkillDetailTabs"
 
 export const dynamic = "force-dynamic"
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const listing = await prisma.skillListing.findUnique({
+    where: { id: params.id },
+    select: { title: true, tagline: true, description: true },
+  })
+
+  if (!listing) {
+    return { title: "Listing not found" }
+  }
+
+  const rawDescription = listing.tagline || listing.description || ""
+  const description = rawDescription.replace(/\s+/g, " ").trim().slice(0, 155)
+
+  return {
+    title: listing.title,
+    description,
+    openGraph: { title: listing.title, description },
+  }
+}
 
 interface Pkg  { name: string; price: number; durationHrs: number; description: string; features: string[] }
 interface FAQ  { q: string; a: string }

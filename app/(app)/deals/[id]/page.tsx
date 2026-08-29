@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
@@ -11,6 +12,23 @@ import { CopyButton } from "@/components/shared/CopyButton"
 import { formatDate } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const deal = await prisma.deal.findUnique({ where: { id: params.id } })
+
+  if (!deal) return { title: "Not found" }
+
+  const description = deal.description.replace(/\s+/g, " ").trim().slice(0, 155)
+  const images = Array.isArray(deal.images)
+    ? deal.images
+    : (typeof deal.images === "string" ? JSON.parse(deal.images || "[]") : [])
+
+  return {
+    title: `${deal.discount}% off ${deal.title}`,
+    description,
+    openGraph: images[0] ? { images: [{ url: images[0] }] } : undefined,
+  }
+}
 
 export default async function DealDetailPage({ params }: { params: { id: string } }) {
   const session = await auth()

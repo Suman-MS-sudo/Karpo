@@ -13,6 +13,11 @@ const PUBLIC_PREFIXES = [
   "/contact",
   "/robots.txt",
   "/sitemap.xml",
+  // External callers (Meta's webhook handshake, Vercel Cron) can never
+  // present a session cookie — these routes carry their own token/HMAC
+  // checks instead, which must be allowed to actually run.
+  "/api/whatsapp/",
+  "/api/cron/",
 ]
 
 // Static assets served from /public (logos, favicons, decorative images) —

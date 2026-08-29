@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   // Update payment status
   const payment = await prisma.payment.findFirst({ where: { razorpayOrderId: razorpay_order_id } })
   if (!payment) return NextResponse.json({ error: "Payment not found" }, { status: 404 })
+  if (payment.userId !== session.user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   await prisma.payment.update({
     where: { id: payment.id },

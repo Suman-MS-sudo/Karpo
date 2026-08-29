@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
@@ -7,6 +8,8 @@ import { PageTitle } from "@/components/ui/page-title"
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 import { MessagesBackButton } from "@/components/shared/MessagesBackButton"
+
+export const metadata: Metadata = { title: "Messages" }
 
 export default async function MessagesPage() {
   const session = await auth()

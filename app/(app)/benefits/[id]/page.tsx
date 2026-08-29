@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
@@ -19,6 +20,23 @@ const TYPE_COLOR: Record<string, string> = {
 
 const TYPE_EMOJI: Record<string, string> = {
   LOAN: "💰", INSURANCE: "🛡️", TRAVEL: "✈️", INVESTMENT: "📈",
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const product = await prisma.benefitProduct.findUnique({
+    where: { id: params.id },
+    include: { provider: { select: { name: true, logo: true } } },
+  })
+
+  if (!product) return { title: "Not found" }
+
+  const description = product.description.replace(/\s+/g, " ").trim().slice(0, 155)
+
+  return {
+    title: `${product.title} — ${product.provider.name}`,
+    description,
+    openGraph: product.provider.logo ? { images: [{ url: product.provider.logo }] } : undefined,
+  }
 }
 
 export default async function BenefitDetailPage({ params }: { params: { id: string } }) {

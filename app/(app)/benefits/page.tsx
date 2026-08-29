@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -7,6 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency } from "@/lib/utils"
+
+export const metadata: Metadata = {
+  title: "Benefits",
+  description: "Exclusive loans, insurance, travel and lifestyle benefits negotiated for Korpo's verified corporate community.",
+}
 
 const TYPE_TABS: { value: string; label: string; emoji: string }[] = [
   { value: "",           label: "All",         emoji: "🎁" },

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -17,6 +18,11 @@ import { fuzzyIncludes } from "@/lib/fuzzy"
 import Image from "next/image"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Job Referrals",
+  description: "Get your resume in front of an employee already on the inside — job referrals from verified colleagues on Korpo.",
+}
 
 const WORK_MODE_LABELS: Record<string, string> = {
   REMOTE: "Remote", HYBRID: "Hybrid", ONSITE: "On-site",

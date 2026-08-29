@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
@@ -27,6 +28,23 @@ const WORK_MODE_LABEL: Record<string, { label: string; icon: any; color: string 
   REMOTE:  { label: "Remote",  icon: Globe,   color: "text-emerald-600 dark:text-emerald-400" },
   HYBRID:  { label: "Hybrid",  icon: Laptop,  color: "text-blue-600 dark:text-blue-400" },
   ONSITE:  { label: "On-site", icon: Monitor, color: "text-violet-600 dark:text-violet-400" },
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const ref = await prisma.jobReferral.findUnique({
+    where: { id: params.id },
+    select: { title: true, description: true, company: { select: { name: true, logo: true } } },
+  })
+  if (!ref) return { title: "Referral not found" }
+
+  const title = ref.company?.name ? `${ref.title} at ${ref.company.name}` : ref.title
+  const description = (ref.description ?? "").replace(/\s+/g, " ").trim().slice(0, 155)
+
+  return {
+    title,
+    description,
+    openGraph: ref.company?.logo ? { images: [{ url: ref.company.logo }] } : undefined,
+  }
 }
 
 export default async function ReferralDetailPage({ params }: { params: { id: string } }) {

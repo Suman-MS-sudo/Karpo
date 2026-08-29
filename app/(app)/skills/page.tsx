@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -11,6 +12,11 @@ import { SkillsLanding } from "./SkillsLanding"
 import { fuzzyFilter } from "@/lib/fuzzy"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Skills",
+  description: "Browse and hire skilled professionals for freelance projects, coaching, and consulting, or list your own skills to offer your services.",
+}
 
 const PAGE_SIZE = 8
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import { FREE_LIMITS } from "@/lib/limits"
@@ -5,6 +6,11 @@ import { DealsClient } from "./DealsClient"
 import type { Deal } from "@/hooks/useDeals"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Deals",
+  description: "Exclusive discounts and affiliate deals curated for Korpo's verified corporate community.",
+}
 
 function serializeDeal(d: any): Deal {
   return {

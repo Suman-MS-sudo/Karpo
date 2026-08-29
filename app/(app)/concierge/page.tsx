@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
@@ -6,6 +7,11 @@ import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { formatRelativeTime } from "@/lib/utils"
 import { FREE_LIMITS } from "@/lib/limits"
+
+export const metadata: Metadata = {
+  title: "Concierge",
+  description: "Tax filing, legal assistance, insurance advisory and financial planning from verified professionals on Korpo.",
+}
 
 const services = [
   { id: "TAX",       title: "Tax Filing",          icon: FileText,   desc: "ITR filing, tax planning, form 16 assistance from verified CAs",         color: "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",      iconColor: "text-blue-600 dark:text-blue-400" },

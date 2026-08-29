@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
@@ -33,6 +34,20 @@ const CONTACT_ICON: Record<string, React.ElementType> = {
 }
 
 const URGENCY_LABEL: Record<string, string> = { URGENT: "Urgent", NORMAL: "Normal", LOW: "Low priority" }
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const lead = await prisma.conciergeLead.findUnique({ where: { id: params.id } })
+
+  if (!lead) return { title: "Not found" }
+
+  const info = SERVICE_INFO[lead.serviceType]
+  const description = lead.description.replace(/\s+/g, " ").trim().slice(0, 155)
+
+  return {
+    title: `${info?.label ?? lead.serviceType} Request`,
+    description,
+  }
+}
 
 export default async function LeadDetailPage({ params }: { params: { id: string } }) {
   const session = await auth()

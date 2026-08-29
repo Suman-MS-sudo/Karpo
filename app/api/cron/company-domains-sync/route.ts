@@ -15,16 +15,10 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
 import { COMPANY_DOMAINS } from "@/lib/company-domains"
+import { isAuthorizedCronRequest } from "@/lib/cron-auth"
 
 export async function POST(req: Request) {
-  const authHeader      = req.headers.get("Authorization") ?? ""
-  const vercelCronToken = req.headers.get("x-vercel-cron-token") ?? ""
-  const cronSecret      = process.env.CRON_SECRET ?? ""
-
-  const isVercelCron = vercelCronToken !== ""
-  const isBearerAuth = cronSecret && authHeader === `Bearer ${cronSecret}`
-
-  if (!isVercelCron && !isBearerAuth) {
+  if (!isAuthorizedCronRequest(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

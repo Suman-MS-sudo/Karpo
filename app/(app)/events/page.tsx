@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import { FREE_LIMITS } from "@/lib/limits"
@@ -6,6 +7,11 @@ import { EventsClient } from "./EventsClient"
 import type { EventItem } from "./EventsClient"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "Events",
+  description: "Discover treks, meetups, workshops, and networking events organized by verified professionals near you.",
+}
 
 export default async function EventsPage() {
   const session   = await auth()

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -17,6 +18,11 @@ import { RentalFilters } from "@/components/rentals/RentalFilters"
 import { fuzzyFilter } from "@/lib/fuzzy"
 import { PageHero } from "@/components/shared/PageHero"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
+
+export const metadata: Metadata = {
+  title: "Rentals & Flatmates",
+  description: "Find PGs, flats and flatmates near your office — verified corporate rentals on Korpo.",
+}
 
 const TYPE_META: Record<string, { label: string; icon: string }> = {
   APARTMENT: { label: "Apartment", icon: "Building2" },

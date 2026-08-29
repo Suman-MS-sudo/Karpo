@@ -19,10 +19,11 @@ export async function POST(req: Request) {
   // ── Admin bypass — whitelisted email skips corporate domain check ──────────
   // These accounts always get an automatic OTP (auto-filled client-side, no
   // real email needed) regardless of ADMIN_EMAIL/DEV_EMAILS env config.
-  const AUTO_OTP_ADMIN_EMAILS = [
-    "testckb@korpo.com",
-    "mssworlz@gmail.com",
-  ]
+  // Sourced from env (not hardcoded) — kept in sync with auth.ts's AUTO_OTP_ADMIN_EMAILS.
+  const AUTO_OTP_ADMIN_EMAILS = (process.env.AUTO_OTP_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
   const adminEmails = (process.env.ADMIN_EMAIL ?? "").split(",").map(e => e.trim().toLowerCase())
   const isAdmin = adminEmails.includes(normalized) || AUTO_OTP_ADMIN_EMAILS.includes(normalized)
 

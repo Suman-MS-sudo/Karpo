@@ -17,12 +17,14 @@ import { normalizePhone } from "@/lib/phone"
 // prod config is sorted.
 const FIREBASE_PHONE_AUTH_ENABLED = false
 
-// Always-admin accounts, independent of ADMIN_EMAIL env config — kept in sync
-// with the AUTO_OTP_ADMIN_EMAILS list in app/api/auth/send-otp/route.ts.
-const AUTO_OTP_ADMIN_EMAILS = [
-  "testckb@korpo.com",
-  "mssworlz@gmail.com",
-]
+// Always-admin accounts that also get auto-filled OTPs, independent of
+// ADMIN_EMAIL — sourced from env (not hardcoded) so this backdoor list can be
+// rotated/disabled without a code change, and kept in sync with the same
+// AUTO_OTP_EMAILS var read in app/api/auth/send-otp/route.ts.
+const AUTO_OTP_ADMIN_EMAILS = (process.env.AUTO_OTP_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean)
 
 // Thrown instead of returning null from authorize() when the account is
 // disabled, so the client can show "Your account has been disabled" instead
@@ -30,6 +32,45 @@ const AUTO_OTP_ADMIN_EMAILS = [
 // signIn()'s result.code carries this string through to the client.
 class AccountDisabledError extends CredentialsSignin {
   code = "account_disabled"
+}
+
+// Thrown when an identifier has too many recent failed OTP/password attempts.
+class TooManyAttemptsError extends CredentialsSignin {
+  code = "too_many_attempts"
+}
+
+// In-process failed-attempt counter for the OTP/password verify path — the
+// send-otp route already rate-limits *sending* OTPs, but the verify step
+// (this file) had no limit at all, making a 6-digit OTP brute-forceable
+// within its expiry window. Keyed by "email" (shared across OTP and
+// password login), with exponential backoff and a hard cap.
+const MAX_ATTEMPTS_BEFORE_LOCKOUT = 5
+const LOCKOUT_WINDOW_MS = 10 * 60 * 1000
+const failedAttempts = new Map<string, { count: number; firstFailureAt: number }>()
+
+function assertNotLockedOut(identifier: string) {
+  const entry = failedAttempts.get(identifier)
+  if (!entry) return
+  if (Date.now() - entry.firstFailureAt > LOCKOUT_WINDOW_MS) {
+    failedAttempts.delete(identifier)
+    return
+  }
+  if (entry.count >= MAX_ATTEMPTS_BEFORE_LOCKOUT) {
+    throw new TooManyAttemptsError()
+  }
+}
+
+function recordFailedAttempt(identifier: string) {
+  const entry = failedAttempts.get(identifier)
+  if (!entry || Date.now() - entry.firstFailureAt > LOCKOUT_WINDOW_MS) {
+    failedAttempts.set(identifier, { count: 1, firstFailureAt: Date.now() })
+  } else {
+    entry.count++
+  }
+}
+
+function clearFailedAttempts(identifier: string) {
+  failedAttempts.delete(identifier)
 }
 
 // Short in-process cache for the session callback's city/name freshness

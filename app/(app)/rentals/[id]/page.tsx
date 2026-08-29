@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
@@ -89,6 +90,28 @@ function RuleChip({ label, allowed }: { label: string; allowed: boolean }) {
       {label}
     </div>
   )
+}
+
+// ─── Metadata ─────────────────────────────────────────────────────────────────
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const rental = await prisma.rentalPost.findUnique({
+    where: { id: params.id },
+    select: { title: true, description: true, city: true, area: true, images: true },
+  })
+  if (!rental) return { title: "Rental not found" }
+
+  const description = (rental.description ?? `${rental.title} in ${rental.area}, ${rental.city}`)
+    .replace(/\s+/g, " ").trim().slice(0, 155)
+  const images = Array.isArray(rental.images)
+    ? rental.images
+    : (() => { try { return JSON.parse(rental.images as unknown as string) } catch { return [] } })()
+
+  return {
+    title: rental.title,
+    description,
+    openGraph: images[0] ? { images: [{ url: images[0] }] } : undefined,
+  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
