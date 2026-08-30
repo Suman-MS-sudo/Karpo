@@ -24,12 +24,17 @@ interface Props {
   current: Filters
 }
 
+// "Boosted first" is temporarily hidden along with the rest of the boost
+// feature (BOOST_ENABLED, see components/marketplace/BoostButton.tsx) — the
+// underlying sort still works server-side if re-enabled, no data change needed.
+const BOOST_ENABLED = false
+
 const SORT_OPTIONS = [
   { value: "newest",     label: "Newest first" },
   { value: "price_asc",  label: "Price: Low → High" },
   { value: "price_desc", label: "Price: High → Low" },
   { value: "views",      label: "Most viewed" },
-  { value: "boosted",    label: "Boosted first" },
+  ...(BOOST_ENABLED ? [{ value: "boosted", label: "Boosted first" }] : []),
 ]
 
 export function MarketplaceFilters({ current }: Props) {
@@ -128,7 +133,7 @@ export function MarketplaceFilters({ current }: Props) {
   return (
     <div className="space-y-3 mb-6">
       {/* Sort + advanced filters row */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {/* Sort */}
         <SortDropdown
           options={SORT_OPTIONS}
@@ -167,7 +172,7 @@ export function MarketplaceFilters({ current }: Props) {
       {/* Advanced filter panel */}
       {showAdvanced && (
         <div className="bg-background border border-border rounded-2xl p-5 space-y-4 shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-6">
             {/* Condition */}
             <div>
               <p className="text-xs font-semibold text-muted-foreground mb-2.5 uppercase tracking-wide">Condition</p>

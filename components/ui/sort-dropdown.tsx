@@ -36,7 +36,7 @@ export function SortDropdown({ options, value, onChange, className }: SortDropdo
       <ChevronDown className={cn("absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500 pointer-events-none transition-transform", open && "rotate-180")} />
 
       {open && (
-        <div className="absolute z-20 mt-2 min-w-[240px] right-0 rounded-2xl border border-border bg-popover shadow-xl overflow-hidden divide-y divide-border">
+        <div className="absolute z-20 mt-2 w-[calc(100vw-2rem)] max-w-[240px] left-0 sm:left-auto sm:right-0 rounded-2xl border border-border bg-popover shadow-xl overflow-hidden divide-y divide-border">
           {options.map((o, i) => {
             const isActive = o.value === value
             return (
