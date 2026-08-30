@@ -81,6 +81,20 @@ async function clearFailedAttempts(identifier: string) {
   await prisma.verificationToken.deleteMany({ where: { identifier: `${LOCKOUT_PREFIX}${identifier}` } })
 }
 
+// Stamped on every successful sign-in, across all four auth methods below —
+// feeds the admin Users table's "Last logged in" column. Best-effort: a
+// failure here must never block an otherwise-successful login.
+async function recordLastLogin(userId: string) {
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date(), loginCount: { increment: 1 } },
+    })
+  } catch (err) {
+    console.error("[auth] recordLastLogin failed", err)
+  }
+}
+
 // Short in-process cache for the session callback's city/name freshness
 // check (see below) — a single page load typically fires several requests
 // (layout, page, multiple API calls) that all land on the same warm
@@ -137,6 +151,7 @@ const providers: Provider[] = [
           if (dbUser.isDisabled) throw new AccountDisabledError()
 
           await prisma.verificationToken.deleteMany({ where: { identifier: `wa:${phone}` } })
+          await recordLastLogin(dbUser.id)
 
           return {
             id: dbUser.id,
@@ -158,6 +173,8 @@ const providers: Provider[] = [
           const dbUser = await prisma.user.findUnique({ where: { phone } })
           if (!dbUser || !dbUser.isVerified) return null
           if (dbUser.isDisabled) throw new AccountDisabledError()
+
+          await recordLastLogin(dbUser.id)
 
           return {
             id: dbUser.id,
@@ -192,6 +209,8 @@ const providers: Provider[] = [
             const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
             if (idRequest && idRequest.status !== "APPROVED") return null
           }
+
+          await recordLastLogin(dbUser.id)
 
           return {
             id: dbUser.id,
@@ -247,6 +266,8 @@ const providers: Provider[] = [
             : {}
 
         const { dbUser } = await provisionUser(email, { isAdmin, isExisting: !!existingUser, ...regProvision })
+
+        await recordLastLogin(dbUser.id)
 
         return {
           id: dbUser.id,
@@ -356,7 +377,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Adapter has already created the User row for a first-time OAuth sign-in;
       // provisionUser upserts on email so it works for both new and returning users.
       // LinkedIn's own workplace verification is trusted as sufficient — no follow-up OTP.
-      await provisionUser(email, { isAdmin, name: user.name, workEmail: isCorporateEmail ? email : undefined })
+      const { dbUser } = await provisionUser(email, { isAdmin, name: user.name, workEmail: isCorporateEmail ? email : undefined })
+      await recordLastLogin(dbUser.id)
       return true
     },
 

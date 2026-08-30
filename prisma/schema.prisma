@@ -91,6 +91,8 @@ model User {
   userCode        String?   @unique  // KP00001, KP00002, ... — assigned sequentially on signup
   batchCode       String?             // 4-digit cohort code, e.g. "0001" for the first 100 users
   referralCode    String?   @unique  // referral code users can share to invite others (currently first 100 users only)
+  lastLoginAt     DateTime?           // stamped on every successful sign-in, any method — powers the admin Users table's "Last logged in" column
+  loginCount      Int       @default(0) // incremented alongside lastLoginAt; also drives the GUEST role's auto-delete-after-5-logins
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -303,7 +305,9 @@ model AppGrievance {
   userId    String
   category  String    // BUG | FEATURE_REQUEST | PAYMENT | ACCOUNT | OTHER (HARASSMENT retired, may still exist on old rows)
   message   String
-  status    String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  status    String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | DISMISSED
+  respondedAt DateTime? // stamped when an admin first moves it to IN_PROGRESS
+  resolvedAt  DateTime? // stamped when an admin marks it RESOLVED or DISMISSED
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 

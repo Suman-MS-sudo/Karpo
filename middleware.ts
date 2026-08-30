@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getToken } from "next-auth/jwt"
 
 // Routes that are accessible without a session
 const PUBLIC_PREFIXES = [
@@ -27,7 +28,11 @@ const STATIC_ASSET_RE = /\.(png|jpe?g|svg|webp|gif|ico|avif)$/i
 // Landing page is public; everything else under "/" requires auth
 const PUBLIC_EXACT = new Set(["/"])
 
-export function middleware(req: NextRequest) {
+// HTTP methods that mutate state — blocked for the read-only GUEST role.
+// GET/HEAD/OPTIONS (browsing) always pass through.
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"])
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (PUBLIC_EXACT.has(pathname)) return NextResponse.next()
@@ -47,6 +52,19 @@ export function middleware(req: NextRequest) {
     url.pathname = "/auth/signin"
     url.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(url)
+  }
+
+  // GUEST is a read-only demo role — can browse everything a normal user can,
+  // but can't create/edit/delete anything (listings, referrals, messages,
+  // profile, etc). Enforced here in one place rather than in every route.
+  if (MUTATING_METHODS.has(req.method)) {
+    const token = await getToken({ req, secret: process.env.AUTH_SECRET })
+    if (token?.role === "GUEST") {
+      return NextResponse.json(
+        { error: "This is a guest account and can only browse — it can't create, edit, or delete anything." },
+        { status: 403 }
+      )
+    }
   }
 
   return NextResponse.next()

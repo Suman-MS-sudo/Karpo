@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   const domain = normalized.split("@")[1]
   if (!isAdmin && (RESERVED_DOMAINS.has(domain) || matchesReservedDomainTypo(domain)) && !existingUser) {
     return NextResponse.json(
-      { error: "No account found with this email." },
+      { error: "Please enter a valid corporate account/email." },
       { status: 404 }
     )
   }
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
   // pointed at Register instead of getting an OTP that would create one.
   if (intent === "signin" && !isAdmin && !existingUser) {
     return NextResponse.json(
-      { error: "No account found with this email. Please sign up instead." },
+      { error: "Please enter a valid corporate account/email." },
       { status: 404 }
     )
   }
