@@ -9,6 +9,7 @@ import { provisionUser } from "@/lib/auth-provision"
 import { getLinkedInVerificationReport } from "@/lib/linkedin-verification"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
+import { randomUUID } from "crypto"
 
 // Firebase phone-auth login is temporarily disabled (see FIREBASE_PHONE_AUTH_ENABLED
 // below) — importing firebase-admin lazily, only when actually needed, so a
@@ -39,38 +40,45 @@ class TooManyAttemptsError extends CredentialsSignin {
   code = "too_many_attempts"
 }
 
-// In-process failed-attempt counter for the OTP/password verify path — the
-// send-otp route already rate-limits *sending* OTPs, but the verify step
-// (this file) had no limit at all, making a 6-digit OTP brute-forceable
-// within its expiry window. Keyed by "email" (shared across OTP and
-// password login), with exponential backoff and a hard cap.
+// Failed-attempt counter for the OTP/password verify path — the send-otp
+// route already rate-limits *sending* OTPs, but the verify step (this file)
+// had no limit at all, making a 6-digit OTP brute-forceable within its
+// expiry window. Keyed by "email" (shared across OTP and password login).
+//
+// Persisted in the DB (not an in-process Map) because this app runs as
+// serverless functions — an in-memory counter resets per cold start/instance
+// and an attacker's guesses landing on different instances would never
+// accumulate, making the lockout unreliable exactly when it matters. Reuses
+// the VerificationToken table under a "lockout:" identifier prefix (the same
+// trick already used for WhatsApp's "wa:" prefix below) so each failed
+// attempt is just one more row, rather than adding a new table/migration.
 const MAX_ATTEMPTS_BEFORE_LOCKOUT = 5
 const LOCKOUT_WINDOW_MS = 10 * 60 * 1000
-const failedAttempts = new Map<string, { count: number; firstFailureAt: number }>()
+const LOCKOUT_PREFIX = "lockout:"
 
-function assertNotLockedOut(identifier: string) {
-  const entry = failedAttempts.get(identifier)
-  if (!entry) return
-  if (Date.now() - entry.firstFailureAt > LOCKOUT_WINDOW_MS) {
-    failedAttempts.delete(identifier)
-    return
-  }
-  if (entry.count >= MAX_ATTEMPTS_BEFORE_LOCKOUT) {
+async function assertNotLockedOut(identifier: string) {
+  const count = await prisma.verificationToken.count({
+    where: { identifier: `${LOCKOUT_PREFIX}${identifier}`, expires: { gt: new Date() } },
+  })
+  if (count >= MAX_ATTEMPTS_BEFORE_LOCKOUT) {
     throw new TooManyAttemptsError()
   }
 }
 
-function recordFailedAttempt(identifier: string) {
-  const entry = failedAttempts.get(identifier)
-  if (!entry || Date.now() - entry.firstFailureAt > LOCKOUT_WINDOW_MS) {
-    failedAttempts.set(identifier, { count: 1, firstFailureAt: Date.now() })
-  } else {
-    entry.count++
-  }
+async function recordFailedAttempt(identifier: string) {
+  const key = `${LOCKOUT_PREFIX}${identifier}`
+  await prisma.$transaction([
+    // Opportunistically sweep this identifier's expired rows so the table
+    // doesn't grow unbounded — cheap since it's scoped to one identifier.
+    prisma.verificationToken.deleteMany({ where: { identifier: key, expires: { lte: new Date() } } }),
+    prisma.verificationToken.create({
+      data: { identifier: key, token: randomUUID(), expires: new Date(Date.now() + LOCKOUT_WINDOW_MS) },
+    }),
+  ])
 }
 
-function clearFailedAttempts(identifier: string) {
-  failedAttempts.delete(identifier)
+async function clearFailedAttempts(identifier: string) {
+  await prisma.verificationToken.deleteMany({ where: { identifier: `${LOCKOUT_PREFIX}${identifier}` } })
 }
 
 // Short in-process cache for the session callback's city/name freshness
@@ -166,14 +174,19 @@ const providers: Provider[] = [
         // Domain guard (defence-in-depth — send-otp also validates); admin bypasses
         if (!isAdmin && isDomainBlocked(email).blocked) return null
 
+        // Shared lockout across both password and OTP guesses for this email —
+        // checked before doing any real verification work below.
+        await assertNotLockedOut(email)
+
         // Password login — set up once after a first OTP/LinkedIn/ID-card
         // verification (see /auth/set-password), used on return visits instead
         // of re-verifying every time.
         if (password) {
           const dbUser = await prisma.user.findUnique({ where: { email } })
-          if (!dbUser?.passwordHash) return null
-          if (!(await verifyPassword(password, dbUser.passwordHash))) return null
+          if (!dbUser?.passwordHash) { await recordFailedAttempt(email); return null }
+          if (!(await verifyPassword(password, dbUser.passwordHash))) { await recordFailedAttempt(email); return null }
           if (dbUser.isDisabled) throw new AccountDisabledError()
+          await clearFailedAttempts(email)
 
           if (!isAdmin) {
             const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
@@ -201,7 +214,7 @@ const providers: Provider[] = [
           }),
           prisma.user.findUnique({ where: { email }, select: { id: true, isDisabled: true, passwordHash: true } }),
         ])
-        if (!token) return null
+        if (!token) { await recordFailedAttempt(email); return null }
 
         // Reject a disabled account outright — its OTP stays valid (send-otp
         // doesn't know about disable status) but sign-in must not proceed.
@@ -215,6 +228,8 @@ const providers: Provider[] = [
           const idRequest = await prisma.idVerificationRequest.findUnique({ where: { corpEmail: email } })
           if (idRequest && idRequest.status !== "APPROVED") return null
         }
+
+        await clearFailedAttempts(email)
 
         // Consume the token immediately
         await prisma.verificationToken.deleteMany({ where: { identifier: email } })
