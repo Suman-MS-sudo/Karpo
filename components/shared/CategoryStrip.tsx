@@ -76,7 +76,14 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
           <div className="flex">
             {items.map((item) => {
               const isActive = activeValue === item.value
-              const href = item.value === "All" ? basePath : `${basePath}?${paramName}=${item.value}`
+              // An item can carry an absolute route of its own (e.g. the dashboard's
+              // service strip, where each tile navigates to a different section like
+              // /marketplace) rather than a filter value to append to basePath as a
+              // query param (e.g. marketplace's category tabs) — link straight there.
+              const href =
+                item.value === "All"      ? basePath :
+                item.value.startsWith("/") ? item.value :
+                `${basePath}?${paramName}=${item.value}`
               const Icon = ICON_REGISTRY[item.icon] ?? Package
               return (
                 <Link
