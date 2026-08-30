@@ -28,6 +28,12 @@ function badgeVariantFor(category: string) {
   return "secondary" as const
 }
 
+// Whole days between two timestamps, rounded up — "resolved same day" reads
+// as 0 days, anything into a second calendar day reads as 1+.
+function daysBetween(from: Date, to: Date): number {
+  return Math.max(0, Math.ceil((to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000)))
+}
+
 export default async function AdminConcernsPage({
   searchParams,
 }: {
@@ -122,7 +128,12 @@ export default async function AdminConcernsPage({
                   </div>
                   <p className="text-xs text-foreground/90">{g.message}</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    {g.user.name ?? g.user.email} · {formatRelativeTime(g.createdAt)}
+                    {g.user.name ?? g.user.email} · Reported {formatRelativeTime(g.createdAt)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {g.respondedAt && <>Responded {formatRelativeTime(g.respondedAt)} · </>}
+                    {g.resolvedAt && <>{g.status === "DISMISSED" ? "Dismissed" : "Resolved"} {formatRelativeTime(g.resolvedAt)} · </>}
+                    {g.resolvedAt && <>{daysBetween(g.createdAt, g.resolvedAt)} day{daysBetween(g.createdAt, g.resolvedAt) === 1 ? "" : "s"} to close</>}
                   </p>
                 </div>
               </div>
@@ -137,7 +148,11 @@ export default async function AdminConcernsPage({
 function ConcernRow({
   g,
 }: {
-  g: { id: string; category: string; message: string; status: string; createdAt: Date; user: { name: string | null; email: string | null } }
+  g: {
+    id: string; category: string; message: string; status: string
+    createdAt: Date; respondedAt: Date | null; resolvedAt: Date | null
+    user: { name: string | null; email: string | null }
+  }
 }) {
   return (
     <div className="px-5 py-4 flex items-start justify-between gap-4">
@@ -152,6 +167,7 @@ function ConcernRow({
         </div>
         <p className="text-xs text-muted-foreground">
           Reported by {g.user.name ?? g.user.email} · {formatRelativeTime(g.createdAt)}
+          {g.respondedAt && <> · Responded {formatRelativeTime(g.respondedAt)}</>}
         </p>
         <p className="text-xs text-foreground/90 mt-1">{g.message}</p>
       </div>
