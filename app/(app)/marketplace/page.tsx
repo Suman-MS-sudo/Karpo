@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   description: "Buy and sell electronics, furniture, vehicles and more with verified colleagues on Korpo's corporate marketplace.",
 }
 
+// Temporarily disabled — matching BOOST_ENABLED in MarketplaceFilters.tsx and
+// the guard in components/marketplace/BoostButton.tsx usage sites.
+const BOOST_ENABLED = false
+
 const PAGE_SIZE = 24
 
 interface PageProps {
@@ -435,17 +439,19 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       )}
 
       {/* ── Boost CTA banner ──────────────────────────────────────────────── */}
-      <div className="mt-12 rounded-2xl bg-gradient-to-r from-blue-50 dark:from-blue-950/40 to-purple-50 dark:to-purple-950/40 border border-blue-100 dark:border-blue-800 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <p className="font-semibold text-base">Want more visibility for your listing?</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Boost to the Featured section and get 5× more views. Starting at ₹49 for 7 days.
-          </p>
+      {BOOST_ENABLED && (
+        <div className="mt-12 rounded-2xl bg-gradient-to-r from-blue-50 dark:from-blue-950/40 to-purple-50 dark:to-purple-950/40 border border-blue-100 dark:border-blue-800 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-base">Want more visibility for your listing?</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Boost to the Featured section and get 5× more views. Starting at ₹49 for 7 days.
+            </p>
+          </div>
+          <Button asChild variant="outline" className="shrink-0 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50">
+            <Link href="/marketplace/new">Post &amp; Boost →</Link>
+          </Button>
         </div>
-        <Button asChild variant="outline" className="shrink-0 border-blue-200 dark:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50">
-          <Link href="/marketplace/new">Post &amp; Boost →</Link>
-        </Button>
-      </div>
+      )}
       </div>
     </div>
   )

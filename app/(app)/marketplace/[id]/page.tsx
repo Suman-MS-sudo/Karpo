@@ -30,6 +30,9 @@ import { MessageSellerButton }     from "@/components/marketplace/MessageSellerB
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { LISTING_CONDITIONS, LISTING_CATEGORIES } from "@/config/services"
 
+// Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx and MarketplaceFilters.tsx.
+const BOOST_ENABLED = false
+
 const MapView = loadDynamic(
   () => import("@/components/rentals/MapView").then((m) => m.MapView),
   { ssr: false, loading: () => <div className="h-[220px] rounded-2xl bg-muted animate-pulse border border-border" /> }
@@ -573,9 +576,11 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   </div>
                   <ListingEngagementPanel listingId={listing.id} initialCount={engagementCount as number} />
                   <OwnerOffersPanel listingId={listing.id} initialCount={offerCount as number} isListingActive={!isSold} />
-                  <div className="pt-1 border-t border-border">
-                    <BoostButton listingId={listing.id} boostLevel={listing.boostLevel} boostExpiresAt={listing.boostExpiresAt} />
-                  </div>
+                  {BOOST_ENABLED && (
+                    <div className="pt-1 border-t border-border">
+                      <BoostButton listingId={listing.id} boostLevel={listing.boostLevel} boostExpiresAt={listing.boostExpiresAt} />
+                    </div>
+                  )}
                 </>
               )}
             </div>

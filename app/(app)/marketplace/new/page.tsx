@@ -502,11 +502,6 @@ export default function NewListingPage() {
           <p className="text-xs text-muted-foreground">First photo is the cover. Clear photos get 3× more responses.</p>
         </section>
 
-        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm">
-          <p className="font-semibold text-amber-800 mb-1">🚀 Boost after posting</p>
-          <p className="text-amber-700 text-xs">Boost for ₹49–₹199 to appear in Featured and get 5× more views.</p>
-        </div>
-
         <Button type="submit" className="w-full" size="lg" disabled={loading || uploading}>
           {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Posting…</> : "Post Listing"}
         </Button>
