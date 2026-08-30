@@ -92,53 +92,47 @@ export default async function DashboardPage() {
     eventCount:       Number(r.eventCount),
   }))
 
-  const [
-    recentListingsRaw,
-    counts,
-    recentRentals,
-    recentReferrals,
-    recentCarpools,
-    recentSkills,
-    recentEvents,
-  ] = await Promise.all([
-    prisma.listing.findMany({
-      where: { status: "ACTIVE", ...cityFilter },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
-    }),
-    countsQuery,
-    prisma.rentalPost.findMany({
-      where: { status: "ACTIVE", ...cityFilter },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: authorSelect } },
-    }),
-    prisma.jobReferral.findMany({
-      where: { status: "OPEN", ...locationFilter },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: authorSelect } },
-    }),
-    prisma.carpoolRoute.findMany({
-      where: { isActive: true, ...(userCity ? { fromLocation: userCity } : {}) },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: authorSelect } },
-    }),
-    prisma.skillListing.findMany({
-      where: { status: "ACTIVE", ...locationFilter },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: authorSelect } },
-    }),
-    prisma.event.findMany({
-      where: { isActive: true, date: { gte: new Date() }, ...locationFilter },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { organizer: { select: authorSelect } },
-    }),
-  ])
+  // The "recent activity" feed used to run 6 separate findMany calls (one
+  // per module, each with a join for the author/company) then merge+sort in
+  // JS. Mathematically, a global top-6-by-createdAt can only ever contain
+  // rows that are themselves in their own table's top-6-by-createdAt — so a
+  // single UNION ALL of each table's top-6 candidates, globally sorted and
+  // re-sliced to 6, is exactly equivalent to the old per-table-then-merge
+  // approach, just in one round trip instead of six. Formatting (title
+  // composition, price labels) is deliberately kept in JS, not SQL — this
+  // Turso/libsql setup fails on any computed SQL expression (CASE/COALESCE/
+  // string concat) that can yield NULL against a NOT-NULL-typed column, so
+  // every branch below selects only raw passthrough columns.
+  type RecentRow = {
+    kind: string; id: string; col1: string; col2: string | null; col3: string | null
+    price: bigint | number | null; badge: string; images: string | null; city: string | null
+    createdAt: Date | string; authorId: string
+  }
+  const recentQuery = prisma.$queryRaw<RecentRow[]>`
+    SELECT * FROM (
+      SELECT 'LISTING' AS kind, id, title AS col1, description AS col2, NULL AS col3, price, category AS badge, images, city, "createdAt" AS "createdAt", "userId" AS "authorId"
+      FROM "Listing" WHERE status = 'ACTIVE' ${cityCond}
+      UNION ALL
+      SELECT 'RENTAL', id, title, description, NULL, rent, 'RENTAL', images, city, "createdAt", "userId"
+      FROM "RentalPost" WHERE status = 'ACTIVE' ${cityCond}
+      UNION ALL
+      SELECT 'REFERRAL', id, title, description, NULL, "salaryMin", 'REFERRAL', NULL, location, "createdAt", "userId"
+      FROM "JobReferral" WHERE status = 'OPEN' ${locationCond}
+      UNION ALL
+      SELECT 'CARPOOL', id, "fromLocation", "toLocation", "departureTime", "pricePerSeat", 'CARPOOL', NULL, "fromLocation", "createdAt", "userId"
+      FROM "CarpoolRoute" WHERE "isActive" = 1 ${fromLocCond}
+      UNION ALL
+      SELECT 'SKILL', id, title, tagline, description, "hourlyRate", 'SKILL', NULL, location, "createdAt", "userId"
+      FROM "SkillListing" WHERE status = 'ACTIVE' ${locationCond}
+      UNION ALL
+      SELECT 'EVENT', id, title, description, NULL, fee, 'EVENT', images, location, "createdAt", "organizerId"
+      FROM "Event" WHERE "isActive" = 1 AND date >= ${now} ${locationCond}
+    )
+    ORDER BY "createdAt" DESC
+    LIMIT 6
+  `
+
+  const [recentRows, counts] = await Promise.all([recentQuery, countsQuery])
 
   const {
     myListingsCount, myMessages, viewsSum: totalViews,
@@ -150,48 +144,63 @@ export default async function DashboardPage() {
     try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [] } catch { return [] }
   }
 
+  type Author = Awaited<ReturnType<typeof prisma.user.findMany<{ select: typeof authorSelect }>>>[number]
   type RecentItem = {
     id: string; href: string; title: string; subtitle?: string
     price?: number; priceLabel?: string; images: string[]
-    author: typeof recentRentals[number]["user"]
+    author: Author
     badge: string; city: string | null; createdAt: Date
   }
 
-  const recentListings: RecentItem[] = [
-    ...recentListingsRaw.map((l): RecentItem => ({
-      id: l.id, href: `/marketplace/${l.id}`, title: l.title, subtitle: l.description,
-      price: l.price, images: parseImages(l.images),
-      author: { id: l.user.id, name: l.user.name, image: l.user.image, avatarUrl: l.user.avatarUrl, isVerified: l.user.isVerified, jobTitle: l.user.jobTitle, department: l.user.department, company: l.user.company },
-      badge: l.category, city: l.city, createdAt: l.createdAt,
-    })),
-    ...recentRentals.map((r): RecentItem => ({
-      id: r.id, href: `/rentals/${r.id}`, title: r.title, subtitle: r.description ?? undefined,
-      price: r.rent, priceLabel: "/mo", images: parseImages(r.images), author: r.user,
-      badge: "RENTAL", city: r.city, createdAt: r.createdAt,
-    })),
-    ...recentReferrals.map((j): RecentItem => ({
-      id: j.id, href: `/referrals/${j.id}`, title: j.title, subtitle: j.description,
-      price: j.salaryMin ?? undefined, priceLabel: j.salaryMin ? "+/yr" : undefined, images: [],
-      author: j.user, badge: "REFERRAL", city: j.location ?? null, createdAt: j.createdAt,
-    })),
-    ...recentCarpools.map((c): RecentItem => ({
-      id: c.id, href: `/carpool/${c.id}`, title: `${c.fromLocation} → ${c.toLocation}`,
-      subtitle: `Departs ${c.departureTime}`, price: c.pricePerSeat, priceLabel: "/seat",
-      images: [], author: c.user, badge: "CARPOOL", city: c.fromLocation, createdAt: c.createdAt,
-    })),
-    ...recentSkills.map((s): RecentItem => ({
-      id: s.id, href: `/skills/${s.id}`, title: s.title, subtitle: s.tagline ?? s.description,
-      price: s.hourlyRate ?? undefined, priceLabel: s.hourlyRate ? "/hr" : undefined, images: [],
-      author: s.user, badge: "SKILL", city: s.location ?? null, createdAt: s.createdAt,
-    })),
-    ...recentEvents.map((e): RecentItem => ({
-      id: e.id, href: `/events/${e.id}`, title: e.title, subtitle: e.description,
-      price: e.fee > 0 ? e.fee : undefined, images: parseImages(e.images), author: e.organizer,
-      badge: "EVENT", city: e.location, createdAt: e.createdAt,
-    })),
-  ]
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 6)
+  const HREF_BY_KIND: Record<string, string> = {
+    LISTING: "marketplace", RENTAL: "rentals", REFERRAL: "referrals",
+    CARPOOL: "carpool", SKILL: "skills", EVENT: "events",
+  }
+  const authorIds = [...new Set(recentRows.map((r) => r.authorId))]
+  const authors = authorIds.length
+    ? await prisma.user.findMany({ where: { id: { in: authorIds } }, select: authorSelect })
+    : []
+  const authorById = new Map(authors.map((a) => [a.id, a]))
+
+  // authorId always references an existing user (foreign key, no orphaned
+  // rows in practice) — filter defensively rather than assert non-null.
+  const recentListings: RecentItem[] = recentRows.flatMap((r): RecentItem[] => {
+    const author = authorById.get(r.authorId)
+    if (!author) return []
+    const price = r.price === null || r.price === undefined ? null : Number(r.price)
+    let title = r.col1, subtitle: string | undefined = r.col2 ?? undefined
+    let finalPrice: number | undefined = price ?? undefined
+    let priceLabel: string | undefined
+
+    if (r.kind === "RENTAL") {
+      priceLabel = "/mo"
+    } else if (r.kind === "REFERRAL") {
+      finalPrice = price ?? undefined
+      priceLabel = price ? "+/yr" : undefined
+    } else if (r.kind === "CARPOOL") {
+      title = `${r.col1} → ${r.col2}`
+      subtitle = `Departs ${r.col3}`
+      priceLabel = "/seat"
+    } else if (r.kind === "SKILL") {
+      subtitle = r.col2 ?? r.col3 ?? undefined
+      finalPrice = price ?? undefined
+      priceLabel = price ? "/hr" : undefined
+    } else if (r.kind === "EVENT") {
+      finalPrice = price && price > 0 ? price : undefined
+    }
+
+    return [{
+      id: r.id,
+      href: `/${HREF_BY_KIND[r.kind]}/${r.id}`,
+      title, subtitle,
+      price: finalPrice, priceLabel,
+      images: parseImages(r.images),
+      author,
+      badge: r.badge,
+      city: r.city,
+      createdAt: new Date(r.createdAt),
+    }]
+  })
 
   const hour = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", hour12: false })
   const greeting = Number(hour) < 12 ? "Good morning" : Number(hour) < 17 ? "Good afternoon" : "Good evening"

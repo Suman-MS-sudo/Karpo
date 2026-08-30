@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
@@ -63,14 +64,29 @@ export default async function ReferralsPage({ searchParams }: Props) {
   const session   = await auth()
   const myId      = session?.user?.id
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
-  const myReferralsCount = myId && !isPremium
-    ? await prisma.jobReferral.count({ where: { userId: myId, status: "OPEN" } })
-    : 0
-  const [openCount, hiringCompanies, deptCountRows] = await Promise.all([
-    prisma.jobReferral.count({ where: { status: "OPEN" } }),
-    prisma.jobReferral.findMany({ where: { status: "OPEN" }, select: { companyId: true }, distinct: ["companyId"] }),
+  // myReferralsCount/openCount/hiringCompanies-count folded into one round
+  // trip (was: a sequential await before the Promise.all, plus a
+  // findMany-just-for-.length inside it — 3 avoidable round trips). groupBy
+  // stays separate since it returns a multi-row shape.
+  const statsQuery = prisma.$queryRaw<Array<{
+    myReferralsCount: bigint; openCount: bigint; hiringCompanies: bigint
+  }>>(Prisma.sql`
+    SELECT
+      (SELECT COUNT(*) FROM "JobReferral" WHERE "userId" = ${myId ?? ""} AND status = 'OPEN') AS "myReferralsCount",
+      (SELECT COUNT(*) FROM "JobReferral" WHERE status = 'OPEN') AS "openCount",
+      (SELECT COUNT(DISTINCT "companyId") FROM "JobReferral" WHERE status = 'OPEN') AS "hiringCompanies"
+  `).then(([r]) => ({
+    myReferralsCount: Number(r.myReferralsCount),
+    openCount: Number(r.openCount),
+    hiringCompanies: Number(r.hiringCompanies),
+  }))
+
+  const [stats, deptCountRows] = await Promise.all([
+    statsQuery,
     prisma.jobReferral.groupBy({ by: ["department"], where: { status: "OPEN" }, _count: true }),
   ])
+  const myReferralsCount = myId && !isPremium ? stats.myReferralsCount : 0
+  const { openCount, hiringCompanies } = stats
   const deptCounts = Object.fromEntries(deptCountRows.map((r) => [r.department, r._count]))
 
   // Build Prisma filters
@@ -200,7 +216,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
         focusRing="focus:ring-sky-400/50"
         stats={[
           { value: openCount.toLocaleString(), label: "Open Referrals", gradient: "from-sky-300 to-blue-200" },
-          { value: hiringCompanies.length.toLocaleString(), label: "Companies Hiring", gradient: "from-indigo-300 to-violet-200" },
+          { value: hiringCompanies.toLocaleString(), label: "Companies Hiring", gradient: "from-indigo-300 to-violet-200" },
           { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/referrals/new", label: "Post Referral", icon: Plus }}

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import {
   Sparkles, Plus, Wrench, Star, Heart, CheckCircle2, ArrowRight,
   Code2, Palette, Megaphone, PenTool, Briefcase, TrendingUp,
@@ -40,12 +41,30 @@ function initials(name: string | null) {
 }
 
 export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const [total, byCategory, ratingAgg, orderAgg, verifiedUsers, featured] = await Promise.all([
-    prisma.skillListing.count({ where: { status: "ACTIVE" } }),
+  // The 4 scalar aggregates below (count/avg/sum/distinct-count) used to be
+  // 4 separate round trips; folded into one raw query since this DB's libsql
+  // adapter doesn't pipeline concurrent requests (each prisma call is its
+  // own ~30ms network hop regardless of Promise.all). groupBy and the
+  // featured-listings join stay as their own queries since they return
+  // multi-row/joined shapes that don't fit a single scalar-subquery SELECT.
+  const statsQuery = prisma.$queryRaw<Array<{
+    total: bigint; avgRating: number | null; completedProjects: bigint; verifiedCount: bigint
+  }>>(Prisma.sql`
+    SELECT
+      (SELECT COUNT(*) FROM "SkillListing" WHERE status = 'ACTIVE') AS total,
+      (SELECT AVG("avgRating") FROM "SkillListing" WHERE status = 'ACTIVE' AND "reviewCount" > 0) AS "avgRating",
+      (SELECT COALESCE(SUM("completedOrders"),0) FROM "SkillListing" WHERE status = 'ACTIVE') AS "completedProjects",
+      (SELECT COUNT(DISTINCT "userId") FROM "SkillListing" WHERE status = 'ACTIVE') AS "verifiedCount"
+  `).then(([r]) => ({
+    total: Number(r.total),
+    avgRating: r.avgRating,
+    completedProjects: Number(r.completedProjects),
+    verifiedCount: Number(r.verifiedCount),
+  }))
+
+  const [stats, byCategory, featured] = await Promise.all([
+    statsQuery,
     prisma.skillListing.groupBy({ by: ["category"], where: { status: "ACTIVE" }, _count: { _all: true } }),
-    prisma.skillListing.aggregate({ where: { status: "ACTIVE", reviewCount: { gt: 0 } }, _avg: { avgRating: true } }),
-    prisma.skillListing.aggregate({ where: { status: "ACTIVE" }, _sum: { completedOrders: true } }),
-    prisma.skillListing.findMany({ where: { status: "ACTIVE" }, select: { userId: true }, distinct: ["userId"] }),
     prisma.skillListing.findMany({
       where: { status: "ACTIVE" },
       orderBy: [{ isFeatured: "desc" }, { avgRating: "desc" }],
@@ -54,15 +73,14 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
     }),
   ])
 
+  const { total, avgRating, completedProjects, verifiedCount } = stats
   const countByCategory = Object.fromEntries(byCategory.map(c => [c.category, c._count._all]))
-  const avgRating         = ratingAgg._avg.avgRating
-  const completedProjects = orderAgg._sum.completedOrders ?? 0
 
   return (
     <div className="min-h-full bg-background">
       <SkillsHero
         totalListings={total}
-        verifiedCount={verifiedUsers.length}
+        verifiedCount={verifiedCount}
         completedProjects={completedProjects}
         avgRating={avgRating}
         isLoggedIn={isLoggedIn}

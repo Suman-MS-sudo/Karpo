@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { ChevronLeft, Plus, Sparkles, Bot } from "lucide-react"
@@ -133,14 +134,31 @@ export default async function SkillsPage({ searchParams }: PageProps) {
     ])
   }
 
-  const [byCategory, locationRows, allActiveCount, verifiedUsers, orderAgg, ratingAgg] = await Promise.all([
+  // allActiveCount/verifiedUsers-count/orderAgg/ratingAgg folded into one
+  // raw round trip — see SkillsLanding.tsx for why (libsql adapter doesn't
+  // pipeline concurrent requests). groupBy/locationRows stay separate since
+  // they return multi-row shapes.
+  const statsQuery = prisma.$queryRaw<Array<{
+    allActiveCount: bigint; completedOrders: bigint; avgRating: number | null; verifiedCount: bigint
+  }>>(Prisma.sql`
+    SELECT
+      (SELECT COUNT(*) FROM "SkillListing" WHERE status = 'ACTIVE') AS "allActiveCount",
+      (SELECT COALESCE(SUM("completedOrders"),0) FROM "SkillListing" WHERE status = 'ACTIVE') AS "completedOrders",
+      (SELECT AVG("avgRating") FROM "SkillListing" WHERE status = 'ACTIVE' AND "reviewCount" > 0) AS "avgRating",
+      (SELECT COUNT(DISTINCT "userId") FROM "SkillListing" WHERE status = 'ACTIVE') AS "verifiedCount"
+  `).then(([r]) => ({
+    allActiveCount: Number(r.allActiveCount),
+    completedOrders: Number(r.completedOrders),
+    avgRating: r.avgRating,
+    verifiedCount: Number(r.verifiedCount),
+  }))
+
+  const [byCategory, locationRows, stats] = await Promise.all([
     prisma.skillListing.groupBy({ by: ["category"], where: { status: "ACTIVE" }, _count: { _all: true } }),
     prisma.skillListing.findMany({ where: { status: "ACTIVE", location: { not: null } }, select: { location: true }, distinct: ["location"] }),
-    prisma.skillListing.count({ where: { status: "ACTIVE" } }),
-    prisma.skillListing.findMany({ where: { status: "ACTIVE" }, select: { userId: true }, distinct: ["userId"] }),
-    prisma.skillListing.aggregate({ where: { status: "ACTIVE" }, _sum: { completedOrders: true } }),
-    prisma.skillListing.aggregate({ where: { status: "ACTIVE", reviewCount: { gt: 0 } }, _avg: { avgRating: true } }),
+    statsQuery,
   ])
+  const { allActiveCount, completedOrders: orderAggSum, avgRating: ratingAggAvg, verifiedCount } = stats
 
   const categoryCounts = Object.fromEntries(byCategory.map(c => [c.category, c._count._all]))
   const locations       = locationRows.map(r => r.location).filter((l): l is string => !!l).sort()
@@ -159,9 +177,9 @@ export default async function SkillsPage({ searchParams }: PageProps) {
     <div className="min-h-full bg-background">
       <SkillsHero
         totalListings={allActiveCount}
-        verifiedCount={verifiedUsers.length}
-        completedProjects={orderAgg._sum.completedOrders ?? 0}
-        avgRating={ratingAgg._avg.avgRating}
+        verifiedCount={verifiedCount}
+        completedProjects={orderAggSum}
+        avgRating={ratingAggAvg}
         isLoggedIn={!!session}
         defaultQuery={searchParams.q ?? ""}
         compact
