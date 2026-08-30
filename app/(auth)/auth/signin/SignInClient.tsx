@@ -109,7 +109,16 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       const res  = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          // This same handler is also used to resend the code mid-registration
+          // (see the Resend button), so it must keep telling the API this is a
+          // signup once registering starts — otherwise a resend would get
+          // rejected as "no account found" for a brand-new email.
+          ...(registering
+            ? { intent: "register", phone: regPhone.trim() }
+            : { intent: "signin" }),
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Failed to send code"); return }
@@ -126,7 +135,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setLoading(false)
     }
-  }, [email])
+  }, [email, registering, regPhone])
 
   // ── OTP box keyboard handling ───────────────────────────────────────────────
   const handleOtpChange = (index: number, value: string) => {
@@ -203,6 +212,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           setError(
             result.code === "account_disabled"
               ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+              : result.code === "too_many_attempts"
+              ? "Too many incorrect attempts. Please wait 10 minutes and try again."
               : "Invalid or expired code. Please try again."
           )
           setOtp(["", "", "", "", "", ""])
@@ -453,6 +464,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         setError(
           result.code === "account_disabled"
             ? "Your account has been disabled. Contact an administrator if you think this is a mistake."
+            : result.code === "too_many_attempts"
+            ? "Too many incorrect attempts. Please wait 10 minutes and try again."
             : "Incorrect email or password."
         )
         return
@@ -553,8 +566,6 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const [idFullName, setIdFullName]       = useState("")
   const [idCorpEmail, setIdCorpEmail]     = useState("")
   const [idPhone, setIdPhone]             = useState("")
-  const [idDesignation, setIdDesignation] = useState("")
-  const [idEmployeeId, setIdEmployeeId]   = useState("")
   const [idPassword, setIdPassword]       = useState("")
   const [idPasswordConfirm, setIdPasswordConfirm] = useState("")
   const [idAgreed, setIdAgreed] = useState(false)
@@ -598,8 +609,6 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           fullName: idFullName.trim(),
           corpEmail: idCorpEmail.trim().toLowerCase(),
           phone: idPhone.trim(),
-          designation: idDesignation.trim() || undefined,
-          employeeId: idEmployeeId.trim() || undefined,
           frontImageUrl: idFront.url,
           backImageUrl: idBack.url,
           password: idPassword,
@@ -613,7 +622,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setIdSubmitting(false)
     }
-  }, [idFullName, idCorpEmail, idPhone, idDesignation, idEmployeeId, idFront, idBack, idPassword, idPasswordConfirm, idAgreed])
+  }, [idFullName, idCorpEmail, idPhone, idFront, idBack, idPassword, idPasswordConfirm, idAgreed])
 
   const urlError = params.get("error")
 
@@ -825,7 +834,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         <div className="space-y-4">
           <button
             type="button"
-            onClick={() => { setError(""); setStep("phone") }}
+            onClick={() => { setError(""); setEmail(""); setStep("phone") }}
             className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
           >
             <div className="h-10 w-10 rounded-lg bg-brand-green-50 dark:bg-brand-green-600/10 flex items-center justify-center shrink-0">
@@ -842,7 +851,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <button
             type="button"
-            onClick={() => { setError(""); setStep("password") }}
+            onClick={() => { setError(""); setEmail(""); setStep("password") }}
             className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
           >
             <div className="h-10 w-10 rounded-lg bg-brand-yellow-50 dark:bg-brand-yellow-600/10 flex items-center justify-center shrink-0">
@@ -858,7 +867,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           {FIREBASE_PHONE_AUTH_ENABLED && (
             <button
               type="button"
-              onClick={() => { setError(""); setStep("fb-phone") }}
+              onClick={() => { setError(""); setEmail(""); setStep("fb-phone") }}
               className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
             >
               <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
@@ -876,7 +885,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           {callbackUrl.startsWith("/admin") && (
             <button
               type="button"
-              onClick={() => { setError(""); setRegistering(false); setStep("email-otp") }}
+              onClick={() => { setError(""); setEmail(""); setRegistering(false); setStep("email-otp") }}
               className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
             >
               <div className="h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center shrink-0">
@@ -1131,17 +1140,6 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <div className="space-y-1.5">
             <Label htmlFor="id-phone">Phone number</Label>
             <Input id="id-phone" type="tel" placeholder="+91 98765 43210" value={idPhone} onChange={(e) => setIdPhone(e.target.value)} required />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="id-designation">Designation (optional)</Label>
-              <Input id="id-designation" value={idDesignation} onChange={(e) => setIdDesignation(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="id-employee-id">Employee ID (optional)</Label>
-              <Input id="id-employee-id" value={idEmployeeId} onChange={(e) => setIdEmployeeId(e.target.value)} />
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

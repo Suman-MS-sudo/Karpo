@@ -7,6 +7,47 @@ const DEV_DOMAINS: Record<string, string> = {
   "korpo.com": "Korpo",
 }
 
+// Internal/dev domains are pre-provisioned, not self-serve — an email on one
+// of these domains must already have a User row; typos of them (e.g.
+// korpo.commm) must never fall through to "new account will be created".
+export const RESERVED_DOMAINS = new Set(Object.keys(DEV_DOMAINS))
+
+function levenshtein(a: string, b: string): number {
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)])
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1])
+    }
+  }
+  return dp[a.length][b.length]
+}
+
+// Collapses runs of the same repeated character down to one, so a held/
+// double-tapped key (korpo.commmmmm) normalizes to the same string regardless
+// of how many times the key repeated — length-based diffing can't handle
+// that since the typo can be arbitrarily long.
+function collapseRepeats(s: string): string {
+  return s.replace(/(.)\1+/g, "$1")
+}
+
+// Catches near-miss typos of a reserved domain (korpo.commm, korp0.com,
+// korpo.commmmmm, ...) so they get treated as an attempt at the real reserved
+// domain rather than sailing through as some brand-new, unrelated corporate
+// domain.
+export function matchesReservedDomainTypo(domain: string): boolean {
+  const collapsed = collapseRepeats(domain)
+  for (const reserved of RESERVED_DOMAINS) {
+    if (domain === reserved) continue
+    if (collapsed === reserved) return true
+    if (Math.abs(domain.length - reserved.length) > 2) continue
+    if (levenshtein(domain, reserved) <= 2) return true
+  }
+  return false
+}
+
 // Shared user-provisioning logic used by both the OTP credentials flow and
 // OAuth flows (LinkedIn) — keeps company-linking/CompanyRequest/dev-domain
 // behavior consistent across sign-in methods. Both flows are trusted enough

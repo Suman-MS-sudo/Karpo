@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { isDomainBlocked } from "@/lib/domains"
+import { RESERVED_DOMAINS, matchesReservedDomainTypo } from "@/lib/auth-provision"
 import { sendOTPEmail } from "@/lib/email"
 import { normalizePhone } from "@/lib/phone"
 import { randomInt } from "crypto"
 
 export async function POST(req: Request) {
   try {
-  const { email, phone: rawPhone } = await req.json()
+  const { email, phone: rawPhone, intent } = await req.json()
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Email is required" }, { status: 400 })
@@ -65,6 +66,32 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Too many requests. Please wait 10 minutes before requesting a new code." },
       { status: 429 }
+    )
+  }
+
+  // ── Reserved internal domains never self-serve-signup ──────────────────────
+  // korpo.com/testcorp.com accounts are pre-provisioned, not opened up to
+  // whoever types that domain — including typos that are one character off
+  // (korpo.commm) but land on an unrelated, unblocked TLD and would otherwise
+  // sail through as "new account will be created".
+  const domain = normalized.split("@")[1]
+  if (!isAdmin && (RESERVED_DOMAINS.has(domain) || matchesReservedDomainTypo(domain)) && !existingUser) {
+    return NextResponse.json(
+      { error: "No account found with this email." },
+      { status: 404 }
+    )
+  }
+
+  // ── Sign In is not Sign Up ──────────────────────────────────────────────────
+  // The plain Sign In screen must only authenticate an existing account — it
+  // must never silently provision one just because the typed address passed
+  // domain validation. Account creation is the Register flow's job (intent
+  // "register", carrying phone); anyone landing here with no account is
+  // pointed at Register instead of getting an OTP that would create one.
+  if (intent === "signin" && !isAdmin && !existingUser) {
+    return NextResponse.json(
+      { error: "No account found with this email. Please sign up instead." },
+      { status: 404 }
     )
   }
 
