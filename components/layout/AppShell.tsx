@@ -6,6 +6,7 @@ import { Sidebar } from "./Sidebar"
 import { ServiceRail } from "./ServiceRail"
 import { TopNav } from "./TopNav"
 import { MobileNav } from "./MobileNav"
+import { RouteProgressBar } from "./RouteProgressBar"
 import { ChatProvider } from "@/components/chat/ChatContext"
 import { FloatingChatContainer } from "@/components/chat/FloatingChatContainer"
 import { LocationPromptModal } from "./LocationPromptModal"
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ChatProvider>
+      <RouteProgressBar />
       <div className="fixed inset-0 flex overflow-hidden">
 
         {/* ── Desktop 3-column layout ─────────────────────────────── */}
