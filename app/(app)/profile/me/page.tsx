@@ -21,6 +21,9 @@ import { PROFILE_SOCIAL_PLATFORMS } from "@/lib/socialPlatforms"
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
+// Temporarily disabled — re-enable once the donor-matching feature is ready.
+const BLOOD_DONATION_ENABLED = false
+
 // ── Types ─────────────────────────────────────────────────────────────────
 
 type SocialLinks = Record<string, string>
@@ -29,8 +32,6 @@ type ProfileForm = {
   name:       string
   bio:        string
   city:       string
-  jobTitle:   string
-  department: string
   phone:      string
   username:   string
   yearsOfExp: string
@@ -41,7 +42,7 @@ type ProfileForm = {
 }
 
 const EMPTY_FORM: ProfileForm = {
-  name: "", bio: "", city: "", jobTitle: "", department: "",
+  name: "", bio: "", city: "",
   phone: "", username: "", yearsOfExp: "", skills: [], socialLinks: {},
   bloodGroup: "", bloodDonationOptIn: false,
 }
@@ -59,8 +60,6 @@ function calcCompletion(form: ProfileForm, hasAvatar: boolean): number {
     !!form.name,
     !!form.bio && form.bio.length > 20,
     !!form.city,
-    !!form.jobTitle,
-    !!form.department,
     !!form.phone,
     hasAvatar,
     form.skills.length > 0,
@@ -101,8 +100,6 @@ export default function EditProfilePage() {
           name:        d.name        ?? "",
           bio:         d.bio         ?? "",
           city:        d.city        ?? "",
-          jobTitle:    d.jobTitle    ?? "",
-          department:  d.department  ?? "",
           phone:       d.phone       ?? "",
           username:    d.username    ?? "",
           yearsOfExp:  d.yearsOfExp  != null ? String(d.yearsOfExp) : "",
@@ -325,25 +322,6 @@ export default function EditProfilePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Job Title</Label>
-                <Input
-                  value={form.jobTitle}
-                  onChange={(e) => setForm((f) => ({ ...f, jobTitle: e.target.value }))}
-                  placeholder="e.g. Software Engineer"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Department</Label>
-                <Input
-                  value={form.department}
-                  onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-                  placeholder="e.g. Engineering"
-                />
-              </div>
-            </div>
-
             {/* Company — read-only, derived from work email domain */}
             <div className="space-y-1.5">
               <Label className="flex items-center gap-1.5">
@@ -423,42 +401,44 @@ export default function EditProfilePage() {
               />
             </div>
 
-            <div className="space-y-2 rounded-xl border border-border p-4">
-              <Label className="flex items-center gap-2"><Droplet className="h-3.5 w-3.5" /> Blood Group</Label>
-              {hasSavedBloodGroup ? (
-                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40">
-                  <Droplet className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">{form.bloodGroup}</span>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {BLOOD_GROUPS.map((bg) => (
-                    <button
-                      key={bg}
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, bloodGroup: f.bloodGroup === bg ? "" : bg }))}
-                      className={cn(
-                        "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
-                        form.bloodGroup === bg
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background border-input hover:bg-muted"
-                      )}
-                    >
-                      {bg}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={form.bloodDonationOptIn}
-                  onChange={(e) => setForm((f) => ({ ...f, bloodDonationOptIn: e.target.checked }))}
-                />
-                I consent to share my blood group with Korpo and be notified when a colleague nearby needs my blood type for donation.
-              </label>
-            </div>
+            {BLOOD_DONATION_ENABLED && (
+              <div className="space-y-2 rounded-xl border border-border p-4">
+                <Label className="flex items-center gap-2"><Droplet className="h-3.5 w-3.5" /> Blood Group</Label>
+                {hasSavedBloodGroup ? (
+                  <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40">
+                    <Droplet className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">{form.bloodGroup}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {BLOOD_GROUPS.map((bg) => (
+                      <button
+                        key={bg}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, bloodGroup: f.bloodGroup === bg ? "" : bg }))}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors",
+                          form.bloodGroup === bg
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-input hover:bg-muted"
+                        )}
+                      >
+                        {bg}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={form.bloodDonationOptIn}
+                    onChange={(e) => setForm((f) => ({ ...f, bloodDonationOptIn: e.target.checked }))}
+                  />
+                  I consent to share my blood group with Korpo and be notified when a colleague nearby needs my blood type for donation.
+                </label>
+              </div>
+            )}
           </div>
         )}
 

@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { User, MapPin, Briefcase, ArrowRight, Droplet, LocateFixed, Loader2 } from "lucide-react"
+import { User, MapPin, ArrowRight, Droplet, LocateFixed, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,6 +12,9 @@ import { CITIES } from "@/config/services"
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
+// Temporarily disabled — re-enable once the donor-matching feature is ready.
+const BLOOD_DONATION_ENABLED = false
+
 export default function OnboardPage() {
   const { data: session, update } = useSession()
   const [loading, setLoading] = useState(false)
@@ -20,8 +23,6 @@ export default function OnboardPage() {
   const [form, setForm] = useState({
     name: session?.user?.name ?? "",
     city: "",
-    department: "",
-    jobTitle: "",
     bio: "",
     bloodGroup: "",
     bloodDonationOptIn: false,
@@ -110,25 +111,6 @@ export default function OnboardPage() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="flex items-center gap-2"><Briefcase className="h-3.5 w-3.5" /> Job Title</Label>
-            <Input
-              placeholder="e.g. Software Engineer"
-              value={form.jobTitle}
-              onChange={(e) => setForm((f) => ({ ...f, jobTitle: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Department</Label>
-            <Input
-              placeholder="e.g. Engineering"
-              value={form.department}
-              onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-            />
-          </div>
-        </div>
-
         <div className="space-y-1.5">
           <Label>Short Bio <span className="text-muted-foreground font-normal">(optional)</span></Label>
           <Textarea
@@ -139,34 +121,36 @@ export default function OnboardPage() {
           />
         </div>
 
-        <div className="space-y-2 rounded-xl border border-border p-4">
-          <Label className="flex items-center gap-2"><Droplet className="h-3.5 w-3.5" /> Blood Group <span className="text-muted-foreground font-normal">(optional)</span></Label>
-          <div className="flex flex-wrap gap-2">
-            {BLOOD_GROUPS.map((bg) => (
-              <button
-                key={bg}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, bloodGroup: f.bloodGroup === bg ? "" : bg }))}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                  form.bloodGroup === bg
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-input hover:bg-muted"
-                }`}
-              >
-                {bg}
-              </button>
-            ))}
+        {BLOOD_DONATION_ENABLED && (
+          <div className="space-y-2 rounded-xl border border-border p-4">
+            <Label className="flex items-center gap-2"><Droplet className="h-3.5 w-3.5" /> Blood Group <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <div className="flex flex-wrap gap-2">
+              {BLOOD_GROUPS.map((bg) => (
+                <button
+                  key={bg}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, bloodGroup: f.bloodGroup === bg ? "" : bg }))}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                    form.bloodGroup === bg
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background border-input hover:bg-muted"
+                  }`}
+                >
+                  {bg}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={form.bloodDonationOptIn}
+                onChange={(e) => setForm((f) => ({ ...f, bloodDonationOptIn: e.target.checked }))}
+              />
+              I consent to share my blood group with Korpo and be notified when a colleague nearby needs my blood type for donation.
+            </label>
           </div>
-          <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              checked={form.bloodDonationOptIn}
-              onChange={(e) => setForm((f) => ({ ...f, bloodDonationOptIn: e.target.checked }))}
-            />
-            I consent to share my blood group with Korpo and be notified when a colleague nearby needs my blood type for donation.
-          </label>
-        </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
