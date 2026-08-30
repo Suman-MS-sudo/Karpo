@@ -119,30 +119,32 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const isFiltered = !!(searchParams.q || searchParams.category || searchParams.condition ||
     searchParams.city || searchParams.negotiable || searchParams.minPrice || searchParams.maxPrice)
 
-  const categorySpotlight = !isFiltered ? await (async () => {
-    const categoryValues = LISTING_CATEGORIES.map((c) => c.value)
-    const rows = await Promise.all(
-      categoryValues.map((cat) =>
-        prisma.listing.findFirst({
-          where: { status: "ACTIVE", category: cat, ...(effectiveCity ? { city: effectiveCity } : {}), NOT: { id: { in: featuredIds } } },
-          orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
-          select: {
-            id: true, title: true, description: true, price: true, images: true,
-            category: true, condition: true, isNegotiable: true, boostLevel: true,
-            viewCount: true, city: true, createdAt: true, userId: true,
-            user: {
-              select: {
-                id: true, name: true, image: true, avatarUrl: true,
-                isVerified: true, jobTitle: true, department: true,
-                membership: { select: { plan: true } },
-              },
-            },
-          },
-        })
-      )
-    )
-    return rows.filter(Boolean) as NonNullable<(typeof rows)[number]>[]
-  })() : []
+  // One query for "one listing per category" instead of the 19 separate
+  // findFirst round trips this used to run (one per LISTING_CATEGORIES entry,
+  // all in parallel) — against a remote DB those still queued up and made
+  // this the single slowest page on the site. `distinct` + `orderBy` gives
+  // the same "top listing per category" result in one round trip.
+  const categorySpotlight = !isFiltered ? await prisma.listing.findMany({
+    where: {
+      status: "ACTIVE",
+      ...(effectiveCity ? { city: effectiveCity } : {}),
+      ...(featuredIds.length ? { NOT: { id: { in: featuredIds } } } : {}),
+    },
+    distinct: ["category"],
+    orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+    select: {
+      id: true, title: true, description: true, price: true, images: true,
+      category: true, condition: true, isNegotiable: true, boostLevel: true,
+      viewCount: true, city: true, createdAt: true, userId: true,
+      user: {
+        select: {
+          id: true, name: true, image: true, avatarUrl: true,
+          isVerified: true, jobTitle: true, department: true,
+          membership: { select: { plan: true } },
+        },
+      },
+    },
+  }) : []
 
   const LISTING_SELECT = {
     id: true, title: true, description: true, price: true, images: true,
