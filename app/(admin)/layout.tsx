@@ -5,6 +5,6 @@ import { AppShell } from "@/components/layout/AppShell"
 export default async function AdminGroupLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   if (!session?.user) redirect("/auth/signin?callbackUrl=/admin")
-  if (session.user.role !== "ADMIN") redirect("/dashboard")
+  if (session.user.role !== "ADMIN") redirect("/auth/signin")
   return <AppShell>{children}</AppShell>
 }
