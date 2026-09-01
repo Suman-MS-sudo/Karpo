@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Settings2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { formatDate } from "@/lib/utils"
+import { formatDate, formatDateTime } from "@/lib/utils"
 import { UserActions } from "./UserActions"
 
 export interface UserRow {
@@ -61,6 +61,33 @@ export function UsersTable({ users, currentAdminId }: { users: UserRow[]; curren
   const [hidden, setHidden] = useState<Set<ColumnId>>(new Set())
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const topScrollRef   = useRef<HTMLDivElement>(null)
+  const tableScrollRef = useRef<HTMLDivElement>(null)
+  const [scrollWidth, setScrollWidth] = useState(0)
+
+  // Mirror a slim scrollbar above the table — dragging either one keeps the
+  // other in sync, since the real table is often taller than the viewport
+  // and its bottom scrollbar can be scrolled out of view.
+  useEffect(() => {
+    const el = tableScrollRef.current
+    if (!el) return
+    const update = () => setScrollWidth(el.scrollWidth)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hidden])
+
+  function syncFromTop() {
+    if (topScrollRef.current && tableScrollRef.current) {
+      tableScrollRef.current.scrollLeft = topScrollRef.current.scrollLeft
+    }
+  }
+  function syncFromTable() {
+    if (topScrollRef.current && tableScrollRef.current) {
+      topScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft
+    }
+  }
 
   // Read the saved column preference after mount only — reading localStorage
   // during the initial render would mismatch the server-rendered HTML (which
@@ -117,8 +144,12 @@ export function UsersTable({ users, currentAdminId }: { users: UserRow[]; curren
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse" style={{ minWidth: 960 }}>
+      <div ref={topScrollRef} onScroll={syncFromTop} className="overflow-x-auto overflow-y-hidden">
+        <div style={{ width: scrollWidth || "100%", height: 1 }} />
+      </div>
+
+      <div ref={tableScrollRef} onScroll={syncFromTable} className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse" style={{ minWidth: 1240 }}>
           <thead>
             <tr className="border-b border-border bg-muted/40">
               <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">User</th>
@@ -202,7 +233,7 @@ export function UsersTable({ users, currentAdminId }: { users: UserRow[]; curren
                 )}
                 {show("lastLogin") && (
                   <td className="px-4 py-3.5 text-xs text-muted-foreground whitespace-nowrap">
-                    {user.lastLoginAt ? formatDate(user.lastLoginAt) : <span className="text-muted-foreground/60">Never</span>}
+                    {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : <span className="text-muted-foreground/60">Never</span>}
                   </td>
                 )}
                 {show("activity") && (

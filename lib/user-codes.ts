@@ -18,16 +18,26 @@ export function formatReferralCode(sequence: number) {
  * added later once the batch is extended past 100).
  */
 export async function assignUserCode(userId: string) {
-  // The count-then-write below isn't atomic, so two registrations landing at
+  // The read-then-write below isn't atomic, so two registrations landing at
   // the same moment (e.g. a duplicate/retried sign-up request) can compute
   // the same next sequence number — whichever writes second hits the unique
   // constraint on userCode/referralCode. That happens *after* the user row
   // itself was already created, so retrying here (rather than letting it
   // throw) avoids failing the whole sign-in over an already-successful
   // account creation.
+  //
+  // The next sequence is derived from the *highest* userCode ever assigned,
+  // not a row count — a count regresses whenever an earlier user is deleted,
+  // which would hand out an already-taken code, exhaust every retry, and
+  // leave the new user with no userCode/referralCode at all.
   for (let attempt = 0; attempt < 5; attempt++) {
-    const sequence = await prisma.user.count({ where: { userCode: { not: null } } })
-    const nextSequence = sequence + 1 + attempt
+    const last = await prisma.user.findFirst({
+      where:   { userCode: { not: null } },
+      orderBy: { userCode: "desc" },
+      select:  { userCode: true },
+    })
+    const lastSequence = last?.userCode ? parseInt(last.userCode.slice(2), 10) || 0 : 0
+    const nextSequence = lastSequence + 1 + attempt
     const isFirstBatch = nextSequence <= FIRST_BATCH_SIZE
 
     try {
