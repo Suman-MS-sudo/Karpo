@@ -120,7 +120,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     },
   })
 
-  if (!raw) return <GoneNotice backHref="/marketplace" backLabel="Back to Marketplace" />
+  if (!raw) return <GoneNotice backHref="/marketplace" backLabel="Back to Buy & Sell" />
 
   const isOwner   = session?.user?.id === raw.userId
   const isSold    = raw.status === "SOLD"
@@ -165,7 +165,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             It may have been sold or has expired since you were notified.
           </p>
           <Button asChild>
-            <Link href="/marketplace">Back to Marketplace</Link>
+            <Link href="/marketplace">Back to Buy & Sell</Link>
           </Button>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-6 flex-wrap">
-        <Link href="/marketplace" className="hover:text-foreground transition-colors">Marketplace</Link>
+        <Link href="/marketplace" className="hover:text-foreground transition-colors">Buy & Sell</Link>
         {catMeta && (
           <>
             <ChevronRight className="h-3 w-3" />
@@ -255,10 +255,18 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         )}
       </nav>
 
+      {/*
+        Explicit grid placement (not just document order) so the sidebar
+        naturally lands between the two content blocks on mobile — where it
+        stacks as its own row, right after Handover Preference and before
+        Safety Guidelines — while still spanning both content rows as one
+        sticky right-hand column on desktop. This avoids rendering the
+        sidebar's stateful subcomponents (which fetch their own data) twice.
+      */}
       <div className="grid lg:grid-cols-3 gap-8 items-start">
 
-        {/* ── Left: main content ─────────────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-5">
+        {/* ── Left: main content, part 1 (through Handover Preference) ────── */}
+        <div className="lg:col-start-1 lg:col-span-2 lg:row-start-1 space-y-5">
 
           {/* Image gallery */}
           <div className="bg-muted/30 border border-border rounded-2xl overflow-hidden">
@@ -398,88 +406,14 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             </div>
           </SectionCard>
 
-          {/* Map */}
-          {hasLocation && (
-            <SectionCard title="Approximate Location" icon={MapPin}>
-              <MapView
-                latitude={listing.latitude!}
-                longitude={listing.longitude!}
-                address={listing.area ? `${listing.area}, ${listing.city}` : listing.city}
-                zoom={13}
-              />
-              <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                <Info className="h-3 w-3" />
-                Exact location shared by seller after you connect.
-              </p>
-            </SectionCard>
-          )}
-
-          {/* Safety guidelines */}
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 space-y-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <p className="font-semibold text-sm text-amber-800 dark:text-amber-300">Safety Guidelines</p>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-2.5">
-              {[
-                { icon: Users,        text: "Meet in a public place — office lobby, café, or mall." },
-                { icon: Eye,          text: "Inspect the item thoroughly before paying." },
-                { icon: AlertTriangle,text: "Never share OTP, passwords, or bank details." },
-                { icon: MessageSquare,text: "Keep all communication on Korpo for your records." },
-                { icon: ShieldCheck,  text: "Only buy from verified corporate employees." },
-                { icon: Zap,          text: "Report suspicious listings immediately." },
-              ].map(({ icon: Icon, text }, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <Icon className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-700 dark:text-amber-400 leading-snug">{text}</p>
-                </div>
-              ))}
-            </div>
-            {!isOwner && !isSold && (
-              <div className="pt-2 border-t border-amber-200 dark:border-amber-700">
-                <ReportButton listingId={listing.id} />
-              </div>
-            )}
-          </div>
-
-          {/* Similar listings */}
-          {similarListings.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold text-sm">Similar listings in {listing.city}</h2>
-                <Link href={`/marketplace?category=${listing.category}&city=${listing.city}`}
-                  className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
-                  View all <ExternalLink className="h-3 w-3" />
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {similarListings.map((s) => {
-                  const sc = LISTING_CONDITIONS.find((c) => c.value === s.condition)
-                  return (
-                    <Link key={s.id} href={`/marketplace/${s.id}`}
-                      className="group bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 hover:shadow-sm transition-all">
-                      <div className="relative aspect-square bg-muted">
-                        {s.images[0]
-                          ? <Image src={s.images[0]} alt={s.title} fill className="object-contain group-hover:scale-105 transition-transform" sizes="25vw" />
-                          : <Package className="h-8 w-8 text-muted-foreground/20 absolute inset-0 m-auto" />
-                        }
-                      </div>
-                      <div className="p-2.5">
-                        <p className="text-xs font-semibold truncate leading-tight">{s.title}</p>
-                        <p className="text-xs font-bold text-primary-600 mt-1">{formatCurrency(s.price)}</p>
-                        {sc && <p className="text-[10px] text-muted-foreground mt-0.5">{sc.label}</p>}
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
         </div>
 
-        {/* ── Right: sidebar ──────────────────────────────────────────────── */}
-        <div className="space-y-4 lg:sticky lg:top-8">
+        {/* ── Right: sidebar — price, seller/buyer panels. Explicitly placed
+            to span both content rows on desktop, but on mobile (where lg:
+            column/row placement doesn't apply) it simply falls in document
+            order — right after Handover Preference, before the map/safety/
+            similar-listings block below. ─────────────────────────────────── */}
+        <div className="space-y-4 lg:col-start-3 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-8">
 
           {/* Price card */}
           <div className="bg-card border border-border rounded-2xl p-5">
@@ -770,6 +704,89 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
           )}
+        </div>
+
+        {/* ── Left: main content, part 2 (map, safety, similar listings) ──── */}
+        <div className="lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-5">
+
+          {/* Map */}
+          {hasLocation && (
+            <SectionCard title="Approximate Location" icon={MapPin}>
+              <MapView
+                latitude={listing.latitude!}
+                longitude={listing.longitude!}
+                address={listing.area ? `${listing.area}, ${listing.city}` : listing.city}
+                zoom={13}
+              />
+              <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                <Info className="h-3 w-3" />
+                Exact location shared by seller after you connect.
+              </p>
+            </SectionCard>
+          )}
+
+          {/* Safety guidelines */}
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <p className="font-semibold text-sm text-amber-800 dark:text-amber-300">Safety Guidelines</p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              {[
+                { icon: Users,        text: "Meet in a public place — office lobby, café, or mall." },
+                { icon: Eye,          text: "Inspect the item thoroughly before paying." },
+                { icon: AlertTriangle,text: "Never share OTP, passwords, or bank details." },
+                { icon: MessageSquare,text: "Keep all communication on Korpo for your records." },
+                { icon: ShieldCheck,  text: "Only buy from verified corporate employees." },
+                { icon: Zap,          text: "Report suspicious listings immediately." },
+              ].map(({ icon: Icon, text }, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <Icon className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700 dark:text-amber-400 leading-snug">{text}</p>
+                </div>
+              ))}
+            </div>
+            {!isOwner && !isSold && (
+              <div className="pt-2 border-t border-amber-200 dark:border-amber-700">
+                <ReportButton listingId={listing.id} />
+              </div>
+            )}
+          </div>
+
+          {/* Similar listings */}
+          {similarListings.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-sm">Similar listings in {listing.city}</h2>
+                <Link href={`/marketplace?category=${listing.category}&city=${listing.city}`}
+                  className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
+                  View all <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {similarListings.map((s) => {
+                  const sc = LISTING_CONDITIONS.find((c) => c.value === s.condition)
+                  return (
+                    <Link key={s.id} href={`/marketplace/${s.id}`}
+                      className="group bg-card border border-border rounded-xl overflow-hidden hover:border-border/60 hover:shadow-sm transition-all">
+                      <div className="relative aspect-square bg-muted">
+                        {s.images[0]
+                          ? <Image src={s.images[0]} alt={s.title} fill className="object-contain group-hover:scale-105 transition-transform" sizes="25vw" />
+                          : <Package className="h-8 w-8 text-muted-foreground/20 absolute inset-0 m-auto" />
+                        }
+                      </div>
+                      <div className="p-2.5">
+                        <p className="text-xs font-semibold truncate leading-tight">{s.title}</p>
+                        <p className="text-xs font-bold text-primary-600 mt-1">{formatCurrency(s.price)}</p>
+                        {sc && <p className="text-[10px] text-muted-foreground mt-0.5">{sc.label}</p>}
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

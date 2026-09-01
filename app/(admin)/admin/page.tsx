@@ -102,7 +102,7 @@ export default async function AdminPage() {
   ]
 
   const serviceStats = [
-    { label: "Marketplace",  value: activeListings,   href: "/marketplace"  },
+    { label: "Buy & Sell",   value: activeListings,   href: "/marketplace"  },
     { label: "Rentals",      value: activeRentals,    href: "/rentals"      },
     { label: "Referrals",    value: activeReferrals,  href: "/referrals"    },
     { label: "Carpool",      value: activeRoutes,     href: "/carpool"      },

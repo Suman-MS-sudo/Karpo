@@ -1,65 +1,37 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSession, signOut } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import { useTheme } from "next-themes"
+import Link from "next/link"
 import Image from "next/image"
 import {
-  User, Phone, MapPin, Briefcase, Tag, FileText,
-  LogOut, Shield, Sun, Moon, Monitor, Check, Loader2, Camera, Settings,
+  Briefcase, LogOut, Shield, Sun, Moon, Monitor, Check, User, ArrowRight, Settings,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageTitle } from "@/components/ui/page-title"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
-import { getInitials } from "@/lib/utils"
 
-interface ProfileData {
-  name: string
-  bio: string
-  phone: string
-  city: string
-  department: string
-  jobTitle: string
-  avatarUrl: string
+interface AccountData {
   email: string
   company?: { name: string; logo?: string }
   isVerified: boolean
   role: string
 }
 
-type SaveState = "idle" | "saving" | "saved" | "error"
-
-const INPUT =
-  "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-600/50 focus:border-primary-600 transition-colors"
-
 const LABEL = "block text-xs font-medium text-muted-foreground mb-1.5"
 
 export default function SettingsPage() {
-  const { data: session } = useSession()
   const { resolvedTheme, setTheme } = useTheme()
 
-  const [form, setForm] = useState<ProfileData>({
-    name: "", bio: "", phone: "", city: "",
-    department: "", jobTitle: "", avatarUrl: "", email: "",
-    company: undefined, isVerified: false, role: "USER",
-  })
+  const [account, setAccount] = useState<AccountData>({ email: "", company: undefined, isVerified: false, role: "USER" })
   const [loading, setLoading] = useState(true)
-  const [save, setSave] = useState<SaveState>("idle")
-  const [error, setError] = useState("")
 
   useEffect(() => {
     fetch("/api/profile")
       .then((r) => r.json())
       .then((data) => {
-        setForm({
-          name:       data.name       ?? "",
-          bio:        data.bio        ?? "",
-          phone:      data.phone      ?? "",
-          city:       data.city       ?? "",
-          department: data.department ?? "",
-          jobTitle:   data.jobTitle   ?? "",
-          avatarUrl:  data.avatarUrl  ?? "",
+        setAccount({
           email:      data.email      ?? "",
           company:    data.company,
           isVerified: data.isVerified ?? false,
@@ -69,40 +41,10 @@ export default function SettingsPage() {
       })
   }, [])
 
-  const set = (field: keyof ProfileData) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setForm((p) => ({ ...p, [field]: e.target.value }))
-
-  const handleSave = async () => {
-    setSave("saving")
-    setError("")
-    const res = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        // city is intentionally omitted — it's managed exclusively by the
-        // top-nav location switcher, which is the single source of truth.
-        // This form used to also PATCH city from a form snapshot taken at
-        // page load, which could silently revert a location change made via
-        // the switcher after this page had already loaded.
-        name: form.name, bio: form.bio, phone: form.phone,
-        department: form.department,
-        jobTitle: form.jobTitle, avatarUrl: form.avatarUrl,
-      }),
-    })
-    if (res.ok) {
-      setSave("saved")
-      setTimeout(() => setSave("idle"), 2500)
-    } else {
-      setSave("error")
-      setError("Failed to save. Please try again.")
-    }
-  }
-
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
-        {[...Array(3)].map((_, i) => (
+        {[...Array(2)].map((_, i) => (
           <div key={i} className="bg-card border border-border rounded-2xl p-6 space-y-4 animate-pulse">
             <div className="h-4 w-32 bg-muted rounded-lg" />
             <div className="h-10 w-full bg-muted rounded-xl" />
@@ -117,120 +59,22 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
       {/* Header */}
-      <PageTitle badge="Settings" badgeIcon={Settings} title="Settings" subtitle="Manage your profile and preferences" />
+      <PageTitle badge="Settings" badgeIcon={Settings} title="Settings" subtitle="Manage your account and preferences" />
 
-      {/* ── Profile card ─────────────────────────────────────────────────── */}
-      <section className="bg-card border border-border rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-border">
-          <h2 className="font-semibold text-sm">Profile</h2>
+      {/* ── Profile link ─────────────────────────────────────────────────── */}
+      <Link
+        href="/profile/me"
+        className="flex items-center gap-3 bg-card border border-border rounded-2xl p-5 hover:border-primary-400 transition-colors group"
+      >
+        <div className="h-10 w-10 rounded-xl bg-primary-100 dark:bg-primary-500/15 flex items-center justify-center shrink-0">
+          <User className="h-5 w-5 text-primary-600 dark:text-primary-400" />
         </div>
-
-        <div className="p-6 space-y-5">
-          {/* Avatar row */}
-          <div className="flex items-center gap-4">
-            <div className="relative shrink-0">
-              <Avatar className="h-16 w-16 ring-2 ring-border">
-                <AvatarImage src={form.avatarUrl || session?.user?.image || ""} />
-                <AvatarFallback className="text-lg font-bold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
-                  {getInitials(form.name || session?.user?.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-card border border-border rounded-full flex items-center justify-center">
-                <Camera className="h-2.5 w-2.5 text-muted-foreground" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <label className={LABEL}>Avatar URL</label>
-              <input
-                className={INPUT}
-                placeholder="https://example.com/photo.jpg"
-                value={form.avatarUrl}
-                onChange={set("avatarUrl")}
-              />
-            </div>
-          </div>
-
-          {/* Name */}
-          <div>
-            <label className={LABEL}>
-              <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> Full Name</span>
-            </label>
-            <input className={INPUT} placeholder="Your full name" value={form.name} onChange={set("name")} />
-          </div>
-
-          {/* Bio */}
-          <div>
-            <label className={LABEL}>
-              <span className="flex items-center gap-1.5"><FileText className="h-3 w-3" /> Bio</span>
-            </label>
-            <textarea
-              className={`${INPUT} resize-none`}
-              rows={3}
-              placeholder="A short bio about yourself…"
-              value={form.bio}
-              onChange={set("bio")}
-            />
-          </div>
-
-          {/* 2-col row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={LABEL}>
-                <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> Phone</span>
-              </label>
-              <input className={INPUT} placeholder="+91 98765 43210" value={form.phone} onChange={set("phone")} />
-            </div>
-            <div>
-              <label className={LABEL}>
-                <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> City</span>
-              </label>
-              <div className={`${INPUT} opacity-60 cursor-not-allowed flex items-center justify-between`}>
-                <span>{form.city || "Not set"}</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Change your city from the location picker in the top navigation.
-              </p>
-            </div>
-          </div>
-
-          {/* 2-col row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={LABEL}>
-                <span className="flex items-center gap-1.5"><Briefcase className="h-3 w-3" /> Department</span>
-              </label>
-              <input className={INPUT} placeholder="Engineering" value={form.department} onChange={set("department")} />
-            </div>
-            <div>
-              <label className={LABEL}>
-                <span className="flex items-center gap-1.5"><Tag className="h-3 w-3" /> Job Title</span>
-              </label>
-              <input className={INPUT} placeholder="Senior Developer" value={form.jobTitle} onChange={set("jobTitle")} />
-            </div>
-          </div>
-
-          {/* Save */}
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <div className="flex items-center gap-3 pt-1">
-            <Button
-              onClick={handleSave}
-              disabled={save === "saving"}
-              className="gap-2"
-            >
-              {save === "saving" ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</>
-              ) : save === "saved" ? (
-                <><Check className="h-3.5 w-3.5" /> Saved</>
-              ) : "Save changes"}
-            </Button>
-            {save === "saved" && (
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                Profile updated
-              </span>
-            )}
-          </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm">Edit your profile</p>
+          <p className="text-xs text-muted-foreground">Name, photo, bio, phone, city, skills &amp; more</p>
         </div>
-      </section>
+        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+      </Link>
 
       {/* ── Appearance ────────────────────────────────────────────────────── */}
       <section className="bg-card border border-border rounded-2xl overflow-hidden">
@@ -287,8 +131,8 @@ export default function SettingsPage() {
           <div>
             <label className={LABEL}>Email address</label>
             <input
-              className={`${INPUT} opacity-60 cursor-not-allowed`}
-              value={form.email}
+              className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm opacity-60 cursor-not-allowed"
+              value={account.email}
               readOnly
               disabled
             />
@@ -298,18 +142,18 @@ export default function SettingsPage() {
           </div>
 
           {/* Company */}
-          {form.company && (
+          {account.company && (
             <div>
               <label className={LABEL}>Company</label>
               <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/30">
-                {form.company.logo ? (
-                  <Image src={form.company.logo} alt={form.company.name} width={20} height={20} className="rounded" />
+                {account.company.logo ? (
+                  <Image src={account.company.logo} alt={account.company.name} width={20} height={20} className="rounded" />
                 ) : (
                   <div className="h-5 w-5 rounded bg-muted flex items-center justify-center">
                     <Briefcase className="h-3 w-3 text-muted-foreground" />
                   </div>
                 )}
-                <span className="text-sm">{form.company.name}</span>
+                <span className="text-sm">{account.company.name}</span>
               </div>
             </div>
           )}
@@ -318,7 +162,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2">
             <Shield className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">
-              Role: <span className="font-medium text-foreground">{form.role}</span>
+              Role: <span className="font-medium text-foreground">{account.role}</span>
             </span>
           </div>
 

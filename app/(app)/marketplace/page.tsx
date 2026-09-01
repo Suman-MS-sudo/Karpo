@@ -15,7 +15,7 @@ import { LISTING_CATEGORIES } from "@/config/services"
 import { fuzzyFilter } from "@/lib/fuzzy"
 
 export const metadata: Metadata = {
-  title: "Marketplace",
+  title: "Buy & Sell",
   description: "Buy and sell electronics, furniture, vehicles and more with verified colleagues on Korpo's corporate marketplace.",
 }
 
@@ -206,7 +206,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     <div className="min-h-full bg-background">
       <PageHero
         imageUrl="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=85&auto=format&fit=crop"
-        eyebrow="Corporate Marketplace"
+        eyebrow="Buy & Sell"
         titleWhite="Buy &"
         titleAccent="Sell"
         description="Verified sellers from your corporate network."

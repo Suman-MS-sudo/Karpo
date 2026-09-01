@@ -192,8 +192,10 @@ export function ListingCard({
         </div>
 
         <div className="p-4">
-          {/* Category badge when no image */}
-          {!displayImage && badge && (
+          {/* Category badge — shown on every card, with or without an image,
+              so all sections tag their listings consistently (previously
+              only image-less cards, e.g. referrals, showed one). */}
+          {badge && (
             <div className="mb-2">
               <Badge variant={badgeVariant}>{badge}</Badge>
             </div>

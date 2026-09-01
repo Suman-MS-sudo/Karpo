@@ -16,7 +16,7 @@ export interface ServiceConfig {
 export const SERVICES: ServiceConfig[] = [
   {
     id: "buy-sell",
-    name: "Marketplace",
+    name: "Buy & Sell",
     icon: "ShoppingBag",
     description: "Buy and sell electronics, vehicles, furniture and more with verified colleagues",
     color: "text-blue-600 dark:text-blue-400",
