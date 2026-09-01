@@ -7,6 +7,7 @@ import { ShieldCheck, ArrowLeft, ArrowRight, Loader2, Mail, RefreshCw, IdCard, U
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { LegalModal } from "@/components/legal/LegalModal"
 import { isDomainBlocked } from "@/lib/domains"
@@ -952,9 +953,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <div className="space-y-1.5">
             <Label htmlFor="pw-password">Password</Label>
-            <Input
+            <PasswordInput
               id="pw-password"
-              type="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -1047,12 +1047,12 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
 
           <div className="space-y-1.5">
             <Label htmlFor="reset-new-password">New password</Label>
-            <Input id="reset-new-password" type="password" autoComplete="new-password"
+            <PasswordInput id="reset-new-password" autoComplete="new-password"
               value={resetNewPassword} onChange={(e) => setResetNewPassword(e.target.value)} required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="reset-new-password-confirm">Confirm new password</Label>
-            <Input id="reset-new-password-confirm" type="password" autoComplete="new-password"
+            <PasswordInput id="reset-new-password-confirm" autoComplete="new-password"
               value={resetNewPasswordConfirm} onChange={(e) => setResetNewPasswordConfirm(e.target.value)} required />
             {resetPasswordMismatch && (
               <p className="text-xs text-red-600 dark:text-red-400">Passwords do not match</p>
@@ -1145,12 +1145,12 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="id-password">Set a password</Label>
-              <Input id="id-password" type="password" autoComplete="new-password"
+              <PasswordInput id="id-password" autoComplete="new-password"
                 value={idPassword} onChange={(e) => setIdPassword(e.target.value)} required />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="id-password-confirm">Confirm password</Label>
-              <Input id="id-password-confirm" type="password" autoComplete="new-password"
+              <PasswordInput id="id-password-confirm" autoComplete="new-password"
                 value={idPasswordConfirm} onChange={(e) => setIdPasswordConfirm(e.target.value)} required />
             </div>
           </div>
