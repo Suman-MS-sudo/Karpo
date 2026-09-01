@@ -70,6 +70,16 @@ export async function POST(req: Request) {
 
   const body = await req.json()
 
+  if (!Array.isArray(body.images) || body.images.length === 0) {
+    return NextResponse.json({ error: "At least one photo is required" }, { status: 400 })
+  }
+  if (!body.description || !String(body.description).trim()) {
+    return NextResponse.json({ error: "A description is required" }, { status: 400 })
+  }
+  if (body.phone && !/^\d{10}$/.test(String(body.phone))) {
+    return NextResponse.json({ error: "Phone / WhatsApp must be a 10-digit number" }, { status: 400 })
+  }
+
   const violatingField = findContactInfoField({ title: body.title, description: body.description, brand: body.brand, warranty: body.warranty })
   if (violatingField) {
     return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })

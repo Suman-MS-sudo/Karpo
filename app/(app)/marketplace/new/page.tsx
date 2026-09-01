@@ -123,6 +123,9 @@ export default function NewListingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.category) { toast.error("Please select a category"); return }
+    if (images.length === 0) { toast.error("Please add at least one photo"); return }
+    if (!form.description.trim()) { toast.error("Please add a description"); return }
+    if (form.phone && form.phone.length !== 10) { toast.error("Phone / WhatsApp must be a 10-digit number"); return }
     setLoading(true)
     try {
       const res = await fetch("/api/listings", {
@@ -153,7 +156,7 @@ export default function NewListingPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <Link href="/marketplace" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 text-sm">
-        <ArrowLeft className="h-4 w-4" /> Back to Marketplace
+        <ArrowLeft className="h-4 w-4" /> Back to Buy & Sell
       </Link>
 
       <div className="flex items-center justify-between mb-6">
@@ -343,12 +346,19 @@ export default function NewListingPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Asking Price (₹) *</Label>
-              <Input
-                required type="number" min="1" max="10000000"
-                placeholder="e.g. 45000"
-                value={form.price}
-                onChange={(e) => set("price", e.target.value)}
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">₹</span>
+                <Input
+                  required type="text" inputMode="numeric"
+                  placeholder="e.g. 45,000"
+                  className="pl-7"
+                  value={form.price ? Number(form.price).toLocaleString("en-IN") : ""}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 8)
+                    set("price", digits)
+                  }}
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>City *</Label>
@@ -411,13 +421,19 @@ export default function NewListingPage() {
               <Label className="flex items-center gap-1.5">
                 <Phone className="h-3.5 w-3.5" /> Phone / WhatsApp
               </Label>
-              <Input
-                type="tel"
-                placeholder="e.g. 9876543210"
-                value={form.phone}
-                onChange={(e) => set("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
-                maxLength={10}
-              />
+              <div className="flex items-center gap-2">
+                <span className="flex items-center h-10 px-3 rounded-xl border border-input bg-muted/40 text-sm text-muted-foreground shrink-0">+91</span>
+                <Input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={form.phone}
+                  onChange={(e) => set("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  maxLength={10}
+                />
+              </div>
+              {form.phone && form.phone.length !== 10 && (
+                <p className="text-xs text-red-500">Enter a valid 10-digit number</p>
+              )}
               <p className="text-xs text-muted-foreground">Shared only with interested buyers</p>
             </div>
             <div className="space-y-1.5">
@@ -452,7 +468,7 @@ export default function NewListingPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Photos <span className="font-normal normal-case">(max {maxImages})</span>
+              Photos * <span className="font-normal normal-case">(max {maxImages})</span>
             </h2>
             {!isPremium && (
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
