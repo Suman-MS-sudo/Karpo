@@ -2,7 +2,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   Home, MessageSquare, Plus, LayoutGrid, Bell, User,
 } from "lucide-react"
@@ -103,6 +103,35 @@ export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [sheet, setSheet] = useState<"post" | "view" | null>(null)
+  const [unread, setUnread] = useState(0)
+
+  const fetchUnread = useCallback(() => {
+    fetch("/api/notifications?limit=20")
+      .then((r) => r.json())
+      .then((d) => setUnread((d.data ?? []).filter((n: { isRead: boolean }) => !n.isRead).length))
+      .catch(() => {})
+  }, [])
+
+  // Initial fetch + refresh whenever navigation happens, same pattern as the
+  // desktop NotificationBell. Visiting the Alerts page itself marks everything
+  // read there, so just clear the badge immediately instead of racing it.
+  useEffect(() => {
+    if (pathname === "/notifications") setUnread(0)
+    else fetchUnread()
+  }, [fetchUnread, pathname])
+
+  // Live push via SSE so the badge updates in real time, matching web.
+  useEffect(() => {
+    const source = new EventSource("/api/notifications/stream")
+    source.onmessage = () => setUnread((n) => n + 1)
+    return () => source.close()
+  }, [])
+
+  // Poll as a fallback safety net in case the SSE connection drops.
+  useEffect(() => {
+    const id = setInterval(fetchUnread, 60_000)
+    return () => clearInterval(id)
+  }, [fetchUnread])
 
   const handleSelect = (service: ServiceConfig) => {
     setSheet((current) => {
@@ -130,7 +159,14 @@ export function MobileNav() {
                 {isActive && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary-600 dark:bg-primary-400" />
                 )}
-                <Icon className={cn("h-5 w-5 transition-all", isActive ? "stroke-[2.5]" : "stroke-[1.75]")} />
+                <span className="relative">
+                  <Icon className={cn("h-5 w-5 transition-all", isActive ? "stroke-[2.5]" : "stroke-[1.75]")} />
+                  {key === "notifications" && unread > 0 && (
+                    <span className="absolute -top-1 -right-2 h-4 min-w-4 px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                </span>
                 {label}
               </>
             )

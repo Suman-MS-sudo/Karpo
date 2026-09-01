@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useSession } from "next-auth/react"
 import { MapPin, ChevronDown, Check, Loader2 } from "lucide-react"
 import { CITIES } from "@/config/services"
@@ -24,6 +25,8 @@ export function LocationSwitcher() {
   const [transition, setTransition] = useState<{ from: string | null; to: string } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   const city = pendingCity ?? session?.user?.city
 
@@ -97,6 +100,41 @@ export function LocationSwitcher() {
 
   if (!session?.user) return null
 
+  const list = (
+    <>
+      <input
+        ref={inputRef}
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search city…"
+        className="w-full h-9 px-3 mb-2 text-sm bg-muted/60 rounded-xl outline-none border border-transparent focus:border-primary-400"
+      />
+      <ul className="max-h-64 overflow-y-auto -mx-1">
+        {filtered.map((c) => {
+          const isActive = c === city
+          return (
+            <li key={c}>
+              <button
+                onClick={() => selectCity(c)}
+                className={cn(
+                  "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm text-left transition-colors hover:bg-muted",
+                  isActive && "font-semibold text-primary-600 dark:text-primary-400"
+                )}
+              >
+                {c}
+                {isActive && <Check className="h-3.5 w-3.5 shrink-0" />}
+              </button>
+            </li>
+          )
+        })}
+        {filtered.length === 0 && (
+          <li className="px-3 py-6 text-center text-xs text-muted-foreground">No matching city</li>
+        )}
+      </ul>
+    </>
+  )
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -115,42 +153,27 @@ export function LocationSwitcher() {
         )}
       </button>
 
+      {/* Desktop: positioned relative to the trigger, in normal DOM flow. */}
       {open && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden" onClick={() => setOpen(false)} />
-        <div className="fixed sm:absolute left-1/2 top-1/2 sm:left-auto sm:top-11 -translate-x-1/2 -translate-y-1/2 sm:translate-x-0 sm:translate-y-0 sm:right-0 z-50 w-[calc(100vw-2rem)] max-w-xs sm:w-72 bg-card border border-border rounded-2xl shadow-xl p-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search city…"
-            className="w-full h-9 px-3 mb-2 text-sm bg-muted/60 rounded-xl outline-none border border-transparent focus:border-primary-400"
-          />
-          <ul className="max-h-64 overflow-y-auto -mx-1">
-            {filtered.map((c) => {
-              const isActive = c === city
-              return (
-                <li key={c}>
-                  <button
-                    onClick={() => selectCity(c)}
-                    className={cn(
-                      "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm text-left transition-colors hover:bg-muted",
-                      isActive && "font-semibold text-primary-600 dark:text-primary-400"
-                    )}
-                  >
-                    {c}
-                    {isActive && <Check className="h-3.5 w-3.5 shrink-0" />}
-                  </button>
-                </li>
-              )
-            })}
-            {filtered.length === 0 && (
-              <li className="px-3 py-6 text-center text-xs text-muted-foreground">No matching city</li>
-            )}
-          </ul>
+        <div className="hidden sm:block absolute right-0 top-11 z-50 w-72 bg-card border border-border rounded-2xl shadow-xl p-3">
+          {list}
         </div>
-        </>
+      )}
+
+      {/* Mobile: portalled straight to <body> and centered on the real
+          viewport — the header this button lives in has backdrop-blur,
+          and CSS backdrop-filter creates a containing block for
+          position:fixed descendants, which would otherwise pin this
+          panel inside the header instead of centering it on screen
+          (same issue LocationChangeModal works around). */}
+      {open && mounted && createPortal(
+        <div className="sm:hidden">
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100vw-2rem)] max-w-xs bg-card border border-border rounded-2xl shadow-xl p-3">
+            {list}
+          </div>
+        </div>,
+        document.body
       )}
 
       {transition && <LocationChangeModal from={transition.from} to={transition.to} />}
