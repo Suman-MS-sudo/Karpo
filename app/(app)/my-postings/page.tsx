@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime, formatDate } from "@/lib/utils"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
+import { deleteExpiredReferrals } from "@/lib/referrals"
 
 export const metadata = { title: "My Postings" }
 export const dynamic  = "force-dynamic"
@@ -479,6 +480,8 @@ function OverviewSection({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function MyPostingsPage({ searchParams }: { searchParams: { tab?: string } }) {
+  await deleteExpiredReferrals()
+
   const session = await auth()
   const userId  = session!.user!.id
 

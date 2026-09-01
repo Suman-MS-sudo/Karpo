@@ -15,6 +15,7 @@ import { ReferralSearchBar } from "@/components/referrals/ReferralSearchBar"
 import { PageHero } from "@/components/shared/PageHero"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { formatRelativeTime } from "@/lib/utils"
+import { deleteExpiredReferrals } from "@/lib/referrals"
 import { fuzzyIncludes } from "@/lib/fuzzy"
 import Image from "next/image"
 
@@ -61,6 +62,8 @@ function SearchBarWrapper() {
 }
 
 export default async function ReferralsPage({ searchParams }: Props) {
+  await deleteExpiredReferrals()
+
   const session   = await auth()
   const myId      = session?.user?.id
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
@@ -92,9 +95,9 @@ export default async function ReferralsPage({ searchParams }: Props) {
   // Build Prisma filters
   const deptFilter     = searchParams.dept    ? searchParams.dept.split(",").filter(Boolean)    : []
   const cityFilter     = searchParams.city    ? searchParams.city.split(",").filter(Boolean)    : []
-  // Default to the user's own city (no explicit filter chip shown) when the
-  // user hasn't picked one themselves — mirrors the top-nav location switcher.
-  const effectiveCityFilter = cityFilter.length ? cityFilter : (session?.user?.city ? [session.user.city] : [])
+  // Listings show across all locations by default; the city filter only
+  // scopes results when the user explicitly picks one or more cities.
+  const effectiveCityFilter = cityFilter
   const modeFilter     = searchParams.mode    ? searchParams.mode.split(",").filter(Boolean)    : []
   const typeFilter     = searchParams.type    ? searchParams.type.split(",").filter(Boolean)    : []
   const companyQuery   = searchParams.company?.trim()

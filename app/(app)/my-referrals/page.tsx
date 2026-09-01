@@ -5,6 +5,7 @@ import { Plus, Briefcase, ExternalLink, Users, ChevronRight, Clock } from "lucid
 import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
+import { deleteExpiredReferrals } from "@/lib/referrals"
 
 export const metadata = { title: "My Referrals" }
 export const dynamic  = "force-dynamic"
@@ -25,6 +26,8 @@ const STATUS_STYLE: Record<string, string> = {
 interface PageProps { searchParams: { tab?: string } }
 
 export default async function MyReferralsPage({ searchParams }: PageProps) {
+  await deleteExpiredReferrals()
+
   const session = await auth()
   const userId  = session!.user!.id
   const tab     = TABS.find((t) => t.key === searchParams.tab)?.key ?? "all"

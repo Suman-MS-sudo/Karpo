@@ -1,91 +1,12 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   FileText, Loader2, CheckCircle2, XCircle, Clock,
-  ArrowRight, ExternalLink, MessageSquare, Upload, X,
+  ExternalLink, MessageSquare, X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const ALLOWED_RESUME_TYPES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]
-const MAX_RESUME_BYTES = 5 * 1024 * 1024 // 5MB
-
-function ResumeUpload({ value, fileName, onChange }: { value: string; fileName: string; onChange: (url: string, name: string) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setError("")
-
-    if (!ALLOWED_RESUME_TYPES.includes(file.type)) {
-      setError("Only PDF, DOC, or DOCX files are allowed")
-      if (inputRef.current) inputRef.current.value = ""
-      return
-    }
-    if (file.size > MAX_RESUME_BYTES) {
-      setError("File is too large — max 5MB")
-      if (inputRef.current) inputRef.current.value = ""
-      return
-    }
-
-    setLoading(true)
-    try {
-      const fd = new FormData()
-      fd.append("file", file)
-      const res = await fetch("/api/referrals/resume-upload", { method: "POST", body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? "Upload failed")
-      onChange(data.url, data.name ?? file.name)
-    } catch (err: any) {
-      setError(err.message ?? "Upload failed")
-    } finally {
-      setLoading(false)
-      if (inputRef.current) inputRef.current.value = ""
-    }
-  }
-
-  function clear() {
-    onChange("", "")
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <input ref={inputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleFile} />
-
-      {value ? (
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-input bg-muted/40 text-sm">
-          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
-          <span className="truncate flex-1">{fileName || "Resume uploaded"}</span>
-          <a href={value} download={fileName || undefined} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:underline shrink-0">View</a>
-          <button type="button" onClick={clear} className="text-muted-foreground hover:text-foreground shrink-0">
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={loading}
-          className="w-full flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-border hover:border-primary-400 hover:bg-primary-50/30 dark:hover:bg-primary-950/10 transition-all text-muted-foreground disabled:opacity-60"
-        >
-          {loading ? <Loader2 className="h-6 w-6 animate-spin text-primary-500" /> : <Upload className="h-6 w-6" />}
-          <p className="text-sm font-medium">{loading ? "Uploading…" : "Upload your resume/CV"}</p>
-          <p className="text-xs">PDF, DOC, or DOCX — max 5MB</p>
-        </button>
-      )}
-
-      {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
-  )
-}
 
 type AppStatus = "PENDING" | "SHORTLISTED" | "REFERRED" | "HIRED" | "REJECTED"
 type AppType   = "INTEREST" | "APPLICATION"
@@ -133,13 +54,8 @@ const JOURNEY_STEPS = [
 
 export function ReferralApplyPanel({ referralId, myApplication, referrerName, referralTitle }: Props) {
   const router = useRouter()
-  const [mode, setMode]       = useState<"options" | "apply">("options")
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState("")
-
-  // Form state — Show Interest only ever needs a resume/CV
-  const [resumeUrl, setResumeUrl] = useState("")
-  const [resumeFileName, setResumeFileName] = useState("")
 
   async function submit(type: AppType) {
     setLoading(true); setError("")
@@ -147,11 +63,7 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
       const res = await fetch(`/api/referrals/${referralId}/applications`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          type,
-          resumeUrl:      resumeUrl      || undefined,
-          resumeFileName: resumeFileName || undefined,
-        }),
+        body:    JSON.stringify({ type }),
       })
       let data: any = null
       try { data = await res.json() } catch { /* non-JSON error page */ }
@@ -249,8 +161,8 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
 
         {canUpgrade && (
           <Button className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => setMode("apply")}>
-            <FileText className="h-4 w-4" />Show Interest
+            disabled={loading} onClick={() => submit("APPLICATION")}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}Show Interest
           </Button>
         )}
 
@@ -277,36 +189,6 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
     )
   }
 
-  // Show Interest form — just a resume/CV, nothing else
-  if (mode === "apply") {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm">Show Interest</p>
-          <button onClick={() => setMode("options")} className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Cancel</button>
-        </div>
-
-        <div>
-          <label className="text-xs font-medium text-muted-foreground block mb-1.5">
-            Resume / CV <span className="text-red-500">*</span>
-          </label>
-          <ResumeUpload
-            value={resumeUrl}
-            fileName={resumeFileName}
-            onChange={(url, name) => { setResumeUrl(url); setResumeFileName(name) }}
-          />
-        </div>
-
-        {error && <p className="text-xs text-red-500">{error}</p>}
-
-        <Button className="w-full gap-2" disabled={!resumeUrl.trim() || loading} onClick={() => submit("APPLICATION")}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-          Show Interest
-        </Button>
-      </div>
-    )
-  }
-
   // Initial options
   return (
     <div className="space-y-3">
@@ -314,14 +196,14 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
 
       {error && <p className="text-xs text-red-500">{error}</p>}
 
-      <button disabled={loading} onClick={() => setMode("apply")}
+      <button disabled={loading} onClick={() => submit("APPLICATION")}
         className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50/60 dark:bg-blue-950/20 hover:bg-blue-100/60 dark:hover:bg-blue-900/30 transition-all text-left group disabled:opacity-50">
         <div className="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          {loading ? <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" /> : <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />}
         </div>
         <div>
           <p className="font-semibold text-sm">Show Interest</p>
-          <p className="text-xs text-muted-foreground">Upload your resume/CV — that's all it takes</p>
+          <p className="text-xs text-muted-foreground">One click — let the referrer know you're interested</p>
         </div>
       </button>
 

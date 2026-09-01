@@ -3,10 +3,13 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
+import { deleteExpiredReferrals } from "@/lib/referrals"
 
 export async function GET() {
   const { error } = await requireVerified()
   if (error) return error
+
+  await deleteExpiredReferrals()
 
   const referrals = await prisma.jobReferral.findMany({
     where:   { status: "OPEN" },

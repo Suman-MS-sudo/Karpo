@@ -456,8 +456,8 @@ model JobReferral {
   department       String
   experienceMin    Int
   experienceMax    Int
-  salaryMin        Int?
-  salaryMax        Int?
+  salaryMin        Float?
+  salaryMax        Float?
   skills           String    @default("[]")
   jobType          String?
   workMode         String?

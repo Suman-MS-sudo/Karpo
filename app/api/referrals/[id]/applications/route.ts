@@ -12,10 +12,6 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const { type = "APPLICATION", coverLetter, linkedIn, resumeUrl, resumeFileName, yearsExp, currentCompany, currentCtc, expectedCtc, noticePeriod } = await req.json()
 
-  if (!resumeUrl || !String(resumeUrl).trim()) {
-    return NextResponse.json({ error: "A resume/CV link is required to show interest or apply" }, { status: 400 })
-  }
-
   const violatingField = findContactInfoField({ coverLetter })
   if (violatingField) {
     return NextResponse.json({ error: contactInfoError(violatingField) }, { status: 400 })

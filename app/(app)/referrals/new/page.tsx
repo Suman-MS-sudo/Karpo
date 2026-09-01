@@ -14,6 +14,12 @@ import { CompanyAutocomplete } from "@/components/ui/company-autocomplete"
 import { DEPARTMENTS } from "@/config/services"
 import { cn } from "@/lib/utils"
 
+// LPA salary fields: up to 3 whole-number digits, optionally with up to 2
+// decimal places (e.g. "12", "120", "12.5") — matches the "(LPA)" label.
+function isValidLpa(value: string): boolean {
+  return value === "" || /^\d{0,3}(\.\d{0,2})?$/.test(value)
+}
+
 const REQUIRED_FIELDS = [
   "title", "companyName", "department", "jobType", "workMode",
   "experienceMin", "experienceMax", "description", "consent",
@@ -85,12 +91,10 @@ export default function NewReferralPage() {
     jobType:         "",
     workMode:        "",
     location:        "",
-    openings:        "1",
     experienceMin:   "",
     experienceMax:   "",
     salaryMin:       "",
     salaryMax:       "",
-    referralBonus:   "",
     internalCode:    "",
     deadline:        "",
     interviewProcess: "",
@@ -147,10 +151,8 @@ export default function NewReferralPage() {
           companyId,
           experienceMin: parseInt(form.experienceMin),
           experienceMax: parseInt(form.experienceMax),
-          openings:      parseInt(form.openings) || 1,
-          salaryMin:     form.salaryMin     ? parseInt(form.salaryMin)     : undefined,
-          salaryMax:     form.salaryMax     ? parseInt(form.salaryMax)     : undefined,
-          referralBonus: form.referralBonus ? parseInt(form.referralBonus) : undefined,
+          salaryMin:     form.salaryMin     ? parseFloat(form.salaryMin)   : undefined,
+          salaryMax:     form.salaryMax     ? parseFloat(form.salaryMax)   : undefined,
           deadline:      form.deadline      ? new Date(form.deadline)      : undefined,
         }),
       })
@@ -226,7 +228,7 @@ export default function NewReferralPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div ref={(el) => { fieldRefs.current.jobType = el }} className="space-y-1.5">
               <Label>Job Type <span className="text-red-500">*</span></Label>
               <Select required value={form.jobType} onValueChange={(v) => set("jobType", v)}>
@@ -252,10 +254,6 @@ export default function NewReferralPage() {
               </Select>
               {fieldErrors.workMode && <p className="text-xs text-red-500">Please select a work mode.</p>}
             </div>
-            <div className="space-y-1.5">
-              <Label>No. of Openings</Label>
-              <Input type="number" min="1" max="50" value={form.openings} onChange={(e) => set("openings", e.target.value)} />
-            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -274,15 +272,19 @@ export default function NewReferralPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Min Salary (LPA) <span className="text-muted-foreground font-normal text-xs">optional</span></Label>
-              <Input type="number" min="0" placeholder="12" value={form.salaryMin} onChange={(e) => set("salaryMin", e.target.value)} />
+              <Input
+                type="text" inputMode="decimal" placeholder="12"
+                value={form.salaryMin}
+                onChange={(e) => { if (isValidLpa(e.target.value)) set("salaryMin", e.target.value) }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Max Salary (LPA) <span className="text-muted-foreground font-normal text-xs">optional</span></Label>
-              <Input type="number" min="0" placeholder="24" value={form.salaryMax} onChange={(e) => set("salaryMax", e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Referral Bonus (₹) <span className="text-muted-foreground font-normal text-xs">optional</span></Label>
-              <Input type="number" placeholder="25000" value={form.referralBonus} onChange={(e) => set("referralBonus", e.target.value)} />
+              <Input
+                type="text" inputMode="decimal" placeholder="24"
+                value={form.salaryMax}
+                onChange={(e) => { if (isValidLpa(e.target.value)) set("salaryMax", e.target.value) }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Application Deadline <span className="text-muted-foreground font-normal text-xs">optional</span></Label>
@@ -370,9 +372,9 @@ export default function NewReferralPage() {
                 if (fieldErrors.consent) setFieldErrors((prev) => ({ ...prev, consent: false }))
               }}
             />
-            I confirm this referral reflects a genuine opening at my official employer and consciously posting it
-            here. Korpo is not involved in the hiring decision, terms, or outcome — it only facilitates the
-            connection between colleagues.
+            I confirm this referral reflects a genuine opening at my official employer. Referral posts are shared
+            by individual employees in their personal capacity. Korpo is not affiliated with, and does not verify
+            claims on behalf of, the referenced employer. Users should verify any opportunity independently.
           </label>
           {fieldErrors.consent && <p className="text-xs text-red-500">Please confirm you agree before posting.</p>}
         </div>

@@ -17,6 +17,7 @@ import { formatDate } from "@/lib/utils"
 import { ReferralApplyPanel } from "@/components/referrals/ReferralApplyPanel"
 import { ReferralApplicationsPanel } from "@/components/referrals/ReferralApplicationsPanel"
 import { ReferralCloseButton } from "@/components/referrals/ReferralCloseButton"
+import { deleteExpiredReferrals } from "@/lib/referrals"
 
 export const dynamic = "force-dynamic"
 
@@ -48,6 +49,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function ReferralDetailPage({ params }: { params: { id: string } }) {
+  await deleteExpiredReferrals()
+
   const session = await auth()
 
   const ref = await prisma.jobReferral.findUnique({
@@ -136,10 +139,6 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
                 <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400">₹{ref.salaryMin}–{ref.salaryMax}L</p>
               </div>
             )}
-            <div className="bg-card border border-border rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground mb-0.5">Openings</p>
-              <p className="font-bold text-sm">{ref.openings}</p>
-            </div>
             <div className="bg-card border border-border rounded-xl p-3 text-center">
               <p className="text-xs text-muted-foreground mb-0.5">Applicants</p>
               <p className="font-bold text-sm">{ref._count.applications}</p>
@@ -232,6 +231,13 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
               {ref.referralBonus && <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">5.</span>If hired, the referrer receives a ₹{ref.referralBonus.toLocaleString()} bonus</li>}
             </ol>
           </div>
+
+          {/* Disclaimer */}
+          <p className="text-xs text-muted-foreground bg-muted/40 rounded-xl px-4 py-3">
+            Referral posts are shared by individual employees in their personal capacity. Korpo is not affiliated
+            with, and does not verify claims on behalf of, the referenced employer. Users should verify any
+            opportunity independently.
+          </p>
         </div>
 
         {/* ── Sidebar ───────────────────────────────────────────── */}
@@ -273,10 +279,6 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
                     <span className="font-medium">{ref.location}</span>
                   </div>
                 )}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Openings</span>
-                  <span className="font-medium">{ref.openings}</span>
-                </div>
                 {ref.referralBonus && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Referral bonus</span>
