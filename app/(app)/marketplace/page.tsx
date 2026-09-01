@@ -51,10 +51,9 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const session = await auth()
   const now     = new Date()
   const page    = Math.max(1, parseInt(searchParams.page ?? "1"))
-  // Default to the user's own city (set via the top-nav location switcher)
-  // when no explicit ?city= filter is present, so switching location scopes
-  // results here just like it does on the dashboard.
-  const effectiveCity = searchParams.city || session?.user?.city || undefined
+  // Listings show across all locations by default; the city filter only
+  // scopes results when the user explicitly picks one.
+  const effectiveCity = searchParams.city || undefined
 
   // ── Build base where clause ───────────────────────────────────────────────
   const baseWhere = {

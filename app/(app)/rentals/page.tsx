@@ -76,9 +76,9 @@ function buildUrl(base: Record<string, string | undefined>, override: Record<str
 export default async function RentalsPage({ searchParams }: PageProps) {
   const session = await auth()
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
-  const userCity = session?.user?.city
-  // Default to the user's own city when no explicit ?city= filter is present.
-  const effectiveCity = searchParams.city || userCity || undefined
+  // Listings show across all locations by default; the city filter only
+  // scopes results when the user explicitly picks one.
+  const effectiveCity = searchParams.city || undefined
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10))
   const myRentalsCount = session?.user?.id && !isPremium
     ? await prisma.rentalPost.count({ where: { userId: session.user.id, status: "ACTIVE" } })

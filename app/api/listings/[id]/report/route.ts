@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const { session, error } = await requireAuth()
@@ -25,19 +26,25 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     create: { listingId: params.id, userId: session.user.id, reason, details: details || null },
   })
 
-  // Notify admins via a notification targeted at each ADMIN user
+  // Notify admins via a notification targeted at each ADMIN user, with the
+  // reporter's identity and full details so nothing requires a separate lookup.
   const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } })
   if (admins.length > 0) {
-    await prisma.notification.createMany({
-      data: admins.map((a) => ({
-        userId: a.id,
-        type: "REPORT",
-        title: "Listing reported",
-        body: `"${listing.title}" was reported for: ${reason}`,
-        link: `/marketplace/${params.id}`,
-      })),
-      skipDuplicates: true,
-    })
+    const reporter = session.user.name ?? session.user.email ?? "A user"
+    const notifications = await prisma.$transaction(
+      admins.map((a) =>
+        prisma.notification.create({
+          data: {
+            userId: a.id,
+            type:   "REPORT",
+            title:  `Listing reported: ${listing.title}`,
+            body:   `Reported by ${reporter} (${session.user.email}). Reason: ${reason}${details ? `. Details: ${details}` : ""}`,
+            link:   `/marketplace/${params.id}`,
+          },
+        })
+      )
+    )
+    notifications.forEach(pushNotification)
   }
 
   return NextResponse.json({ ok: true, reportId: report.id })

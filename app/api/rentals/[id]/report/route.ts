@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
+import { pushNotification } from "@/lib/notify"
 
 type Ctx = { params: { id: string } }
 
@@ -18,18 +19,25 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   if (!rental) return NextResponse.json({ error: "Not found" }, { status: 404 })
   if (rental.userId === session.user.id) return NextResponse.json({ error: "Cannot report your own listing" }, { status: 400 })
 
-  // Notify all admins
+  // Notify all admins, with the reporter's identity and full details so
+  // nothing requires a separate lookup.
   const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } })
   if (admins.length > 0) {
-    await prisma.notification.createMany({
-      data: admins.map((a) => ({
-        userId: a.id,
-        type: "ADMIN_REPORT",
-        title: `Rental reported: ${rental.title}`,
-        body: `Reason: ${reason}${details ? `. Details: ${details}` : ""}`,
-        link: `/rentals/${params.id}`,
-      })),
-    })
+    const reporter = session.user.name ?? session.user.email ?? "A user"
+    const notifications = await prisma.$transaction(
+      admins.map((a) =>
+        prisma.notification.create({
+          data: {
+            userId: a.id,
+            type:   "ADMIN_REPORT",
+            title:  `Rental reported: ${rental.title}`,
+            body:   `Reported by ${reporter} (${session.user.email}). Reason: ${reason}${details ? `. Details: ${details}` : ""}`,
+            link:   `/rentals/${params.id}`,
+          },
+        })
+      )
+    )
+    notifications.forEach(pushNotification)
   }
 
   return NextResponse.json({ ok: true })

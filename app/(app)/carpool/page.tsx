@@ -149,20 +149,13 @@ export default async function CarpoolPage({
   const hasFilters = !!(timeOfDay || freqFilter.length || vehicleFilter.length || acOnly || maxPrice !== null)
   const isFiltered = isSearching || hasFilters
 
-  const session  = await auth()
-  const userCity = session?.user?.city
-  // Default to routes touching the user's own city when they haven't
-  // searched a specific route — mirrors the top-nav location switcher.
-  const cityWhere = !isSearching && userCity
-    ? { OR: [{ fromLocation: { contains: userCity } }, { toLocation: { contains: userCity } }] }
-    : {}
+  const session = await auth()
 
   await expireOneTimeCarpoolRoutes()
 
   const allRoutes = await prisma.carpoolRoute.findMany({
     where: {
       isActive: true,
-      ...cityWhere,
       ...(freqFilter.length > 0    ? { frequency:    { in: freqFilter    } } : {}),
       ...(vehicleFilter.length > 0 ? { vehicleType:  { in: vehicleFilter } } : {}),
       ...(acOnly                   ? { acAvailable:  true                  } : {}),

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireAuth } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { pushNotification } from "@/lib/notify"
 
 const CATEGORIES = ["BUG", "FEATURE_REQUEST", "PAYMENT", "ACCOUNT", "OTHER"]
 
@@ -27,11 +28,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please describe the issue in at least 10 characters" }, { status: 400 })
   }
 
-  // Admins see new concerns via the badge/count on the Concerns tab
-  // (app/(admin)/admin/concerns) rather than through the notification bell.
   const grievance = await prisma.appGrievance.create({
     data: { userId: session.user.id, category, message: message.trim() },
   })
+
+  // Notify every admin, with the reporter's identity and full message so
+  // nothing requires a separate lookup on the Concerns tab.
+  const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } })
+  if (admins.length > 0) {
+    const reporter = session.user.name ?? session.user.email ?? "A user"
+    const notifications = await prisma.$transaction(
+      admins.map((a) =>
+        prisma.notification.create({
+          data: {
+            userId: a.id,
+            type:   "REPORT",
+            title:  `New concern reported: ${category.replace(/_/g, " ")}`,
+            body:   `${reporter} (${session.user.email}) reported: ${message.trim()}`,
+            link:   `/admin/concerns`,
+          },
+        })
+      )
+    )
+    notifications.forEach(pushNotification)
+  }
 
   return NextResponse.json({ ok: true, id: grievance.id })
 }
