@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Navigation, Clock, MapPin, Loader2, WifiOff, Car } from "lucide-react"
+import { MAP_DARK_FILTER_CLASS, MAP_TILE_SUBDOMAINS, tileUrl } from "@/lib/mapTiles"
 
 interface TrackData {
   rideStatus: string
@@ -43,11 +44,6 @@ function carSvg(color = "#f97316") {
     </svg>
   </div>`
 }
-
-const isDark  = () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-const tileUrl = (dark: boolean) => dark
-  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
 
 function pinHtml(color: string, label: string) {
   return `<div style="filter:drop-shadow(0 2px 5px rgba(0,0,0,.35))">
@@ -110,7 +106,7 @@ export function CarpoolLiveTrack({ routeId, pickupLat, pickupLng }: Props) {
       if (!(containerRef.current as any)._leaflet_id) {
         const map = L.map(containerRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: false })
           .setView([data.lat!, data.lng!], 14)
-        L.tileLayer(tileUrl(isDark()), { subdomains: "abcd", maxZoom: 19 }).addTo(map)
+        L.tileLayer(tileUrl(), { subdomains: MAP_TILE_SUBDOMAINS, maxZoom: 19 }).addTo(map)
         mapRef.current = map
 
         // Pickup pin
@@ -120,12 +116,6 @@ export function CarpoolLiveTrack({ routeId, pickupLat, pickupLng }: Props) {
             interactive: false,
           }).addTo(map)
         }
-
-        // Dark mode tile swap
-        const obs = new MutationObserver(() => {
-          map.eachLayer((l: any) => { if (l._url) l.setUrl(tileUrl(isDark())) })
-        })
-        obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
       }
 
       const map = mapRef.current
@@ -252,7 +242,7 @@ export function CarpoolLiveTrack({ routeId, pickupLat, pickupLng }: Props) {
 
       {showMap && hasFix && (
         <>
-          <div className="rounded-xl overflow-hidden border border-border shadow-sm mb-2" style={{ height: 280 }}>
+          <div className={`rounded-xl overflow-hidden border border-border shadow-sm mb-2 ${MAP_DARK_FILTER_CLASS}`} style={{ height: 280 }}>
             <div ref={containerRef} className="w-full h-full" />
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

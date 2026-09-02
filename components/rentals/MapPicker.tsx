@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Search, MapPin, Loader2, LocateFixed, X } from "lucide-react"
+import { MAP_ATTRIBUTION, MAP_DARK_FILTER_CLASS, MAP_TILE_SUBDOMAINS, tileUrl } from "@/lib/mapTiles"
 
 interface Props {
   latitude?: number
@@ -73,14 +74,6 @@ export function MapPicker({ latitude, longitude, cityHint, onSelect }: Props) {
   )
   const [locating, setLocating] = useState(false)
 
-  const isDark = () =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-
-  const tileUrl = (dark: boolean) =>
-    dark
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-
   const placeMarker = useCallback((L: any, lat: number, lng: number, animate = false) => {
     if (markerRef.current) markerRef.current.remove()
     markerRef.current = L.marker([lat, lng], { icon: makePinIcon(L, animate) }).addTo(mapRef.current)
@@ -90,7 +83,6 @@ export function MapPicker({ latitude, longitude, cityHint, onSelect }: Props) {
     if (typeof window === "undefined" || !containerRef.current) return
 
     let map: any = null
-    let observer: MutationObserver | null = null
 
     import("leaflet").then((L) => {
       // Guard against double-init (React Strict Mode runs effects twice in dev)
@@ -109,9 +101,9 @@ export function MapPicker({ latitude, longitude, cityHint, onSelect }: Props) {
       L.control.zoom({ position: "bottomright" }).addTo(map)
       L.control.attribution({ position: "bottomright", prefix: false }).addTo(map)
 
-      tileRef.current = L.tileLayer(tileUrl(isDark()), {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-        subdomains: "abcd",
+      tileRef.current = L.tileLayer(tileUrl(), {
+        attribution: MAP_ATTRIBUTION,
+        subdomains: MAP_TILE_SUBDOMAINS,
         maxZoom: 19,
       }).addTo(map)
 
@@ -135,15 +127,9 @@ export function MapPicker({ latitude, longitude, cityHint, onSelect }: Props) {
       })
 
       mapRef.current = map
-
-      observer = new MutationObserver(() => {
-        tileRef.current?.setUrl(tileUrl(isDark()))
-      })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
     })
 
     return () => {
-      observer?.disconnect()
       // Remove map on unmount (also covers Strict Mode second cleanup)
       if (map) {
         map.remove()
@@ -264,7 +250,7 @@ export function MapPicker({ latitude, longitude, cityHint, onSelect }: Props) {
       </div>
 
       {/* Map canvas */}
-      <div className="relative rounded-2xl overflow-hidden border border-border shadow-md" style={{ height: 320 }}>
+      <div className={`relative rounded-2xl overflow-hidden border border-border shadow-md ${MAP_DARK_FILTER_CLASS}`} style={{ height: 320 }}>
         <div ref={containerRef} className="w-full h-full" />
 
         {!pinCoords && (

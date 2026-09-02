@@ -4,6 +4,17 @@
 // set, so calling it directly from the client gets blocked/rate-limited).
 "use client"
 
+// Thrown when the browser reports the user has previously denied the
+// permission — the browser will not show the native prompt again, so the UI
+// needs to point the user at their browser's own site-settings instead of
+// just retrying.
+export class LocationPermissionDeniedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "LocationPermissionDeniedError"
+  }
+}
+
 export function detectCityFromBrowser(): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!("geolocation" in navigator)) {
@@ -30,7 +41,9 @@ export function detectCityFromBrowser(): Promise<string> {
       },
       (err) => {
         if (err.code === err.PERMISSION_DENIED) {
-          reject(new Error("Location access was denied. Please pick your city manually."))
+          reject(new LocationPermissionDeniedError(
+            "Location access is blocked for Korpo in your browser. Enable it in your browser's site settings, then try again."
+          ))
         } else if (err.code === err.POSITION_UNAVAILABLE) {
           reject(new Error("Your location couldn't be determined. Please pick your city manually."))
         } else if (err.code === err.TIMEOUT) {
@@ -42,6 +55,24 @@ export function detectCityFromBrowser(): Promise<string> {
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
     )
   })
+}
+
+// Short, browser-specific steps to re-enable a previously-denied location
+// permission — shown alongside LocationPermissionDeniedError since the
+// browser won't show its own prompt again until the user does this manually.
+export function getEnableLocationSteps(): string {
+  if (typeof navigator === "undefined") return ""
+  const ua = navigator.userAgent
+  if (/Chrome|Edg/.test(ua) && !/Firefox/.test(ua)) {
+    return "Click the lock/info icon in the address bar → Site settings → set Location to Allow, then reload."
+  }
+  if (/Firefox/.test(ua)) {
+    return "Click the lock icon in the address bar → Permissions → clear the Blocked Location setting, then reload."
+  }
+  if (/Safari/.test(ua)) {
+    return "Go to Safari → Settings for This Website → set Location to Allow, then reload the page."
+  }
+  return "Open your browser's site settings for this page and allow Location access, then reload."
 }
 
 // Matches a free-text detected city name against the known CITIES list

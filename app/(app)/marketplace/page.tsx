@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
-import { Plus, TrendingUp, ChevronLeft, ChevronRight, Zap, LayoutGrid } from "lucide-react"
+import { Plus, TrendingUp, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react"
 import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
@@ -201,6 +201,9 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const myListingsCount = session?.user?.id && !isPremium
     ? await prisma.listing.count({ where: { userId: session.user.id, status: "ACTIVE" } })
     : 0
+  const wishlistedIds = session?.user?.id
+    ? new Set((await prisma.wishlist.findMany({ where: { userId: session.user.id, itemType: "LISTING" }, select: { listingId: true } })).map((w) => w.listingId))
+    : new Set<string>()
 
   return (
     <div className="min-h-full bg-background">
@@ -250,7 +253,6 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         <div className="flex justify-end mb-4">
           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
             <span className="text-amber-700 dark:text-amber-300 font-medium">{myListingsCount}/{FREE_LIMITS.marketplace} listed</span>
-            <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
           </div>
         </div>
       )}
@@ -285,6 +287,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                 viewCount={listing.viewCount}
                 serviceBorderColor="border-l-amber-400"
                 isOwn={listing.userId === session?.user?.id}
+                isWishlisted={wishlistedIds.has(listing.id)}
                 listingId={listing.id}
               />
             ))}
@@ -320,6 +323,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                 viewCount={listing.viewCount}
                 serviceBorderColor="border-l-violet-400"
                 isOwn={listing.userId === session?.user?.id}
+                isWishlisted={wishlistedIds.has(listing.id)}
                 listingId={listing.id}
               />
             ))}
@@ -366,6 +370,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                     viewCount={listing.viewCount}
                     serviceBorderColor="border-l-blue-400"
                     isOwn={listing.userId === session?.user?.id}
+                    isWishlisted={wishlistedIds.has(listing.id)}
                     listingId={listing.id}
                   />
                 ))}

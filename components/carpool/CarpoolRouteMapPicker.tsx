@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Search, X, Loader2, Navigation, MapPin } from "lucide-react"
+import { MAP_ATTRIBUTION, MAP_DARK_FILTER_CLASS, MAP_TILE_SUBDOMAINS, tileUrl } from "@/lib/mapTiles"
 
 export interface Stop {
   name: string
@@ -115,11 +116,6 @@ function pinHtml(color: string, label?: string) {
   </div>`
 }
 
-const isDark = () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-const tileUrl = (dark: boolean) => dark
-  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-
 // ─── Component ────────────────────────────────────────────────────────────────
 export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null)
@@ -207,7 +203,6 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return
     let map: any = null
-    let observer: MutationObserver | null = null
 
     import("leaflet").then((L) => {
       if (!containerRef.current || (containerRef.current as any)._leaflet_id) return
@@ -222,9 +217,9 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
       map = L.map(containerRef.current, { zoomControl: true, attributionControl: false })
         .setView([20.5937, 78.9629], 5) // India overview while locating
 
-      L.tileLayer(tileUrl(isDark()), {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-        subdomains: "abcd", maxZoom: 19,
+      L.tileLayer(tileUrl(), {
+        attribution: MAP_ATTRIBUTION,
+        subdomains: MAP_TILE_SUBDOMAINS, maxZoom: 19,
       }).addTo(map)
 
       map._L = L
@@ -271,15 +266,9 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
         }
       })
 
-      observer = new MutationObserver(() => {
-        map.eachLayer((l: any) => { if (l._url) l.setUrl(tileUrl(isDark())) })
-      })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
-
     })
 
     return () => {
-      observer?.disconnect()
       if (map) { map.remove(); mapRef.current = null }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -498,7 +487,7 @@ export function CarpoolRouteMapPicker({ onChange, initialData }: Props) {
       </div>
 
       {/* Map */}
-      <div className="rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: 340 }}>
+      <div className={`rounded-2xl overflow-hidden border border-border shadow-sm ${MAP_DARK_FILTER_CLASS}`} style={{ height: 340 }}>
         <div ref={containerRef} className="w-full h-full" />
       </div>
 

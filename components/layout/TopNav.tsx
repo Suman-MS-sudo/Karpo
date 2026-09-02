@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { User, Settings, LogOut, ChevronDown, Menu, Sparkles, Crown, ShieldCheck } from "lucide-react"
+import { User, Settings, LogOut, ChevronDown, Menu, Crown, ShieldCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NotificationBell } from "@/components/shared/NotificationBell"
 import { MessageIcon } from "@/components/shared/MessageIcon"
@@ -80,18 +80,10 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
                   <div className="px-4 py-3 border-b border-border">
                     <p className="text-sm font-semibold">{session.user.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{session.user.email}</p>
-                    {isPremium ? (
+                    {isPremium && (
                       <span className="inline-flex items-center gap-1 mt-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-700 px-2 py-0.5 rounded-full">
                         <Crown className="h-2.5 w-2.5" /> Premium Member
                       </span>
-                    ) : (
-                      <Link
-                        href="/membership"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-accent-400 hover:underline"
-                      >
-                        <Sparkles className="h-3 w-3" /> Upgrade — listings appear first
-                      </Link>
                     )}
                   </div>
 

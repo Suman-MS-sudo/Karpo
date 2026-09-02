@@ -77,7 +77,7 @@ export function DashboardSearchBar({ variant = "light" }: { variant?: "light" | 
           className={
             isGlass
               ? "w-full rounded-2xl bg-white/15 backdrop-blur-md pl-11 pr-4 py-3 text-sm text-white placeholder:text-white/60 outline-none transition-colors focus:bg-white/25"
-              : "w-full rounded-2xl border border-border bg-card pl-11 pr-4 py-3 text-sm shadow-[0_2px_10px_rgba(0,0,0,0.04)] outline-none transition-shadow focus:shadow-[0_4px_16px_rgba(0,0,0,0.08)] focus:border-primary-400"
+              : "w-full rounded-2xl border border-border bg-card pl-11 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground shadow-[0_2px_10px_rgba(0,0,0,0.04)] outline-none transition-shadow focus:shadow-[0_4px_16px_rgba(0,0,0,0.08)] focus:border-primary-400"
           }
         />
         {loading && (

@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Shield, FileText, Scale, Heart, TrendingUp, Clock, ChevronRight, Plus, Zap, Sparkles } from "lucide-react"
+import { Shield, FileText, Scale, Heart, TrendingUp, Clock, ChevronRight, Plus, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { formatRelativeTime } from "@/lib/utils"
@@ -59,7 +59,6 @@ export default async function ConciergePage() {
           {!isPremium && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
               <span className="text-amber-700 dark:text-amber-300 font-medium">{activeLeadCount}/{FREE_LIMITS.concierge} active requests</span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
             </div>
           )}
           {recentLeads.length > 0 && (

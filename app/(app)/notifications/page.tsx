@@ -35,7 +35,16 @@ export default function NotificationsPage() {
   useEffect(() => {
     fetch("/api/notifications?limit=50")
       .then((r) => r.json())
-      .then((d) => setNotifs(d.data ?? []))
+      .then((d) => {
+        const data: Notif[] = d.data ?? []
+        setNotifs(data)
+        // Viewing the Alerts page counts as reading it — mark everything
+        // read immediately so the badge/dropdown don't keep showing stale
+        // "unread" notifications after the user has already seen them here.
+        if (data.some((n) => !n.isRead)) {
+          fetch("/api/notifications/read-all", { method: "POST" }).catch(() => {})
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 

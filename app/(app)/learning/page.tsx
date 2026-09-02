@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
-import { Plus, Award, Globe, MapPin, GraduationCap, Clock, Zap } from "lucide-react"
+import { Plus, Award, Globe, MapPin, GraduationCap, Clock } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -55,7 +55,6 @@ export default async function LearningPage({ searchParams }: { searchParams: { c
           {!isPremium && session?.user?.id && (
             <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
               <span className="text-amber-700 dark:text-amber-300 font-medium">{myCoursesCount}/{FREE_LIMITS.learning} courses listed</span>
-              <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
             </div>
           )}
           <Button asChild><Link href="/learning/new"><Plus className="h-4 w-4" /> List Course</Link></Button>

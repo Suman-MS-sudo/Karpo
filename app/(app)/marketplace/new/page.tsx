@@ -162,9 +162,7 @@ export default function NewListingPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Post an Item</h1>
         {!isPremium && (
-          <Link href="/membership" className="text-xs text-accent-400 hover:underline">
-            Free: 5 listings &amp; 5 photos · Upgrade →
-          </Link>
+          <span className="text-xs text-muted-foreground">Free: 5 listings &amp; 5 photos</span>
         )}
       </div>
 
@@ -452,7 +450,7 @@ export default function NewListingPage() {
 
         {/* ── Section 5: Description ──────────────────────────────────────── */}
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Description</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Description *</h2>
           <Textarea
             required
             rows={5}

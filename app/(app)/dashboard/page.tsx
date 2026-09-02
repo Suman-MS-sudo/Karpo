@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
 import Link from "next/link"
 import {
-  Plus, MessageSquare, MapPin, Crown, Zap, ArrowRight, Flag,
-  Bell, FileText,
+  Plus, MessageSquare, MapPin, ArrowRight, Flag,
+  Bell, FileText, Heart, ThumbsUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -39,7 +39,6 @@ export default async function DashboardPage() {
   const session  = await auth()
   const userId   = session!.user!.id
   const userCity = session!.user!.city
-  const isPremium = session!.user!.membershipPlan === "PREMIUM"
 
   const cityFilter = userCity ? { city: userCity } : {}
   const locationFilter = userCity ? { location: userCity } : {}
@@ -209,6 +208,8 @@ export default async function DashboardPage() {
     { label: "Post listing", href: null as string | null, icon: Plus },
     { label: "Messages", href: "/messages", icon: MessageSquare, badge: myMessages },
     { label: "My postings", href: "/my-postings", icon: FileText },
+    { label: "Wishlist", href: "/wishlist", icon: Heart },
+    { label: "My Interests", href: "/my-interests", icon: ThumbsUp },
     { label: "Notifications", href: "/notifications", icon: Bell },
   ]
 
@@ -464,30 +465,6 @@ export default async function DashboardPage() {
             ]}
           />
         </div>
-
-        {/* Premium */}
-        {!isPremium && (
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 dark:from-amber-950 dark:to-zinc-900 p-5 text-white">
-            <div className="pointer-events-none absolute -top-4 -right-4 h-24 w-24 bg-amber-500/20 rounded-full blur-lg" />
-            <div className="relative flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Crown className="h-4 w-4 text-amber-400" />
-                  <span className="font-semibold text-sm">Go Premium</span>
-                </div>
-                <p className="text-xs text-white/60 leading-snug max-w-xs">
-                  Unlimited listings, carpool routes &amp; deal redemptions. Priority matching + boosts.
-                </p>
-              </div>
-              <Link
-                href="/membership"
-                className="shrink-0 flex items-center gap-1.5 text-xs font-bold bg-amber-400 text-zinc-900 hover:bg-amber-300 px-3 py-2.5 rounded-xl transition-colors whitespace-nowrap"
-              >
-                <Zap className="h-3.5 w-3.5" /> ₹99/mo
-              </Link>
-            </div>
-          </div>
-        )}
 
         {/* Recent listings */}
         <div>

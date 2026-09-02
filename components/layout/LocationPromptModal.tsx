@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { MapPin, Loader2, LocateFixed } from "lucide-react"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { Button } from "@/components/ui/button"
-import { detectCityFromBrowser, matchCity } from "@/lib/geolocation"
+import { detectCityFromBrowser, matchCity, LocationPermissionDeniedError, getEnableLocationSteps } from "@/lib/geolocation"
 import { CITIES } from "@/config/services"
 
 // Shown once per session for accounts that somehow reached the app without a
@@ -19,6 +19,7 @@ export function LocationPromptModal() {
   const [saving, setSaving] = useState(false)
   const [locating, setLocating] = useState(false)
   const [locateError, setLocateError] = useState("")
+  const [locateDenied, setLocateDenied] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
   if (!session?.user || session.user.city || dismissed) return null
@@ -45,6 +46,7 @@ export function LocationPromptModal() {
   async function useCurrentLocation() {
     setLocating(true)
     setLocateError("")
+    setLocateDenied(false)
     try {
       const detected = await detectCityFromBrowser()
       const matched = matchCity(detected, CITIES)
@@ -52,6 +54,7 @@ export function LocationPromptModal() {
       await save(matched)
     } catch (err) {
       setLocateError(err instanceof Error ? err.message : "Could not get your location.")
+      setLocateDenied(err instanceof LocationPermissionDeniedError)
     } finally {
       setLocating(false)
     }
@@ -79,7 +82,14 @@ export function LocationPromptModal() {
           Use my current location
         </Button>
         <CityAutocomplete value={city} onChange={setCity} placeholder="Search your city…" />
-        {locateError && <p className="text-xs text-red-600 mt-2">{locateError}</p>}
+        {locateError && (
+          <div className="mt-2">
+            <p className="text-xs text-red-600">{locateError}</p>
+            {locateDenied && (
+              <p className="text-xs text-muted-foreground mt-1">{getEnableLocationSteps()}</p>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-2 mt-4">
           <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setDismissed(true)}>
             Skip for now

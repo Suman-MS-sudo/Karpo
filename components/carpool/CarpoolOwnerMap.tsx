@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Loader2 } from "lucide-react"
+import { MAP_DARK_FILTER_CLASS, MAP_TILE_SUBDOMAINS, tileUrl } from "@/lib/mapTiles"
 
 export interface RiderPoint {
   name:        string
@@ -56,11 +57,6 @@ function pinHtml(color: string, text: string) {
   </div>`
 }
 
-const isDark  = () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-const tileUrl = (dark: boolean) => dark
-  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function CarpoolOwnerMap({ fromLat, fromLng, toLat, toLng, stops = [], riders }: Props) {
@@ -78,7 +74,6 @@ export function CarpoolOwnerMap({ fromLat, fromLng, toLat, toLng, stops = [], ri
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return
     let map: any  = null
-    let observer: MutationObserver | null = null
 
     import("leaflet").then(async (L) => {
       if (!containerRef.current || (containerRef.current as any)._leaflet_id) return
@@ -92,7 +87,7 @@ export function CarpoolOwnerMap({ fromLat, fromLng, toLat, toLng, stops = [], ri
 
       map = L.map(containerRef.current, { zoomControl: true, attributionControl: false, scrollWheelZoom: true })
         .setView([fromLat, fromLng], 12)
-      L.tileLayer(tileUrl(isDark()), { subdomains: "abcd", maxZoom: 19 }).addTo(map)
+      L.tileLayer(tileUrl(), { subdomains: MAP_TILE_SUBDOMAINS, maxZoom: 19 }).addTo(map)
       map._L = L
       mapRef.current = map
 
@@ -200,15 +195,9 @@ export function CarpoolOwnerMap({ fromLat, fromLng, toLat, toLng, stops = [], ri
       }
 
       setLoading(false)
-
-      observer = new MutationObserver(() => {
-        map.eachLayer((l: any) => { if (l._url) l.setUrl(tileUrl(isDark())) })
-      })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
     })
 
     return () => {
-      observer?.disconnect()
       if (map) { map.remove(); mapRef.current = null }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -272,7 +261,7 @@ export function CarpoolOwnerMap({ fromLat, fromLng, toLat, toLng, stops = [], ri
       </div>
 
       {/* Map */}
-      <div className="relative rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: 380 }}>
+      <div className={`relative rounded-2xl overflow-hidden border border-border shadow-sm ${MAP_DARK_FILTER_CLASS}`} style={{ height: 380 }}>
         {loading && (
           <div className="absolute inset-0 bg-muted/80 flex items-center justify-center z-10 rounded-2xl">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

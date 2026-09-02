@@ -129,6 +129,7 @@ model User {
   conciergeLeads    ConciergeLead[]
   idVerificationRequests IdVerificationRequest[]
   appGrievances     AppGrievance[]
+  wishlists         Wishlist[]
 }
 
 model Membership {
@@ -276,9 +277,29 @@ model Listing {
   offers      ListingOffer[]
   reports     ListingReport[]
   engagements ListingEngagement[]
+  wishlistedBy Wishlist[]
 
   @@index([city, status, category])
   @@index([userId])
+}
+
+// A user's saved/favourited listing — the heart icon on a listing card.
+// Scoped to marketplace Listing for now (itemType always "LISTING"), kept as
+// a string rather than a hard enum so other post types (rentals, skills…)
+// can be wishlisted later without a schema change.
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  itemType  String   @default("LISTING")
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemType, listingId])
+  @@index([userId])
+  @@index([listingId])
 }
 
 model ListingReport {

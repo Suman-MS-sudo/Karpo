@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import {
-  Tag, Users, AlertCircle, Zap, RefreshCw, Bell, Clock,
+  Tag, Users, AlertCircle, Zap, Bell, Clock,
   SlidersHorizontal, Sparkles, Search, X, Star, Flame,
   ShoppingBag, Plane, Tv, Shirt, Heart, Landmark, BookOpen, Hotel,
   Code2, Smile, Shield, Car, Package, Globe, Copy, Check, ChevronDown,
@@ -465,15 +465,13 @@ export function DealsClient({
   }, [sortOpen, brandOpen, discountOpen, rupeeOpen])
 
   const {
-    deals: fetchedDeals, loading, newDealsCount, lastFetchedAt, secondsUntilRefresh,
-    refresh, dismissNewDeals,
+    deals: fetchedDeals, loading, newDealsCount, dismissNewDeals,
   } = useDeals(initialDeals, filters)
 
   const deals = fetchedDeals
     .filter((d) => !brandFilter || d.merchantName === brandFilter)
     .filter((d) => !minRupee || dealRupeeAmount(d) >= minRupee)
 
-  const minutesUntilRefresh = Math.ceil(secondsUntilRefresh / 60)
   const isNewDeal = (id: string) => newDealsCount > 0 && !seenIds.has(id)
   const isFiltered = !!(filters.category || filters.minDiscount || filters.search || brandFilter || minRupee)
 
@@ -537,9 +535,6 @@ export function DealsClient({
               {!isPremium && (
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs backdrop-blur-sm">
                   <span className="text-amber-300 font-medium">{redemptionCount}/{FREE_LIMITS.deals} redeemed</span>
-                  <Link href="/membership" className="flex items-center gap-1 text-amber-400 font-bold hover:underline">
-                    <Zap className="h-3 w-3" />Upgrade
-                  </Link>
                 </div>
               )}
             </div>
@@ -931,21 +926,6 @@ export function DealsClient({
             <p className="text-center text-xs text-muted-foreground">
               Deals refresh automatically every 5 minutes · All offers are exclusively for verified corporate employees
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              {lastFetchedAt && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />Updated {formatRelativeTime(lastFetchedAt)}
-                </span>
-              )}
-              <button
-                onClick={refresh}
-                disabled={loading}
-                className="flex items-center gap-1 h-7 px-2 rounded-full border border-border hover:bg-muted transition-colors"
-              >
-                <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
-                {loading ? "Refreshing…" : `${minutesUntilRefresh}m`}
-              </button>
-            </div>
           </div>
         )}
       </div>

@@ -7,7 +7,7 @@ import Image from "next/image"
 import {
   Search, Plus, X, LayoutGrid, List, Package,
   Calendar, MapPin, Users, Clock, Bookmark, BookmarkCheck,
-  TrendingUp, Sparkles, Globe, Video, ChevronDown, Zap,
+  TrendingUp, Sparkles, Globe, Video, ChevronDown,
   ArrowUpDown, Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation, Flag,
   Mountain, Trophy, Handshake, Palette, MoreHorizontal,
   Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
@@ -369,9 +369,6 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               {!isPremium && (
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs backdrop-blur-sm">
                   <span className="text-amber-300 font-medium">{myEventsCount}/{eventsLimit} events</span>
-                  <Link href="/membership" className="flex items-center gap-1 text-amber-400 font-bold hover:underline">
-                    <Zap className="h-3 w-3" />Upgrade
-                  </Link>
                 </div>
               )}
               <Button asChild variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full">

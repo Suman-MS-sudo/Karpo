@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef } from "react"
 import { MapPin } from "lucide-react"
+import { MAP_ATTRIBUTION, MAP_DARK_FILTER_CLASS, MAP_TILE_SUBDOMAINS, tileUrl } from "@/lib/mapTiles"
 
 interface Props {
   latitude: number
@@ -28,20 +29,10 @@ export function MapView({ latitude, longitude, address, zoom = 15 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<any>(null)
 
-  const isDark = () =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-
-  const tileUrl = (dark: boolean) =>
-    dark
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return
 
     let map: any = null
-    let tileLayer: any = null
-    let observer: MutationObserver | null = null
 
     import("leaflet").then((L) => {
       if (!containerRef.current || (containerRef.current as any)._leaflet_id) return
@@ -63,9 +54,9 @@ export function MapView({ latitude, longitude, address, zoom = 15 }: Props) {
 
       L.control.attribution({ position: "bottomright", prefix: false }).addTo(map)
 
-      tileLayer = L.tileLayer(tileUrl(isDark()), {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-        subdomains: "abcd",
+      L.tileLayer(tileUrl(), {
+        attribution: MAP_ATTRIBUTION,
+        subdomains: MAP_TILE_SUBDOMAINS,
         maxZoom: 19,
       }).addTo(map)
 
@@ -83,21 +74,15 @@ export function MapView({ latitude, longitude, address, zoom = 15 }: Props) {
       }
 
       mapRef.current = map
-
-      observer = new MutationObserver(() => {
-        tileLayer?.setUrl(tileUrl(isDark()))
-      })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
     })
 
     return () => {
-      observer?.disconnect()
       if (map) { map.remove(); mapRef.current = null }
     }
   }, [latitude, longitude]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: 260 }}>
+    <div className={`rounded-2xl overflow-hidden border border-border shadow-sm ${MAP_DARK_FILTER_CLASS}`} style={{ height: 260 }}>
       <div ref={containerRef} className="w-full h-full" />
     </div>
   )

@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef, useState, useCallback } from "react"
 import { MapPin, Loader2, LocateFixed, Search, Check, X } from "lucide-react"
+import { MAP_ATTRIBUTION, MAP_TILE_SUBDOMAINS, MAP_TILE_URL } from "@/lib/mapTiles"
 
 export interface PickedLocation {
   lat: number
@@ -109,18 +110,14 @@ export function LocationPicker({ value, onChange }: Props) {
         attributionControl: false,
       })
 
-      // CartoDB Voyager — clean, colourful, Google Maps-like
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        { maxZoom: 19 }
-      ).addTo(map)
+      L.tileLayer(MAP_TILE_URL, { subdomains: MAP_TILE_SUBDOMAINS, maxZoom: 19 }).addTo(map)
 
       // Zoom bottom-right
       L.control.zoom({ position: "bottomright" }).addTo(map)
 
       // Attribution
       L.control.attribution({ position: "bottomleft", prefix: "" })
-        .addAttribution('&copy; <a href="https://carto.com">CARTO</a>')
+        .addAttribution(MAP_ATTRIBUTION)
         .addTo(map)
 
       map.on("movestart", () => { setDragging(true);  setConfirmed(false) })

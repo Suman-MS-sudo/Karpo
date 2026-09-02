@@ -9,6 +9,7 @@ import { formatCurrency, formatRelativeTime, truncate, getInitials } from "@/lib
 import { cn } from "@/lib/utils"
 import { Lock, Eye, Handshake, Pencil, Crown } from "lucide-react"
 import { SocialShare } from "./SocialShare"
+import { WishlistButton } from "./WishlistButton"
 import { LISTING_CONDITIONS } from "@/config/services"
 
 interface ListingAuthor {
@@ -46,6 +47,7 @@ interface ListingCardProps {
   viewCount?: number
   isOwn?: boolean
   listingId?: string
+  isWishlisted?: boolean
 }
 
 function getConditionMeta(condition?: string) {
@@ -99,6 +101,7 @@ export function ListingCard({
   viewCount,
   isOwn = false,
   listingId,
+  isWishlisted = false,
 }: ListingCardProps) {
   const displayImage = image ?? images?.[0]
   const condMeta = getConditionMeta(condition)
@@ -187,6 +190,13 @@ export function ListingCard({
                 variant="icon"
                 className="shadow-sm"
               />
+            </div>
+          )}
+
+          {/* Wishlist heart — bottom-left, clear of the badges/share icon above */}
+          {listingId && !isOwn && (
+            <div className="absolute bottom-2 left-2">
+              <WishlistButton listingId={listingId} initialWishlisted={isWishlisted} />
             </div>
           )}
         </div>

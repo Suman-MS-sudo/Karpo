@@ -224,7 +224,6 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         <div className="flex justify-end">
           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
             <span className="text-amber-700 dark:text-amber-300 font-medium">{myRentalsCount}/{FREE_LIMITS.rentals} posted</span>
-            <Link href="/membership" className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold hover:underline"><Zap className="h-3 w-3" />Upgrade</Link>
           </div>
         </div>
       )}

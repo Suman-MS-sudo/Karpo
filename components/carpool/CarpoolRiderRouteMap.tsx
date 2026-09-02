@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { MAP_DARK_FILTER_CLASS, MAP_TILE_SUBDOMAINS, tileUrl } from "@/lib/mapTiles"
 
 interface Stop { name: string; lat: number; lng: number }
 
@@ -41,11 +42,6 @@ function pinHtml(color: string, label: string) {
   </div>`
 }
 
-const isDark  = () => typeof document !== "undefined" && document.documentElement.classList.contains("dark")
-const tileUrl = (dark: boolean) => dark
-  ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-  : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-
 export function CarpoolRiderRouteMap({
   fromLat, fromLng, toLat, toLng, stops = [],
   pickupLat, pickupLng, dropoffLat, dropoffLng,
@@ -56,7 +52,6 @@ export function CarpoolRiderRouteMap({
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return
     let map: any = null
-    let observer: MutationObserver | null = null
 
     import("leaflet").then(async (L) => {
       if (!containerRef.current || (containerRef.current as any)._leaflet_id) return
@@ -75,7 +70,7 @@ export function CarpoolRiderRouteMap({
         dragging:         true,
       }).setView([pickupLat, pickupLng], 13)
 
-      L.tileLayer(tileUrl(isDark()), { subdomains: "abcd", maxZoom: 19 }).addTo(map)
+      L.tileLayer(tileUrl(), { subdomains: MAP_TILE_SUBDOMAINS, maxZoom: 19 }).addTo(map)
 
       const mkIcon = (color: string, label: string) =>
         L.divIcon({ className: "", html: pinHtml(color, label), iconSize: [28, 38], iconAnchor: [14, 38] })
@@ -128,15 +123,9 @@ export function CarpoolRiderRouteMap({
       const pts: [number, number][] = [[fromLat, fromLng], [toLat, toLng], [pickupLat, pickupLng]]
       if (hasDropoff) pts.push([dropoffLat!, dropoffLng!])
       map.fitBounds(L.latLngBounds(pts).pad(0.18))
-
-      observer = new MutationObserver(() => {
-        map.eachLayer((l: any) => { if (l._url) l.setUrl(tileUrl(isDark())) })
-      })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
     })
 
     return () => {
-      observer?.disconnect()
       if (map) { map.remove(); mapRef.current = null }
     }
 
@@ -148,7 +137,7 @@ export function CarpoolRiderRouteMap({
 
   return (
     <div className="space-y-2">
-      <div style={{ height }} className="w-full rounded-b-xl overflow-hidden">
+      <div style={{ height }} className={`w-full rounded-b-xl overflow-hidden ${MAP_DARK_FILTER_CLASS}`}>
         <div ref={containerRef} className="w-full h-full" />
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1 px-3 pb-2 text-xs text-muted-foreground">

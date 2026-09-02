@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar"
 import { getInitials, cn } from "@/lib/utils"
-import { detectCityFromBrowser, matchCity } from "@/lib/geolocation"
+import { detectCityFromBrowser, matchCity, LocationPermissionDeniedError, getEnableLocationSteps } from "@/lib/geolocation"
 import { CITIES } from "@/config/services"
 
 interface Props {
@@ -26,6 +26,7 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
   const [saving, setSaving] = useState(false)
   const [locating, setLocating] = useState(false)
   const [error, setError] = useState("")
+  const [locateDenied, setLocateDenied] = useState(false)
 
   async function selectCity(next: string) {
     if (!next.trim() || next === city) {
@@ -56,6 +57,7 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
   async function useCurrentLocation() {
     setLocating(true)
     setError("")
+    setLocateDenied(false)
     try {
       const detected = await detectCityFromBrowser()
       const matched = matchCity(detected, CITIES)
@@ -63,6 +65,7 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
       await selectCity(matched)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not get your location.")
+      setLocateDenied(err instanceof LocationPermissionDeniedError)
     } finally {
       setLocating(false)
     }
@@ -138,7 +141,14 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
 
             <CityAutocomplete value={picked} onChange={setPicked} placeholder="Search your city…" />
 
-            {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+            {error && (
+              <div className="mt-2">
+                <p className="text-xs text-red-600">{error}</p>
+                {locateDenied && (
+                  <p className="text-xs text-muted-foreground mt-1">{getEnableLocationSteps()}</p>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center gap-2 mt-4">
               <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setOpen(false)} disabled={saving}>
