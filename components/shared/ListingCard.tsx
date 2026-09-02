@@ -163,42 +163,31 @@ export function ListingCard({
           )}
 
           {/* Condition badge — top right */}
-          {condMeta ? (
+          {condMeta && (
             <div className="absolute top-2 right-2">
               <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border", condMeta.badge)}>
                 {condMeta.label}
               </span>
             </div>
-          ) : (
-            /* Share icon — appears on hover when no condition badge */
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <SocialShare
-                title={title}
-                path={href}
-                variant="icon"
-                className="shadow-sm"
-              />
-            </div>
           )}
 
-          {/* Share icon alongside condition badge */}
-          {condMeta && (
-            <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <SocialShare
-                title={title}
-                path={href}
-                variant="icon"
-                className="shadow-sm"
-              />
-            </div>
-          )}
-
-          {/* Wishlist heart — bottom-left, clear of the badges/share icon above */}
-          {listingId && !isOwn && (
-            <div className="absolute bottom-2 left-2">
+          {/* Wishlist heart + share icon — top right when there's no condition
+              badge, otherwise bottom right alongside it. The heart stays
+              visible so a saved listing is recognizable at a glance; the
+              share icon only appears on hover, matching before. */}
+          <div className={cn("absolute right-2 flex items-center gap-1.5", condMeta ? "bottom-2" : "top-2")}>
+            {listingId && !isOwn && (
               <WishlistButton listingId={listingId} initialWishlisted={isWishlisted} />
+            )}
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <SocialShare
+                title={title}
+                path={href}
+                variant="icon"
+                className="shadow-sm"
+              />
             </div>
-          )}
+          </div>
         </div>
 
         <div className="p-4">
