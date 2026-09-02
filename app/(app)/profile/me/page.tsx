@@ -55,13 +55,14 @@ const TABS = [
 
 // ── Completion calculator ──────────────────────────────────────────────────
 
-function calcCompletion(form: ProfileForm, hasAvatar: boolean): number {
+// Profile photo is optional — not counted towards completion, so a user
+// without one isn't stuck below 100%.
+function calcCompletion(form: ProfileForm): number {
   const checks = [
     !!form.name,
     !!form.bio && form.bio.length > 20,
     !!form.city,
     !!form.phone,
-    hasAvatar,
     form.skills.length > 0,
     !!form.yearsOfExp,
     Object.values(form.socialLinks).some(Boolean),
@@ -186,7 +187,7 @@ export default function EditProfilePage() {
     }
   }
 
-  const completion = calcCompletion(form, !!avatarUrl)
+  const completion = calcCompletion(form)
   // Completion color
   const completionColor =
     completion >= 80 ? "from-green-500 to-emerald-400" :
