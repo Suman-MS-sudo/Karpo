@@ -1,11 +1,12 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   Camera, Loader2, CheckCircle2, Plus, X, ExternalLink, AtSign,
   User, Link as LinkIcon, Sparkles, AlertCircle, Building2, Droplet,
+  Upload, Trash2,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -80,6 +81,10 @@ export default function EditProfilePage() {
   const [error,      setError]      = useState("")
   const [activeTab,  setActiveTab]  = useState("basic")
   const [avatarUrl,  setAvatarUrl]  = useState("")
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const avatarMenuRef = useRef<HTMLDivElement>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
   const [skillInput, setSkillInput] = useState("")
   const [form,       setForm]       = useState<ProfileForm>(EMPTY_FORM)
   const [company,    setCompany]    = useState<{ name: string; logo?: string | null } | null>(null)
@@ -115,27 +120,71 @@ export default function EditProfilePage() {
 
   useEffect(() => { loadProfile() }, [loadProfile])
 
+  // Close the avatar menu on outside click
+  useEffect(() => {
+    if (!avatarMenuOpen) return
+    const onClick = (e: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) setAvatarMenuOpen(false)
+    }
+    document.addEventListener("mousedown", onClick)
+    return () => document.removeEventListener("mousedown", onClick)
+  }, [avatarMenuOpen])
+
   // Avatar upload
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ""
     if (!file) return
-    const fd = new FormData()
-    fd.append("file", file)
-    const res  = await fetch("/api/upload", { method: "POST", body: fd })
-    const data = await res.json()
-    if (data.url) {
-      setAvatarUrl(data.url)
-      const patchRes = await fetch("/api/profile", {
+    setAvatarBusy(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res  = await fetch("/api/upload", { method: "POST", body: fd })
+      const data = await res.json()
+      if (data.url) {
+        setAvatarUrl(data.url)
+        const patchRes = await fetch("/api/profile", {
+          method:  "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ avatarUrl: data.url }),
+        })
+        if (!patchRes.ok) {
+          toast.error("Photo uploaded but failed to save — try again")
+          return
+        }
+        await update()
+        router.refresh()
+      }
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
+
+  // Remove photo — clears the saved avatar so the initials fallback shows again
+  const handleRemoveAvatar = async () => {
+    setAvatarMenuOpen(false)
+    setAvatarBusy(true)
+    const previous = avatarUrl
+    setAvatarUrl("")
+    try {
+      const res = await fetch("/api/profile", {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ avatarUrl: data.url }),
+        body:    JSON.stringify({ avatarUrl: null }),
       })
-      if (!patchRes.ok) {
-        toast.error("Photo uploaded but failed to save — try again")
+      if (!res.ok) {
+        setAvatarUrl(previous)
+        toast.error("Failed to remove photo — try again")
         return
       }
       await update()
       router.refresh()
+      toast.success("Profile photo removed")
+    } catch {
+      setAvatarUrl(previous)
+      toast.error("Network error — please try again")
+    } finally {
+      setAvatarBusy(false)
     }
   }
 
@@ -206,17 +255,49 @@ export default function EditProfilePage() {
       <div className="bg-card border border-border rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-5">
           {/* Avatar */}
-          <div className="relative shrink-0">
+          <div className="relative shrink-0" ref={avatarMenuRef}>
             <Avatar className="h-24 w-24 ring-2 ring-border">
               <AvatarImage src={avatarUrl} />
               <AvatarFallback className="text-2xl font-semibold">
                 {getInitials(form.name || session?.user?.name)}
               </AvatarFallback>
             </Avatar>
-            <label className="absolute bottom-0 right-0 h-8 w-8 bg-primary-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors shadow-md">
-              <Camera className="h-3.5 w-3.5" />
-              <input type="file" accept="image/*" onChange={handleAvatarUpload} className="sr-only" />
-            </label>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="sr-only"
+            />
+            <button
+              type="button"
+              onClick={() => setAvatarMenuOpen((v) => !v)}
+              disabled={avatarBusy}
+              className="absolute bottom-0 right-0 h-8 w-8 bg-primary-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors shadow-md disabled:opacity-60"
+            >
+              {avatarBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+            </button>
+
+            {avatarMenuOpen && (
+              <div className="absolute z-20 top-full mt-2 left-1/2 -translate-x-1/2 w-44 rounded-xl border border-border bg-popover shadow-xl overflow-hidden py-1">
+                <button
+                  type="button"
+                  onClick={() => { setAvatarMenuOpen(false); avatarInputRef.current?.click() }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-muted transition-colors text-left"
+                >
+                  <Upload className="h-4 w-4 text-muted-foreground" /> Upload image
+                </button>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors text-left"
+                  >
+                    <Trash2 className="h-4 w-4" /> Remove photo
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Info + completion */}
