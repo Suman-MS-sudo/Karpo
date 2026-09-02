@@ -12,6 +12,8 @@ import {
   SquareArrowOutUpRight, Info, ShieldCheck,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -153,6 +155,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
   const isFilled  = rental.status === "FILLED"
   const isExpired = rental.status === "EXPIRED"
   const typeColor = TYPE_COLOR[rental.type] ?? "bg-muted text-muted-foreground"
+  const isWishlisted = !isOwner && (await getWishlistedIds(userId, "RENTAL")).has(params.id)
   const hasLocation = !!(rental.latitude && rental.longitude)
 
   // Viewer's own engagement record
@@ -189,6 +192,9 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
             </>
           )}
           {!isOwner && !isFilled && <RentalReportButton rentalId={params.id} />}
+          {!isOwner && (
+            <WishlistButton itemId={params.id} itemType="RENTAL" initialWishlisted={isWishlisted} />
+          )}
           <SocialShare
             title={`${rental.title} — Rental on Korpo`}
             path={`/rentals/${params.id}`}

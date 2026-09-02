@@ -13,6 +13,7 @@ import {
 import { Badge }    from "@/components/ui/badge"
 import { Button }  from "@/components/ui/button"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
 import { formatDate, formatRelativeTime, cn } from "@/lib/utils"
 import { useDeals, type Deal, type DealFilters } from "@/hooks/useDeals"
 import { FREE_LIMITS } from "@/lib/limits"
@@ -152,7 +153,7 @@ function dealSavingText(deal: Deal): string {
   return rupeeMatch ? rupeeMatch[0] : "SPECIAL OFFER"
 }
 
-function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
+function DealCard({ deal, isNew, isWishlisted }: { deal: Deal; isNew: boolean; isWishlisted: boolean }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
@@ -239,7 +240,8 @@ function DealCard({ deal, isNew }: { deal: Deal; isNew: boolean }) {
             <Badge variant="outline" className="text-[10px] px-1.5 py-0">{
               DEAL_CATEGORIES.find(c => c.value === deal.category)?.label ?? deal.category
             }</Badge>
-            <div onClick={(e) => e.preventDefault()}>
+            <div onClick={(e) => e.preventDefault()} className="flex items-center gap-1.5">
+              <WishlistButton itemId={deal.id} itemType="DEAL" initialWishlisted={isWishlisted} />
               <SocialShare title={`${deal.title} — Deal on Korpo`} path={`/deals/${deal.id}`} variant="icon" />
             </div>
           </div>
@@ -417,12 +419,14 @@ interface DealsClientProps {
   expiringSoon:    Deal[]
   redemptionCount: number
   isPremium:       boolean
+  wishlistedIds:   string[]
 }
 
 export function DealsClient({
   initialDeals, featuredDeals, trendingDeals, expiringSoon,
-  redemptionCount, isPremium,
+  redemptionCount, isPremium, wishlistedIds,
 }: DealsClientProps) {
+  const wishlistedSet = new Set(wishlistedIds)
   const [filters, setFilters] = useState<DealFilters>({
     category:    "",
     minDiscount: 0,
@@ -877,7 +881,7 @@ export function DealsClient({
           <section>
             <SectionHeader icon={Clock} title="Expiring Soon" gradient="from-red-500 to-rose-600" count={expiringSoon.length} />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {expiringSoon.map((d) => <DealCard key={d.id} deal={d} isNew={false} />)}
+              {expiringSoon.map((d) => <DealCard key={d.id} deal={d} isNew={false} isWishlisted={wishlistedSet.has(d.id)} />)}
             </div>
           </section>
         )}
@@ -915,7 +919,7 @@ export function DealsClient({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {deals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} />)}
+              {deals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} isWishlisted={wishlistedSet.has(d.id)} />)}
             </div>
           )}
         </section>

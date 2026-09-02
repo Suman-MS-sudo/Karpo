@@ -11,6 +11,8 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
 import { formatCurrency, getInitials } from "@/lib/utils"
@@ -100,6 +102,7 @@ export default async function SkillDetailPage({ params }: { params: { id: string
 
   const isOwner  = session?.user?.id === listing.userId
   const isSeller = isOwner
+  const isWishlisted = !isOwner && (await getWishlistedIds(session?.user?.id, "SKILL")).has(params.id)
 
   // Viewer's latest non-terminal order
   const myOrder = session?.user?.id && !isOwner
@@ -206,6 +209,19 @@ export default async function SkillDetailPage({ params }: { params: { id: string
 
           {!isOwner && (
             <div className="flex items-center gap-2 shrink-0">
+              <WishlistButton
+                itemId={listing.id}
+                itemType="SKILL"
+                initialWishlisted={isWishlisted}
+                className="bg-white/15 hover:bg-white/25 ring-1 ring-white/30"
+              />
+              <SocialShare
+                title={`${listing.user.name} — ${listing.title} on Korpo`}
+                description={listing.tagline ?? undefined}
+                path={`/skills/${params.id}`}
+                variant="icon"
+                className="bg-white/15 hover:bg-white/25 ring-1 ring-white/30 text-white"
+              />
               <Button asChild className="bg-white text-primary hover:bg-white/90 shadow-lg">
                 <Link href="#book"><Briefcase className="h-4 w-4 mr-1.5" />Hire Now</Link>
               </Button>

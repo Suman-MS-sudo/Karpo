@@ -2,17 +2,21 @@
 import { useState } from "react"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { WishlistItemType } from "@/lib/wishlist"
 
 interface WishlistButtonProps {
-  listingId: string
+  itemId: string
+  itemType?: WishlistItemType
   initialWishlisted?: boolean
   className?: string
   onChange?: (wishlisted: boolean) => void
 }
 
-// Heart toggle shown on a listing's image. Optimistic — flips immediately,
-// rolls back if the request fails.
-export function WishlistButton({ listingId, initialWishlisted = false, className, onChange }: WishlistButtonProps) {
+// Heart toggle shown on a post's image, next to the share icon. Optimistic —
+// flips immediately, rolls back if the request fails. Works for any
+// wishlistable post type (Marketplace, Rentals, Referrals, Carpool, Skills,
+// Deals, Events, Learning) — see lib/wishlist.ts.
+export function WishlistButton({ itemId, itemType = "LISTING", initialWishlisted = false, className, onChange }: WishlistButtonProps) {
   const [wishlisted, setWishlisted] = useState(initialWishlisted)
   const [busy, setBusy] = useState(false)
 
@@ -28,7 +32,7 @@ export function WishlistButton({ listingId, initialWishlisted = false, className
       const res = await fetch("/api/wishlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId }),
+        body: JSON.stringify({ itemId, itemType }),
       })
       if (!res.ok) throw new Error()
       const data = await res.json()

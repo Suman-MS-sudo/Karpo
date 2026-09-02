@@ -7,6 +7,8 @@ import { Plus, ArrowRight, Search, Zap, Car } from "lucide-react"
 import { PageHero } from "@/components/shared/PageHero"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
@@ -176,6 +178,7 @@ export default async function CarpoolPage({
   const myCarpoolCount = session?.user?.id && !isPremium
     ? await prisma.carpoolRoute.count({ where: { userId: session.user.id, isActive: true } })
     : 0
+  const wishlistedIds = await getWishlistedIds(session?.user?.id, "CARPOOL")
 
   const [activeRouteCount, seatsAgg, freqCountRows] = await Promise.all([
     prisma.carpoolRoute.count({ where: { isActive: true } }),
@@ -348,11 +351,14 @@ export default async function CarpoolPage({
                     <div className="mt-auto pt-4">
                       <div className="flex items-center justify-between border-t border-border pt-3">
                         <UserCard user={route.user} size="sm" clickable={false} />
-                        <SocialShare
-                          title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
-                          path={`/carpool/${route.id}`}
-                          variant="icon"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <WishlistButton itemId={route.id} itemType="CARPOOL" initialWishlisted={wishlistedIds.has(route.id)} />
+                          <SocialShare
+                            title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
+                            path={`/carpool/${route.id}`}
+                            variant="icon"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

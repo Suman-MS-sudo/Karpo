@@ -153,9 +153,10 @@ interface Props {
   myEventsCount:   number
   eventsLimit:     number
   initialCity?:    string
+  wishlistedIds?:  string[]
 }
 
-export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEventsCount, eventsLimit, initialCity }: Props) {
+export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEventsCount, eventsLimit, initialCity, wishlistedIds }: Props) {
   const searchParams = useSearchParams()
   const router       = useRouter()
   const [search,      setSearch]      = useState("")
@@ -166,7 +167,10 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   const [formatFilter,setFormatFilter]= useState("all")   // all | online | inperson | hybrid
   const [sort,        setSort]        = useState("date")
   const [view,        setView]        = useState<"grid" | "list">("grid")
-  const [bookmarks,   setBookmarks]   = useState<Set<string>>(new Set())
+  // "Bookmark" is this page's existing save-for-later affordance — wired to
+  // the real cross-app Wishlist (itemType EVENT) so it persists, rather than
+  // adding a second, redundant heart icon next to it.
+  const [bookmarks,   setBookmarks]   = useState<Set<string>>(() => new Set(wishlistedIds ?? []))
   const [showFilters, setShowFilters] = useState(false)
   const [sortOpen,    setSortOpen]    = useState(false)
   // Default to the user's own city (set via the top-nav location switcher)
@@ -262,12 +266,25 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
 
   const toggleBookmark = useCallback((id: string, e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
+    const wasBookmarked = bookmarks.has(id)
     setBookmarks(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      wasBookmarked ? next.delete(id) : next.add(id)
       return next
     })
-  }, [])
+    fetch("/api/wishlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId: id, itemType: "EVENT" }),
+    }).catch(() => {
+      // Roll back on failure
+      setBookmarks(prev => {
+        const next = new Set(prev)
+        wasBookmarked ? next.add(id) : next.delete(id)
+        return next
+      })
+    })
+  }, [bookmarks])
 
   // ── Filtering ────────────────────────────────────────────────────────────────
 

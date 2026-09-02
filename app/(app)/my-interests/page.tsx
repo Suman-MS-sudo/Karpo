@@ -8,6 +8,7 @@ import { ThumbsUp, ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { ListingCard } from "@/components/shared/ListingCard"
+import { parseImages } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "My Interests" }
 
@@ -82,7 +83,7 @@ export default async function MyInterestsPage() {
                 title={listing.title}
                 subtitle={listing.description}
                 price={listing.price}
-                images={listing.images}
+                images={parseImages(listing.images)}
                 author={listing.user}
                 badge={listing.category}
                 tags={[STATUS_LABEL[r.status] ?? r.status]}

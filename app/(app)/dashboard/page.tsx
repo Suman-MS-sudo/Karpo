@@ -21,6 +21,7 @@ import { MobileDashboardHeader } from "@/components/dashboard/MobileDashboardHea
 import { DashboardRefresh } from "@/components/dashboard/DashboardRefresh"
 import { PostPickerButton } from "@/components/shared/PostPickerButton"
 import { ServiceIconGrid } from "@/components/dashboard/ServiceIconGrid"
+import type { WishlistItemType } from "@/lib/wishlist"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
@@ -149,6 +150,7 @@ export default async function DashboardPage() {
     price?: number; priceLabel?: string; images: string[]
     author: Author
     badge: string; city: string | null; createdAt: Date
+    wishlistItemType: WishlistItemType
   }
 
   const HREF_BY_KIND: Record<string, string> = {
@@ -160,6 +162,11 @@ export default async function DashboardPage() {
     ? await prisma.user.findMany({ where: { id: { in: authorIds } }, select: authorSelect })
     : []
   const authorById = new Map(authors.map((a) => [a.id, a]))
+
+  // All of this user's wishlisted item keys, so the recent-activity feed's
+  // hearts (which span several post types) show the right saved state.
+  const wishlistRows = await prisma.wishlist.findMany({ where: { userId }, select: { itemType: true, itemId: true } })
+  const wishlistedKeys = new Set(wishlistRows.map((w) => `${w.itemType}:${w.itemId}`))
 
   // authorId always references an existing user (foreign key, no orphaned
   // rows in practice) — filter defensively rather than assert non-null.
@@ -198,6 +205,7 @@ export default async function DashboardPage() {
       badge: r.badge,
       city: r.city,
       createdAt: new Date(r.createdAt),
+      wishlistItemType: r.kind as WishlistItemType,
     }]
   })
 
@@ -494,6 +502,9 @@ export default async function DashboardPage() {
                     badge={item.badge}
                     city={item.city}
                     createdAt={item.createdAt}
+                    listingId={item.id}
+                    wishlistItemType={item.wishlistItemType}
+                    isWishlisted={wishlistedKeys.has(`${item.wishlistItemType}:${item.id}`)}
                     serviceBorderColor="border-l-blue-400"
                   />
                 ))}

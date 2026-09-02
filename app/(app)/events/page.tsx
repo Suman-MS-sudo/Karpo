@@ -5,6 +5,7 @@ import { auth } from "@/auth"
 import { FREE_LIMITS } from "@/lib/limits"
 import { EventsClient } from "./EventsClient"
 import type { EventItem } from "./EventsClient"
+import { getWishlistedIds } from "@/lib/wishlist"
 
 export const dynamic = "force-dynamic"
 
@@ -75,6 +76,8 @@ export default async function EventsPage() {
     }
   })
 
+  const wishlistedIds = await getWishlistedIds(userId, "EVENT")
+
   return (
     <Suspense>
       <EventsClient
@@ -85,6 +88,7 @@ export default async function EventsPage() {
         myEventsCount={myEventsCount}
         eventsLimit={FREE_LIMITS.events}
         initialCity={session?.user?.city ?? undefined}
+        wishlistedIds={[...wishlistedIds]}
       />
     </Suspense>
   )

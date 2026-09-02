@@ -9,6 +9,8 @@ import {
   BookOpen, CheckCircle, GraduationCap, Pencil, Languages, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
@@ -87,6 +89,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
 
   const isOwner = userId === course.instructorId
   const isEnrolled = Array.isArray((course as any).enrollments) && (course as any).enrollments.length > 0
+  const isWishlisted = !isOwner && (await getWishlistedIds(userId, "COURSE")).has(params.id)
   const enrolledCount = course._count.enrollments
   const curriculum = course.curriculum as Module[] | null
   const totalTopics = curriculum?.reduce((s, m) => s + m.topics.length, 0) ?? 0
@@ -136,6 +139,9 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/learning/${params.id}/edit`}><Pencil className="h-3.5 w-3.5 mr-1" />Edit</Link>
                   </Button>
+                )}
+                {!isOwner && (
+                  <WishlistButton itemId={params.id} itemType="COURSE" initialWishlisted={isWishlisted} />
                 )}
                 <SocialShare title={`${course.title} — Course on Korpo`} path={`/learning/${params.id}`} variant="icon" />
               </div>

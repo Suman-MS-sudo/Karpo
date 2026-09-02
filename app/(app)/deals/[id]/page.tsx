@@ -6,6 +6,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, Calendar, ExternalLink, Tag, Copy, CheckCircle, Globe, AlertCircle, ShoppingCart, IndianRupee, PackageX } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CopyButton } from "@/components/shared/CopyButton"
@@ -43,6 +45,8 @@ export default async function DealDetailPage({ params }: { params: { id: string 
   })
 
   if (!deal) notFound()
+
+  const isWishlisted = (await getWishlistedIds(userId, "DEAL")).has(params.id)
 
   if (!deal.isActive) {
     return (
@@ -113,7 +117,10 @@ export default async function DealDetailPage({ params }: { params: { id: string 
                   </p>
                 )}
               </div>
-              <SocialShare title={`${deal.discount}% off — ${deal.title} on Korpo`} path={`/deals/${params.id}`} variant="icon" />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <WishlistButton itemId={params.id} itemType="DEAL" initialWishlisted={isWishlisted} />
+                <SocialShare title={`${deal.discount}% off — ${deal.title} on Korpo`} path={`/deals/${params.id}`} variant="icon" />
+              </div>
             </div>
           </div>
 

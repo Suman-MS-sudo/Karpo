@@ -4,6 +4,7 @@ import { auth } from "@/auth"
 import { FREE_LIMITS } from "@/lib/limits"
 import { DealsClient } from "./DealsClient"
 import type { Deal } from "@/hooks/useDeals"
+import { getWishlistedIds } from "@/lib/wishlist"
 
 export const dynamic = "force-dynamic"
 
@@ -90,6 +91,8 @@ export default async function DealsPage() {
       : Promise.resolve(0),
   ])
 
+  const wishlistedIds = await getWishlistedIds(session?.user?.id, "DEAL")
+
   return (
     <DealsClient
       initialDeals={rawDeals.map(serializeDeal)}
@@ -98,6 +101,7 @@ export default async function DealsPage() {
       expiringSoon={rawExpiringSoon.map(serializeDeal)}
       redemptionCount={redemptionCount}
       isPremium={isPremium}
+      wishlistedIds={[...wishlistedIds]}
     />
   )
 }

@@ -10,6 +10,8 @@ import {
   CreditCard, Shield, RotateCcw, ChevronDown, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
@@ -105,6 +107,7 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
   }
 
   const isOwner = session?.user?.id === route.userId
+  const isWishlisted = !isOwner && (await getWishlistedIds(session?.user?.id, "CARPOOL")).has(params.id)
 
   const approvedSeats = await prisma.carpoolRequest.aggregate({
     where: { routeId: params.id, status: "APPROVED" },
@@ -170,11 +173,16 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
                   <span className="font-semibold text-base truncate max-w-[180px]">{route.toLocation}</span>
                 </div>
               </div>
-              <SocialShare
-                title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
-                path={`/carpool/${params.id}`}
-                variant="icon"
-              />
+              <div className="flex items-center gap-1.5 shrink-0">
+                {!isOwner && (
+                  <WishlistButton itemId={params.id} itemType="CARPOOL" initialWishlisted={isWishlisted} />
+                )}
+                <SocialShare
+                  title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
+                  path={`/carpool/${params.id}`}
+                  variant="icon"
+                />
+              </div>
             </div>
 
             {/* Quick-stat pills */}

@@ -1,63 +1,60 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { isWishlistItemType, type WishlistItemType } from "@/lib/wishlist"
 
-// GET /api/wishlist — the current user's wishlisted listing ids (used to
-// paint hearts as filled on cards) or, with ?full=1, the full listing cards
-// for the Wishlist dashboard page.
-export async function GET(req: Request) {
+// Existence check per post type — used before creating a wishlist row so we
+// never save a dangling reference. Each wishlistable post type lives in its
+// own table, so this can't be a single Prisma relation/FK.
+async function itemExists(itemType: WishlistItemType, itemId: string): Promise<boolean> {
+  switch (itemType) {
+    case "LISTING":  return !!(await prisma.listing.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "RENTAL":   return !!(await prisma.rentalPost.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "REFERRAL": return !!(await prisma.jobReferral.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "CARPOOL":  return !!(await prisma.carpoolRoute.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "SKILL":    return !!(await prisma.skillListing.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "DEAL":     return !!(await prisma.deal.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "EVENT":    return !!(await prisma.event.findUnique({ where: { id: itemId }, select: { id: true } }))
+    case "COURSE":   return !!(await prisma.course.findUnique({ where: { id: itemId }, select: { id: true } }))
+  }
+}
+
+// GET /api/wishlist — the current user's wishlisted item ids, grouped by
+// type (used to paint hearts as filled on cards).
+export async function GET() {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { searchParams } = new URL(req.url)
-  const full = searchParams.get("full") === "1"
-
-  if (!full) {
-    const rows = await prisma.wishlist.findMany({
-      where: { userId: session.user.id, itemType: "LISTING" },
-      select: { listingId: true },
-    })
-    return NextResponse.json({ listingIds: rows.map((r) => r.listingId) })
-  }
-
   const rows = await prisma.wishlist.findMany({
-    where: { userId: session.user.id, itemType: "LISTING" },
-    orderBy: { createdAt: "desc" },
-    include: {
-      listing: {
-        select: {
-          id: true, title: true, description: true, price: true, images: true,
-          category: true, condition: true, isNegotiable: true, city: true,
-          status: true, boostLevel: true, viewCount: true, createdAt: true,
-          user: {
-            select: {
-              id: true, name: true, image: true, avatarUrl: true, isVerified: true,
-              jobTitle: true, department: true,
-            },
-          },
-        },
-      },
-    },
+    where: { userId: session.user.id },
+    select: { itemType: true, itemId: true },
   })
 
-  const listings = rows.filter((r) => r.listing).map((r) => r.listing)
-  return NextResponse.json({ data: listings })
+  const byType: Record<string, string[]> = {}
+  for (const r of rows) {
+    (byType[r.itemType] ??= []).push(r.itemId)
+  }
+  return NextResponse.json({ itemsByType: byType })
 }
 
-// POST /api/wishlist { listingId } — toggles the listing in/out of the
+// POST /api/wishlist { itemId, itemType } — toggles the item in/out of the
 // user's wishlist. Returns the resulting state.
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json().catch(() => null)
-  const listingId = body?.listingId
-  if (!listingId || typeof listingId !== "string") {
-    return NextResponse.json({ error: "listingId is required" }, { status: 400 })
+  const itemId = body?.itemId
+  const itemType = body?.itemType ?? "LISTING"
+  if (!itemId || typeof itemId !== "string") {
+    return NextResponse.json({ error: "itemId is required" }, { status: 400 })
+  }
+  if (!isWishlistItemType(itemType)) {
+    return NextResponse.json({ error: "Invalid itemType" }, { status: 400 })
   }
 
   const existing = await prisma.wishlist.findUnique({
-    where: { userId_itemType_listingId: { userId: session.user.id, itemType: "LISTING", listingId } },
+    where: { userId_itemType_itemId: { userId: session.user.id, itemType, itemId } },
   })
 
   if (existing) {
@@ -65,11 +62,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ wishlisted: false })
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id: listingId }, select: { id: true } })
-  if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 })
+  if (!(await itemExists(itemType, itemId))) {
+    return NextResponse.json({ error: "Item not found" }, { status: 404 })
+  }
 
   await prisma.wishlist.create({
-    data: { userId: session.user.id, itemType: "LISTING", listingId },
+    data: { userId: session.user.id, itemType, itemId },
   })
   return NextResponse.json({ wishlisted: true })
 }

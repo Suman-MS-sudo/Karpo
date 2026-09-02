@@ -277,29 +277,31 @@ model Listing {
   offers      ListingOffer[]
   reports     ListingReport[]
   engagements ListingEngagement[]
-  wishlistedBy Wishlist[]
 
   @@index([city, status, category])
   @@index([userId])
 }
 
-// A user's saved/favourited listing — the heart icon on a listing card.
-// Scoped to marketplace Listing for now (itemType always "LISTING"), kept as
-// a string rather than a hard enum so other post types (rentals, skills…)
-// can be wishlisted later without a schema change.
+// A user's saved/favourited post — the heart icon shown on any post's card
+// (Marketplace, Rentals, Referrals, Carpool, Skills, Deals, Events, Learning).
+// itemId deliberately has no foreign key: it points at the id column of
+// whichever table itemType names (Listing, RentalPost, JobReferral,
+// CarpoolRoute, SkillListing, Deal, Event, Course) — a polymorphic reference
+// resolved in application code, since Prisma/SQLite can't FK to "one of
+// several tables". Cleanup of wishlist rows for a deleted post is therefore
+// also handled in application code (best-effort), not via onDelete: Cascade.
 model Wishlist {
   id        String   @id @default(cuid())
   userId    String
-  itemType  String   @default("LISTING")
-  listingId String
+  itemType  String
+  itemId    String
   createdAt DateTime @default(now())
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, itemType, listingId])
+  @@unique([userId, itemType, itemId])
   @@index([userId])
-  @@index([listingId])
+  @@index([itemType, itemId])
 }
 
 model ListingReport {

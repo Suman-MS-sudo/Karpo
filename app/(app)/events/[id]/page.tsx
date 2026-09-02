@@ -9,6 +9,8 @@ import {
   Pencil, ExternalLink, ChevronRight, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatCurrency, getInitials } from "@/lib/utils"
@@ -87,6 +89,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   }
 
   const isOwner          = session?.user?.id === event.organizerId
+  const isWishlisted     = !isOwner && (await getWishlistedIds(session?.user?.id, "EVENT")).has(params.id)
   const confirmedRsvps    = event.rsvps.filter((r) => (r as any).status !== "PENDING")
   const pendingRsvps      = event.rsvps.filter((r) => (r as any).status === "PENDING")
   const confirmedCount    = confirmedRsvps.length
@@ -335,12 +338,17 @@ export default async function EventDetailPage({ params }: { params: { id: string
                   </p>
                   {event.fee > 0 && <p className="text-xs text-muted-foreground">per person</p>}
                 </div>
-                <SocialShare
-                  title={`${event.title} — Event on Korpo`}
-                  description={event.description ?? undefined}
-                  path={`/events/${params.id}`}
-                  variant="icon"
-                />
+                <div className="flex items-center gap-1.5">
+                  {!isOwner && (
+                    <WishlistButton itemId={params.id} itemType="EVENT" initialWishlisted={isWishlisted} />
+                  )}
+                  <SocialShare
+                    title={`${event.title} — Event on Korpo`}
+                    description={event.description ?? undefined}
+                    path={`/events/${params.id}`}
+                    variant="icon"
+                  />
+                </div>
               </div>
 
               {/* RSVP action */}

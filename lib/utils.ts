@@ -65,3 +65,18 @@ export function buildSearchParams(params: Record<string, string | number | undef
   }
   return sp.toString()
 }
+
+// Parses a JSON-array-as-string field (e.g. Listing.images) into a real
+// array. Needed anywhere a listing is fetched through a *nested* relation
+// (an `include`) — the Prisma middleware in lib/prisma.ts only auto-parses
+// these fields on the top-level query model, not on included relations.
+export function parseImages(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw !== "string") return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}

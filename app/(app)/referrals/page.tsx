@@ -7,6 +7,8 @@ import { Suspense } from "react"
 import { Plus, Building2, Clock, Briefcase, MapPin, MonitorSmartphone, Zap } from "lucide-react"
 import { FREE_LIMITS } from "@/lib/limits"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
@@ -90,6 +92,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
   ])
   const myReferralsCount = myId && !isPremium ? stats.myReferralsCount : 0
   const { openCount, hiringCompanies } = stats
+  const wishlistedIds = await getWishlistedIds(myId, "REFERRAL")
   const deptCounts = Object.fromEntries(deptCountRows.map((r) => [r.department, r._count]))
 
   // Build Prisma filters
@@ -358,11 +361,14 @@ export default async function ReferralsPage({ searchParams }: Props) {
                     <div className="mt-auto pt-4">
                       <div className="flex items-center justify-between border-t border-border pt-3">
                         <UserCard user={ref.user} size="sm" clickable={false} />
-                        <SocialShare
-                          title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
-                          path={`/referrals/${ref.id}`}
-                          variant="icon"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <WishlistButton itemId={ref.id} itemType="REFERRAL" initialWishlisted={wishlistedIds.has(ref.id)} />
+                          <SocialShare
+                            title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
+                            path={`/referrals/${ref.id}`}
+                            variant="icon"
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <Badge variant="success" className="text-[11px]">Open</Badge>

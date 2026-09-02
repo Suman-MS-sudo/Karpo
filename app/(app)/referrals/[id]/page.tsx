@@ -10,6 +10,8 @@ import {
   Monitor, Laptop, Globe, Code2, ListChecks, Sparkles,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
@@ -66,6 +68,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
 
   const isOwner  = session?.user?.id === ref.userId
   const isClosed = ref.status !== "OPEN"
+  const isWishlisted = !isOwner && (await getWishlistedIds(session?.user?.id, "REFERRAL")).has(params.id)
 
   const myApplication = session?.user?.id && !isOwner
     ? await prisma.referralApplication.findUnique({
@@ -100,12 +103,17 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <h1 className="text-xl font-bold leading-tight">{ref.title}</h1>
-                  <SocialShare
-                    title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
-                    description={ref.description ?? undefined}
-                    path={`/referrals/${params.id}`}
-                    variant="icon"
-                  />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {!isOwner && (
+                      <WishlistButton itemId={params.id} itemType="REFERRAL" initialWishlisted={isWishlisted} />
+                    )}
+                    <SocialShare
+                      title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
+                      description={ref.description ?? undefined}
+                      path={`/referrals/${params.id}`}
+                      variant="icon"
+                    />
+                  </div>
                 </div>
                 <p className="text-base text-muted-foreground mt-0.5 flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 shrink-0" />{ref.company.name}

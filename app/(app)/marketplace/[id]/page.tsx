@@ -14,6 +14,8 @@ import {
   Clock, Award, Zap, AlertTriangle, PackageX,
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -125,6 +127,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const isOwner   = session?.user?.id === raw.userId
   const isSold    = raw.status === "SOLD"
   const isExpired = raw.status === "EXPIRED"
+  const isWishlisted = !isOwner && (await getWishlistedIds(session?.user?.id, "LISTING")).has(params.id)
 
   // Fetch myEngagement BEFORE the auth gate so sold-via-engagement buyers aren't blocked
   const [acceptedDeal, myEngagement] = await Promise.all([
@@ -323,12 +326,17 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               {listing.isNegotiable && !isSold && (
                 <p className="text-xs text-muted-foreground">Price is negotiable</p>
               )}
-              <SocialShare
-                title={`${listing.title} — ₹${listing.price.toLocaleString()} on Korpo`}
-                description={listing.description ?? undefined}
-                path={`/marketplace/${params.id}`}
-                variant="icon"
-              />
+              <div className="flex items-center gap-1.5">
+                {!isOwner && (
+                  <WishlistButton itemId={params.id} itemType="LISTING" initialWishlisted={isWishlisted} />
+                )}
+                <SocialShare
+                  title={`${listing.title} — ₹${listing.price.toLocaleString()} on Korpo`}
+                  description={listing.description ?? undefined}
+                  path={`/marketplace/${params.id}`}
+                  variant="icon"
+                />
+              </div>
             </div>
           </div>
 

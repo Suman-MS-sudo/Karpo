@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { Lock, Eye, Handshake, Pencil, Crown } from "lucide-react"
 import { SocialShare } from "./SocialShare"
 import { WishlistButton } from "./WishlistButton"
+import type { WishlistItemType } from "@/lib/wishlist"
 import { LISTING_CONDITIONS } from "@/config/services"
 
 interface ListingAuthor {
@@ -47,6 +48,7 @@ interface ListingCardProps {
   viewCount?: number
   isOwn?: boolean
   listingId?: string
+  wishlistItemType?: WishlistItemType
   isWishlisted?: boolean
 }
 
@@ -101,6 +103,7 @@ export function ListingCard({
   viewCount,
   isOwn = false,
   listingId,
+  wishlistItemType = "LISTING",
   isWishlisted = false,
 }: ListingCardProps) {
   const displayImage = image ?? images?.[0]
@@ -177,7 +180,7 @@ export function ListingCard({
               share icon only appears on hover, matching before. */}
           <div className={cn("absolute right-2 flex items-center gap-1.5", condMeta ? "bottom-2" : "top-2")}>
             {listingId && !isOwn && (
-              <WishlistButton listingId={listingId} initialWishlisted={isWishlisted} />
+              <WishlistButton itemId={listingId} itemType={wishlistItemType} initialWishlisted={isWishlisted} />
             )}
             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
               <SocialShare

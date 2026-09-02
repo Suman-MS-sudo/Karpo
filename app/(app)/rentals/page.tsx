@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { RentalFilters } from "@/components/rentals/RentalFilters"
 import { fuzzyFilter } from "@/lib/fuzzy"
@@ -83,6 +85,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
   const myRentalsCount = session?.user?.id && !isPremium
     ? await prisma.rentalPost.count({ where: { userId: session.user.id, status: "ACTIVE" } })
     : 0
+  const wishlistedIds = await getWishlistedIds(session?.user?.id, "RENTAL")
 
   // budget param maps to minRent/maxRent
   const [budgetMin, budgetMax] = (() => {
@@ -294,11 +297,14 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <p className={`font-bold text-sm ${isBoosted ? "text-amber-600 dark:text-amber-400" : "text-primary-600"}`}>{formatCurrency(rental.rent)}<span className="text-[10px] font-normal text-muted-foreground">/mo</span></p>
                         {rental.deposit && <p className="text-[10px] text-muted-foreground">+{formatCurrency(rental.deposit)} dep</p>}
-                        <SocialShare
-                          title={`${rental.title} — Rental on Korpo`}
-                          path={`/rentals/${rental.id}`}
-                          variant="icon"
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <WishlistButton itemId={rental.id} itemType="RENTAL" initialWishlisted={wishlistedIds.has(rental.id)} />
+                          <SocialShare
+                            title={`${rental.title} — Rental on Korpo`}
+                            path={`/rentals/${rental.id}`}
+                            variant="icon"
+                          />
+                        </div>
                       </div>
                     </div>
 

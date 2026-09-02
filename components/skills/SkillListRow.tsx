@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Star, MapPin, CheckCircle2, TrendingUp } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { WishlistButton } from "@/components/shared/WishlistButton"
 import { formatCurrency, getInitials } from "@/lib/utils"
 
 interface Package { price: number }
@@ -38,7 +39,7 @@ function lowestPrice(l: Listing): number | null {
   return Math.min(...pkgs.map(p => p.price))
 }
 
-export function SkillListRow({ listing: l }: { listing: Listing }) {
+export function SkillListRow({ listing: l, isWishlisted = false, isOwn = false }: { listing: Listing; isWishlisted?: boolean; isOwn?: boolean }) {
   const avatar     = l.user.avatarUrl ?? l.user.image
   const price      = lowestPrice(l)
   const successPct = l.totalOrders > 0 ? Math.round((l.completedOrders / l.totalOrders) * 100) : null
@@ -46,7 +47,12 @@ export function SkillListRow({ listing: l }: { listing: Listing }) {
 
   return (
     <Link href={`/skills/${l.id}`} className="group block">
-      <div className="flex gap-4 p-4 rounded-3xl bg-card ring-1 ring-border/60 hover:ring-primary/30 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+      <div className="relative flex gap-4 p-4 rounded-3xl bg-card ring-1 ring-border/60 hover:ring-primary/30 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
+        {!isOwn && (
+          <div className="absolute top-3 right-3">
+            <WishlistButton itemId={l.id} itemType="SKILL" initialWishlisted={isWishlisted} />
+          </div>
+        )}
         <Avatar className="h-16 w-16 shrink-0 rounded-2xl ring-2 ring-border/50">
           <AvatarImage src={avatar ?? ""} className="rounded-2xl object-cover" />
           <AvatarFallback className="rounded-2xl text-base">{getInitials(l.user.name)}</AvatarFallback>
@@ -75,7 +81,7 @@ export function SkillListRow({ listing: l }: { listing: Listing }) {
                 {l.location && <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>}
               </div>
             </div>
-            <div className="text-right shrink-0">
+            <div className="text-right shrink-0 pr-8">
               <p className="font-bold text-sm">
                 {price != null ? formatCurrency(price) : "View pricing"}
                 {l.pricingModel === "HOURLY" && price != null && <span className="text-xs font-normal text-muted-foreground">/hr</span>}

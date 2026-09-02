@@ -5,6 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { Plus, Award, Globe, MapPin, GraduationCap, Clock } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PageTitle } from "@/components/ui/page-title"
@@ -33,6 +35,7 @@ export default async function LearningPage({ searchParams }: { searchParams: { c
   const myCoursesCount = session?.user?.id && !isPremium
     ? await prisma.course.count({ where: { instructorId: session.user.id, isActive: true } })
     : 0
+  const wishlistedIds = await getWishlistedIds(session?.user?.id, "COURSE")
 
   const where: Record<string, unknown> = { isActive: true }
   if (searchParams.category && searchParams.category !== "All") where.category = searchParams.category
@@ -148,6 +151,7 @@ export default async function LearningPage({ searchParams }: { searchParams: { c
                       <UserCard user={course.instructor} size="sm" clickable={false} />
                       <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
                         <p className="font-bold text-primary-600 text-sm">{course.price === 0 ? "Free" : formatCurrency(course.price)}</p>
+                        <WishlistButton itemId={course.id} itemType="COURSE" initialWishlisted={wishlistedIds.has(course.id)} />
                         <SocialShare title={`${course.title} — Course on Korpo`} path={`/learning/${course.id}`} variant="icon" />
                       </div>
                     </div>

@@ -13,6 +13,7 @@ import { PageHero } from "@/components/shared/PageHero"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
 import { LISTING_CATEGORIES } from "@/config/services"
 import { fuzzyFilter } from "@/lib/fuzzy"
+import { getWishlistedIds } from "@/lib/wishlist"
 
 export const metadata: Metadata = {
   title: "Buy & Sell",
@@ -201,9 +202,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
   const myListingsCount = session?.user?.id && !isPremium
     ? await prisma.listing.count({ where: { userId: session.user.id, status: "ACTIVE" } })
     : 0
-  const wishlistedIds = session?.user?.id
-    ? new Set((await prisma.wishlist.findMany({ where: { userId: session.user.id, itemType: "LISTING" }, select: { listingId: true } })).map((w) => w.listingId))
-    : new Set<string>()
+  const wishlistedIds = await getWishlistedIds(session?.user?.id, "LISTING")
 
   return (
     <div className="min-h-full bg-background">

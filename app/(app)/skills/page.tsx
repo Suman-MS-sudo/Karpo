@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ChevronLeft, Plus, Sparkles, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SkillListRow } from "@/components/skills/SkillListRow"
+import { getWishlistedIds } from "@/lib/wishlist"
 import { SkillListFilters } from "@/components/skills/SkillListFilters"
 import { SkillsHero } from "@/components/skills/SkillsHero"
 import { SkillCategoryStrip } from "@/components/skills/SkillCategoryStrip"
@@ -134,6 +135,8 @@ export default async function SkillsPage({ searchParams }: PageProps) {
     ])
   }
 
+  const wishlistedIds = await getWishlistedIds(session?.user?.id, "SKILL")
+
   // allActiveCount/verifiedUsers-count/orderAgg/ratingAgg folded into one
   // raw round trip — see SkillsLanding.tsx for why (libsql adapter doesn't
   // pipeline concurrent requests). groupBy/locationRows stay separate since
@@ -212,7 +215,14 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         {listings.length > 0 ? (
           <>
             <div className="space-y-3">
-              {listings.map((l) => <SkillListRow key={l.id} listing={l as any} />)}
+              {listings.map((l) => (
+                <SkillListRow
+                  key={l.id}
+                  listing={l as any}
+                  isWishlisted={wishlistedIds.has(l.id)}
+                  isOwn={session?.user?.id === (l as any).userId}
+                />
+              ))}
             </div>
 
             {pages > 1 && (
