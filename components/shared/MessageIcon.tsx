@@ -21,20 +21,23 @@ interface Conversation {
 
 export function MessageIcon() {
   const pathname  = usePathname()
-  const { totalUnread, openChat, windows } = useChatContext()
+  const { totalUnread, messageTick, openChat, windows } = useChatContext()
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen]               = useState(false)
   const [conversations, setConvos]    = useState<Conversation[]>([])
   const [loading, setLoading]         = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  // Refresh unread count on navigation or context changes
+  // Refresh unread count on navigation, on context changes, and — the part
+  // that used to be missing — the instant a new message arrives over SSE
+  // (messageTick), so the badge shows up in real time instead of only on
+  // the next navigation.
   useEffect(() => {
     fetch("/api/messages/unread-count")
       .then((r) => r.json())
       .then((d) => setUnreadCount(d.count ?? 0))
       .catch(() => {})
-  }, [pathname, totalUnread])
+  }, [pathname, totalUnread, messageTick])
 
   // Close popup on outside click
   useEffect(() => {

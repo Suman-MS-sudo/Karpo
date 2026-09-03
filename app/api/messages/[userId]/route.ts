@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 import { emitNewMessage } from "@/lib/message-events"
 import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
+import { pushNotification } from "@/lib/notify"
 
 export async function GET(_req: Request, { params }: { params: { userId: string } }) {
   const { session, error } = await requireVerified()
@@ -56,7 +57,8 @@ export async function POST(req: Request, { params }: { params: { userId: string 
     isRead:     message.isRead,
   })
 
-  // Create notification (non-blocking — don't await)
+  // Create notification, then push it live over SSE so the bell/badge
+  // updates instantly instead of waiting for the 60s poll fallback.
   prisma.notification.create({
     data: {
       userId: params.userId,
@@ -65,7 +67,7 @@ export async function POST(req: Request, { params }: { params: { userId: string 
       body:   `${session.user.name ?? "Someone"} sent you a message`,
       link:   `/messages/${session.user.id}`,
     },
-  }).catch(() => {})
+  }).then(pushNotification).catch(() => {})
 
   return NextResponse.json(message, { status: 201 })
 }

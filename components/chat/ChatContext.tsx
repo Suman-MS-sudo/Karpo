@@ -41,6 +41,12 @@ export interface ChatWindow {
 interface ChatContextValue {
   windows: ChatWindow[]
   totalUnread: number
+  /** Bumps by 1 on every message the SSE stream delivers for this user —
+   * including from senders with no chat window open (which windows-based
+   * totalUnread can't reflect). Components that show an unread badge but
+   * don't want to track per-window state (MessageIcon, MobileNav) can
+   * depend on this to know instantly when to refetch their own count. */
+  messageTick: number
   openChat: (partner: ChatPartner) => void
   closeChat: (partnerId: string) => void
   toggleMinimize: (partnerId: string) => void
@@ -63,6 +69,7 @@ export function useChatContext() {
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
   const [windows, setWindows] = useState<ChatWindow[]>([])
+  const [messageTick, setMessageTick] = useState(0)
   const sseRef = useRef<EventSource | null>(null)
 
   // ── SSE connection ──────────────────────────────────────────────────────────
@@ -82,11 +89,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           // Only handle messages sent TO the current user
           if (msg.receiverId !== session!.user!.id) return
 
+          // Every incoming message bumps the tick — this is what lets
+          // MessageIcon/MobileNav (which don't track per-window state)
+          // know to refetch their unread count immediately, including for
+          // senders with no chat window currently open.
+          setMessageTick((t) => t + 1)
+
           setWindows((prev) => {
             const idx = prev.findIndex((w) => w.partner.id === msg.senderId)
             if (idx === -1) {
-              // Partner window not open → just bump unread via the global count
-              // (handled below)
+              // No window open for this sender — nothing to update here;
+              // messageTick above is what drives the badge in this case.
               return prev
             }
             const win = prev[idx]
@@ -260,7 +273,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ChatContext.Provider
-      value={{ windows, totalUnread, openChat, closeChat, toggleMinimize, sendMessage, markRead }}
+      value={{ windows, totalUnread, messageTick, openChat, closeChat, toggleMinimize, sendMessage, markRead }}
     >
       {children}
     </ChatContext.Provider>

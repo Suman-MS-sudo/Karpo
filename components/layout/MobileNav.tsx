@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { SERVICES, type ServiceConfig } from "@/config/services"
 import { cn } from "@/lib/utils"
+import { useChatContext } from "@/components/chat/ChatContext"
 
 const serviceImageMap: Record<string, string> = {
   "buy-sell": "/images/services/marketplace.jpeg",
@@ -102,8 +103,10 @@ function LaunchpadSheet({
 export function MobileNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const { messageTick } = useChatContext()
   const [sheet, setSheet] = useState<"post" | "view" | null>(null)
   const [unread, setUnread] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
   const fetchUnread = useCallback(() => {
     fetch("/api/notifications?limit=20")
@@ -132,6 +135,24 @@ export function MobileNav() {
     const id = setInterval(fetchUnread, 60_000)
     return () => clearInterval(id)
   }, [fetchUnread])
+
+  // Messages badge — same live-update pattern as Alerts above, driven by
+  // ChatContext's messageTick (bumped by its own /api/messages/stream
+  // subscription) instead of opening a second SSE connection here.
+  const fetchUnreadMessages = useCallback(() => {
+    fetch("/api/messages/unread-count")
+      .then((r) => r.json())
+      .then((d) => setUnreadMessages(d.count ?? 0))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    // Unlike Alerts, opening one conversation (GET /api/messages/[userId])
+    // only marks *that* conversation's messages read — other unread
+    // conversations may remain — so always refetch the real count rather
+    // than optimistically zeroing it.
+    fetchUnreadMessages()
+  }, [fetchUnreadMessages, pathname, messageTick])
 
   const handleSelect = (service: ServiceConfig) => {
     setSheet((current) => {
@@ -164,6 +185,11 @@ export function MobileNav() {
                   {key === "notifications" && unread > 0 && (
                     <span className="absolute -top-1 -right-2 h-4 min-w-4 px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                       {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                  {key === "messages" && unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-2 h-4 min-w-4 px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                      {unreadMessages > 9 ? "9+" : unreadMessages}
                     </span>
                   )}
                 </span>
