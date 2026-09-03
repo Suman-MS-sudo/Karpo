@@ -259,168 +259,21 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       </nav>
 
       {/*
-        Explicit grid placement (not just document order) so the sidebar
-        naturally lands between the two content blocks on mobile — where it
-        stacks as its own row, right after Handover Preference and before
-        Safety Guidelines — while still spanning both content rows as one
-        sticky right-hand column on desktop. This avoids rendering the
-        sidebar's stateful subcomponents (which fetch their own data) twice.
+        Explicit grid placement (not just document order) so the sidebar can
+        render FIRST in source — on mobile (where lg: column/row placement
+        doesn't apply) it simply falls in document order, so it's the very
+        first thing shown, above the photo gallery. Sellers/buyers otherwise
+        had to scroll past photos, specs and description to find "Your
+        Listing" / buyer-engagement info, which was easy to miss. On desktop
+        the explicit lg:col-start-3 placement still puts it in its usual
+        sticky right-hand column regardless of source order. This also
+        avoids rendering the sidebar's stateful subcomponents (which fetch
+        their own data) twice.
       */}
       <div className="grid lg:grid-cols-3 gap-8 items-start">
 
-        {/* ── Left: main content, part 1 (through Handover Preference) ────── */}
-        <div className="lg:col-start-1 lg:col-span-2 lg:row-start-1 space-y-5">
-
-          {/* Image gallery */}
-          <div className="bg-muted/30 border border-border rounded-2xl overflow-hidden">
-            {listing.images.length > 0 ? (
-              <ListingImageGallery
-                images={listing.images}
-                title={listing.title}
-                isSold={isSold}
-                isBoostActive={isBoostActive}
-                boostLevel={listing.boostLevel}
-              />
-            ) : (
-              <div className="aspect-[4/3] flex items-center justify-center">
-                <Package className="h-16 w-16 text-muted-foreground/20" />
-              </div>
-            )}
-          </div>
-
-          {/* Title + price header */}
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                {catMeta && (
-                  <Link href={`/marketplace?category=${listing.category}`}>
-                    <Badge variant="secondary" className="hover:bg-muted cursor-pointer">{catMeta.label}</Badge>
-                  </Link>
-                )}
-                {listing.subcategory && (
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground">{listing.subcategory}</span>
-                )}
-                {condMeta && (
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${condMeta.badge}`}>
-                    {condDetail?.icon} {condMeta.label}
-                  </span>
-                )}
-                {listing.isNegotiable && !isSold && (
-                  <span className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-2.5 py-1 rounded-full">
-                    <Handshake className="h-3 w-3" /> Negotiable
-                  </span>
-                )}
-                {isSold && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
-                    Sold
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="text-right shrink-0 flex flex-col items-end gap-2">
-              <p className="text-3xl font-bold text-primary-600">{formatCurrency(listing.price)}</p>
-              {isSold && acceptedDeal && (
-                <p className="text-sm text-green-600 dark:text-green-400 font-medium">Sold for {formatCurrency(acceptedDeal.amount)}</p>
-              )}
-              {listing.isNegotiable && !isSold && (
-                <p className="text-xs text-muted-foreground">Price is negotiable</p>
-              )}
-              <div className="flex items-center gap-1.5">
-                {!isOwner && (
-                  <WishlistButton itemId={params.id} itemType="LISTING" initialWishlisted={isWishlisted} />
-                )}
-                <SocialShare
-                  title={`${listing.title} — ₹${listing.price.toLocaleString()} on Korpo`}
-                  description={listing.description ?? undefined}
-                  path={`/marketplace/${params.id}`}
-                  variant="icon"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground py-3 border-y border-border">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5" />
-              {listing.area ? `${listing.area}, ${listing.city}` : listing.city}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              Listed {formatRelativeTime(listing.createdAt)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Eye className="h-3.5 w-3.5" />
-              {listing.viewCount} views
-            </span>
-            {hasLocation && <DistanceText lat={listing.latitude!} lng={listing.longitude!} />}
-          </div>
-
-          {/* Item specifications */}
-          <SectionCard title="Item Details" icon={Tag}>
-            <div className="divide-y divide-border/50">
-              <SpecRow icon={Tag}      label="Category"     value={catMeta?.label ?? listing.category} />
-              {listing.subcategory && <SpecRow icon={ChevronRight} label="Subcategory" value={listing.subcategory} />}
-              {listing.brand        && <SpecRow icon={Award}  label="Brand"         value={listing.brand} />}
-              {listing.purchaseYear && <SpecRow icon={Calendar} label="Purchased"    value={listing.purchaseYear.toString()} />}
-              {listing.warranty && listing.warranty !== "No warranty"
-                                    && <SpecRow icon={ShieldCheck} label="Warranty" value={listing.warranty} />}
-              <SpecRow icon={Star}    label="Condition"    value={`${condDetail?.icon ?? ""} ${condMeta?.label ?? listing.condition}`} />
-              <SpecRow icon={MeetIcon} label="Handover"   value={meetMeta.label} />
-              <SpecRow icon={MapPin}  label="Location"     value={listing.area ? `${listing.area}, ${listing.city}` : listing.city} />
-            </div>
-          </SectionCard>
-
-          {/* Condition explained */}
-          {condDetail && (
-            <div className={`flex items-start gap-3 p-4 rounded-xl border ${condMeta?.badge ?? "border-border bg-muted/30"}`}>
-              <span className="text-xl leading-none mt-0.5">{condDetail.icon}</span>
-              <div>
-                <p className="text-sm font-semibold">{condMeta?.label} — what this means</p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{condDetail.desc}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Description */}
-          <SectionCard title="Description" icon={Info}>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{listing.description}</p>
-          </SectionCard>
-
-          {/* Handover / meeting preference */}
-          <SectionCard title="Handover Preference" icon={Truck}>
-            <div className="flex items-start gap-4">
-              <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
-                listing.meetingPref === "PICKUP"  ? "bg-blue-100 dark:bg-blue-900/30" :
-                listing.meetingPref === "DELIVER" ? "bg-emerald-100 dark:bg-emerald-900/30" :
-                "bg-violet-100 dark:bg-violet-900/30"
-              }`}>
-                <MeetIcon className={`h-5 w-5 ${
-                  listing.meetingPref === "PICKUP"  ? "text-blue-600 dark:text-blue-400" :
-                  listing.meetingPref === "DELIVER" ? "text-emerald-600 dark:text-emerald-400" :
-                  "text-violet-600 dark:text-violet-400"
-                }`} />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">{meetMeta.label}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{meetMeta.desc}</p>
-                {listing.area && (
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> Based in {listing.area}, {listing.city}
-                  </p>
-                )}
-              </div>
-            </div>
-          </SectionCard>
-
-        </div>
-
-        {/* ── Right: sidebar — price, seller/buyer panels. Explicitly placed
-            to span both content rows on desktop, but on mobile (where lg:
-            column/row placement doesn't apply) it simply falls in document
-            order — right after Handover Preference, before the map/safety/
-            similar-listings block below. ─────────────────────────────────── */}
+        {/* ── Right (desktop) / top (mobile): sidebar — price, seller/buyer
+            panels. See the placement note above. ──────────────────────── */}
         <div className="space-y-4 lg:col-start-3 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-8">
 
           {/* Price card */}
@@ -712,6 +565,143 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </Link>
           )}
+        </div>
+
+        {/* ── Left: main content, part 1 (through Handover Preference) ────── */}
+        <div className="lg:col-start-1 lg:col-span-2 lg:row-start-1 space-y-5">
+
+          {/* Image gallery */}
+          <div className="bg-muted/30 border border-border rounded-2xl overflow-hidden">
+            {listing.images.length > 0 ? (
+              <ListingImageGallery
+                images={listing.images}
+                title={listing.title}
+                isSold={isSold}
+                isBoostActive={isBoostActive}
+                boostLevel={listing.boostLevel}
+              />
+            ) : (
+              <div className="aspect-[4/3] flex items-center justify-center">
+                <Package className="h-16 w-16 text-muted-foreground/20" />
+              </div>
+            )}
+          </div>
+
+          {/* Title + price header */}
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {catMeta && (
+                  <Link href={`/marketplace?category=${listing.category}`}>
+                    <Badge variant="secondary" className="hover:bg-muted cursor-pointer">{catMeta.label}</Badge>
+                  </Link>
+                )}
+                {listing.subcategory && (
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-muted border border-border text-muted-foreground">{listing.subcategory}</span>
+                )}
+                {condMeta && (
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${condMeta.badge}`}>
+                    {condDetail?.icon} {condMeta.label}
+                  </span>
+                )}
+                {listing.isNegotiable && !isSold && (
+                  <span className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-2.5 py-1 rounded-full">
+                    <Handshake className="h-3 w-3" /> Negotiable
+                  </span>
+                )}
+                {isSold && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+                    Sold
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="text-right shrink-0 flex flex-col items-end gap-2">
+              <p className="text-3xl font-bold text-primary-600">{formatCurrency(listing.price)}</p>
+              {isSold && acceptedDeal && (
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">Sold for {formatCurrency(acceptedDeal.amount)}</p>
+              )}
+              {listing.isNegotiable && !isSold && (
+                <p className="text-xs text-muted-foreground">Price is negotiable</p>
+              )}
+              <div className="flex items-center gap-1.5">
+                {!isOwner && (
+                  <WishlistButton itemId={params.id} itemType="LISTING" initialWishlisted={isWishlisted} />
+                )}
+                <SocialShare
+                  title={`${listing.title} — ₹${listing.price.toLocaleString()} on Korpo`}
+                  description={listing.description ?? undefined}
+                  path={`/marketplace/${params.id}`}
+                  variant="icon"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Meta row */}
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground py-3 border-y border-border">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5" />
+              {listing.area ? `${listing.area}, ${listing.city}` : listing.city}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              Listed {formatRelativeTime(listing.createdAt)}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Eye className="h-3.5 w-3.5" />
+              {listing.viewCount} views
+            </span>
+            {hasLocation && <DistanceText lat={listing.latitude!} lng={listing.longitude!} />}
+          </div>
+
+          {/* Item specifications */}
+          <SectionCard title="Item Details" icon={Tag}>
+            <div className="divide-y divide-border/50">
+              <SpecRow icon={Tag}      label="Category"     value={catMeta?.label ?? listing.category} />
+              {listing.subcategory && <SpecRow icon={ChevronRight} label="Subcategory" value={listing.subcategory} />}
+              {listing.brand        && <SpecRow icon={Award}  label="Brand"         value={listing.brand} />}
+              {listing.purchaseYear && <SpecRow icon={Calendar} label="Purchased"    value={listing.purchaseYear.toString()} />}
+              {listing.warranty && listing.warranty !== "No warranty"
+                                    && <SpecRow icon={ShieldCheck} label="Warranty" value={listing.warranty} />}
+              <SpecRow icon={Star}    label="Condition"    value={`${condDetail?.icon ?? ""} ${condMeta?.label ?? listing.condition}`} />
+              <SpecRow icon={MeetIcon} label="Handover"   value={meetMeta.label} />
+              <SpecRow icon={MapPin}  label="Location"     value={listing.area ? `${listing.area}, ${listing.city}` : listing.city} />
+            </div>
+          </SectionCard>
+
+          {/* Description */}
+          <SectionCard title="Description" icon={Info}>
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{listing.description}</p>
+          </SectionCard>
+
+          {/* Handover / meeting preference */}
+          <SectionCard title="Handover Preference" icon={Truck}>
+            <div className="flex items-start gap-4">
+              <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
+                listing.meetingPref === "PICKUP"  ? "bg-blue-100 dark:bg-blue-900/30" :
+                listing.meetingPref === "DELIVER" ? "bg-emerald-100 dark:bg-emerald-900/30" :
+                "bg-violet-100 dark:bg-violet-900/30"
+              }`}>
+                <MeetIcon className={`h-5 w-5 ${
+                  listing.meetingPref === "PICKUP"  ? "text-blue-600 dark:text-blue-400" :
+                  listing.meetingPref === "DELIVER" ? "text-emerald-600 dark:text-emerald-400" :
+                  "text-violet-600 dark:text-violet-400"
+                }`} />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{meetMeta.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{meetMeta.desc}</p>
+                {listing.area && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> Based in {listing.area}, {listing.city}
+                  </p>
+                )}
+              </div>
+            </div>
+          </SectionCard>
+
         </div>
 
         {/* ── Left: main content, part 2 (map, safety, similar listings) ──── */}

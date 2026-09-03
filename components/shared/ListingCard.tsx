@@ -11,7 +11,6 @@ import { Lock, Eye, Handshake, Pencil, Crown } from "lucide-react"
 import { SocialShare } from "./SocialShare"
 import { WishlistButton } from "./WishlistButton"
 import type { WishlistItemType } from "@/lib/wishlist"
-import { LISTING_CONDITIONS } from "@/config/services"
 
 interface ListingAuthor {
   id: string
@@ -56,10 +55,6 @@ interface ListingCardProps {
   imageBanner?: { label: string; tone: "success" | "muted" }
 }
 
-function getConditionMeta(condition?: string) {
-  return LISTING_CONDITIONS.find((c) => c.value === condition)
-}
-
 function getBoostStyle(boostLevel?: string): { border: string; glow: string; badge: string | null } {
   switch (boostLevel) {
     case "SUPER":
@@ -101,7 +96,6 @@ export function ListingCard({
   createdAt,
   isPremium,
   serviceBorderColor = "border-l-blue-400",
-  condition,
   isNegotiable,
   boostLevel,
   viewCount,
@@ -112,7 +106,6 @@ export function ListingCard({
   imageBanner,
 }: ListingCardProps) {
   const displayImage = image ?? images?.[0]
-  const condMeta = getConditionMeta(condition)
   const boost = getBoostStyle(boostLevel)
   const isBoosted = boostLevel && boostLevel !== "NONE"
   const leftBorder = isOwn ? "border-l-emerald-500" : isBoosted ? boost.border : serviceBorderColor
@@ -181,20 +174,10 @@ export function ListingCard({
             </div>
           )}
 
-          {/* Condition badge — top right */}
-          {condMeta && (
-            <div className="absolute top-2 right-2">
-              <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border", condMeta.badge)}>
-                {condMeta.label}
-              </span>
-            </div>
-          )}
-
-          {/* Wishlist heart + share icon — top right when there's no condition
-              badge, otherwise bottom right alongside it. The heart stays
-              visible so a saved listing is recognizable at a glance; the
-              share icon only appears on hover, matching before. */}
-          <div className={cn("absolute right-2 flex items-center gap-1.5", condMeta ? "bottom-2" : "top-2")}>
+          {/* Wishlist heart + share icon — top right. The heart stays visible
+              so a saved listing is recognizable at a glance; the share icon
+              only appears on hover. */}
+          <div className="absolute top-2 right-2 flex items-center gap-1.5">
             {listingId && !isOwn && (
               <WishlistButton itemId={listingId} itemType={wishlistItemType} initialWishlisted={isWishlisted} />
             )}
