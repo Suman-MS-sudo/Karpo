@@ -8,7 +8,7 @@ import { ThumbsUp, ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { ListingCard } from "@/components/shared/ListingCard"
-import { parseImages } from "@/lib/utils"
+import { parseImages, cn } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "My Interests" }
 
@@ -53,6 +53,35 @@ export default async function MyInterestsPage() {
     return true
   })
 
+  // A sold listing's deal winner is whoever the seller accepted — via a
+  // priced offer (ListingOffer) or a confirmed visit (ListingEngagement
+  // status ACCEPTED, same as the marketplace detail page's own definition).
+  // Everyone else who showed interest still sees the listing here, just
+  // clearly marked as no longer available, rather than having it vanish.
+  const soldListingIds = items.filter((r) => r.listing!.status === "SOLD").map((r) => r.listingId)
+  const myAcceptedOfferListingIds = soldListingIds.length
+    ? new Set(
+        (await prisma.listingOffer.findMany({
+          where: { listingId: { in: soldListingIds }, buyerId: userId, status: "ACCEPTED" },
+          select: { listingId: true },
+        })).map((o) => o.listingId)
+      )
+    : new Set<string>()
+
+  function dealStatus(r: (typeof items)[number]): "won" | "lost" | null {
+    if (r.listing!.status !== "SOLD") return null
+    const won = myAcceptedOfferListingIds.has(r.listingId) || r.status === "ACCEPTED"
+    return won ? "won" : "lost"
+  }
+
+  // Won deals float to the top, active interests next, deals you didn't
+  // win sink to the bottom instead of disappearing.
+  const rank = (r: (typeof items)[number]) => {
+    const status = dealStatus(r)
+    return status === "won" ? 0 : status === "lost" ? 2 : 1
+  }
+  items.sort((a, b) => rank(a) - rank(b))
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center gap-3 mb-6">
@@ -75,28 +104,35 @@ export default async function MyInterestsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((r) => {
             const listing = r.listing!
+            const deal = dealStatus(r)
+            const tag =
+              deal === "won"  ? "🎉 Deal done" :
+              deal === "lost" ? "No longer available" :
+              STATUS_LABEL[r.status] ?? r.status
+
             return (
-              <ListingCard
-                key={r.id}
-                id={listing.id}
-                href={`/marketplace/${listing.id}`}
-                title={listing.title}
-                subtitle={listing.description}
-                price={listing.price}
-                images={parseImages(listing.images)}
-                author={listing.user}
-                badge={listing.category}
-                tags={[STATUS_LABEL[r.status] ?? r.status]}
-                city={listing.city}
-                createdAt={listing.createdAt}
-                condition={listing.condition}
-                isNegotiable={listing.isNegotiable}
-                boostLevel={listing.boostLevel}
-                viewCount={listing.viewCount}
-                isOwn={listing.user.id === userId}
-                listingId={listing.id}
-                serviceBorderColor="border-l-blue-400"
-              />
+              <div key={r.id} className={cn(deal === "lost" && "opacity-60 saturate-50")}>
+                <ListingCard
+                  id={listing.id}
+                  href={`/marketplace/${listing.id}`}
+                  title={listing.title}
+                  subtitle={listing.description}
+                  price={listing.price}
+                  images={parseImages(listing.images)}
+                  author={listing.user}
+                  badge={listing.category}
+                  tags={[tag]}
+                  city={listing.city}
+                  createdAt={listing.createdAt}
+                  condition={listing.condition}
+                  isNegotiable={listing.isNegotiable}
+                  boostLevel={listing.boostLevel}
+                  viewCount={listing.viewCount}
+                  isOwn={listing.user.id === userId}
+                  listingId={listing.id}
+                  serviceBorderColor={deal === "won" ? "border-l-emerald-500" : deal === "lost" ? "border-l-muted-foreground/30" : "border-l-blue-400"}
+                />
+              </div>
             )
           })}
         </div>
