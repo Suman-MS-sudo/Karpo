@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   Star, Calendar, ChevronDown, ChevronUp, Loader2,
-  CheckCircle2, XCircle, User, Clock, Package, Handshake, ThumbsDown,
+  CheckCircle2, XCircle, User, Clock, Package, Handshake, ThumbsDown, MessageSquare,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -121,6 +122,16 @@ function EngagementCard({ engagement, listingId, onRefresh }: {
           </span>
         </div>
       </div>
+
+      {/* Message the buyer — always available, seller-initiated. We no
+          longer auto-message on Accept/Confirm (that used to hand over the
+          seller's phone number automatically); this is the deliberate way
+          to reach out instead. */}
+      <Button size="sm" variant="outline" className="w-full h-8 text-xs gap-1.5" asChild>
+        <Link href={`/messages/${buyer.id}?context=${listingId}&type=listing`}>
+          <MessageSquare className="h-3.5 w-3.5" /> Message Buyer
+        </Link>
+      </Button>
 
       {/* Visit details */}
       {engagement.type === "VISIT" && engagement.visitDate && (

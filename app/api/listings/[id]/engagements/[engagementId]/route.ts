@@ -27,13 +27,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const engagement = await prisma.listingEngagement.findUnique({
     where: { id: params.engagementId },
     include: {
-      listing: {
-        select: {
-          userId: true, title: true, id: true, price: true,
-          user: { select: { phone: true, name: true } },
-        },
-      },
-      user: { select: { name: true } },
+      listing: { select: { userId: true, title: true, id: true, price: true } },
     },
   })
 
@@ -58,10 +52,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   }
 
   const newStatus = ACTION_STATUS[action]
-  const buyerName = engagement.user.name?.split(" ")[0] ?? "there"
   const listingTitle = engagement.listing.title
 
   if (action === "ACCEPT") {
+    // Notify only — no auto-message. An auto-message used to hand the
+    // seller's phone number straight to the buyer, bypassing in-app
+    // messaging entirely (and any contact-exchange monetization down the
+    // line). The seller now reaches out deliberately via "Message Buyer".
     const [, notification] = await prisma.$transaction([
       prisma.listingEngagement.update({
         where: { id: params.engagementId },
@@ -72,17 +69,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
           userId: engagement.userId,
           type:   "OFFER_ACCEPTED",
           title:  "Seller accepted your interest! 🎉",
-          body:   `The seller of "${listingTitle}" accepted your interest. Contact details are now available.`,
+          body:   `The seller of "${listingTitle}" accepted your interest. They'll message you here to arrange next steps.`,
           link:   `/marketplace/${engagement.listing.id}`,
-        },
-      }),
-      prisma.message.create({
-        data: {
-          senderId:    session.user.id,
-          receiverId:  engagement.userId,
-          content:     `Hi ${buyerName}! I've accepted your interest in "${listingTitle}". Feel free to message me here to arrange a visit or pick-up!\n\n📞 Phone: ${engagement.listing.user.phone ?? "Not provided"}`,
-          listingId:   engagement.listing.id,
-          listingType: "listing",
         },
       }),
     ])
@@ -102,17 +90,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
           userId: engagement.userId,
           type:   "OFFER_ACCEPTED",
           title:  "Site visit confirmed! 📅",
-          body:   `Your visit to see "${listingTitle}" is confirmed for ${visitInfo}.`,
+          body:   `Your visit to see "${listingTitle}" is confirmed for ${visitInfo}. Message the seller here if you need to coordinate.`,
           link:   `/marketplace/${engagement.listing.id}`,
-        },
-      }),
-      prisma.message.create({
-        data: {
-          senderId:    session.user.id,
-          receiverId:  engagement.userId,
-          content:     `Hi ${buyerName}! Your visit to see "${listingTitle}" is confirmed for ${visitInfo}.\n\nMy contact:\n📞 ${engagement.listing.user.phone ?? "Not provided"}\n\nLooking forward to meeting you!`,
-          listingId:   engagement.listing.id,
-          listingType: "listing",
         },
       }),
     ])
@@ -134,17 +113,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
           userId: engagement.userId,
           type:   "OFFER_ACCEPTED",
           title:  "Deal confirmed! 🎉",
-          body:   `Your visit to see "${listingTitle}" turned into a deal. Congratulations!`,
+          body:   `Your visit to see "${listingTitle}" turned into a deal. Congratulations! Message the seller here to coordinate the handover.`,
           link:   `/marketplace/${engagement.listing.id}`,
-        },
-      }),
-      prisma.message.create({
-        data: {
-          senderId:    session.user.id,
-          receiverId:  engagement.userId,
-          content:     `Hi ${buyerName}! Great meeting you. I'm happy to confirm the deal for "${listingTitle}". 🎉\n\nPlease reach out to coordinate the handover.\n\n📞 ${engagement.listing.user.phone ?? "Not provided"}`,
-          listingId:   engagement.listing.id,
-          listingType: "listing",
         },
       }),
     ])
