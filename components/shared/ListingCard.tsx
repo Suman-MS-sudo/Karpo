@@ -50,6 +50,10 @@ interface ListingCardProps {
   listingId?: string
   wishlistItemType?: WishlistItemType
   isWishlisted?: boolean
+  // Prominent strip across the bottom of the image — for states that need
+  // to be unmissable at a glance (e.g. "Deal done" / "No longer available"
+  // on My Interests), rather than buried in the small tag pills below.
+  imageBanner?: { label: string; tone: "success" | "muted" }
 }
 
 function getConditionMeta(condition?: string) {
@@ -105,6 +109,7 @@ export function ListingCard({
   listingId,
   wishlistItemType = "LISTING",
   isWishlisted = false,
+  imageBanner,
 }: ListingCardProps) {
   const displayImage = image ?? images?.[0]
   const condMeta = getConditionMeta(condition)
@@ -147,6 +152,17 @@ export function ListingCard({
                 <Lock className="h-4 w-4" />
                 <span className="text-sm font-medium">Premium</span>
               </div>
+            </div>
+          )}
+
+          {imageBanner && (
+            <div
+              className={cn(
+                "absolute inset-x-0 bottom-0 flex items-center justify-center py-2 text-sm font-bold text-white text-center",
+                imageBanner.tone === "success" ? "bg-emerald-600/90" : "bg-black/60"
+              )}
+            >
+              {imageBanner.label}
             </div>
           )}
 

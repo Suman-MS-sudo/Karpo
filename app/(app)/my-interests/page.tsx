@@ -105,13 +105,14 @@ export default async function MyInterestsPage() {
           {items.map((r) => {
             const listing = r.listing!
             const deal = dealStatus(r)
-            const tag =
-              deal === "won"  ? "🎉 Deal done" :
-              deal === "lost" ? "No longer available" :
-              STATUS_LABEL[r.status] ?? r.status
+            const tag = deal ? null : STATUS_LABEL[r.status] ?? r.status
+            const imageBanner =
+              deal === "won"  ? { label: "🎉 Deal done", tone: "success" as const } :
+              deal === "lost" ? { label: "No longer available", tone: "muted" as const } :
+              undefined
 
             return (
-              <div key={r.id} className={cn(deal === "lost" && "opacity-60 saturate-50")}>
+              <div key={r.id} className={cn(deal === "lost" && "opacity-70 saturate-50")}>
                 <ListingCard
                   id={listing.id}
                   href={`/marketplace/${listing.id}`}
@@ -121,7 +122,7 @@ export default async function MyInterestsPage() {
                   images={parseImages(listing.images)}
                   author={listing.user}
                   badge={listing.category}
-                  tags={[tag]}
+                  tags={tag ? [tag] : undefined}
                   city={listing.city}
                   createdAt={listing.createdAt}
                   condition={listing.condition}
@@ -131,6 +132,7 @@ export default async function MyInterestsPage() {
                   isOwn={listing.user.id === userId}
                   listingId={listing.id}
                   serviceBorderColor={deal === "won" ? "border-l-emerald-500" : deal === "lost" ? "border-l-muted-foreground/30" : "border-l-blue-400"}
+                  imageBanner={imageBanner}
                 />
               </div>
             )
