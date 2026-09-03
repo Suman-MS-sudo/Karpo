@@ -416,6 +416,24 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
+        {/* Wishlist / My Interests (mobile) — desktop gets these in the hero's
+            quick-actions row; mobile has no equivalent spot, so give them
+            their own compact row here. */}
+        <div className="md:hidden -mt-2 flex items-center gap-3">
+          <Link
+            href="/wishlist"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-card border border-border py-3 text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform"
+          >
+            <Heart className="h-4 w-4 text-rose-500" /> Wishlist
+          </Link>
+          <Link
+            href="/my-interests"
+            className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-card border border-border py-3 text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform"
+          >
+            <ThumbsUp className="h-4 w-4 text-primary-600" /> My Interests
+          </Link>
+        </div>
+
         {/* Service icon grid (mobile) — same real images as the desktop strip */}
         <div className="md:hidden -mt-2">
           <ServiceIconGrid

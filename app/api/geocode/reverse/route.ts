@@ -28,8 +28,15 @@ export async function GET(req: NextRequest) {
     }
     const data = await res.json()
     const address = data?.address ?? {}
+    // Mobile GPS is usually far more precise than desktop's WiFi/IP-based
+    // location, so it often lands inside a specific neighbourhood/suburb
+    // that Nominatim doesn't tag with a "city" field at all — only the
+    // narrower ones (suburb, village, municipality…). Widened fallback
+    // chain, broadest-appropriate first, so a precise fix still resolves.
     const city: string | undefined =
-      address.city || address.town || address.county || address.state_district
+      address.city || address.town || address.municipality || address.village ||
+      address.suburb || address.city_district || address.county ||
+      address.state_district || address.state
     if (!city) {
       return NextResponse.json({ error: "Could not determine your city from your location." }, { status: 404 })
     }
