@@ -213,7 +213,6 @@ export default async function DashboardPage() {
   const greeting = Number(hour) < 12 ? "Good morning" : Number(hour) < 17 ? "Good afternoon" : "Good evening"
 
   const QUICK_ACTIONS = [
-    { label: "Post listing", href: null as string | null, icon: Plus },
     { label: "Messages", href: "/messages", icon: MessageSquare, badge: myMessages },
     { label: "My postings", href: "/my-postings", icon: FileText },
     { label: "Wishlist", href: "/wishlist", icon: Heart },
@@ -355,37 +354,19 @@ export default async function DashboardPage() {
 
           {/* Quick actions */}
           <div className="mt-6 flex items-center gap-5 sm:gap-7 flex-wrap">
-            {QUICK_ACTIONS.map(({ label, href, icon: Icon, badge }) => {
-              const content = (
-                <>
-                  <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm transition-all group-hover:bg-white/25 group-hover:scale-105">
-                    <Icon className="h-4.5 w-4.5 text-white" />
-                    {!!badge && badge > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-400 px-1 text-[10px] font-bold text-white ring-2 ring-indigo-900">
-                        {badge > 9 ? "9+" : badge}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-sm font-medium text-white/90 group-hover:text-white">{label}</span>
-                </>
-              )
-
-              if (href === null) {
-                return (
-                  <PostPickerButton key={label}>
-                    <button type="button" className="group flex items-center gap-2.5">
-                      {content}
-                    </button>
-                  </PostPickerButton>
-                )
-              }
-
-              return (
-                <Link key={label} href={href} className="group flex items-center gap-2.5">
-                  {content}
-                </Link>
-              )
-            })}
+            {QUICK_ACTIONS.map(({ label, href, icon: Icon, badge }) => (
+              <Link key={label} href={href} className="group flex items-center gap-2.5">
+                <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm transition-all group-hover:bg-white/25 group-hover:scale-105">
+                  <Icon className="h-4.5 w-4.5 text-white" />
+                  {!!badge && badge > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-400 px-1 text-[10px] font-bold text-white ring-2 ring-indigo-900">
+                      {badge > 9 ? "9+" : badge}
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm font-medium text-white/90 group-hover:text-white">{label}</span>
+              </Link>
+            ))}
           </div>
         </div>
       </div>
