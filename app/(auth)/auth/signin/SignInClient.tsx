@@ -528,7 +528,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       setResetNewPassword("")
       setResetNewPasswordConfirm("")
       setPassword("")
-      setNotice("Password reset. Sign in with your new password.")
+      setNotice("Password reset successful. Sign in with your new password.")
       setStep("password")
     } finally {
       setLoading(false)
