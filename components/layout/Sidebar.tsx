@@ -191,30 +191,6 @@ export function Sidebar({ className }: { className?: string }) {
               })}
             </nav>
 
-            {/* Services — compact 2-col icon grid */}
-            <div>
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2 px-1">
-                Services
-              </p>
-              <div className="grid grid-cols-2 gap-1">
-                {SERVICES.filter((s) => s.isActive).map((service) => {
-                  const Icon = iconMap[service.icon] ?? ShoppingBag
-                  return (
-                    <Link
-                      key={service.id}
-                      href={service.route}
-                      className="flex items-center gap-2 px-2 py-2 rounded-lg text-[11px] font-medium transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <div className={cn("h-6 w-6 rounded-md flex items-center justify-center shrink-0", service.bgColor)}>
-                        <Icon className={cn("h-3.5 w-3.5", service.color)} />
-                      </div>
-                      <span className="truncate leading-tight">{service.name}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-
             {/* Admin */}
             {session?.user?.role === "ADMIN" && (
               <>
