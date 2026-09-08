@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
@@ -15,6 +15,21 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
   const { data: session } = useSession()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close on any click outside the menu — not just on a bare patch of page.
+  // The previous fixed-overlay-behind-the-dropdown approach only caught
+  // clicks that reached that overlay; anything stacked above it (the header
+  // itself, sidebar, other controls) swallowed the click first and never
+  // closed the menu.
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [userMenuOpen])
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-card/95 backdrop-blur-md border-b border-border flex items-center px-4 gap-2 shrink-0">
@@ -50,7 +65,7 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
             (and the Settings shortcut on that page), same pattern as Messages
             and Notifications above. */}
         {session?.user && (
-          <div className="relative ml-1 hidden sm:block">
+          <div className="relative ml-1 hidden sm:block" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-xl hover:bg-muted px-2 py-1.5 transition-colors"
@@ -75,8 +90,6 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
             </button>
 
             {userMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                 <div className="absolute right-0 top-12 z-50 w-56 bg-card border border-border rounded-2xl shadow-xl py-1.5 overflow-hidden">
                   {/* User info header */}
                   <div className="px-4 py-3 border-b border-border">
@@ -124,7 +137,6 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
                     </button>
                   </div>
                 </div>
-              </>
             )}
           </div>
         )}
