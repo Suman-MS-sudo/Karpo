@@ -1,14 +1,11 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { MapPin, ChevronDown, LocateFixed, Loader2, X } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar"
-import { getInitials, cn } from "@/lib/utils"
 import { detectCityFromBrowser, matchCity, LocationPermissionDeniedError, getEnableLocationSteps } from "@/lib/geolocation"
 import { CITIES } from "@/config/services"
 
@@ -73,7 +70,7 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
 
   return (
     <div className="sticky top-0 z-40 bg-gradient-to-b from-indigo-600 to-indigo-500 text-white px-4 pt-4 pb-4">
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex items-center gap-3 mb-3">
         <button
           type="button"
           onClick={() => { setOpen(true); setPicked(city ?? "") }}
@@ -88,15 +85,6 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
             </p>
           </div>
         </button>
-
-        <Link href="/profile/me" className="shrink-0">
-          <Avatar className="h-9 w-9 ring-2 ring-white/30">
-            <AvatarImage src={avatarUrl ?? ""} />
-            <AvatarFallback className={cn("font-outfit", "bg-white/20 text-white text-xs font-bold")}>
-              {getInitials(name)}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
       </div>
 
       <DashboardSearchBar variant="light" />
