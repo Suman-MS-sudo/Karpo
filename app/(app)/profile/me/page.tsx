@@ -2,11 +2,12 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import NextLink from "next/link"
 import { toast } from "sonner"
 import {
   Camera, Loader2, CheckCircle2, Plus, X, ExternalLink, AtSign,
   User, Link as LinkIcon, Sparkles, AlertCircle, Building2, Droplet,
-  Upload, Trash2,
+  Upload, Trash2, Settings,
 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -247,8 +248,18 @@ export default function EditProfilePage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
 
       {/* Page header */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <PageTitle badge="Edit Profile" badgeIcon={User} title="Edit Profile" subtitle="How colleagues see you across Korpo" />
+        {/* Settings/Sign out — TopNav's own link to this is hidden on mobile
+            (see components/layout/TopNav.tsx), so mobile needs another way
+            in; the Profile tab is the natural spot. */}
+        <NextLink
+          href="/settings"
+          className="md:hidden shrink-0 flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted transition-colors"
+          title="Settings"
+        >
+          <Settings className="h-5 w-5 text-muted-foreground" />
+        </NextLink>
       </div>
 
       {/* Profile card */}

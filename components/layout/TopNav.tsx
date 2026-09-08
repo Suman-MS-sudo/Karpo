@@ -46,9 +46,11 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
         {/* Location — desktop only, mobile uses the location picker on the dashboard header */}
         <div className="hidden sm:block"><LocationSwitcher /></div>
 
-        {/* User menu */}
+        {/* User menu — desktop only, mobile uses the bottom nav's Profile tab
+            (and the Settings shortcut on that page), same pattern as Messages
+            and Notifications above. */}
         {session?.user && (
-          <div className="relative ml-1">
+          <div className="relative ml-1 hidden sm:block">
             <button
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-xl hover:bg-muted px-2 py-1.5 transition-colors"
@@ -97,20 +99,17 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
                         <ShieldCheck className="h-4 w-4" /> Admin Panel
                       </Link>
                     )}
-                    {/* Profile/Settings — desktop only; mobile reaches Profile via
-                        the bottom nav's own Profile tab, same pattern as Messages
-                        and Notifications disappearing from this header on mobile. */}
                     <Link
                       href="/profile/me"
                       onClick={() => setUserMenuOpen(false)}
-                      className="hidden sm:flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition-colors"
                     >
                       <User className="h-4 w-4 text-muted-foreground" /> My Profile
                     </Link>
                     <Link
                       href="/settings"
                       onClick={() => setUserMenuOpen(false)}
-                      className="hidden sm:flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-muted transition-colors"
                     >
                       <Settings className="h-4 w-4 text-muted-foreground" /> Settings
                     </Link>
