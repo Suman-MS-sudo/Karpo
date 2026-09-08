@@ -8,6 +8,7 @@ import {
   useState,
 } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ export function useChatContext() {
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [windows, setWindows] = useState<ChatWindow[]>([])
   const [messageTick, setMessageTick] = useState(0)
   const sseRef = useRef<EventSource | null>(null)
@@ -158,8 +160,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // ── Open / focus a conversation ────────────────────────────────────────────
+  // Below the lg breakpoint (same one the full-page /messages/[userId] view
+  // itself switches on) the floating widget's fixed 320px width doesn't fit
+  // the viewport and reads as a broken, disconnected "separate window" — so
+  // on mobile, go straight to the full-page conversation instead of opening
+  // a floating window at all.
   const openChat = useCallback(
     (partner: ChatPartner) => {
+      if (typeof window !== "undefined" && !window.matchMedia("(min-width: 1024px)").matches) {
+        router.push(`/messages/${partner.id}`)
+        return
+      }
       setWindows((prev) => {
         const existing = prev.find((w) => w.partner.id === partner.id)
         if (existing) {
@@ -186,7 +197,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       // Fetch message history after state update
       setTimeout(() => loadMessages(partner.id), 0)
     },
-    [loadMessages]
+    [loadMessages, router]
   )
 
   const closeChat = useCallback((partnerId: string) => {
