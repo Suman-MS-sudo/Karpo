@@ -65,7 +65,10 @@ export const SERVICES: ServiceConfig[] = [
     route: "/carpool",
     model: "CarpoolRoute",
     isPremium: false,
-    isActive: true,
+    // Temporarily disabled — hidden from nav/discovery, but the routes,
+    // data model and all carpool functionality are untouched. Flip back
+    // to true to re-enable.
+    isActive: false,
   },
   {
     id: "services",

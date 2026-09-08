@@ -41,3 +41,4 @@ Thumbs.db
 
 # Claude internal
 .claude/
+.artifact-tmp/

@@ -61,12 +61,11 @@ export default async function DashboardPage() {
   const now = new Date()
   const cityCond      = userCity ? Prisma.sql`AND city = ${userCity}` : Prisma.empty
   const locationCond  = userCity ? Prisma.sql`AND location = ${userCity}` : Prisma.empty
-  const fromLocCond   = userCity ? Prisma.sql`AND "fromLocation" = ${userCity}` : Prisma.empty
 
   const countsQuery = prisma.$queryRaw<Array<{
     myListingsCount: bigint; myMessages: bigint; viewsSum: bigint
     marketplaceCount: bigint; rentalCount: bigint; referralCount: bigint
-    carpoolCount: bigint; skillCount: bigint; dealCount: bigint; eventCount: bigint
+    skillCount: bigint; dealCount: bigint; eventCount: bigint
   }>>(Prisma.sql`
     SELECT
       (SELECT COUNT(*) FROM "Listing" WHERE "userId" = ${userId} AND status = 'ACTIVE') AS "myListingsCount",
@@ -75,7 +74,6 @@ export default async function DashboardPage() {
       (SELECT COUNT(*) FROM "Listing" WHERE status = 'ACTIVE' ${cityCond}) AS "marketplaceCount",
       (SELECT COUNT(*) FROM "RentalPost" WHERE status = 'ACTIVE' ${cityCond}) AS "rentalCount",
       (SELECT COUNT(*) FROM "JobReferral" WHERE status = 'OPEN' ${locationCond}) AS "referralCount",
-      (SELECT COUNT(*) FROM "CarpoolRoute" WHERE "isActive" = 1 ${fromLocCond}) AS "carpoolCount",
       (SELECT COUNT(*) FROM "SkillListing" WHERE status = 'ACTIVE' ${locationCond}) AS "skillCount",
       (SELECT COUNT(*) FROM "Deal" WHERE "isActive" = 1 AND "validUntil" >= ${now}) AS "dealCount",
       (SELECT COUNT(*) FROM "Event" WHERE "isActive" = 1 AND date >= ${now} ${locationCond}) AS "eventCount"
@@ -86,7 +84,6 @@ export default async function DashboardPage() {
     marketplaceCount: Number(r.marketplaceCount),
     rentalCount:      Number(r.rentalCount),
     referralCount:    Number(r.referralCount),
-    carpoolCount:     Number(r.carpoolCount),
     skillCount:       Number(r.skillCount),
     dealCount:        Number(r.dealCount),
     eventCount:       Number(r.eventCount),
@@ -119,9 +116,6 @@ export default async function DashboardPage() {
       SELECT 'REFERRAL', id, title, description, NULL, "salaryMin", 'REFERRAL', NULL, location, "createdAt", "userId"
       FROM "JobReferral" WHERE status = 'OPEN' ${locationCond}
       UNION ALL
-      SELECT 'CARPOOL', id, "fromLocation", "toLocation", "departureTime", "pricePerSeat", 'CARPOOL', NULL, "fromLocation", "createdAt", "userId"
-      FROM "CarpoolRoute" WHERE "isActive" = 1 ${fromLocCond}
-      UNION ALL
       SELECT 'SKILL', id, title, tagline, description, "hourlyRate", 'SKILL', NULL, location, "createdAt", "userId"
       FROM "SkillListing" WHERE status = 'ACTIVE' ${locationCond}
       UNION ALL
@@ -136,7 +130,7 @@ export default async function DashboardPage() {
 
   const {
     myListingsCount, myMessages, viewsSum: totalViews,
-    marketplaceCount, rentalCount, referralCount, carpoolCount, skillCount, dealCount, eventCount,
+    marketplaceCount, rentalCount, referralCount, skillCount, dealCount, eventCount,
   } = counts
 
   function parseImages(raw: string | null | undefined): string[] {
@@ -155,7 +149,7 @@ export default async function DashboardPage() {
 
   const HREF_BY_KIND: Record<string, string> = {
     LISTING: "marketplace", RENTAL: "rentals", REFERRAL: "referrals",
-    CARPOOL: "carpool", SKILL: "skills", EVENT: "events",
+    SKILL: "skills", EVENT: "events",
   }
   const authorIds = [...new Set(recentRows.map((r) => r.authorId))]
   const authors = authorIds.length
@@ -183,10 +177,6 @@ export default async function DashboardPage() {
     } else if (r.kind === "REFERRAL") {
       finalPrice = price ?? undefined
       priceLabel = price ? "+/yr" : undefined
-    } else if (r.kind === "CARPOOL") {
-      title = `${r.col1} → ${r.col2}`
-      subtitle = `Departs ${r.col3}`
-      priceLabel = "/seat"
     } else if (r.kind === "SKILL") {
       subtitle = r.col2 ?? r.col3 ?? undefined
       finalPrice = price ?? undefined
@@ -238,12 +228,6 @@ export default async function DashboardPage() {
       color: "text-violet-600 dark:text-violet-400", bgColor: "bg-violet-100 dark:bg-violet-500/15",
       borderColor: "border-violet-200 dark:border-violet-800",
       count: referralCount, countLabel: "open roles", isPremium: false,
-    },
-    {
-      id: "carpool", name: "Carpool", icon: "Car", route: "/carpool", newHref: "/carpool/new",
-      color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-100 dark:bg-orange-500/15",
-      borderColor: "border-orange-200 dark:border-orange-800",
-      count: carpoolCount, countLabel: "active routes", isPremium: false,
     },
     {
       id: "services", name: "Skill Marketplace", icon: "Wrench", route: "/skills", newHref: "/skills/new",
@@ -381,7 +365,7 @@ export default async function DashboardPage() {
           glowShadow="shadow-[0_0_12px_rgba(99,102,241,0.4)]"
           underlineGradient="from-indigo-500 to-violet-400"
           items={[
-            { value: "All", label: "Home", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: marketplaceCount + rentalCount + referralCount + carpoolCount + skillCount + dealCount + eventCount },
+            { value: "All", label: "Home", icon: "LayoutDashboard", iconBg: "bg-slate-100 dark:bg-white/10", iconColor: "text-slate-600 dark:text-white", count: marketplaceCount + rentalCount + referralCount + skillCount + dealCount + eventCount },
             ...SERVICE_TILES.map((service) => ({
               value: service.route,
               label: service.name,
