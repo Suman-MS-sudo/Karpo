@@ -145,11 +145,28 @@ export default async function DashboardPage() {
     author: Author
     badge: string; city: string | null; createdAt: Date
     wishlistItemType: WishlistItemType
+    kind: string
   }
 
   const HREF_BY_KIND: Record<string, string> = {
     LISTING: "marketplace", RENTAL: "rentals", REFERRAL: "referrals",
     SKILL: "skills", EVENT: "events",
+  }
+
+  // Each row's `badge` used to be a raw pass-through — the marketplace category
+  // enum for LISTING rows, but the literal SQL `kind` string ("RENTAL",
+  // "REFERRAL", ...) for everything else — so the feed's cards showed
+  // inconsistent, unstyled labels and all shared the same blue left border
+  // regardless of which service they actually came from. This maps each kind
+  // to the same name/color already used for that service everywhere else in
+  // the app (config/services.ts), so the mixed feed reads as clearly
+  // service-tagged cards instead of a flat, uncategorized list.
+  const KIND_META: Record<string, { label: string; border: string; badgeVariant: "default" | "secondary" | "success" | "warning" }> = {
+    LISTING:  { label: "Marketplace", border: "border-l-blue-400",    badgeVariant: "default" },
+    RENTAL:   { label: "Rentals",     border: "border-l-emerald-400", badgeVariant: "success" },
+    REFERRAL: { label: "Referral",    border: "border-l-violet-400",  badgeVariant: "secondary" },
+    SKILL:    { label: "Skill",       border: "border-l-cyan-400",    badgeVariant: "secondary" },
+    EVENT:    { label: "Event",       border: "border-l-amber-400",   badgeVariant: "warning" },
   }
   const authorIds = [...new Set(recentRows.map((r) => r.authorId))]
   const authors = authorIds.length
@@ -192,10 +209,11 @@ export default async function DashboardPage() {
       price: finalPrice, priceLabel,
       images: parseImages(r.images),
       author,
-      badge: r.badge,
+      badge: KIND_META[r.kind]?.label ?? r.badge,
       city: r.city,
       createdAt: new Date(r.createdAt),
       wishlistItemType: r.kind as WishlistItemType,
+      kind: r.kind,
     }]
   })
 
@@ -470,7 +488,7 @@ export default async function DashboardPage() {
                   View all <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {recentListings.map((item) => (
                   <ListingCard
                     key={item.id}
@@ -483,12 +501,13 @@ export default async function DashboardPage() {
                     images={item.images}
                     author={item.author}
                     badge={item.badge}
+                    badgeVariant={KIND_META[item.kind]?.badgeVariant ?? "default"}
                     city={item.city}
                     createdAt={item.createdAt}
                     listingId={item.id}
                     wishlistItemType={item.wishlistItemType}
                     isWishlisted={wishlistedKeys.has(`${item.wishlistItemType}:${item.id}`)}
-                    serviceBorderColor="border-l-blue-400"
+                    serviceBorderColor={KIND_META[item.kind]?.border ?? "border-l-blue-400"}
                   />
                 ))}
               </div>

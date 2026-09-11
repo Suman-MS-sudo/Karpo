@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 import type { RiderPoint } from "./CarpoolOwnerMap"
 
@@ -89,15 +90,17 @@ function RiderCard({ request, routeId }: { request: CarpoolRequest; routeId: str
     <div className="border border-border rounded-xl p-4 space-y-3 bg-card">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarImage src={rider.avatarUrl ?? rider.image ?? ""} />
-            <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
-              {getInitials(rider.name)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileLink userId={rider.id}>
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarImage src={rider.avatarUrl ?? rider.image ?? ""} />
+              <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
+                {getInitials(rider.name)}
+              </AvatarFallback>
+            </Avatar>
+          </ProfileLink>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold truncate">{rider.name ?? "Anonymous"}</p>
+              <ProfileLink userId={rider.id} className="block text-sm font-semibold truncate">{rider.name ?? "Anonymous"}</ProfileLink>
               {rider.isVerified && <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
             </div>
             <p className="text-xs text-muted-foreground truncate">

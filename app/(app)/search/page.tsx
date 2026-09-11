@@ -143,7 +143,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           color="text-emerald-600"
           href={`/rentals?q=${encodeURIComponent(q)}`}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {rentals.map((r) => (
               <Link key={r.id} href={`/rentals/${r.id}`}
                 className="border border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">
@@ -166,7 +166,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           color="text-orange-600"
           href={`/carpool?q=${encodeURIComponent(q)}`}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {carpool.map((c) => (
               <Link key={c.id} href={`/carpool/${c.id}`}
                 className="border border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">
@@ -188,7 +188,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           color="text-cyan-600"
           href={`/skills?q=${encodeURIComponent(q)}`}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {skills.map((s) => (
               <Link key={s.id} href={`/skills/${s.id}`}
                 className="border border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">

@@ -1,13 +1,10 @@
 import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
-import Link from "next/link"
 import { MessageSquare } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { PageTitle } from "@/components/ui/page-title"
-import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
-import { formatRelativeTime, getInitials } from "@/lib/utils"
+import { PageBanner } from "@/components/shared/PageBanner"
 import { MessagesBackButton } from "@/components/shared/MessagesBackButton"
+import { MessagesList, type ConversationItem } from "@/components/shared/MessagesList"
 
 export const metadata: Metadata = { title: "Messages" }
 
@@ -20,7 +17,7 @@ export default async function MessagesPage() {
     where: { OR: [{ senderId: userId }, { receiverId: userId }] },
     orderBy: { createdAt: "desc" },
     include: {
-      sender: { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      sender:   { include: { company: { select: { name: true, logo: true, domain: true } } } },
       receiver: { include: { company: { select: { name: true, logo: true, domain: true } } } },
     },
   })
@@ -34,57 +31,42 @@ export default async function MessagesPage() {
     }
   }
 
-  const conversations = Array.from(conversationMap.entries()).map(([partnerId, lastMsg]) => {
+  const conversations: ConversationItem[] = Array.from(conversationMap.entries()).map(([partnerId, lastMsg]) => {
     const partner = lastMsg.senderId === userId ? lastMsg.receiver : lastMsg.sender
-    return { partnerId, partner, lastMsg }
+    return {
+      partnerId,
+      partner: {
+        name:       partner.name,
+        avatarUrl:  partner.avatarUrl,
+        image:      partner.image,
+        isVerified: partner.isVerified,
+        jobTitle:   partner.jobTitle,
+      },
+      lastMessage: lastMsg.content,
+      lastAt:      lastMsg.createdAt.toISOString(),
+      isUnread:    !lastMsg.isRead && lastMsg.receiverId === userId,
+      isMine:      lastMsg.senderId === userId,
+    }
   })
+
+  const unreadCount = conversations.filter((c) => c.isUnread).length
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="mb-3">
         <MessagesBackButton />
-        <PageTitle badge="Messages" badgeIcon={MessageSquare} title="Messages" subtitle="Your conversations with colleagues." />
       </div>
 
-      {conversations.length === 0 ? (
-        <div className="text-center py-20">
-          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
-          <p className="text-muted-foreground">When you contact someone about a listing, your conversation will appear here.</p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {conversations.map(({ partnerId, partner, lastMsg }) => {
-            const isUnread = !lastMsg.isRead && lastMsg.receiverId === userId
-            return (
-              <Link key={partnerId} href={`/messages/${partnerId}`}>
-                <div className={`flex items-center gap-4 p-4 rounded-xl hover:bg-muted transition-colors ${isUnread ? "bg-accent-50" : ""}`}>
-                  <div className="relative">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={partner.avatarUrl ?? partner.image ?? ""} />
-                      <AvatarFallback>{getInitials(partner.name)}</AvatarFallback>
-                    </Avatar>
-                    {isUnread && <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 bg-accent-400 rounded-full border-2 border-background" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-medium ${isUnread ? "text-foreground" : "text-foreground"}`}>{partner.name}</span>
-                      {partner.isVerified && <VerifiedBadge size="sm" />}
-                    </div>
-                    {partner.jobTitle && <p className="text-xs text-muted-foreground">{partner.jobTitle}</p>}
-                    <p className={`text-sm mt-0.5 truncate ${isUnread ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                      {lastMsg.senderId === userId ? "You: " : ""}{lastMsg.content}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs text-muted-foreground">{formatRelativeTime(lastMsg.createdAt)}</p>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      )}
+      <PageBanner
+        image="/messages-banner.svg"
+        icon={MessageSquare}
+        title="Messages"
+        subtitle={unreadCount > 0 ? `${unreadCount} unread conversation${unreadCount === 1 ? "" : "s"}` : "Your conversations with colleagues."}
+        overlayFrom="from-indigo-700/85"
+        overlayTo="to-purple-700/80"
+      />
+
+      <MessagesList conversations={conversations} />
     </div>
   )
 }

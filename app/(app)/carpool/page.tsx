@@ -298,7 +298,7 @@ export default async function CarpoolPage({
           <Button asChild><Link href="/carpool/new">Offer First Ride</Link></Button>
         </div>
       ) : routes.length === 0 && isFiltered ? null : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {routes.map((route) => {
             const isBoosted = route.isBoosted
             return (

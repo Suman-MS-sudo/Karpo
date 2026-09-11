@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { cn } from "@/lib/utils"
 
 // A bold, rounded display font for headings/labels — gives the Events section
@@ -801,7 +802,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                     <span className="text-xs text-muted-foreground">({saved.length})</span>
                   </div>
                   <div className={cn(view === "grid"
-                    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                    ? "grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5"
                     : "space-y-3"
                   )}>
                     {saved.map(ev => view === "grid"
@@ -827,7 +828,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                 </div>
 
                 {view === "grid" ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                     {gridEvents.map(ev => <GridCard key={ev.id} event={ev} bookmarks={bookmarks} onBookmark={toggleBookmark} />)}
                   </div>
                 ) : (
@@ -916,15 +917,17 @@ function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
               {ev.rsvps.length > 0 && (
                 <div className="flex -space-x-2">
                   {ev.rsvps.slice(0, 6).map(r => (
-                    <Avatar key={r.userId} className="h-7 w-7 ring-2 ring-slate-900">
-                      <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
-                      <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(r.name)}</AvatarFallback>
-                    </Avatar>
+                    <ProfileLink key={r.userId} userId={r.userId}>
+                      <Avatar className="h-7 w-7 ring-2 ring-slate-900">
+                        <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
+                        <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(r.name)}</AvatarFallback>
+                      </Avatar>
+                    </ProfileLink>
                   ))}
                 </div>
               )}
               <span className="text-xs text-slate-400">
-                Hosted by <span className="text-white font-medium">{ev.organizer.name?.split(" ")[0]}</span>
+                Hosted by <ProfileLink userId={ev.organizer.id} className="text-white font-medium">{ev.organizer.name?.split(" ")[0]}</ProfileLink>
                 {ev.organizer.company && <span className="text-slate-500"> · {ev.organizer.company.name}</span>}
               </span>
             </div>
@@ -1043,20 +1046,24 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
           {/* Footer */}
           <div className="flex items-center justify-between pt-3 mt-auto border-t border-border">
             <div className="flex items-center gap-2 min-w-0">
-              <Avatar className="h-5 w-5 shrink-0">
-                <AvatarImage src={ev.organizer.avatarUrl ?? ev.organizer.image ?? ""} />
-                <AvatarFallback className="text-[9px]">{getInitials(ev.organizer.name)}</AvatarFallback>
-              </Avatar>
-              <span className="text-xs text-muted-foreground truncate">{ev.organizer.name?.split(" ")[0]}</span>
+              <ProfileLink userId={ev.organizer.id}>
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage src={ev.organizer.avatarUrl ?? ev.organizer.image ?? ""} />
+                  <AvatarFallback className="text-[9px]">{getInitials(ev.organizer.name)}</AvatarFallback>
+                </Avatar>
+              </ProfileLink>
+              <ProfileLink userId={ev.organizer.id} className="text-xs text-muted-foreground truncate">{ev.organizer.name?.split(" ")[0]}</ProfileLink>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               {ev.rsvps.slice(0, 3).length > 0 && (
                 <div className="flex -space-x-1.5">
                   {ev.rsvps.slice(0, 3).map(r => (
-                    <Avatar key={r.userId} className="h-5 w-5 ring-1 ring-card">
-                      <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
-                      <AvatarFallback className="text-[8px]">{getInitials(r.name)}</AvatarFallback>
-                    </Avatar>
+                    <ProfileLink key={r.userId} userId={r.userId}>
+                      <Avatar className="h-5 w-5 ring-1 ring-card">
+                        <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
+                        <AvatarFallback className="text-[8px]">{getInitials(r.name)}</AvatarFallback>
+                      </Avatar>
+                    </ProfileLink>
                   ))}
                 </div>
               )}

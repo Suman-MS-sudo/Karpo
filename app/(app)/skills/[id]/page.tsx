@@ -15,6 +15,7 @@ import { WishlistButton } from "@/components/shared/WishlistButton"
 import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatCurrency, getInitials } from "@/lib/utils"
 import { SkillOrderPanel } from "@/components/skills/SkillOrderPanel"
 import { SkillOrdersPanel } from "@/components/skills/SkillOrdersPanel"
@@ -176,14 +177,16 @@ export default async function SkillDetailPage({ params }: { params: { id: string
         <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b]/80 via-primary/60 to-accent/50" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" aria-hidden />
         <div className="relative flex flex-col sm:flex-row items-start gap-5">
-          <Avatar className="h-24 w-24 rounded-2xl ring-2 ring-white/30 shrink-0 shadow-xl">
-            <AvatarImage src={avatar ?? ""} className="object-cover" />
-            <AvatarFallback className="rounded-2xl text-2xl bg-white/15 text-white">{getInitials(listing.user.name)}</AvatarFallback>
-          </Avatar>
+          <ProfileLink userId={listing.userId}>
+            <Avatar className="h-24 w-24 rounded-2xl ring-2 ring-white/30 shrink-0 shadow-xl">
+              <AvatarImage src={avatar ?? ""} className="object-cover" />
+              <AvatarFallback className="rounded-2xl text-2xl bg-white/15 text-white">{getInitials(listing.user.name)}</AvatarFallback>
+            </Avatar>
+          </ProfileLink>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">{listing.user.name}</h1>
+              <ProfileLink userId={listing.userId} className="text-2xl font-bold">{listing.user.name}</ProfileLink>
               {listing.user.isVerified && (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-sm">
                   <CheckCircle2 className="h-3 w-3" /> Verified
@@ -581,7 +584,7 @@ export default async function SkillDetailPage({ params }: { params: { id: string
           {/* Other listings by same seller */}
           {listing.user.skillListings.filter((l) => l.id !== listing.id).length > 0 && (
             <div className="rounded-3xl bg-card ring-1 ring-border/60 shadow-sm p-5">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">More by {listing.user.name?.split(" ")[0]}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">More by <ProfileLink userId={listing.userId}>{listing.user.name?.split(" ")[0]}</ProfileLink></p>
               <div className="space-y-3">
                 {listing.user.skillListings.filter((l) => l.id !== listing.id).map((l) => (
                   <Link key={l.id} href={`/skills/${l.id}`} className="flex items-start gap-2 group">

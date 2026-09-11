@@ -95,7 +95,10 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
                   )}
                 >
                   <div className={cn(
-                    "h-16 w-16 sm:h-24 sm:w-24 rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                    "relative h-16 w-16 sm:h-24 sm:w-24 rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                    // Grounding shadow + a subtle bottom-heavy gradient give the tile
+                    // itself some depth even before the glossy highlight is added.
+                    "shadow-[0_3px_0_rgba(0,0,0,0.06)_inset,0_6px_14px_-6px_rgba(0,0,0,0.35)] dark:shadow-[0_3px_0_rgba(0,0,0,0.25)_inset,0_6px_14px_-6px_rgba(0,0,0,0.6)]",
                     isActive
                       ? cn(item.iconBg, "ring-2 scale-110", ringClass, glowShadow)
                       : cn(item.iconBg, "group-hover:scale-105 group-hover:ring-2", ringClass)
@@ -113,7 +116,17 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Icon className={cn("h-7 w-7 sm:h-10 sm:w-10", item.iconColor)} strokeWidth={isActive ? 2.5 : 2} />
+                      <>
+                        {/* Glossy top-left highlight + a darker floor — no external
+                            image, just gradients/shadow standing in for a "3D" tile
+                            until real category artwork exists (see item.image). */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-white/5 to-transparent dark:from-white/15 dark:via-white/0" aria-hidden />
+                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/10 to-transparent dark:from-black/25" aria-hidden />
+                        <Icon
+                          className={cn("relative h-7 w-7 sm:h-10 sm:w-10 drop-shadow-sm", item.iconColor)}
+                          strokeWidth={2.5}
+                        />
+                      </>
                     )}
                   </div>
                   <span className={cn("font-outfit", "text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>

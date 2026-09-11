@@ -51,37 +51,60 @@ export default function MessageThreadPage() {
   const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef  = useRef<HTMLInputElement>(null)
 
+  // Measure MobileNav's real rendered height (rather than guessing a fixed
+  // Tailwind spacing value) so the panel's bottom inset lands exactly at its
+  // top edge — MobileNav's own height varies by device (its `env(safe-area-
+  // inset-bottom)` padding differs on notched phones), so this is the only
+  // way to avoid either a gap above it or being covered by it.
+  const [navHeight, setNavHeight] = useState<number | null>(null)
+  useEffect(() => {
+    const nav = document.getElementById("mobile-nav")
+    if (!nav) return
+    const update = () => setNavHeight(nav.getBoundingClientRect().height)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(nav)
+    return () => ro.disconnect()
+  }, [])
+
   // Detect whether the browser has history to go back to
   useEffect(() => {
     setCanGoBack(window.history.length > 1)
   }, [])
 
   // ── Mobile keyboard handling ────────────────────────────────────────────
-  // On mobile this page renders as a `fixed inset-0` overlay (see the root
-  // div below) so it's completely independent of AppShell's scrollable
-  // <main> — that's what stops the browser's "scroll the focused input into
-  // view" behavior from dragging the header/messages off-screen when the
-  // keyboard opens.
+  // Normally this page sits in AppShell's flow like any other page, so the
+  // top nav and bottom nav stay visible. But on iOS Safari, focusing the
+  // input while the layout is in normal flow makes the browser PAN the
+  // visual viewport to bring the input above the keyboard — since AppShell's
+  // shell is `position: fixed`, that pan drags the whole app (including the
+  // messages above the input) up and off-screen instead of just resizing.
   //
-  // `position: fixed` pins to the LAYOUT viewport, not the VISUAL one — on
-  // iOS Safari in particular, opening the keyboard can shift the layout
-  // viewport's scroll position without visualViewport.height changing by the
-  // same amount (most noticeable the *second* time the keyboard opens, once
-  // the page has already been scrolled once). Tracking only `height` left
-  // the container's top edge pinned to a layout position that no longer
-  // matched what was actually visible, so it (and the header/messages inside
-  // it) drifted upward off-screen again. Tracking `offsetTop` too and
-  // applying it as the container's `top` keeps it pinned to the visual
-  // viewport exactly, however it's shifted, every time.
+  // The fix: only go into the old fixed/full-screen, visualViewport-tracked
+  // mode while the keyboard is actually open (detected by the visual
+  // viewport shrinking well below its keyboard-closed baseline). Nav bars
+  // are hidden during that window — acceptable, since the keyboard already
+  // covers where the bottom nav would be — and reappear the moment the
+  // keyboard closes.
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null)
+  const baselineHeightRef = useRef<number | null>(null)
+
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
-    // Only drive position off visualViewport below the lg breakpoint — on
-    // desktop the page is back to a normal in-flow panel (see the `lg:`
-    // classes below) and must NOT have inline top/height fighting them.
     const mq = window.matchMedia("(min-width: 1024px)")
-    const update = () => setViewport(mq.matches ? null : { height: vv.height, top: vv.offsetTop })
+
+    const update = () => {
+      if (mq.matches) { setKeyboardOpen(false); setViewport(null); return }
+      if (baselineHeightRef.current == null || vv.height > baselineHeightRef.current) {
+        baselineHeightRef.current = vv.height
+      }
+      const shrunk = baselineHeightRef.current - vv.height > 120
+      setKeyboardOpen(shrunk)
+      setViewport(shrunk ? { height: vv.height, top: vv.offsetTop } : null)
+    }
+
     update()
     vv.addEventListener("resize", update)
     vv.addEventListener("scroll", update)
@@ -93,14 +116,11 @@ export default function MessageThreadPage() {
     }
   }, [])
 
-  // Belt-and-braces: also stop the document itself from scrolling while this
-  // full-screen overlay is mounted. It shouldn't need to (the overlay is
-  // `fixed` and its own message list scrolls internally), but if anything
-  // ever does trigger a document scroll behind it (e.g. a focus-scroll that
-  // escapes the fixed container), a scrolled document is exactly what
-  // desyncs the layout viewport from the visual one on iOS and reproduces
-  // this bug — so just make that scroll impossible.
+  // Stop the document itself from scrolling while the keyboard-open overlay
+  // is active — a scrolled document is what desyncs the layout viewport
+  // from the visual one on iOS and reproduces the pan bug this works around.
   useEffect(() => {
+    if (!keyboardOpen) return
     const { style } = document.body
     const prevOverflow = style.overflow
     const prevPosition = style.position
@@ -110,7 +130,7 @@ export default function MessageThreadPage() {
       style.overflow = prevOverflow
       style.position = prevPosition
     }
-  }, [])
+  }, [keyboardOpen])
 
   useEffect(() => {
     fetch(`/api/profile/${partnerId}`).then((r) => r.json()).then((d) => setPartner(d))
@@ -190,17 +210,29 @@ export default function MessageThreadPage() {
   }
 
   return (
-    // Mobile: a `fixed inset-0` overlay, position + height pinned to
-    // visualViewport (see the effect above) — deliberately taken OUT of
-    // AppShell's scrollable <main> and above the fixed MobileNav (z-[60]),
-    // so the browser's "scroll focused input into view" behavior has no
-    // scrollable ancestor to act on and can't drag the header/messages
-    // off-screen when the keyboard opens.
-    // Desktop (lg): back to a normal in-flow panel inside <main>, no keyboard
-    // to account for.
+    // Position: fixed is the one technique that's immune to ancestor padding/
+    // percentage/flex ambiguity — it's sized purely from the viewport, not
+    // from <main>'s box model (which several earlier attempts here got wrong
+    // in different ways: percentage heights, calc() padding math, sticky
+    // positioning that only activates on actual scroll, measured-height
+    // floors — all fragile). `top-14`/`bottom-20` leave exactly the same
+    // room TopNav/MobileNav already occupy elsewhere, so nav stays visible;
+    // the difference from the old `inset-0` version is just these insets.
+    //
+    // While the keyboard is open: goes full `inset-0` (covering nav) and
+    // pins to the visual viewport instead (see the effect above) — see that
+    // comment for why.
     <div
-      className="fixed inset-0 z-[60] flex flex-col bg-background lg:static lg:z-auto lg:h-[calc(100svh-4rem)]"
-      style={viewport != null ? { top: viewport.top, height: viewport.height } : undefined}
+      className={cn(
+        "flex flex-col bg-background fixed inset-x-0 z-30",
+        keyboardOpen ? "inset-0 z-[60]" : "top-14",
+        "lg:static lg:inset-auto lg:z-auto lg:h-[calc(100svh-4rem)]"
+      )}
+      style={
+        keyboardOpen && viewport ? { top: viewport.top, height: viewport.height }
+        : !keyboardOpen ? { bottom: navHeight ?? 80 }
+        : undefined
+      }
     >
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-3 shrink-0">

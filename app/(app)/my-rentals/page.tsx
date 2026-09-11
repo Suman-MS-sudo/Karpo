@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import Link from "next/link"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import Image from "next/image"
 import {
   Plus, Home, Eye, Users, Pencil, ExternalLink,
@@ -54,7 +55,7 @@ export default async function MyRentalsPage({ searchParams }: PageProps) {
         _count:   { select: { inquiries: true } },
         inquiries: {
           where:   { status: { in: ["ACCEPTED", "PENDING"] } },
-          include: { user: { select: { name: true, jobTitle: true, company: { select: { name: true } } } } },
+          include: { user: { select: { id: true, name: true, jobTitle: true, company: { select: { name: true } } } } },
           orderBy: { createdAt: "desc" },
         },
       },
@@ -206,7 +207,7 @@ export default async function MyRentalsPage({ searchParams }: PageProps) {
                   {isFilled && accepted && (
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
                       <CheckCircle2 className="h-3 w-3" />
-                      Filled by {accepted.user.name ?? "—"}
+                      Filled by <ProfileLink userId={accepted.user.id}>{accepted.user.name ?? "—"}</ProfileLink>
                       {accepted.user.jobTitle && ` · ${accepted.user.jobTitle}`}
                     </p>
                   )}

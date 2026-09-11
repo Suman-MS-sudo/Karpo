@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { SERVICES } from "@/config/services"
 import { cn } from "@/lib/utils"
 import { useOpenConcernsCount } from "@/hooks/useOpenConcernsCount"
+import { DuotoneIcon } from "@/components/shared/DuotoneIcon"
 import {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users,
   GraduationCap, Shield, Gift, LayoutDashboard, Pin, PinOff,
@@ -140,19 +141,19 @@ export function ServiceRail() {
         <Link
           href={item.href}
           className={cn(
-            "flex items-center gap-3 h-10 w-full rounded-xl pr-1",
+            "flex items-center gap-3 h-12 w-full rounded-xl pr-1",
             "transition-colors duration-150",
             item.isActive ? cn(item.bgColor, "shadow-sm") : "hover:bg-muted"
           )}
         >
-          <span className="flex items-center justify-center w-[44px] h-full shrink-0">
-            <span className={cn("h-9 w-9 rounded-2xl flex items-center justify-center overflow-hidden", item.bgColor)}>
-              {item.image ? (
-                <Image src={item.image} alt={item.label} width={90} height={90} quality={90} className="h-full w-full object-cover" />
-              ) : (
-                <item.Icon className={cn("h-4 w-4", item.color)} />
-              )}
-            </span>
+          <span className="flex items-center justify-center w-[52px] h-full shrink-0">
+            {item.image ? (
+              <span className={cn("h-11 w-11 rounded-2xl flex items-center justify-center overflow-hidden", item.bgColor)}>
+                <Image src={item.image} alt={item.label} width={110} height={110} quality={90} className="h-full w-full object-cover" />
+              </span>
+            ) : (
+              <DuotoneIcon icon={item.Icon} color={item.color} bg={item.bgColor} size="lg" className="rounded-2xl" />
+            )}
           </span>
           <span className={cn(
             "text-sm font-medium truncate flex-1 min-w-0",

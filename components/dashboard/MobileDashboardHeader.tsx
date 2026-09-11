@@ -69,8 +69,15 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
   }
 
   return (
-    <div className="sticky top-0 z-40 bg-gradient-to-b from-indigo-600 to-indigo-500 text-white px-4 pt-4 pb-4">
-      <div className="flex items-center gap-3 mb-3">
+    <div
+      className="sticky top-0 z-40 text-white px-4 pt-4 pb-4 bg-cover bg-center overflow-hidden"
+      style={{ backgroundImage: "url(/dashboard-header-bg.svg)" }}
+    >
+      {/* Color wash over the artwork — keeps the greeting/city/search text
+          legible at every scroll position without flattening the image out. */}
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-600/80 via-indigo-600/70 to-indigo-500/80" aria-hidden />
+
+      <div className="relative flex items-center gap-3 mb-3">
         <button
           type="button"
           onClick={() => { setOpen(true); setPicked(city ?? "") }}
@@ -87,7 +94,9 @@ export function MobileDashboardHeader({ name, avatarUrl, city, greeting }: Props
         </button>
       </div>
 
-      <DashboardSearchBar variant="light" />
+      <div className="relative">
+        <DashboardSearchBar variant="light" />
+      </div>
 
       {open && (
         <div

@@ -9,7 +9,7 @@ import { ArrowRight, ShoppingBag, Home, Briefcase } from "lucide-react"
 // references — passing component functions as props from the server-rendered
 // dashboard page into this "use client" component isn't serializable across
 // the RSC boundary.
-const ICON_REGISTRY: Record<string, React.ComponentType<{ className?: string }>> = {
+const ICON_REGISTRY: Record<string, React.ComponentType<any>> = {
   ShoppingBag, Home, Briefcase,
 }
 
@@ -98,7 +98,7 @@ function TiltCard({ card }: { card: HeroCard }) {
             className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm transition-transform duration-200 group-hover:scale-110"
             style={{ transform: "translateZ(45px)" }}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className="h-5 w-5" strokeWidth={2.5} />
           </span>
         </div>
       </div>

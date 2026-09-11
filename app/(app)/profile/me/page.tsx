@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PageTitle } from "@/components/ui/page-title"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { ReverifyWorkEmail } from "@/components/profile/ReverifyWorkEmail"
+import { ImageCropperModal } from "@/components/shared/ImageCropperModal"
 import { getInitials, cn } from "@/lib/utils"
 import { PROFILE_SOCIAL_PLATFORMS } from "@/lib/socialPlatforms"
 
@@ -84,6 +85,7 @@ export default function EditProfilePage() {
   const [avatarUrl,  setAvatarUrl]  = useState("")
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false)
   const [avatarBusy, setAvatarBusy] = useState(false)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
   const avatarMenuRef = useRef<HTMLDivElement>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [skillInput, setSkillInput] = useState("")
@@ -131,15 +133,25 @@ export default function EditProfilePage() {
     return () => document.removeEventListener("mousedown", onClick)
   }, [avatarMenuOpen])
 
-  // Avatar upload
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Avatar upload — file selection opens the crop dialog first; the actual
+  // upload happens once the user confirms the crop (handleCropConfirm below).
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ""
     if (!file) return
+    setCropSrc(URL.createObjectURL(file))
+  }
+
+  const handleCropCancel = () => {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+  }
+
+  const handleCropConfirm = async (blob: Blob) => {
     setAvatarBusy(true)
     try {
       const fd = new FormData()
-      fd.append("file", file)
+      fd.append("file", blob, "avatar.jpg")
       const res  = await fetch("/api/upload", { method: "POST", body: fd })
       const data = await res.json()
       if (data.url) {
@@ -155,9 +167,13 @@ export default function EditProfilePage() {
         }
         await update()
         router.refresh()
+      } else {
+        toast.error(data.error ?? "Failed to upload photo")
       }
     } finally {
       setAvatarBusy(false)
+      if (cropSrc) URL.revokeObjectURL(cropSrc)
+      setCropSrc(null)
     }
   }
 
@@ -690,6 +706,14 @@ export default function EditProfilePage() {
           )}
         </div>
       </form>
+
+      {cropSrc && (
+        <ImageCropperModal
+          imageSrc={cropSrc}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </div>
   )
 }

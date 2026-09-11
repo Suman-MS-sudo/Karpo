@@ -4,6 +4,7 @@ import { X, Minus, Send, Loader2, CheckCheck, MoreVertical, ShieldOff, ShieldChe
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials, formatRelativeTime } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { useChatContext, type ChatWindow as ChatWindowType } from "./ChatContext"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
@@ -109,7 +110,7 @@ export function ChatWindow({ win, offsetRight }: Props) {
         className="flex items-center gap-2.5 px-3 py-2.5 bg-primary-700 dark:bg-primary-900 text-white cursor-pointer select-none shrink-0"
         onClick={() => toggleMinimize(win.partner.id)}
       >
-        <div className="relative shrink-0">
+        <ProfileLink userId={win.partner.id} className="relative shrink-0">
           <Avatar className="h-8 w-8 ring-2 ring-white/30">
             <AvatarImage src={win.partner.avatarUrl ?? ""} />
             <AvatarFallback className="text-xs bg-primary-500 text-white">
@@ -117,10 +118,10 @@ export function ChatWindow({ win, offsetRight }: Props) {
             </AvatarFallback>
           </Avatar>
           <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-400 border-2 border-primary-700 dark:border-primary-900" />
-        </div>
+        </ProfileLink>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold truncate leading-tight">{win.partner.name}</p>
+          <ProfileLink userId={win.partner.id} className="block text-sm font-semibold truncate leading-tight">{win.partner.name}</ProfileLink>
           {win.partner.jobTitle && (
             <p className="text-[10px] text-white/60 truncate leading-tight">{win.partner.jobTitle}</p>
           )}

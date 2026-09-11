@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -329,14 +330,16 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                         <span className="text-[10px] text-muted-foreground">{dealLabel}</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 shrink-0">
-                          <AvatarImage src={dealBuyer.avatarUrl ?? dealBuyer.image ?? ""} />
-                          <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/50 text-primary-700">
-                            {getInitials(dealBuyer.name)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <ProfileLink userId={dealBuyer.id}>
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={dealBuyer.avatarUrl ?? dealBuyer.image ?? ""} />
+                            <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/50 text-primary-700">
+                              {getInitials(dealBuyer.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </ProfileLink>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold truncate">{dealBuyer.name ?? "Anonymous"}</p>
+                          <ProfileLink userId={dealBuyer.id} className="block text-sm font-semibold truncate">{dealBuyer.name ?? "Anonymous"}</ProfileLink>
                           {dealBuyer.jobTitle && <p className="text-xs text-muted-foreground truncate">{dealBuyer.jobTitle}</p>}
                         </div>
                       </div>
@@ -425,12 +428,14 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Seller</p>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-emerald-200 dark:ring-emerald-800">
-                    <AvatarImage src={listing.user.avatarUrl ?? listing.user.image ?? ""} />
-                    <AvatarFallback className="text-xs font-semibold">{getInitials(listing.user.name)}</AvatarFallback>
-                  </Avatar>
+                  <ProfileLink userId={listing.userId}>
+                    <Avatar className="h-10 w-10 ring-2 ring-emerald-200 dark:ring-emerald-800">
+                      <AvatarImage src={listing.user.avatarUrl ?? listing.user.image ?? ""} />
+                      <AvatarFallback className="text-xs font-semibold">{getInitials(listing.user.name)}</AvatarFallback>
+                    </Avatar>
+                  </ProfileLink>
                   <div>
-                    <p className="text-sm font-semibold">{listing.user.name}</p>
+                    <ProfileLink userId={listing.userId} className="block text-sm font-semibold">{listing.user.name}</ProfileLink>
                     {listing.user.jobTitle && <p className="text-xs text-muted-foreground">{listing.user.jobTitle}</p>}
                     {listing.user.isVerified && (
                       <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
@@ -469,14 +474,16 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               {/* Seller info */}
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Seller</p>
               <div className="flex items-center gap-3">
-                <Avatar className="h-11 w-11 ring-2 ring-border">
-                  <AvatarImage src={listing.user.avatarUrl ?? listing.user.image ?? ""} />
-                  <AvatarFallback className="font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
-                    {getInitials(listing.user.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfileLink userId={listing.userId}>
+                  <Avatar className="h-11 w-11 ring-2 ring-border">
+                    <AvatarImage src={listing.user.avatarUrl ?? listing.user.image ?? ""} />
+                    <AvatarFallback className="font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
+                      {getInitials(listing.user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileLink>
                 <div className="min-w-0">
-                  <p className="font-semibold text-sm leading-tight">{listing.user.name}</p>
+                  <ProfileLink userId={listing.userId} className="block font-semibold text-sm leading-tight">{listing.user.name}</ProfileLink>
                   {listing.user.jobTitle && <p className="text-xs text-muted-foreground truncate">{listing.user.jobTitle}</p>}
                   <div className="flex items-center gap-2 mt-0.5">
                     {listing.user.isVerified && (

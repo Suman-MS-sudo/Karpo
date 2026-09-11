@@ -7,9 +7,10 @@ import { VerifiedBadge } from "./VerifiedBadge"
 import { PremiumStrip } from "./PremiumBadge"
 import { formatCurrency, formatRelativeTime, truncate, getInitials } from "@/lib/utils"
 import { cn } from "@/lib/utils"
-import { Lock, Eye, Handshake, Pencil, Crown } from "lucide-react"
+import { Lock, Eye, Handshake, Pencil, Crown, MapPin, Clock } from "lucide-react"
 import { SocialShare } from "./SocialShare"
 import { WishlistButton } from "./WishlistButton"
+import { ProfileLink } from "./ProfileLink"
 import type { WishlistItemType } from "@/lib/wishlist"
 
 interface ListingAuthor {
@@ -111,12 +112,17 @@ export function ListingCard({
   const leftBorder = isOwn ? "border-l-emerald-500" : isBoosted ? boost.border : serviceBorderColor
 
   return (
-    <div className="group relative">
+    // h-full so this fills its grid cell — CSS Grid stretches this wrapper to
+    // match the tallest card in the row by default, but without h-full/flex
+    // here and on the card below, the visible bordered box inside only takes
+    // its own content's height, leaving cards in the same row visually
+    // uneven even though the invisible grid cell itself is already even.
+    <div className="group relative h-full flex flex-col">
       {/* Stretched base link — covers the whole card */}
       <Link href={href} className="absolute inset-0 z-0 rounded-xl" aria-label={title} />
       <div
         className={cn(
-          "bg-card rounded-xl border border-border hover:shadow-md transition-all duration-200 overflow-hidden",
+          "flex flex-col flex-1 bg-card rounded-xl border border-border hover:shadow-md transition-all duration-200 overflow-hidden",
           "border-l-4",
           leftBorder,
           boost.glow
@@ -192,35 +198,35 @@ export function ListingCard({
           </div>
         </div>
 
-        <div className="p-4">
+        <div className="p-3 sm:p-4 flex flex-col flex-1">
           {/* Category badge — shown on every card, with or without an image,
               so all sections tag their listings consistently (previously
               only image-less cards, e.g. referrals, showed one). */}
           {badge && (
-            <div className="mb-2">
-              <Badge variant={badgeVariant}>{badge}</Badge>
+            <div className="mb-1.5 sm:mb-2">
+              <Badge variant={badgeVariant} className="text-[10px] sm:text-xs">{badge}</Badge>
             </div>
           )}
 
-          <h3 className="font-semibold text-foreground group-hover:text-accent-400 transition-colors line-clamp-1 cursor-pointer">
+          <h3 className="text-sm sm:text-base font-semibold text-foreground group-hover:text-accent-400 transition-colors line-clamp-1 cursor-pointer">
             {title}
           </h3>
 
           {subtitle && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{truncate(subtitle, 90)}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-1 sm:line-clamp-2">{truncate(subtitle, 90)}</p>
           )}
 
           {/* Price row */}
           <div className="mt-2 flex items-center justify-between gap-2">
             {price !== undefined && (
-              <p className="text-lg font-bold text-primary-600">
+              <p className="text-base sm:text-lg font-bold text-primary-600">
                 {formatCurrency(price)}
-                {priceLabel && <span className="text-sm font-normal text-muted-foreground ml-1">{priceLabel}</span>}
+                {priceLabel && <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-1">{priceLabel}</span>}
               </p>
             )}
             {isNegotiable && (
-              <span className="flex items-center gap-1 text-xs text-success font-medium">
-                <Handshake className="h-3 w-3" /> Negotiable
+              <span className="flex items-center gap-1 text-xs text-success font-medium" title="Negotiable">
+                <Handshake className="h-3 w-3 shrink-0" /> <span className="hidden sm:inline">Negotiable</span>
               </span>
             )}
           </div>
@@ -235,7 +241,7 @@ export function ListingCard({
             </div>
           )}
 
-          <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
+          <div className="mt-auto pt-2.5 sm:pt-3 border-t border-border flex items-center gap-2">
             {isOwn ? (
               /* ── Own listing footer ── */
               <>
@@ -256,26 +262,34 @@ export function ListingCard({
             ) : (
               /* ── Other seller footer ── */
               <>
-                <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarImage src={author.avatarUrl ?? author.image ?? ""} alt={author.name ?? ""} />
-                  <AvatarFallback className="text-[10px] font-semibold">{getInitials(author.name)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
+                <ProfileLink userId={author.id} className="relative z-10 shrink-0">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={author.avatarUrl ?? author.image ?? ""} alt={author.name ?? ""} />
+                    <AvatarFallback className="text-[10px] font-semibold">{getInitials(author.name)}</AvatarFallback>
+                  </Avatar>
+                </ProfileLink>
+                <div className="relative z-10 flex-1 min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-medium truncate leading-none">{author.name ?? "Anonymous"}</span>
+                    <ProfileLink userId={author.id} className="text-xs font-medium truncate leading-none">{author.name ?? "Anonymous"}</ProfileLink>
                     {author.isVerified && <VerifiedBadge size="sm" />}
                     {isBoosted && <Crown className="h-3 w-3 text-amber-500 shrink-0" />}
                   </div>
                   {(author.jobTitle || author.department) && (
-                    <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-none">{author.jobTitle ?? author.department}</p>
+                    <p className="hidden sm:block text-[10px] text-muted-foreground truncate mt-0.5 leading-none">{author.jobTitle ?? author.department}</p>
                   )}
                 </div>
                 <div className="text-right shrink-0 space-y-0.5">
-                  {city && <p className="text-[10px] text-muted-foreground whitespace-nowrap">{city}</p>}
-                  <p className="text-[10px] text-muted-foreground whitespace-nowrap">{formatRelativeTime(createdAt)}</p>
+                  {city && (
+                    <p className="text-[10px] text-muted-foreground flex items-center justify-end gap-0.5 whitespace-nowrap">
+                      <MapPin className="h-2.5 w-2.5 shrink-0" /> <span className="truncate max-w-[70px]">{city}</span>
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground flex items-center justify-end gap-0.5 whitespace-nowrap">
+                    <Clock className="h-2.5 w-2.5 shrink-0" /> {formatRelativeTime(createdAt)}
+                  </p>
                   {viewCount !== undefined && viewCount > 0 && (
                     <p className="text-[10px] text-muted-foreground flex items-center justify-end gap-0.5">
-                      <Eye className="h-2.5 w-2.5" /> {viewCount}
+                      <Eye className="h-2.5 w-2.5 shrink-0" /> {viewCount}
                     </p>
                   )}
                 </div>

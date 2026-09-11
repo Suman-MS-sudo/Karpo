@@ -96,7 +96,7 @@ export default async function LearningPage({ searchParams }: { searchParams: { c
           <Button asChild><Link href="/learning/new">List First Course</Link></Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {courses.map((course) => (
             <Link key={course.id} href={`/learning/${course.id}`} className="group">
               <div className="bg-card border border-border border-l-4 border-l-indigo-400 rounded-xl overflow-hidden hover:shadow-md transition-all h-full flex flex-col">

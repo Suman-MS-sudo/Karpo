@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronDown, ChevronUp, Loader2, Calendar, Link2, CheckCircle2, Package, Clock, BadgeCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatCurrency } from "@/lib/utils"
 
 interface Buyer {
@@ -102,17 +103,17 @@ function OrderCard({ order, listingId }: { order: Order; listingId: string }) {
       {/* Summary row */}
       <button className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-muted/30 transition-colors"
         onClick={() => setOpen((v) => !v)}>
-        <div className="shrink-0">
+        <ProfileLink userId={order.buyer.id} className="shrink-0">
           {avatar
             ? <img src={avatar} alt="" className="h-10 w-10 rounded-full object-cover ring-2 ring-border" />
             : <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
                 {order.buyer.name?.[0] ?? "?"}
               </div>
           }
-        </div>
+        </ProfileLink>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="font-semibold text-sm truncate">{order.buyer.name}</p>
+            <ProfileLink userId={order.buyer.id} className="block font-semibold text-sm truncate">{order.buyer.name}</ProfileLink>
             {order.buyer.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
           </div>
           <p className="text-xs text-muted-foreground truncate">{order.buyer.jobTitle ?? order.buyer.department ?? order.buyer.email}</p>

@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 
 interface Buyer {
@@ -96,15 +97,17 @@ function EngagementCard({ engagement, listingId, onRefresh }: {
       {/* Buyer info */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarImage src={buyer.avatarUrl ?? buyer.image ?? ""} />
-            <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
-              {getInitials(buyer.name)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileLink userId={buyer.id}>
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarImage src={buyer.avatarUrl ?? buyer.image ?? ""} />
+              <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
+                {getInitials(buyer.name)}
+              </AvatarFallback>
+            </Avatar>
+          </ProfileLink>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold truncate">{buyer.name ?? "Anonymous"}</p>
+              <ProfileLink userId={buyer.id} className="block text-sm font-semibold truncate">{buyer.name ?? "Anonymous"}</ProfileLink>
               {buyer.isVerified && <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
             </div>
             <p className="text-xs text-muted-foreground truncate">

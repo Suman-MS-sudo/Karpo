@@ -3,6 +3,7 @@ import { Star, MapPin, CheckCircle2, TrendingUp } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatCurrency, getInitials } from "@/lib/utils"
 
 interface Package { price: number }
@@ -53,16 +54,18 @@ export function SkillListRow({ listing: l, isWishlisted = false, isOwn = false }
             <WishlistButton itemId={l.id} itemType="SKILL" initialWishlisted={isWishlisted} />
           </div>
         )}
-        <Avatar className="h-16 w-16 shrink-0 rounded-2xl ring-2 ring-border/50">
-          <AvatarImage src={avatar ?? ""} className="rounded-2xl object-cover" />
-          <AvatarFallback className="rounded-2xl text-base">{getInitials(l.user.name)}</AvatarFallback>
-        </Avatar>
+        <ProfileLink userId={l.user.id}>
+          <Avatar className="h-16 w-16 shrink-0 rounded-2xl ring-2 ring-border/50">
+            <AvatarImage src={avatar ?? ""} className="rounded-2xl object-cover" />
+            <AvatarFallback className="rounded-2xl text-base">{getInitials(l.user.name)}</AvatarFallback>
+          </Avatar>
+        </ProfileLink>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors truncate">{l.user.name}</h3>
+                <ProfileLink userId={l.user.id} className="font-semibold text-sm group-hover:text-primary transition-colors truncate">{l.user.name}</ProfileLink>
                 {isTopRated && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
                     Top Rated

@@ -62,12 +62,12 @@ export function SocialShare({ title, description, path, className, variant = "bu
           "inline-flex items-center gap-1.5 text-sm font-medium transition-colors",
           variant === "icon"
             ? "h-9 w-9 justify-center rounded-xl border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
-            : "h-9 px-3 justify-center rounded-xl border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
+            : "h-9 w-9 px-0 sm:w-auto sm:px-3 justify-center rounded-xl border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground"
         )}
         title="Share"
       >
         <Share2 className="h-4 w-4 shrink-0" />
-        {variant === "button" && <span>Share</span>}
+        {variant === "button" && <span className="hidden sm:inline">Share</span>}
       </button>
 
       {open && (

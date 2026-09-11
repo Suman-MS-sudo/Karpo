@@ -266,7 +266,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
             <TrendingUp className="h-4 w-4 text-amber-500" />
             <h2 className="font-semibold text-sm uppercase tracking-wide text-amber-700 dark:text-amber-400">Featured Listings</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {featuredListings.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -302,7 +302,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
             <LayoutGrid className="h-4 w-4 text-primary-600" />
             <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Browse by Category</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
             {categorySpotlight.map((listing) => (
               <ListingCard
                 key={listing.id}
@@ -349,7 +349,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                   All listings
                 </p>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                 {listings.map((listing) => (
                   <ListingCard
                     key={listing.id}

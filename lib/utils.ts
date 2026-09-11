@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { formatDistanceToNow, format } from "date-fns"
+import { format } from "date-fns"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -14,8 +14,28 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
+// Compact relative time — "10d ago", "2mo ago" — instead of date-fns's
+// verbose "about 1 month ago" default, which reads long and cluttered
+// wherever it's shown alongside other card metadata (city, views, etc.).
 export function formatRelativeTime(date: Date | string): string {
-  return formatDistanceToNow(new Date(date), { addSuffix: true })
+  const diffMs = Date.now() - new Date(date).getTime()
+  const diffSec = Math.round(diffMs / 1000)
+
+  if (diffSec < 60) return "just now"
+
+  const UNITS: [string, number][] = [
+    ["y",  365 * 86400],
+    ["mo", 30 * 86400],
+    ["w",  7 * 86400],
+    ["d",  86400],
+    ["h",  3600],
+    ["m",  60],
+  ]
+  for (const [suffix, secondsInUnit] of UNITS) {
+    const value = Math.floor(diffSec / secondsInUnit)
+    if (value >= 1) return `${value}${suffix} ago`
+  }
+  return "just now"
 }
 
 export function formatDate(date: Date | string): string {

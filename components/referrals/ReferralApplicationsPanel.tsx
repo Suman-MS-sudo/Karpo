@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 
 interface Applicant {
@@ -131,15 +132,17 @@ function ApplicationCard({ app, referralId, onStatusChange }: { app: Application
       {/* Candidate header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-10 w-10 shrink-0">
-            <AvatarImage src={user.avatarUrl ?? user.image ?? ""} />
-            <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
-              {getInitials(user.name)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileLink userId={user.id}>
+            <Avatar className="h-10 w-10 shrink-0">
+              <AvatarImage src={user.avatarUrl ?? user.image ?? ""} />
+              <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">
+                {getInitials(user.name)}
+              </AvatarFallback>
+            </Avatar>
+          </ProfileLink>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold truncate">{user.name ?? "Anonymous"}</p>
+              <ProfileLink userId={user.id} className="block text-sm font-semibold truncate">{user.name ?? "Anonymous"}</ProfileLink>
               {user.isVerified && <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
             </div>
             <p className="text-xs text-muted-foreground truncate">

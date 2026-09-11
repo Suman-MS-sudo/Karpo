@@ -24,6 +24,7 @@ import { RentalReportButton } from "@/components/rentals/RentalReportButton"
 import { RentalDeleteButton } from "@/components/rentals/RentalDeleteButton"
 import { RentalImageGallery } from "@/components/rentals/RentalImageGallery"
 import { RentalPhotoManager } from "@/components/rentals/RentalPhotoManager"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 
 const MapView = loadDynamic(
   () => import("@/components/rentals/MapView").then((m) => m.MapView),
@@ -447,14 +448,16 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
           <div className="bg-card border border-border rounded-2xl p-5">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Posted by</h3>
             <div className="flex items-center gap-3">
-              <Avatar className="h-11 w-11 ring-2 ring-border">
-                <AvatarImage src={rental.user.avatarUrl ?? rental.user.image ?? ""} />
-                <AvatarFallback className="font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
-                  {getInitials(rental.user.name)}
-                </AvatarFallback>
-              </Avatar>
+              <ProfileLink userId={rental.userId}>
+                <Avatar className="h-11 w-11 ring-2 ring-border">
+                  <AvatarImage src={rental.user.avatarUrl ?? rental.user.image ?? ""} />
+                  <AvatarFallback className="font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
+                    {getInitials(rental.user.name)}
+                  </AvatarFallback>
+                </Avatar>
+              </ProfileLink>
               <div className="min-w-0">
-                <p className="font-semibold text-sm">{rental.user.name}</p>
+                <ProfileLink userId={rental.userId} className="block font-semibold text-sm">{rental.user.name}</ProfileLink>
                 {rental.user.jobTitle && <p className="text-xs text-muted-foreground">{rental.user.jobTitle}</p>}
                 {rental.user.isVerified && (
                   <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">

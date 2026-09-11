@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 320" width="1400" height="320">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338ca" />
+      <stop offset="55%" stop-color="#6d28d9" />
+      <stop offset="100%" stop-color="#7e22ce" />
+    </linearGradient>
+    <radialGradient id="glow" cx="85%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1400" height="320" fill="url(#bg)" />
+  <rect width="1400" height="320" fill="url(#glow)" />
+  <g opacity="0.07">
+      <rect x="587.0" y="4.5" width="186.0" height="108.9" rx="14" fill="#ffffff" />
+      <path d="M755.0 111.4 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.12">
+      <rect x="477.7" y="106.3" width="187.8" height="106.5" rx="14" fill="#ffffff" />
+      <path d="M647.6 210.8 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.05">
+      <rect x="290.7" y="5.4" width="155.7" height="101.4" rx="14" fill="#ffffff" />
+      <path d="M308.7 104.7 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.07">
+      <rect x="1061.1" y="191.3" width="191.0" height="120.6" rx="14" fill="#ffffff" />
+      <path d="M1079.1 309.8 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.11">
+      <rect x="71.8" y="55.7" width="151.8" height="97.7" rx="14" fill="#ffffff" />
+      <path d="M205.6 151.4 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.10">
+      <rect x="1094.9" y="116.3" width="139.1" height="83.5" rx="14" fill="#ffffff" />
+      <path d="M1112.9 197.9 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.09">
+      <rect x="1217.3" y="1.9" width="182.5" height="123.2" rx="14" fill="#ffffff" />
+      <path d="M1235.3 123.1 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.10">
+      <rect x="8.5" y="221.4" width="82.6" height="47.2" rx="14" fill="#ffffff" />
+      <path d="M73.1 266.6 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.08">
+      <rect x="435.2" y="147.9" width="175.9" height="108.9" rx="14" fill="#ffffff" />
+      <path d="M453.2 254.7 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.06">
+      <rect x="325.1" y="101.4" width="70.0" height="39.6" rx="14" fill="#ffffff" />
+      <path d="M343.1 139.0 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.11">
+      <rect x="648.7" y="185.6" width="78.3" height="45.4" rx="14" fill="#ffffff" />
+      <path d="M709.1 229.0 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.08">
+      <rect x="499.1" y="129.8" width="186.4" height="118.3" rx="14" fill="#ffffff" />
+      <path d="M667.5 246.1 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.07">
+      <rect x="194.9" y="57.7" width="134.2" height="89.7" rx="14" fill="#ffffff" />
+      <path d="M311.1 145.4 l16 14 l-4 -16 Z" fill="#ffffff" />
+    </g><g opacity="0.06">
+      <rect x="376.2" y="90.2" width="151.0" height="90.0" rx="14" fill="#ffffff" />
+      <path d="M394.2 178.2 l-16 14 l4 -16 Z" fill="#ffffff" />
+    </g>
+</svg>

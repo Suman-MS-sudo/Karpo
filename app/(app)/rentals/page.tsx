@@ -20,6 +20,7 @@ import { RentalFilters } from "@/components/rentals/RentalFilters"
 import { fuzzyFilter } from "@/lib/fuzzy"
 import { PageHero } from "@/components/shared/PageHero"
 import { CategoryStrip } from "@/components/shared/CategoryStrip"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 
 export const metadata: Metadata = {
   title: "Rentals & Flatmates",
@@ -251,13 +252,13 @@ export default async function RentalsPage({ searchParams }: PageProps) {
           <Button asChild size="sm"><Link href="/rentals/new">Post a Listing</Link></Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {rentals.map((rental) => {
             const typeColor  = TYPE_COLOR[rental.type] ?? "bg-muted text-muted-foreground"
             const isBoosted  = rental.isBoosted
             return (
-              <Link key={rental.id} href={`/rentals/${rental.id}`} className="group block">
-                <div className={`bg-card border rounded-2xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
+              <Link key={rental.id} href={`/rentals/${rental.id}`} className="group flex h-full">
+                <div className={`flex flex-col w-full bg-card border rounded-2xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${
                   isBoosted
                     ? "border-amber-300 dark:border-amber-700 shadow-sm shadow-amber-100 dark:shadow-amber-900/20"
                     : "border-border"
@@ -265,7 +266,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                   {isBoosted && <PremiumStrip />}
 
                   {/* Image */}
-                  <div className="relative aspect-[4/3] bg-muted">
+                  <div className="relative aspect-[4/3] bg-muted shrink-0">
                     {rental.images[0] ? (
                       <Image src={rental.images[0]} alt={rental.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-300" sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw" />
                     ) : (
@@ -288,7 +289,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                     )}
                   </div>
 
-                  <div className="p-4">
+                  <div className="p-4 flex flex-col flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         {isBoosted && <PremiumBadge variant="boosted" className="mb-1" />}
@@ -345,13 +346,15 @@ export default async function RentalsPage({ searchParams }: PageProps) {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-border">
                       <div className="flex items-center gap-1.5">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={rental.user.avatarUrl ?? rental.user.image ?? ""} />
-                          <AvatarFallback className="text-[8px] bg-primary-100 dark:bg-primary-900/40 text-primary-700">{getInitials(rental.user.name)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-muted-foreground truncate max-w-[100px]">{rental.user.name?.split(" ")[0]}</span>
+                        <ProfileLink userId={rental.userId}>
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={rental.user.avatarUrl ?? rental.user.image ?? ""} />
+                            <AvatarFallback className="text-[8px] bg-primary-100 dark:bg-primary-900/40 text-primary-700">{getInitials(rental.user.name)}</AvatarFallback>
+                          </Avatar>
+                        </ProfileLink>
+                        <ProfileLink userId={rental.userId} className="text-xs text-muted-foreground truncate max-w-[100px]">{rental.user.name?.split(" ")[0]}</ProfileLink>
                       </div>
                       <span className="text-[10px] text-muted-foreground">{formatRelativeTime(rental.createdAt)}</span>
                     </div>

@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { ChevronDown, ChevronUp, Loader2, CheckCircle2, XCircle, RotateCcw, Send } from "lucide-react"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatCurrency, formatRelativeTime } from "@/lib/utils"
 
 interface Offer {
@@ -143,7 +144,9 @@ export function OwnerOffersPanel({ listingId, initialCount, isListingActive }: P
 
                 {/* Buyer info */}
                 <p className="text-xs text-muted-foreground">
-                  {offer.buyer.name ?? offer.buyer.email?.split("@")[0] ?? "Anonymous"}
+                  <ProfileLink userId={offer.buyer.id}>
+                    {offer.buyer.name ?? offer.buyer.email?.split("@")[0] ?? "Anonymous"}
+                  </ProfileLink>
                   {offer.buyer.jobTitle ? ` · ${offer.buyer.jobTitle}` : ""}
                   <span className="ml-2 opacity-60">· {formatRelativeTime(new Date(offer.createdAt))}</span>
                 </p>

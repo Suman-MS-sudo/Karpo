@@ -880,7 +880,7 @@ export function DealsClient({
         {expiringSoon.length > 0 && !isFiltered && (
           <section>
             <SectionHeader icon={Clock} title="Expiring Soon" gradient="from-red-500 to-rose-600" count={expiringSoon.length} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
               {expiringSoon.map((d) => <DealCard key={d.id} deal={d} isNew={false} isWishlisted={wishlistedSet.has(d.id)} />)}
             </div>
           </section>
@@ -903,7 +903,7 @@ export function DealsClient({
           )}
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
               {Array.from({ length: 8 }).map((_, i) => <DealCardSkeleton key={i} />)}
             </div>
           ) : deals.length === 0 ? (
@@ -918,7 +918,7 @@ export function DealsClient({
               <Button variant="outline" className="rounded-full" onClick={clearAllFilters}>Clear filters</Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
               {deals.map((d) => <DealCard key={d.id} deal={d} isNew={isNewDeal(d.id)} isWishlisted={wishlistedSet.has(d.id)} />)}
             </div>
           )}

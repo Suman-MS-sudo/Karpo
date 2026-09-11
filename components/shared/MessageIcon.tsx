@@ -7,6 +7,7 @@ import { useChatContext } from "@/components/chat/ChatContext"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials, formatRelativeTime } from "@/lib/utils"
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 
 interface Conversation {
   partnerId: string
@@ -122,7 +123,7 @@ export function MessageIcon() {
                     c.unread && !openPartnerIds.has(c.partnerId) ? "bg-accent-50 dark:bg-accent-900/20" : ""
                   }`}
                 >
-                  <div className="relative shrink-0">
+                  <ProfileLink userId={c.partnerId} className="relative shrink-0">
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={c.partnerAvatar} />
                       <AvatarFallback className="text-xs">{getInitials(c.partnerName)}</AvatarFallback>
@@ -130,10 +131,10 @@ export function MessageIcon() {
                     {c.unread && !openPartnerIds.has(c.partnerId) && (
                       <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-accent-400 rounded-full border-2 border-background" />
                     )}
-                  </div>
+                  </ProfileLink>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-sm truncate ${c.unread ? "font-semibold" : "font-medium"}`}>{c.partnerName}</span>
+                      <ProfileLink userId={c.partnerId} className={`text-sm truncate ${c.unread ? "font-semibold" : "font-medium"}`}>{c.partnerName}</ProfileLink>
                       {c.isVerified && <VerifiedBadge size="sm" />}
                     </div>
                     {c.partnerJobTitle && (

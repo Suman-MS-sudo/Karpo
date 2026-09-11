@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 import Link from "next/link"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 
 interface Inquirer {
   id: string; name: string | null; email: string | null; phone: string | null
@@ -93,12 +94,14 @@ function InquiryCard({
     <div className="border border-border rounded-xl p-3.5 space-y-3">
       {/* User row */}
       <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={inquiry.user.avatarUrl ?? inquiry.user.image ?? ""} />
-          <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">{getInitials(inquiry.user.name)}</AvatarFallback>
-        </Avatar>
+        <ProfileLink userId={inquiry.user.id}>
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarImage src={inquiry.user.avatarUrl ?? inquiry.user.image ?? ""} />
+            <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700">{getInitials(inquiry.user.name)}</AvatarFallback>
+          </Avatar>
+        </ProfileLink>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm leading-tight">{inquiry.user.name}</p>
+          <ProfileLink userId={inquiry.user.id} className="block font-semibold text-sm leading-tight">{inquiry.user.name}</ProfileLink>
           <p className="text-xs text-muted-foreground">{inquiry.user.jobTitle ?? inquiry.user.department}</p>
 
           {/* Visit date */}

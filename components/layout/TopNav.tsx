@@ -52,8 +52,8 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
         {/* Messages — desktop only, mobile uses the bottom nav */}
         <div className="hidden sm:block"><MessageIcon /></div>
 
-        {/* Notifications — desktop only, mobile uses the bottom nav */}
-        <div className="hidden sm:block"><NotificationBell /></div>
+        {/* Notifications — shown on every breakpoint, including mobile */}
+        <NotificationBell />
 
         {/* Theme toggle */}
         <ThemeToggle />
@@ -61,11 +61,12 @@ export function TopNav({ onMenuClick }: { onMenuClick?: () => void }) {
         {/* Location — desktop only, mobile uses the location picker on the dashboard header */}
         <div className="hidden sm:block"><LocationSwitcher /></div>
 
-        {/* User menu — desktop only, mobile uses the bottom nav's Profile tab
-            (and the Settings shortcut on that page), same pattern as Messages
-            and Notifications above. */}
+        {/* User menu — full (avatar + name + chevron) on desktop; mobile keeps
+            just the avatar so there's still a way to see your own photo and
+            reach this menu from the top bar, while Messages/Notifications/
+            Location stay bottom-nav-only on mobile. */}
         {session?.user && (
-          <div className="relative ml-1 hidden sm:block" ref={userMenuRef}>
+          <div className="relative ml-1" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen((o) => !o)}
               className="flex items-center gap-2 rounded-xl hover:bg-muted px-2 py-1.5 transition-colors"

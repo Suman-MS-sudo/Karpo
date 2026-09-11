@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import Image from "next/image"
 import { Plus, Eye, Pencil, ExternalLink, Package, TrendingUp, BadgeCheck, Wallet, Home, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,7 +41,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
       include: {
         offers: {
           where:   { status: "ACCEPTED" },
-          select:  { amount: true, buyer: { select: { name: true, jobTitle: true, company: { select: { name: true } } } } },
+          select:  { amount: true, buyer: { select: { id: true, name: true, jobTitle: true, company: { select: { name: true } } } } },
           take: 1,
         },
       },
@@ -202,7 +203,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
                     </span>
                     {isSold && acceptedOffer?.buyer && (
                       <span className="text-xs text-muted-foreground">
-                        buyer: {acceptedOffer.buyer.name ?? "—"}
+                        buyer: <ProfileLink userId={acceptedOffer.buyer.id}>{acceptedOffer.buyer.name ?? "—"}</ProfileLink>
                         {acceptedOffer.buyer.jobTitle && ` · ${acceptedOffer.buyer.jobTitle}`}
                       </span>
                     )}

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Check, X, Loader2, Clock } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 import { getInitials } from "@/lib/utils"
 
 interface PendingRequest {
@@ -57,11 +58,13 @@ export function PendingRequestsPanel({ eventId, requests: initial }: Props) {
       <div className="space-y-2">
         {requests.map((r) => (
           <div key={r.userId} className="flex items-center gap-3 p-2.5 rounded-xl border border-border">
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
-              <AvatarFallback className="text-[10px]">{getInitials(r.name)}</AvatarFallback>
-            </Avatar>
-            <span className="flex-1 min-w-0 text-sm font-medium truncate">{r.name ?? "Unknown"}</span>
+            <ProfileLink userId={r.userId}>
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
+                <AvatarFallback className="text-[10px]">{getInitials(r.name)}</AvatarFallback>
+              </Avatar>
+            </ProfileLink>
+            <ProfileLink userId={r.userId} className="flex-1 min-w-0 text-sm font-medium truncate block">{r.name ?? "Unknown"}</ProfileLink>
             <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"

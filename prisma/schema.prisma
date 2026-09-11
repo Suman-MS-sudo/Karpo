@@ -132,6 +132,8 @@ model User {
   wishlists         Wishlist[]
   blocksMade        UserBlock[]     @relation("BlocksMade")
   blocksReceived    UserBlock[]     @relation("BlocksReceived")
+  reportsMade       UserReport[]    @relation("UserReportsMade")
+  reportsReceived   UserReport[]    @relation("UserReportsReceived")
 }
 
 model Membership {
@@ -310,6 +312,9 @@ model UserBlock {
   id        String   @id @default(cuid())
   blockerId String
   blockedId String
+  // "MESSAGE" — just stops the two of you messaging each other.
+  // "FULL"    — also hides each other's profile page across the app.
+  scope     String   @default("MESSAGE")
   createdAt DateTime @default(now())
 
   blocker User @relation("BlocksMade",     fields: [blockerId], references: [id], onDelete: Cascade)
@@ -317,6 +322,22 @@ model UserBlock {
 
   @@unique([blockerId, blockedId])
   @@index([blockedId])
+}
+
+model UserReport {
+  id         String   @id @default(cuid())
+  reporterId String
+  reportedId String
+  reason     String
+  details    String?
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+
+  reporter User @relation("UserReportsMade",     fields: [reporterId], references: [id], onDelete: Cascade)
+  reported User @relation("UserReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@index([reportedId])
+  @@index([status])
 }
 
 model ListingReport {

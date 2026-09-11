@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Star, ThumbsUp, MessageSquare, BadgeCheck, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 
 interface Reviewer { id: string; name: string | null; avatarUrl: string | null; image: string | null; jobTitle: string | null; department: string | null }
 interface Review {
@@ -78,14 +79,21 @@ function ReviewCard({ review, listingId, isSeller }: { review: Review; listingId
       <div className="flex items-start gap-3">
         {review.isAnonymous
           ? <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0 text-muted-foreground text-sm font-bold">?</div>
-          : avatar
-            ? <img src={avatar} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-border shrink-0" />
-            : <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shrink-0 text-white text-sm font-bold">
-                {review.reviewer.name?.[0] ?? "?"}
-              </div>
+          : <ProfileLink userId={review.reviewer.id} className="shrink-0">
+              {avatar
+                ? <img src={avatar} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-border" />
+                : <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold">
+                    {review.reviewer.name?.[0] ?? "?"}
+                  </div>
+              }
+            </ProfileLink>
         }
         <div className="flex-1">
-          <p className="text-sm font-semibold">{review.isAnonymous ? "Anonymous" : review.reviewer.name}</p>
+          {review.isAnonymous ? (
+            <p className="text-sm font-semibold">Anonymous</p>
+          ) : (
+            <ProfileLink userId={review.reviewer.id} className="block text-sm font-semibold">{review.reviewer.name}</ProfileLink>
+          )}
           {!review.isAnonymous && review.reviewer.jobTitle && (
             <p className="text-xs text-muted-foreground">{review.reviewer.jobTitle}</p>
           )}

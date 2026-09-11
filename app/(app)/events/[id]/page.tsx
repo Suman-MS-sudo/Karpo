@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { formatCurrency, getInitials } from "@/lib/utils"
 import { RsvpButton } from "@/components/events/RsvpButton"
 import { PendingRequestsPanel } from "@/components/events/PendingRequestsPanel"
+import { ProfileLink } from "@/components/shared/ProfileLink"
 
 type AgendaItem = { time: string; title: string; speaker?: string }
 
@@ -189,10 +190,12 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <div className="flex items-center gap-3 mt-5">
               <div className="flex -space-x-2">
                 {confirmedRsvps.slice(0, 8).map((r) => (
-                  <Avatar key={r.userId} className="h-8 w-8 ring-2 ring-slate-900">
-                    <AvatarImage src={r.user.avatarUrl ?? r.user.image ?? ""} />
-                    <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(r.user.name)}</AvatarFallback>
-                  </Avatar>
+                  <ProfileLink key={r.userId} userId={r.userId}>
+                    <Avatar className="h-8 w-8 ring-2 ring-slate-900">
+                      <AvatarImage src={r.user.avatarUrl ?? r.user.image ?? ""} />
+                      <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(r.user.name)}</AvatarFallback>
+                    </Avatar>
+                  </ProfileLink>
                 ))}
                 {confirmedCount > 8 && (
                   <div className="h-8 w-8 rounded-full ring-2 ring-slate-900 bg-slate-700 flex items-center justify-center text-[10px] text-slate-300 font-semibold">
@@ -388,7 +391,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
               )}
 
               <p className="text-[11px] text-muted-foreground/80 leading-relaxed mt-4 pt-4 border-t border-border">
-                This event is organized independently by {event.organizer.name?.split(" ")[0] ?? "the host"}. Korpo only
+                This event is organized independently by <ProfileLink userId={event.organizer.id}>{event.organizer.name?.split(" ")[0] ?? "the host"}</ProfileLink>. Korpo only
                 provides the platform to list and discover it, and isn&apos;t responsible for how it&apos;s run.
               </p>
             </div>

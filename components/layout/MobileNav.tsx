@@ -4,11 +4,12 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import {
-  Home, MessageSquare, Plus, LayoutGrid, Bell, User,
+  Home, MessageSquare, Plus, LayoutGrid,
 } from "lucide-react"
 import { SERVICES, type ServiceConfig } from "@/config/services"
 import { cn } from "@/lib/utils"
 import { useChatContext } from "@/components/chat/ChatContext"
+import { DuotoneIcon } from "@/components/shared/DuotoneIcon"
 
 const serviceImageMap: Record<string, string> = {
   "buy-sell": "/images/services/marketplace.jpeg",
@@ -20,13 +21,14 @@ const serviceImageMap: Record<string, string> = {
   events: "/images/services/events.png",
 }
 
+// Profile and Alerts are reachable from the top bar on mobile (avatar and
+// the notification bell) instead of bottom-nav tabs — those tabs duplicated
+// what's already up top and crowded the bar.
 const TABS = [
-  { key: "home",          href: "/dashboard",     label: "Home",     icon: Home },
-  { key: "messages",      href: "/messages",       label: "Messages", icon: MessageSquare },
-  { key: "post",          href: null,              label: "Post",     icon: Plus },
-  { key: "view",          href: null,              label: "View",     icon: LayoutGrid },
-  { key: "notifications", href: "/notifications",  label: "Alerts",   icon: Bell },
-  { key: "profile",       href: "/profile/me",     label: "Profile",  icon: User },
+  { key: "home",     href: "/dashboard", label: "Home",     icon: Home },
+  { key: "messages", href: "/messages",  label: "Messages", icon: MessageSquare },
+  { key: "post",     href: null,         label: "Post",     icon: Plus },
+  { key: "view",     href: null,         label: "View",     icon: LayoutGrid },
 ] as const
 
 function LaunchpadSheet({
@@ -105,38 +107,9 @@ export function MobileNav() {
   const router = useRouter()
   const { messageTick } = useChatContext()
   const [sheet, setSheet] = useState<"post" | "view" | null>(null)
-  const [unread, setUnread] = useState(0)
   const [unreadMessages, setUnreadMessages] = useState(0)
 
-  const fetchUnread = useCallback(() => {
-    fetch("/api/notifications?limit=20")
-      .then((r) => r.json())
-      .then((d) => setUnread((d.data ?? []).filter((n: { isRead: boolean }) => !n.isRead).length))
-      .catch(() => {})
-  }, [])
-
-  // Initial fetch + refresh whenever navigation happens, same pattern as the
-  // desktop NotificationBell. Visiting the Alerts page itself marks everything
-  // read there, so just clear the badge immediately instead of racing it.
-  useEffect(() => {
-    if (pathname === "/notifications") setUnread(0)
-    else fetchUnread()
-  }, [fetchUnread, pathname])
-
-  // Live push via SSE so the badge updates in real time, matching web.
-  useEffect(() => {
-    const source = new EventSource("/api/notifications/stream")
-    source.onmessage = () => setUnread((n) => n + 1)
-    return () => source.close()
-  }, [])
-
-  // Poll as a fallback safety net in case the SSE connection drops.
-  useEffect(() => {
-    const id = setInterval(fetchUnread, 60_000)
-    return () => clearInterval(id)
-  }, [fetchUnread])
-
-  // Messages badge — same live-update pattern as Alerts above, driven by
+  // Messages badge — driven by
   // ChatContext's messageTick (bumped by its own /api/messages/stream
   // subscription) instead of opening a second SSE connection here.
   const fetchUnreadMessages = useCallback(() => {
@@ -164,6 +137,7 @@ export function MobileNav() {
   return (
     <>
       <nav
+        id="mobile-nav"
         className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
@@ -181,11 +155,15 @@ export function MobileNav() {
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary-600 dark:bg-primary-400" />
                 )}
                 <span className="relative">
-                  <Icon className={cn("h-5 w-5 transition-all", isActive ? "stroke-[2.5]" : "stroke-[1.75]")} />
-                  {key === "notifications" && unread > 0 && (
-                    <span className="absolute -top-1 -right-2 h-4 min-w-4 px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
+                  {isActive ? (
+                    <DuotoneIcon
+                      icon={Icon}
+                      color="text-primary-600 dark:text-primary-400"
+                      bg="bg-primary-100 dark:bg-primary-500/20"
+                      size="sm"
+                    />
+                  ) : (
+                    <Icon className="h-5 w-5 stroke-[1.75]" />
                   )}
                   {key === "messages" && unreadMessages > 0 && (
                     <span className="absolute -top-1 -right-2 h-4 min-w-4 px-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
