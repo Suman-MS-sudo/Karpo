@@ -540,7 +540,7 @@ export default function NewEventPage() {
               />
               <p className="text-xs text-muted-foreground leading-relaxed">
                 I confirm I am organizing this event independently and am responsible for its planning, safety, and delivery.
-                Korpo only provides a platform to list and discover events between verified professionals — it does not
+                Korpo only provides a platform to list and discover events between members with verified corporate emails — it does not
                 organize, host, supervise, or take responsibility for this event or any interactions between attendees.
               </p>
             </label>

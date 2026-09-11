@@ -10,7 +10,7 @@ import { FREE_LIMITS } from "@/lib/limits"
 
 export const metadata: Metadata = {
   title: "Concierge",
-  description: "Tax filing, legal assistance, insurance advisory and financial planning from verified professionals on Korpo.",
+  description: "Tax filing, legal assistance, insurance advisory and financial planning from service providers listed on Korpo.",
 }
 
 const services = [
@@ -142,7 +142,7 @@ export default async function ConciergePage() {
         <div className="grid sm:grid-cols-3 gap-5 text-sm">
           {[
             { step: "1", title: "Submit Request", desc: "Describe your need, budget, and urgency. Takes 2 minutes." },
-            { step: "2", title: "Get Matched",    desc: "Our team reviews and matches you with a verified professional within 1–2 days." },
+            { step: "2", title: "Get Matched",    desc: "Our team reviews and matches you with a service provider within 1–2 days." },
             { step: "3", title: "Get Help",       desc: "Work directly with the professional. Track progress in My Requests." },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex items-start gap-3">

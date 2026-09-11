@@ -18,6 +18,11 @@ import { randomUUID } from "crypto"
 // prod config is sorted.
 const FIREBASE_PHONE_AUTH_ENABLED = false
 
+// WhatsApp OTP login is temporarily disabled — password is the only
+// supported sign-in method for now. Matching the disabled send-whatsapp-otp
+// route and the hidden button in SignInClient.tsx.
+const WHATSAPP_OTP_LOGIN_ENABLED = false
+
 // Always-admin accounts that also get auto-filled OTPs, independent of
 // ADMIN_EMAIL — sourced from env (not hardcoded) so this backdoor list can be
 // rotated/disabled without a code change, and kept in sync with the same
@@ -139,7 +144,7 @@ const providers: Provider[] = [
         const firebaseIdToken = credentials?.firebaseIdToken as string | undefined
 
         // ── WhatsApp OTP login (returning users, phone-based, no email) ────────
-        if (!email && regPhone && whatsappOtp) {
+        if (!email && regPhone && whatsappOtp && WHATSAPP_OTP_LOGIN_ENABLED) {
           const phone = normalizePhone(regPhone)
           const token = await prisma.verificationToken.findFirst({
             where: { identifier: `wa:${phone}`, token: whatsappOtp, expires: { gt: new Date() } },

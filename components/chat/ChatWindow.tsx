@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
-import { X, Minus, Send, Loader2, CheckCheck } from "lucide-react"
+import { X, Minus, Send, Loader2, CheckCheck, MoreVertical, ShieldOff, ShieldCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials, formatRelativeTime } from "@/lib/utils"
 import { cn } from "@/lib/utils"
@@ -15,9 +15,11 @@ interface Props {
 
 export function ChatWindow({ win, offsetRight }: Props) {
   const { data: session } = useSession()
-  const { closeChat, toggleMinimize, sendMessage, markRead } = useChatContext()
+  const { closeChat, toggleMinimize, sendMessage, markRead, setBlocked } = useChatContext()
   const [input, setInput]   = useState("")
   const [sending, setSending] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [blockLoading, setBlockLoading] = useState(false)
   const bottomRef  = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLInputElement>(null)
   const windowRef  = useRef<HTMLDivElement>(null)
@@ -77,6 +79,19 @@ export function ChatWindow({ win, offsetRight }: Props) {
     }
   }
 
+  const handleToggleBlock = async () => {
+    setBlockLoading(true)
+    setMenuOpen(false)
+    try {
+      await fetch(`/api/users/${win.partner.id}/block`, { method: win.isBlocked ? "DELETE" : "POST" })
+      setBlocked(win.partner.id, !win.isBlocked)
+    } finally {
+      setBlockLoading(false)
+    }
+  }
+
+  const canSend = !win.isBlocked && !win.blockedByOther
+
   return (
     <div
       ref={windowRef}
@@ -117,7 +132,31 @@ export function ChatWindow({ win, offsetRight }: Props) {
           </span>
         )}
 
-        <div className="flex items-center gap-1 ml-1">
+        <div className="flex items-center gap-1 ml-1 relative">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o) }}
+            className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+            title="More"
+          >
+            <MoreVertical className="h-3.5 w-3.5" />
+          </button>
+          {menuOpen && (
+            <div
+              className="absolute top-7 right-0 z-10 w-40 bg-card border border-border rounded-lg shadow-lg overflow-hidden text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={handleToggleBlock}
+                disabled={blockLoading}
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted transition-colors disabled:opacity-60"
+              >
+                {win.isBlocked ? <ShieldCheck className="h-3.5 w-3.5" /> : <ShieldOff className="h-3.5 w-3.5" />}
+                {win.isBlocked ? "Unblock" : "Block"} {win.partner.name}
+              </button>
+            </div>
+          )}
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); toggleMinimize(win.partner.id) }}
@@ -214,38 +253,44 @@ export function ChatWindow({ win, offsetRight }: Props) {
           </div>
 
           {/* Input */}
-          <form
-            onSubmit={handleSend}
-            className="bg-card border-t border-border p-2 flex items-center gap-2 shrink-0"
-          >
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Aa"
-              className="flex-1 h-9 px-3 rounded-full bg-muted text-sm outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend(e as unknown as React.FormEvent)
-                }
-              }}
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || sending}
-              className={cn(
-                "h-9 w-9 rounded-full flex items-center justify-center transition-colors shrink-0",
-                input.trim()
-                  ? "bg-primary-600 hover:bg-primary-700 text-white"
-                  : "bg-muted text-muted-foreground"
-              )}
+          {canSend ? (
+            <form
+              onSubmit={handleSend}
+              className="bg-card border-t border-border p-2 flex items-center gap-2 shrink-0"
             >
-              {sending
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <Send className="h-4 w-4" />}
-            </button>
-          </form>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Aa"
+                className="flex-1 h-9 px-3 rounded-full bg-muted text-sm outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend(e as unknown as React.FormEvent)
+                  }
+                }}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || sending}
+                className={cn(
+                  "h-9 w-9 rounded-full flex items-center justify-center transition-colors shrink-0",
+                  input.trim()
+                    ? "bg-primary-600 hover:bg-primary-700 text-white"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {sending
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Send className="h-4 w-4" />}
+              </button>
+            </form>
+          ) : (
+            <div className="bg-card border-t border-border p-3 shrink-0 text-center text-xs text-muted-foreground">
+              {win.isBlocked ? "You've blocked this user." : "You can't message this user."}
+            </div>
+          )}
         </>
       )}
     </div>

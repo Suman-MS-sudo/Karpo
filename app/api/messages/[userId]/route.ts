@@ -9,16 +9,24 @@ export async function GET(_req: Request, { params }: { params: { userId: string 
   const { session, error } = await requireVerified()
   if (error) return error
 
-  const messages = await prisma.message.findMany({
-    where: {
-      OR: [
-        { senderId: session.user.id, receiverId: params.userId },
-        { senderId: params.userId, receiverId: session.user.id },
-      ],
-    },
-    orderBy: { createdAt: "asc" },
-    take: 100,
-  })
+  const [messages, iBlockedThem, theyBlockedMe] = await Promise.all([
+    prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: session.user.id, receiverId: params.userId },
+          { senderId: params.userId, receiverId: session.user.id },
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+      take: 100,
+    }),
+    prisma.userBlock.findUnique({
+      where: { blockerId_blockedId: { blockerId: session.user.id, blockedId: params.userId } },
+    }),
+    prisma.userBlock.findUnique({
+      where: { blockerId_blockedId: { blockerId: params.userId, blockedId: session.user.id } },
+    }),
+  ])
 
   // Mark unread messages as read
   await prisma.message.updateMany({
@@ -26,12 +34,24 @@ export async function GET(_req: Request, { params }: { params: { userId: string 
     data: { isRead: true },
   })
 
-  return NextResponse.json({ messages })
+  return NextResponse.json({ messages, isBlocked: !!iBlockedThem, blockedByOther: !!theyBlockedMe })
 }
 
 export async function POST(req: Request, { params }: { params: { userId: string } }) {
   const { session, error } = await requireVerified()
   if (error) return error
+
+  const blocked = await prisma.userBlock.findFirst({
+    where: {
+      OR: [
+        { blockerId: session.user.id, blockedId: params.userId },
+        { blockerId: params.userId, blockedId: session.user.id },
+      ],
+    },
+  })
+  if (blocked) {
+    return NextResponse.json({ error: "You can't message this user." }, { status: 403 })
+  }
 
   const body = await req.json()
   if (findContactInfo(body.content)) {

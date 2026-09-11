@@ -14,7 +14,7 @@ export function PublicFooter() {
               <span className="font-bold text-lg">Korpo</span>
             </div>
             <p className="text-blue-200 text-sm leading-relaxed">
-              India&apos;s first verified corporate employee marketplace.
+              A corporate-email-verified marketplace for corporate professionals.
             </p>
           </div>
 
@@ -55,6 +55,9 @@ export function PublicFooter() {
                   <button type="button" className="hover:text-white transition-colors">Terms of Service</button>
                 </LegalModal>
               </li>
+              <li><Link href="/cookies"             className="hover:text-white transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/prohibited-content"  className="hover:text-white transition-colors">Prohibited Content Policy</Link></li>
+              <li><Link href="/grievance"           className="hover:text-white transition-colors">Grievance Redressal</Link></li>
             </ul>
           </div>
         </div>

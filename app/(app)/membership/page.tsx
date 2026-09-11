@@ -190,7 +190,7 @@ export default function MembershipPage() {
         </div>
         <h1 className="text-4xl font-bold tracking-tight mb-4">Everything is free.<br />Premium makes you first.</h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          All core services are free for every verified employee. Premium unlocks auto-boosting across every service — your listings always appear first — plus four exclusive premium sections.
+          All core services are free for every member with a verified corporate email. Premium unlocks auto-boosting across every service — your listings always appear first — plus four exclusive premium sections.
         </p>
       </div>
 

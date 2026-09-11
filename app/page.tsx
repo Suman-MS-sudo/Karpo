@@ -15,7 +15,7 @@ import { ContactForm } from "@/components/shared/ContactForm"
 import { prisma } from "@/lib/prisma"
 
 const heroStats = [
-  { value: "50,000+", label: "Verified employees" },
+  { value: "50,000+", label: "Corporate emails verified" },
   { value: "200+",    label: "Companies onboarded" },
   { value: "4",       label: "Cities active" },
 ]
@@ -82,10 +82,9 @@ const productivitySteps = [
 ]
 
 const aboutStats = [
-  { value: "50,000+", label: "Verified employees" },
+  { value: "50,000+", label: "Corporate emails verified" },
   { value: "200+",    label: "Companies onboarded" },
   { value: "10+",     label: "Services on platform" },
-  { value: "0",       label: "Fake profiles" },
 ]
 
 const aboutValues = [
@@ -111,7 +110,7 @@ const contactFaqs = [
 const testimonials = [
   { name: "Priya K.", role: "Software Engineer", text: "Found my flatmate in 2 days. Knowing they're a verified colleague made all the difference." },
   { name: "Rahul M.", role: "Analyst", text: "Got 3 referral requests within a week of posting. The quality is just better here." },
-  { name: "Anjali S.", role: "Product Manager", text: "Sold my laptop in 4 hours. Verified buyers only — zero scammers, zero stress." },
+  { name: "Anjali S.", role: "Product Manager", text: "Sold my laptop in 4 hours. Knowing buyers had verified corporate emails made it far less stressful." },
 ]
 
 function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
@@ -228,7 +227,7 @@ export default async function LandingPage() {
             </Button>
           </div>
 
-          <p className="mt-14 text-xs font-medium uppercase tracking-wide text-muted-foreground">Number of verified employees are using Korpo</p>
+          <p className="mt-14 text-xs font-medium uppercase tracking-wide text-muted-foreground">Corporate email accounts verified on Korpo</p>
         </div>
 
         {/* Dark hero banner */}
@@ -247,7 +246,7 @@ export default async function LandingPage() {
             <div className="relative flex flex-col justify-center h-full p-8 sm:p-14 max-w-md">
               <p className="text-foreground font-bold text-2xl sm:text-3xl tracking-tight">Keeping it all together</p>
               <p className="text-muted-foreground text-sm sm:text-base mt-3 leading-relaxed">
-                One verified network for everything you need at work — and outside it. No fake profiles, no strangers, ever.
+                One corporate-verified network for everything you need at work — and outside it.
               </p>
               <Button asChild size="lg" className="mt-7 rounded-xl w-fit">
                 <Link href="/auth/signin?mode=register">Register</Link>
@@ -273,7 +272,7 @@ export default async function LandingPage() {
                 className={`px-8 py-8 text-center ${i === 1 ? "bg-primary text-primary-foreground" : "bg-card text-foreground border border-border"}`}
               >
                 <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
-                  {stat.label === "Verified employees" ? verifiedEmployeesLabel : stat.value}
+                  {stat.label === "Corporate emails verified" ? verifiedEmployeesLabel : stat.value}
                 </p>
                 <p className="text-xs sm:text-sm mt-1.5 opacity-70">{stat.label}</p>
               </div>
@@ -457,11 +456,11 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-3xl mx-auto mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-16">
             {aboutStats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {stat.label === "Verified employees" ? verifiedEmployeesLabel : stat.value}
+                  {stat.label === "Corporate emails verified" ? verifiedEmployeesLabel : stat.value}
                 </p>
                 <p className="text-muted-foreground text-xs sm:text-sm mt-1">{stat.label}</p>
               </div>
@@ -685,7 +684,7 @@ export default async function LandingPage() {
                   Get started with Korpo today
                 </h2>
                 <p className="text-muted-foreground text-lg max-w-md">
-                  Verify your corporate email and get instant access. Zero fake profiles, zero scammers — just verified colleagues.
+                  Verify your corporate email and get instant access to a network of colleagues from verified companies.
                 </p>
                 <p className="mt-5 text-muted-foreground/70 text-sm">Free forever for core services · Premium from ₹99/month</p>
               </div>

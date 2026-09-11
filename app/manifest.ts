@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Korpo",
     short_name: "Korpo",
-    description: "India's first verified corporate employee marketplace.",
+    description: "A corporate-email-verified marketplace for corporate professionals.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

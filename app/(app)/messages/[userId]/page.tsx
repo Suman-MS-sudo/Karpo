@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useParams, useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Send } from "lucide-react"
+import { ArrowLeft, Send, MoreVertical, ShieldOff, ShieldCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +43,10 @@ export default function MessageThreadPage() {
   const [input,    setInput]    = useState("")
   const [sending,  setSending]  = useState(false)
   const [canGoBack, setCanGoBack] = useState(false)
+  const [isBlocked, setIsBlocked] = useState(false)
+  const [blockedByOther, setBlockedByOther] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [blockLoading, setBlockLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef  = useRef<HTMLInputElement>(null)
@@ -112,7 +116,11 @@ export default function MessageThreadPage() {
     fetch(`/api/profile/${partnerId}`).then((r) => r.json()).then((d) => setPartner(d))
 
     const fetchMessages = () =>
-      fetch(`/api/messages/${partnerId}`).then((r) => r.json()).then((d) => setMessages(d.messages ?? []))
+      fetch(`/api/messages/${partnerId}`).then((r) => r.json()).then((d) => {
+        setMessages(d.messages ?? [])
+        setIsBlocked(!!d.isBlocked)
+        setBlockedByOther(!!d.blockedByOther)
+      })
 
     fetchMessages()
     if (pollRef.current) clearInterval(pollRef.current)
@@ -137,6 +145,19 @@ export default function MessageThreadPage() {
       router.push("/messages")
     }
   }
+
+  const handleToggleBlock = async () => {
+    setBlockLoading(true)
+    setMenuOpen(false)
+    try {
+      await fetch(`/api/users/${partnerId}/block`, { method: isBlocked ? "DELETE" : "POST" })
+      setIsBlocked((b) => !b)
+    } finally {
+      setBlockLoading(false)
+    }
+  }
+
+  const canSend = !isBlocked && !blockedByOther
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -208,6 +229,30 @@ export default function MessageThreadPage() {
             </div>
           </>
         )}
+
+        <div className="ml-auto relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            title="More"
+          >
+            <MoreVertical className="h-4.5 w-4.5" />
+          </button>
+          {menuOpen && (
+            <div className="absolute top-9 right-0 z-10 w-44 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={handleToggleBlock}
+                disabled={blockLoading}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-muted transition-colors disabled:opacity-60"
+              >
+                {isBlocked ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
+                {isBlocked ? "Unblock" : "Block"} {partner?.name}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
@@ -239,28 +284,34 @@ export default function MessageThreadPage() {
         className="bg-card border-t border-border p-4 shrink-0"
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
       >
-        <form onSubmit={sendMessage} className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type a message…"
-            className="flex-1"
-          />
-          {/* onMouseDown/onTouchStart preventDefault stops the button from
-              stealing focus away from the input on tap — without this, focus
-              moving to the (mobile) button, even for an instant, is what
-              triggers the keyboard to dismiss and slide back up on send. */}
-          <Button
-            type="submit"
-            disabled={!input.trim() || sending}
-            size="icon"
-            onMouseDown={(e) => e.preventDefault()}
-            onTouchStart={(e) => e.preventDefault()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+        {canSend ? (
+          <form onSubmit={sendMessage} className="flex gap-2">
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message…"
+              className="flex-1"
+            />
+            {/* onMouseDown/onTouchStart preventDefault stops the button from
+                stealing focus away from the input on tap — without this, focus
+                moving to the (mobile) button, even for an instant, is what
+                triggers the keyboard to dismiss and slide back up on send. */}
+            <Button
+              type="submit"
+              disabled={!input.trim() || sending}
+              size="icon"
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchStart={(e) => e.preventDefault()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        ) : (
+          <p className="text-center text-sm text-muted-foreground">
+            {isBlocked ? "You've blocked this user." : "You can't message this user."}
+          </p>
+        )}
       </div>
     </div>
   )

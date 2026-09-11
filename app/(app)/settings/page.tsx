@@ -6,17 +6,26 @@ import { useTheme } from "next-themes"
 import Link from "next/link"
 import Image from "next/image"
 import {
-  Briefcase, LogOut, Shield, Sun, Moon, Monitor, Check, User, ArrowRight, Settings,
+  Briefcase, LogOut, Shield, Sun, Moon, Monitor, Check, User, ArrowRight, Settings, ShieldOff, Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getInitials } from "@/lib/utils"
 
 interface AccountData {
   email: string
   company?: { name: string; logo?: string }
   isVerified: boolean
   role: string
+}
+
+interface BlockedUser {
+  id: string
+  name: string | null
+  avatarUrl: string | null
+  jobTitle: string | null
 }
 
 const LABEL = "block text-xs font-medium text-muted-foreground mb-1.5"
@@ -26,6 +35,9 @@ export default function SettingsPage() {
 
   const [account, setAccount] = useState<AccountData>({ email: "", company: undefined, isVerified: false, role: "USER" })
   const [loading, setLoading] = useState(true)
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([])
+  const [blockedLoading, setBlockedLoading] = useState(true)
+  const [unblockingId, setUnblockingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/profile")
@@ -40,6 +52,23 @@ export default function SettingsPage() {
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    fetch("/api/users/blocked")
+      .then((r) => r.json())
+      .then((data) => setBlockedUsers(data.blocked ?? []))
+      .finally(() => setBlockedLoading(false))
+  }, [])
+
+  const handleUnblock = async (userId: string) => {
+    setUnblockingId(userId)
+    try {
+      await fetch(`/api/users/${userId}/block`, { method: "DELETE" })
+      setBlockedUsers((prev) => prev.filter((u) => u.id !== userId))
+    } finally {
+      setUnblockingId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -117,6 +146,47 @@ export default function SettingsPage() {
               {resolvedTheme === "dark" ? "Night mode active — click to switch to day" : "Day mode active — click to switch to night"}
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── Blocked users ─────────────────────────────────────────────────── */}
+      <section className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="font-semibold text-sm">Blocked users</h2>
+        </div>
+        <div className="p-6">
+          {blockedLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : blockedUsers.length === 0 ? (
+            <p className="text-xs text-muted-foreground">You haven't blocked anyone. Blocked users can't message you.</p>
+          ) : (
+            <div className="space-y-3">
+              {blockedUsers.map((u) => (
+                <div key={u.id} className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={u.avatarUrl ?? ""} />
+                    <AvatarFallback>{getInitials(u.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{u.name}</p>
+                    {u.jobTitle && <p className="text-xs text-muted-foreground truncate">{u.jobTitle}</p>}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 shrink-0"
+                    disabled={unblockingId === u.id}
+                    onClick={() => handleUnblock(u.id)}
+                  >
+                    {unblockingId === u.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldOff className="h-3.5 w-3.5" />}
+                    Unblock
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

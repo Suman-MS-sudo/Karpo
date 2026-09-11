@@ -20,6 +20,10 @@ type Step = "signin" | "register-choice" | "otp" | "password" | "idcard" | "idca
 // Flip both back on once Firebase prod config is sorted.
 const FIREBASE_PHONE_AUTH_ENABLED = false
 
+// Temporarily disabled — matching WHATSAPP_OTP_LOGIN_ENABLED in auth.ts.
+// Password is the only supported sign-in method for now.
+const WHATSAPP_OTP_LOGIN_ENABLED = false
+
 function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const params      = useSearchParams()
   const router      = useRouter()
@@ -731,7 +735,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
-        {step === "phone" && (
+        {WHATSAPP_OTP_LOGIN_ENABLED && step === "phone" && (
           <>
             <h1 className="text-2xl font-bold">Sign in with WhatsApp</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">
@@ -739,7 +743,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             </p>
           </>
         )}
-        {step === "phone-otp" && (
+        {WHATSAPP_OTP_LOGIN_ENABLED && step === "phone-otp" && (
           <>
             <h1 className="text-2xl font-bold">Enter your code</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">
@@ -833,22 +837,24 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       {/* ── Sign in: verified users only ──────────────────────────────────────── */}
       {step === "signin" && (
         <div className="space-y-4">
-          <button
-            type="button"
-            onClick={() => { setError(""); setEmail(""); setStep("phone") }}
-            className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
-          >
-            <div className="h-10 w-10 rounded-lg bg-brand-green-50 dark:bg-brand-green-600/10 flex items-center justify-center shrink-0">
-              <svg className="h-5 w-5 text-brand-green-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.45 3.38 1.3 4.85L2.05 22l5.36-1.41a9.9 9.9 0 0 0 4.63 1.18h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0 0 12.04 2zm5.83 14.11c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.12.11-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.75-4.14-4.9-4.33-.14-.2-1.17-1.56-1.17-2.98 0-1.42.74-2.11 1-2.41.26-.3.57-.37.76-.37.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.57.81 1.98.88 2.12.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.45.12.61-.07.17-.19.71-.83.9-1.11.19-.29.38-.24.64-.14.26.1 1.65.78 1.94.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground">WhatsApp OTP</p>
-              <p className="text-xs text-muted-foreground">Code sent to your registered number</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          {WHATSAPP_OTP_LOGIN_ENABLED && (
+            <button
+              type="button"
+              onClick={() => { setError(""); setEmail(""); setStep("phone") }}
+              className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left hover:border-primary-400 hover:shadow-sm transition-all group"
+            >
+              <div className="h-10 w-10 rounded-lg bg-brand-green-50 dark:bg-brand-green-600/10 flex items-center justify-center shrink-0">
+                <svg className="h-5 w-5 text-brand-green-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.71.45 3.38 1.3 4.85L2.05 22l5.36-1.41a9.9 9.9 0 0 0 4.63 1.18h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.87 9.87 0 0 0 12.04 2zm5.83 14.11c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.12.11-1.81-.11-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.75-4.14-4.9-4.33-.14-.2-1.17-1.56-1.17-2.98 0-1.42.74-2.11 1-2.41.26-.3.57-.37.76-.37.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.57.81 1.98.88 2.12.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.57.16.28.71 1.17 1.52 1.9 1.05.94 1.93 1.23 2.21 1.37.28.14.45.12.61-.07.17-.19.71-.83.9-1.11.19-.29.38-.24.64-.14.26.1 1.65.78 1.94.92.28.14.47.21.54.33.07.12.07.68-.17 1.36z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">WhatsApp OTP</p>
+                <p className="text-xs text-muted-foreground">Code sent to your registered number</p>
+              </div>
+              <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          )}
 
           <button
             type="button"
@@ -1272,7 +1278,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
             <Label htmlFor="reg-phone">Phone number</Label>
             <Input id="reg-phone" type="tel" placeholder="+91 98765 43210"
               value={regPhone} onChange={(e) => setRegPhone(e.target.value)} required />
-            <p className="text-xs text-muted-foreground">Used to sign in with a WhatsApp OTP from your next login onward.</p>
+            <p className="text-xs text-muted-foreground">Used for account contact and identification.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -1326,7 +1332,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       )}
 
       {/* ── Step: WhatsApp OTP sign-in — phone entry ─────────────────────────── */}
-      {step === "phone" && (
+      {WHATSAPP_OTP_LOGIN_ENABLED && step === "phone" && (
         <form onSubmit={handleSendWhatsAppOTP} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="wa-phone">Phone number</Label>
@@ -1349,7 +1355,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       )}
 
       {/* ── Step: WhatsApp OTP sign-in — code entry ──────────────────────────── */}
-      {step === "phone-otp" && (
+      {WHATSAPP_OTP_LOGIN_ENABLED && step === "phone-otp" && (
         <div className="space-y-5">
           <div>
             <Label className="block text-center mb-3">Enter the 6-digit code</Label>

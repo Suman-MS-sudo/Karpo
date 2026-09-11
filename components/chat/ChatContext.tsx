@@ -37,6 +37,10 @@ export interface ChatWindow {
   isMinimized: boolean
   isLoading: boolean
   unreadCount: number
+  /** True if the current user has blocked this partner. */
+  isBlocked: boolean
+  /** True if this partner has blocked the current user. */
+  blockedByOther: boolean
 }
 
 interface ChatContextValue {
@@ -53,6 +57,7 @@ interface ChatContextValue {
   toggleMinimize: (partnerId: string) => void
   sendMessage: (partnerId: string, content: string) => Promise<void>
   markRead: (partnerId: string) => void
+  setBlocked: (partnerId: string, isBlocked: boolean) => void
 }
 
 // ─── Context ─────────────────────────────────────────────────────────────────
@@ -146,7 +151,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       setWindows((prev) =>
         prev.map((w) =>
           w.partner.id === partnerId
-            ? { ...w, messages: data.messages ?? [], isLoading: false, unreadCount: 0 }
+            ? {
+                ...w,
+                messages: data.messages ?? [],
+                isLoading: false,
+                unreadCount: 0,
+                isBlocked: !!data.isBlocked,
+                blockedByOther: !!data.blockedByOther,
+              }
             : w
         )
       )
@@ -191,6 +203,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             isMinimized: false,
             isLoading: true,
             unreadCount: 0,
+            isBlocked: false,
+            blockedByOther: false,
           },
         ]
       })
@@ -280,11 +294,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     [session?.user?.id]
   )
 
+  const setBlocked = useCallback((partnerId: string, isBlocked: boolean) => {
+    setWindows((prev) =>
+      prev.map((w) => (w.partner.id === partnerId ? { ...w, isBlocked } : w))
+    )
+  }, [])
+
   const totalUnread = windows.reduce((sum, w) => sum + w.unreadCount, 0)
 
   return (
     <ChatContext.Provider
-      value={{ windows, totalUnread, messageTick, openChat, closeChat, toggleMinimize, sendMessage, markRead }}
+      value={{ windows, totalUnread, messageTick, openChat, closeChat, toggleMinimize, sendMessage, markRead, setBlocked }}
     >
       {children}
     </ChatContext.Provider>

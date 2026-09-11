@@ -17,8 +17,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://korpo.in"
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: "Korpo — Your work ID. Your pass to everything else.", template: "%s | Korpo" },
-  description: "India's first verified corporate employee marketplace — buy/sell, find flatmates, get referrals and share rides with verified professionals.",
-  keywords: ["corporate marketplace", "employee benefits", "verified professionals", "IT professionals", "job referrals", "corporate carpool"],
+  description: "Korpo is a corporate-email-verified marketplace — buy/sell, find flatmates, get referrals and share rides with colleagues from verified companies.",
+  keywords: ["corporate marketplace", "employee benefits", "corporate email verified", "IT professionals", "job referrals", "corporate carpool"],
   authors: [{ name: "Korpo" }],
   creator: "Korpo",
   alternates: {
@@ -44,13 +44,13 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: "Korpo",
     title: "Korpo — Your work ID. Your pass to everything else.",
-    description: "India's first verified corporate employee marketplace",
+    description: "A corporate-email-verified marketplace for corporate professionals",
     images: [{ url: "/logo.png", width: 512, height: 512, alt: "Korpo" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Korpo — Your work ID. Your pass to everything else.",
-    description: "India's first verified corporate employee marketplace — buy/sell, find flatmates, get referrals and share rides with verified professionals.",
+    description: "Korpo is a corporate-email-verified marketplace — buy/sell, find flatmates, get referrals and share rides with colleagues from verified companies.",
     images: ["/logo.png"],
   },
 }
@@ -61,7 +61,7 @@ const organizationJsonLd = {
   name: "Korpo",
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
-  description: "India's first verified corporate employee marketplace.",
+  description: "A corporate-email-verified marketplace for corporate professionals.",
   sameAs: [] as string[],
 }
 

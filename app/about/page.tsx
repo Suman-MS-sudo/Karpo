@@ -6,17 +6,16 @@ import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
 
 const stats = [
-  { value: "50,000+", label: "Verified Employees"   },
-  { value: "200+",    label: "Companies Onboarded"  },
-  { value: "10+",     label: "Services on Platform" },
-  { value: "0",       label: "Fake Profiles"        },
+  { value: "50,000+", label: "Corporate Emails Verified" },
+  { value: "200+",    label: "Companies Onboarded"       },
+  { value: "10+",     label: "Services on Platform"      },
 ]
 
 const values = [
   {
     icon: ShieldCheck,
     title: "Trust First",
-    desc: "Every member is verified via their corporate email. No exceptions. No shortcuts. Trust is the foundation everything else is built on.",
+    desc: "Every member's corporate email is verified before they join. Trust is the foundation everything else is built on.",
     color: "text-blue-600",
     bg: "bg-blue-50",
   },
@@ -44,7 +43,7 @@ const values = [
   {
     icon: Target,
     title: "Quality over Quantity",
-    desc: "A smaller, verified network beats a massive, fake one every time. We'd rather have 1,000 real users than 100,000 bots.",
+    desc: "A smaller, corporate-email-verified network beats an open, anonymous one. We'd rather have 1,000 real users than 100,000 bots.",
     color: "text-emerald-600",
     bg: "bg-emerald-50",
   },
@@ -66,7 +65,7 @@ const milestones = [
 
 export const metadata = {
   title: "About Us",
-  description: "Learn about Korpo — India's first verified corporate employee marketplace built on trust.",
+  description: "Learn about Korpo — a corporate-email-verified marketplace built on trust.",
 }
 
 export default function AboutPage() {
@@ -95,7 +94,7 @@ export default function AboutPage() {
       {/* Stats */}
       <section className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl sm:text-4xl font-bold text-[#1E3A5F]">{stat.value}</p>
@@ -119,18 +118,18 @@ export default function AboutPage() {
                   India has millions of corporate employees — engineers, analysts, consultants, bankers — who work in the same buildings, commute the same routes, and live in the same neighbourhoods. Yet when they needed to sell a laptop, find a flatmate or get a job referral, they had to turn to public marketplaces filled with strangers, scammers and fake listings.
                 </p>
                 <p>
-                  The existing solutions had no way to distinguish a verified Infosys engineer from an anonymous fraudster. Trust was luck, not structure.
+                  Existing solutions had no way to confirm someone actually holds a corporate email at a real company. Trust was luck, not structure.
                 </p>
                 <p>
-                  <span className="font-semibold text-[#1E3A5F]">Korpo changes that.</span> Your corporate email is your identity. Your badge is your reputation. Everyone on Korpo is who they say they are — because they&apos;ve already proved it to their employer.
+                  <span className="font-semibold text-[#1E3A5F]">Korpo changes that.</span> We verify access to your corporate email before you join. It's not a background check or an employment check — it's a meaningful first signal that most open marketplaces don't have.
                 </p>
               </div>
               <div className="mt-8 space-y-3">
                 {[
-                  "Verified via OTP sent to corporate inbox — no fake signups possible",
+                  "Corporate email access verified via OTP before signup",
                   "Domain whitelist: only approved companies get access",
                   "Reputation scores and reviews after every transaction",
-                  "Zero phone/email exposed publicly — all contact is in-app",
+                  "Phone/email not exposed publicly — in-app messaging by default",
                 ].map((point) => (
                   <div key={point} className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
@@ -152,8 +151,8 @@ export default function AboutPage() {
                   />
                 </div>
                 <div className="absolute -bottom-4 -right-4 bg-white border border-gray-100 rounded-2xl shadow-lg px-4 py-3 text-center">
-                  <p className="text-2xl font-bold text-[#1E3A5F]">0</p>
-                  <p className="text-xs text-gray-500">Fake profiles<br />ever</p>
+                  <p className="text-2xl font-bold text-[#1E3A5F]">100%</p>
+                  <p className="text-xs text-gray-500">Corporate email<br />verified</p>
                 </div>
               </div>
             </div>
@@ -209,7 +208,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">Our journey</h2>
-            <p className="mt-3 text-blue-200">From an idea to India&apos;s most trusted corporate network.</p>
+            <p className="mt-3 text-blue-200">From an idea to a growing corporate-verified network.</p>
           </div>
           <div className="relative">
             <div className="absolute left-6 sm:left-1/2 top-0 bottom-0 w-px bg-white/20" />
@@ -241,7 +240,7 @@ export default function AboutPage() {
             Join the verified network
           </h2>
           <p className="text-gray-600 text-lg mb-8">
-            Sign in with your corporate email and become part of India&apos;s most trusted professional community. It takes under a minute.
+            Sign in with your corporate email and become part of a growing corporate-verified professional community. It takes under a minute.
           </p>
           <Button asChild size="xl">
             <Link href="/auth/signin">

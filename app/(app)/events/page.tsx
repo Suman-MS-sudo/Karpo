@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Events",
-  description: "Discover treks, meetups, workshops, and networking events organized by verified professionals near you.",
+  description: "Discover treks, meetups, workshops, and networking events organized by members with verified corporate emails near you.",
 }
 
 export default async function EventsPage() {

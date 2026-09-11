@@ -380,7 +380,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
                 <span className="bg-gradient-to-r from-white via-fuchsia-200 to-cyan-200 bg-clip-text text-transparent">Events</span>
                 {" "}<span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">&amp; Communities</span>
               </h1>
-              <p className="text-white/60 mt-2 text-sm">Treks, sports, networking &amp; hobby clubs — only verified professionals.</p>
+              <p className="text-white/60 mt-2 text-sm">Treks, sports, networking &amp; hobby clubs — only members with verified corporate emails.</p>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {!isPremium && (
