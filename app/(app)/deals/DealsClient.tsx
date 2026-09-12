@@ -8,12 +8,13 @@ import {
   SlidersHorizontal, Sparkles, Search, X, Star, Flame,
   ShoppingBag, Plane, Tv, Shirt, Heart, Landmark, BookOpen, Hotel,
   Code2, Smile, Shield, Car, Package, Globe, Copy, Check, ChevronDown,
-  ArrowUpDown, Building2,
+  Building2,
 } from "lucide-react"
 import { Badge }    from "@/components/ui/badge"
 import { Button }  from "@/components/ui/button"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { SortDropdown } from "@/components/ui/sort-dropdown"
 import { formatDate, formatRelativeTime, cn } from "@/lib/utils"
 import { useDeals, type Deal, type DealFilters } from "@/hooks/useDeals"
 import { FREE_LIMITS } from "@/lib/limits"
@@ -434,8 +435,7 @@ export function DealsClient({
     search:      "",
   })
   const [searchInput, setSearchInput] = useState("")
-  const [sortOpen, setSortOpen] = useState(false)
-  const sortRef = useRef<HTMLDivElement>(null)
+  const [showFilters, setShowFilters] = useState(false)
   const [brandFilter, setBrandFilter] = useState("")
   const [brandOpen, setBrandOpen] = useState(false)
   const [brandQuery, setBrandQuery] = useState("")
@@ -457,16 +457,15 @@ export function DealsClient({
   }, [brandOpen])
 
   useEffect(() => {
-    if (!sortOpen && !brandOpen && !discountOpen && !rupeeOpen) return
+    if (!brandOpen && !discountOpen && !rupeeOpen) return
     const onClickOutside = (e: MouseEvent) => {
-      if (sortOpen && sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false)
       if (brandOpen && brandRef.current && !brandRef.current.contains(e.target as Node)) setBrandOpen(false)
       if (discountOpen && discountRef.current && !discountRef.current.contains(e.target as Node)) setDiscountOpen(false)
       if (rupeeOpen && rupeeRef.current && !rupeeRef.current.contains(e.target as Node)) setRupeeOpen(false)
     }
     document.addEventListener("mousedown", onClickOutside)
     return () => document.removeEventListener("mousedown", onClickOutside)
-  }, [sortOpen, brandOpen, discountOpen, rupeeOpen])
+  }, [brandOpen, discountOpen, rupeeOpen])
 
   const {
     deals: fetchedDeals, loading, newDealsCount, dismissNewDeals,
@@ -507,7 +506,7 @@ export function DealsClient({
     <div className="min-h-full bg-background">
 
       {/* ── Hero header ──────────────────────────────────────────────────────── */}
-      <div className="relative text-white overflow-hidden" style={{ minHeight: 300 }}>
+      <div className="relative text-white overflow-hidden min-h-[220px] sm:min-h-[300px]">
         <img
           src="https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=1920&q=85&auto=format&fit=crop"
           alt=""
@@ -519,25 +518,25 @@ export function DealsClient({
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-rose-500/30 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-amber-400/20 blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-5 sm:pt-10 sm:pb-8">
 
           {/* Top row */}
-          <div className="flex items-start justify-between gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase text-white border border-white/30 rounded-full px-3 py-1 backdrop-blur-sm bg-gradient-to-r from-rose-500/30 via-red-500/30 to-amber-400/30 shadow-[0_0_20px_rgba(244,63,94,0.35)]">
+          <div className="flex items-start justify-between gap-3 sm:gap-4 mb-5 sm:mb-8 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-white border border-white/30 rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 backdrop-blur-sm bg-gradient-to-r from-rose-500/30 via-red-500/30 to-amber-400/30 shadow-[0_0_20px_rgba(244,63,94,0.35)]">
                   <Sparkles className="h-3 w-3 text-rose-300" /> Corporate Exclusive
                 </span>
               </div>
-              <h1 className={cn("font-outfit", "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
+              <h1 className={cn("font-outfit", "text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
                 <span className="bg-gradient-to-r from-white via-rose-200 to-amber-200 bg-clip-text text-transparent">Employee</span>
                 {" "}<span className="bg-gradient-to-r from-amber-300 via-orange-300 to-rose-300 bg-clip-text text-transparent">Deals</span> 🏷️
               </h1>
-              <p className="text-white/60 mt-2 text-sm">Exclusive discounts &amp; offers for verified corporate professionals.</p>
+              <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Exclusive discounts &amp; offers for verified corporate professionals.</p>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">
               {!isPremium && (
-                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs backdrop-blur-sm">
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs backdrop-blur-sm whitespace-nowrap">
                   <span className="text-amber-300 font-medium">{redemptionCount}/{FREE_LIMITS.deals} redeemed</span>
                 </div>
               )}
@@ -545,32 +544,32 @@ export function DealsClient({
           </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-8 mb-8">
+          <div className="flex items-center gap-4 sm:gap-8 mb-5 sm:mb-8 flex-wrap">
             <div>
-              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-rose-300 to-red-200 bg-clip-text text-transparent")}>{fetchedDeals.length}</p>
-              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Active Deals</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold tabular-nums bg-gradient-to-r from-rose-300 to-red-200 bg-clip-text text-transparent")}>{fetchedDeals.length}</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Active Deals</p>
             </div>
-            <div className="w-px h-10 bg-white/15" />
+            <div className="w-px h-7 sm:h-10 bg-white/15" />
             <div>
-              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-amber-300 to-orange-200 bg-clip-text text-transparent")}>{totalClaims.toLocaleString()}</p>
-              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total Claims</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold tabular-nums bg-gradient-to-r from-amber-300 to-orange-200 bg-clip-text text-transparent")}>{totalClaims.toLocaleString()}</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Total Claims</p>
             </div>
-            <div className="w-px h-10 bg-white/15" />
+            <div className="w-px h-7 sm:h-10 bg-white/15" />
             <div>
-              <p className={cn("font-outfit", "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
-              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Verified</p>
             </div>
           </div>
 
           {/* Search */}
-          <form onSubmit={submitSearch} className="relative pb-2">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 pointer-events-none" />
+          <form onSubmit={submitSearch} className="relative pb-1 sm:pb-2">
+            <Search className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 pointer-events-none" />
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search deals, companies, or offers…"
-              className="w-full h-12 pl-11 pr-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:bg-white/15 transition-all"
+              className="w-full h-10 sm:h-12 pl-10 sm:pl-11 pr-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-400/50 focus:bg-white/15 transition-all"
             />
             {searchInput && (
               <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
@@ -624,11 +623,44 @@ export function DealsClient({
         <div className="border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 text-sm text-foreground">
-                <SlidersHorizontal className="h-4 w-4" />
-                <span className="font-bold">Filters</span>
-              </div>
+              <button
+                onClick={() => setShowFilters(o => !o)}
+                className={cn(
+                  "flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full border transition-all",
+                  (filters.minDiscount > 0 || minRupee > 0 || brandFilter || showFilters)
+                    ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white border-transparent shadow-sm"
+                    : "text-foreground border-border hover:border-rose-400/60 hover:text-rose-600 dark:hover:text-rose-400"
+                )}
+              >
+                <SlidersHorizontal className="h-4 w-4" /> Filters
+                <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showFilters && "rotate-180")} />
+              </button>
 
+              {isFiltered && (
+                <Button variant="ghost" size="sm" className="h-8 text-sm font-bold gap-1 text-muted-foreground rounded-full" onClick={clearAllFilters}>
+                  <X className="h-3.5 w-3.5" /> Clear all
+                </Button>
+              )}
+
+              <div className="flex-1" />
+
+              {!loading && (
+                <span className="text-sm font-bold text-foreground whitespace-nowrap hidden sm:block">
+                  {deals.length} deal{deals.length !== 1 ? "s" : ""}
+                </span>
+              )}
+
+              {/* Sort — shared SortDropdown, same component used app-wide */}
+              <SortDropdown
+                options={SORT_OPTIONS}
+                value={filters.sortBy}
+                onChange={(v) => setFilters(f => ({ ...f, sortBy: v as DealFilters["sortBy"] }))}
+              />
+            </div>
+
+            {/* Filter panel — Discount / Rupee-off / Brand — collapsed by default */}
+            {showFilters && (
+            <div className="flex items-center gap-2 flex-wrap mt-3 pt-3 border-t border-border">
               {/* Discount % dropdown */}
               <div className="relative" ref={discountRef}>
                 <button
@@ -753,53 +785,8 @@ export function DealsClient({
                 )}
               </div>
 
-              {isFiltered && (
-                <Button variant="ghost" size="sm" className="h-8 text-sm font-bold gap-1 text-muted-foreground rounded-full" onClick={clearAllFilters}>
-                  <X className="h-3.5 w-3.5" /> Clear all
-                </Button>
-              )}
-
-              <div className="flex-1" />
-
-              {!loading && (
-                <span className="text-sm font-bold text-foreground whitespace-nowrap hidden sm:block">
-                  {deals.length} deal{deals.length !== 1 ? "s" : ""}
-                </span>
-              )}
-
-              {/* Sort dropdown */}
-              <div className="relative" ref={sortRef}>
-                <button
-                  onClick={() => setSortOpen(o => !o)}
-                  className={cn(
-                    "flex items-center gap-1.5 text-sm font-bold px-3.5 py-1.5 rounded-full border transition-all",
-                    sortOpen
-                      ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white border-transparent shadow-sm"
-                      : "text-foreground border-border hover:border-rose-400/60 hover:text-rose-600 dark:hover:text-rose-400"
-                  )}
-                >
-                  <ArrowUpDown className="h-4 w-4" />
-                  {SORT_OPTIONS.find(s => s.value === filters.sortBy)?.label}
-                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", sortOpen && "rotate-180")} />
-                </button>
-                {sortOpen && (
-                  <div className="absolute right-0 top-full mt-2 z-20 bg-card border-2 border-border rounded-2xl shadow-[0_12px_36px_rgba(244,63,94,0.12)] overflow-hidden min-w-[200px] py-1.5">
-                    {SORT_OPTIONS.map(opt => (
-                      <button key={opt.value} onClick={() => { setFilters(f => ({ ...f, sortBy: opt.value as DealFilters["sortBy"] })); setSortOpen(false) }}
-                        className={cn("w-full flex items-center justify-between gap-2 text-left mx-1.5 my-0.5 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors",
-                          filters.sortBy === opt.value
-                            ? "bg-gradient-to-r from-rose-500 to-amber-400 text-white"
-                            : "text-foreground hover:bg-muted"
-                        )}
-                      >
-                        {opt.label}
-                        {filters.sortBy === opt.value && <Check className="h-4 w-4 shrink-0" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
+            )}
 
             {/* Active filter chips */}
             {isFiltered && (

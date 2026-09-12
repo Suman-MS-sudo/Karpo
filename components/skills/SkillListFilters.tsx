@@ -5,22 +5,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { ChevronDown, X, Star, SlidersHorizontal, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const CATEGORIES = [
-  { value: "TECH",        label: "Tech & Dev" },
-  { value: "DATA",        label: "Data & AI" },
-  { value: "DESIGN",      label: "Design & UX" },
-  { value: "ENGINEERING", label: "Engineering" },
-  { value: "MARKETING",   label: "Marketing" },
-  { value: "BUSINESS",    label: "Business" },
-  { value: "FINANCE",     label: "Finance" },
-  { value: "LEGAL",       label: "Legal" },
-  { value: "LANGUAGE",    label: "Languages" },
-  { value: "COACHING",    label: "Coaching" },
-  { value: "CREATIVE",    label: "Creative" },
-  { value: "WELLNESS",    label: "Wellness" },
-  { value: "PHOTOGRAPHY", label: "Photography" },
-]
-
 const FORMATS = [
   { value: "",          label: "Any format" },
   { value: "ONLINE",    label: "Online" },
@@ -45,7 +29,6 @@ const SORTS = [
 ]
 
 interface Props {
-  categoryCounts: Record<string, number>
   locations: string[]
   skillOptions: string[]
   children: React.ReactNode
@@ -80,7 +63,7 @@ function FilterDropdown({ label, active, children }: { label: string; active?: b
   )
 }
 
-export function SkillListFilters({ categoryCounts, locations, skillOptions, children }: Props) {
+export function SkillListFilters({ locations, skillOptions, children }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
   const sp       = useSearchParams()
@@ -131,29 +114,6 @@ export function SkillListFilters({ categoryCounts, locations, skillOptions, chil
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Category</p>
-          <div className="space-y-0.5">
-            <button
-              onClick={() => push({ category: "" })}
-              className={cn("w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors", !category ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted")}
-            >
-              <span>All</span>
-              <span className="text-xs">{Object.values(categoryCounts).reduce((a, b) => a + b, 0)}</span>
-            </button>
-            {CATEGORIES.map(c => (
-              <button
-                key={c.value}
-                onClick={() => push({ category: c.value })}
-                className={cn("w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors", category === c.value ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-muted")}
-              >
-                <span>{c.label}</span>
-                <span className="text-xs">{categoryCounts[c.value] ?? 0}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Format</p>
           <div className="space-y-2">
             {FORMATS.map(f => (
@@ -185,6 +145,18 @@ export function SkillListFilters({ categoryCounts, locations, skillOptions, chil
             className="w-full accent-primary"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>₹0</span><span>₹{Number(maxPrice).toLocaleString()}+</span></div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Rating</p>
+          <div className="space-y-2">
+            {["4.5", "4", "3", ""].map(r => (
+              <label key={r || "any"} className="flex items-center gap-2 text-sm cursor-pointer text-foreground/90">
+                <input type="radio" name="minRating" checked={minRating === r} onChange={() => push({ minRating: r })} className="accent-primary" />
+                {r ? <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-amber-400 text-amber-400" />{r}+ &amp; up</span> : "Any rating"}
+              </label>
+            ))}
+          </div>
         </div>
 
         {skillOptions.length > 0 && (
@@ -221,41 +193,14 @@ export function SkillListFilters({ categoryCounts, locations, skillOptions, chil
         <div className="flex items-center gap-2 flex-wrap mb-6">
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="lg:hidden flex items-center gap-1.5 px-3.5 py-2 rounded-xl ring-1 ring-border/60 bg-card text-xs font-medium text-muted-foreground hover:text-foreground shadow-sm"
+            className={cn(
+              "lg:hidden flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium shadow-sm transition-all",
+              hasFilters ? "ring-1 ring-primary/40 bg-primary/10 text-primary" : "ring-1 ring-border/60 bg-card text-muted-foreground hover:text-foreground"
+            )}
           >
             <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
+            {hasFilters && <span className="h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">•</span>}
           </button>
-
-          <FilterDropdown label="Format" active={!!format}>
-            <div className="space-y-1">
-              {FORMATS.map(f => (
-                <button key={f.value} onClick={() => push({ format: f.value })} className={cn("w-full text-left px-2 py-1.5 rounded-md text-xs font-medium", format === f.value ? "bg-primary/10 text-primary" : "hover:bg-muted")}>{f.label}</button>
-              ))}
-            </div>
-          </FilterDropdown>
-
-          <FilterDropdown label="Experience" active={!!minExp}>
-            <div className="space-y-1">
-              {EXPERIENCE_BANDS.map(b => (
-                <button key={b.value} onClick={() => push({ minExp: b.value })} className={cn("w-full text-left px-2 py-1.5 rounded-md text-xs font-medium", minExp === b.value ? "bg-primary/10 text-primary" : "hover:bg-muted")}>{b.label}</button>
-              ))}
-            </div>
-          </FilterDropdown>
-
-          <FilterDropdown label="Price" active={maxPrice !== "5000"}>
-            <p className="text-xs font-medium mb-2">Up to ₹{Number(maxPrice).toLocaleString()}/hr</p>
-            <input type="range" min={0} max={5000} step={100} value={maxPrice} onChange={e => push({ maxPrice: e.target.value })} className="w-full accent-primary" />
-          </FilterDropdown>
-
-          <FilterDropdown label="Rating" active={!!minRating}>
-            <div className="space-y-1">
-              {["4.5", "4", "3", ""].map(r => (
-                <button key={r} onClick={() => push({ minRating: r })} className={cn("w-full flex items-center gap-1.5 text-left px-2 py-1.5 rounded-md text-xs", minRating === r ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted")}>
-                  {r ? <><Star className="h-3 w-3 fill-amber-400 text-amber-400" />{r}+ &amp; up</> : "Any rating"}
-                </button>
-              ))}
-            </div>
-          </FilterDropdown>
 
           <FilterDropdown label="Sort by">
             <div className="space-y-1">

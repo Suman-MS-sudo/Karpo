@@ -241,10 +241,10 @@ export function ListingCard({
             </div>
           )}
 
-          <div className="mt-auto pt-2.5 sm:pt-3 border-t border-border flex items-center gap-2">
+          <div className="mt-auto pt-2.5 sm:pt-3 border-t border-border">
             {isOwn ? (
               /* ── Own listing footer ── */
-              <>
+              <div className="flex items-center gap-2">
                 <div className="h-7 w-7 shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                   <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">You</span>
                 </div>
@@ -258,42 +258,48 @@ export function ListingCard({
                 >
                   <Pencil className="h-3 w-3" /> Edit
                 </Link>
-              </>
+              </div>
             ) : (
-              /* ── Other seller footer ── */
-              <>
-                <ProfileLink userId={author.id} className="relative z-10 shrink-0">
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={author.avatarUrl ?? author.image ?? ""} alt={author.name ?? ""} />
-                    <AvatarFallback className="text-[10px] font-semibold">{getInitials(author.name)}</AvatarFallback>
-                  </Avatar>
-                </ProfileLink>
-                <div className="relative z-10 flex-1 min-w-0">
-                  <div className="flex items-center gap-1">
-                    <ProfileLink userId={author.id} className="text-xs font-medium truncate leading-none">{author.name ?? "Anonymous"}</ProfileLink>
-                    {author.isVerified && <VerifiedBadge size="sm" />}
-                    {isBoosted && <Crown className="h-3 w-3 text-amber-500 shrink-0" />}
+              /* ── Other seller footer — name gets its own line, with
+                  location/posted-time/views as a second row beneath it,
+                  instead of squeezing everything into two side-by-side
+                  columns that truncated the name early. ── */
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <ProfileLink userId={author.id} className="relative z-10 shrink-0">
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={author.avatarUrl ?? author.image ?? ""} alt={author.name ?? ""} />
+                      <AvatarFallback className="text-[10px] font-semibold">{getInitials(author.name)}</AvatarFallback>
+                    </Avatar>
+                  </ProfileLink>
+                  <div className="relative z-10 flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <ProfileLink userId={author.id} className="text-xs font-medium truncate leading-none">{author.name ?? "Anonymous"}</ProfileLink>
+                      {author.isVerified && <VerifiedBadge size="sm" />}
+                      {isBoosted && <Crown className="h-3 w-3 text-amber-500 shrink-0" />}
+                    </div>
+                    {(author.jobTitle || author.department) && (
+                      <p className="hidden sm:block text-[10px] text-muted-foreground truncate mt-0.5 leading-none">{author.jobTitle ?? author.department}</p>
+                    )}
                   </div>
-                  {(author.jobTitle || author.department) && (
-                    <p className="hidden sm:block text-[10px] text-muted-foreground truncate mt-0.5 leading-none">{author.jobTitle ?? author.department}</p>
-                  )}
                 </div>
-                <div className="text-right shrink-0 space-y-0.5">
+
+                <div className="flex items-center gap-2.5 pl-9 text-[10px] text-muted-foreground">
                   {city && (
-                    <p className="text-[10px] text-muted-foreground flex items-center justify-end gap-0.5 whitespace-nowrap">
-                      <MapPin className="h-2.5 w-2.5 shrink-0" /> <span className="truncate max-w-[70px]">{city}</span>
-                    </p>
+                    <span className="flex items-center gap-0.5 min-w-0">
+                      <MapPin className="h-2.5 w-2.5 shrink-0" /> <span className="truncate">{city}</span>
+                    </span>
                   )}
-                  <p className="text-[10px] text-muted-foreground flex items-center justify-end gap-0.5 whitespace-nowrap">
+                  <span className="flex items-center gap-0.5 shrink-0">
                     <Clock className="h-2.5 w-2.5 shrink-0" /> {formatRelativeTime(createdAt)}
-                  </p>
+                  </span>
                   {viewCount !== undefined && viewCount > 0 && (
-                    <p className="text-[10px] text-muted-foreground flex items-center justify-end gap-0.5">
+                    <span className="flex items-center gap-0.5 shrink-0">
                       <Eye className="h-2.5 w-2.5 shrink-0" /> {viewCount}
-                    </p>
+                    </span>
                   )}
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

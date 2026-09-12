@@ -199,7 +199,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         <p className="text-sm text-muted-foreground mt-1">{total.toLocaleString()} professionals available</p>
       </div>
 
-      <SkillListFilters categoryCounts={categoryCounts} locations={locations} skillOptions={SKILL_OPTIONS}>
+      <SkillListFilters locations={locations} skillOptions={SKILL_OPTIONS}>
         {aiMatch && (
           <div className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent ring-1 ring-primary/20 px-5 py-4 mb-6">
             <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">

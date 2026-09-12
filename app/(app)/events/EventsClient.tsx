@@ -8,7 +8,7 @@ import {
   Search, Plus, X, LayoutGrid, List, Package,
   Calendar, MapPin, Users, Clock, Bookmark, BookmarkCheck,
   TrendingUp, Sparkles, Globe, Video, ChevronDown,
-  ArrowUpDown, Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation, Flag,
+  Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation, Flag,
   Mountain, Trophy, Handshake, Palette, MoreHorizontal,
   Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
   Clapperboard, Dumbbell, Plane,
@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProfileLink } from "@/components/shared/ProfileLink"
 import { cn } from "@/lib/utils"
+import { SortDropdown } from "@/components/ui/sort-dropdown"
 
 // A bold, rounded display font for headings/labels — gives the Events section
 // a distinct, friendly identity (Zepto-style) separate from the app's default UI font.
@@ -173,7 +174,6 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
   // adding a second, redundant heart icon next to it.
   const [bookmarks,   setBookmarks]   = useState<Set<string>>(() => new Set(wishlistedIds ?? []))
   const [showFilters, setShowFilters] = useState(false)
-  const [sortOpen,    setSortOpen]    = useState(false)
   // Default to the user's own city (set via the top-nav location switcher)
   // so switching location scopes Events too, unless they pick a different one.
   const [cityFilter,      setCityFilter]      = useState<string>(() => initialCity && CITIES.some(c => c.name === initialCity) ? initialCity : "All")
@@ -351,7 +351,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
     <div className="min-h-full bg-background">
 
       {/* ── Hero header ──────────────────────────────────────────────────────── */}
-      <div ref={heroRef} className="relative text-white overflow-hidden" style={{ minHeight: 320 }}>
+      <div ref={heroRef} className="relative text-white overflow-hidden min-h-[220px] sm:min-h-[320px]">
         {/* Background image — professional event/conference crowd */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -367,37 +367,37 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/30 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-5 sm:pt-10 sm:pb-8">
 
           {/* Top row */}
-          <div className="flex items-start justify-between gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase text-white border border-white/30 rounded-full px-3 py-1 backdrop-blur-sm bg-gradient-to-r from-fuchsia-500/30 via-violet-500/30 to-cyan-400/30 shadow-[0_0_20px_rgba(217,70,239,0.35)]">
+          <div className="flex items-start justify-between gap-3 sm:gap-4 mb-5 sm:mb-8 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-white border border-white/30 rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 backdrop-blur-sm bg-gradient-to-r from-fuchsia-500/30 via-violet-500/30 to-cyan-400/30 shadow-[0_0_20px_rgba(217,70,239,0.35)]">
                   <Sparkles className="h-3 w-3 text-fuchsia-300" /> Corporate Events
                 </span>
               </div>
-              <h1 className={cn("font-outfit", "text-4xl sm:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
+              <h1 className={cn("font-outfit", "text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight drop-shadow-lg")}>
                 <span className="bg-gradient-to-r from-white via-fuchsia-200 to-cyan-200 bg-clip-text text-transparent">Events</span>
                 {" "}<span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">&amp; Communities</span>
               </h1>
-              <p className="text-white/60 mt-2 text-sm">Treks, sports, networking &amp; hobby clubs — only members with verified corporate emails.</p>
+              <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Treks, sports, networking &amp; hobby clubs — only members with verified corporate emails.</p>
             </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="flex flex-row flex-wrap sm:flex-col items-center sm:items-end gap-1.5 sm:gap-2 shrink-0">
               {!isPremium && (
-                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 text-xs backdrop-blur-sm">
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs backdrop-blur-sm whitespace-nowrap">
                   <span className="text-amber-300 font-medium">{myEventsCount}/{eventsLimit} events</span>
                 </div>
               )}
-              <Button asChild variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full">
-                <Link href="/my-events"><Package className="h-4 w-4 mr-1.5" /> My Events</Link>
+              <Button asChild size="sm" variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full sm:h-10 sm:px-4 sm:text-sm">
+                <Link href="/my-events"><Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5" /> <span className="hidden sm:inline">My Events</span></Link>
               </Button>
-              <Button asChild className="bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 text-white hover:brightness-110 font-bold shadow-[0_4px_20px_rgba(217,70,239,0.4)] backdrop-blur-sm rounded-full border-0">
-                <Link href="/events/new"><Plus className="h-4 w-4 mr-1.5" /> Create Event</Link>
+              <Button asChild size="sm" className="bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400 text-white hover:brightness-110 font-bold shadow-[0_4px_20px_rgba(217,70,239,0.4)] backdrop-blur-sm rounded-full border-0 sm:h-10 sm:px-5 sm:text-sm">
+                <Link href="/events/new"><Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5" /> <span className="hidden sm:inline">Create Event</span><span className="sm:hidden">Create</span></Link>
               </Button>
               <Link
                 href="/report"
-                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 transition-colors mt-0.5"
+                className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 hover:text-white/80 transition-colors mt-0.5"
               >
                 <Flag className="h-3 w-3" /> Notify Concern
               </Link>
@@ -405,34 +405,34 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
           </div>
 
           {/* Stats */}
-          <div className="flex items-center gap-8 mb-8">
+          <div className="flex items-center gap-4 sm:gap-8 mb-5 sm:mb-8 flex-wrap">
             <div>
-              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-fuchsia-300 to-pink-200 bg-clip-text text-transparent")}>{totalEvents}</p>
-              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Upcoming</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold tabular-nums bg-gradient-to-r from-fuchsia-300 to-pink-200 bg-clip-text text-transparent")}>{totalEvents}</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Upcoming</p>
             </div>
-            <div className="w-px h-10 bg-white/15" />
+            <div className="w-px h-7 sm:h-10 bg-white/15" />
             <div>
-              <p className={cn("font-outfit", "text-3xl font-extrabold tabular-nums bg-gradient-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent")}>{totalRsvps.toLocaleString()}</p>
-              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Total RSVPs</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold tabular-nums bg-gradient-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent")}>{totalRsvps.toLocaleString()}</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Total RSVPs</p>
             </div>
-            <div className="w-px h-10 bg-white/15" />
+            <div className="w-px h-7 sm:h-10 bg-white/15" />
             <div>
-              <p className={cn("font-outfit", "text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
-              <p className="text-xs text-white/50 mt-0.5 uppercase tracking-wide">Verified</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Verified</p>
             </div>
           </div>
 
           {/* Search + Location row */}
-          <div className="flex gap-2 items-center pb-2">
+          <div className="flex gap-2 items-center pb-1 sm:pb-2">
             {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 pointer-events-none" />
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50 pointer-events-none" />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search events, venues, tags…"
-                className="w-full h-12 pl-11 pr-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400/50 focus:bg-white/15 transition-all"
+                className="w-full h-10 sm:h-12 pl-10 sm:pl-11 pr-10 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/40 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400/50 focus:bg-white/15 transition-all"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
@@ -447,14 +447,14 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               disabled={locationLoading}
               title={locationFilter ? `Filtering: ${locationFilter}` : "Find events near me"}
               className={cn(
-                "h-12 px-4 rounded-full border text-sm font-medium flex items-center gap-2 transition-all whitespace-nowrap backdrop-blur-md",
+                "h-10 sm:h-12 px-2.5 sm:px-4 rounded-full border text-xs sm:text-sm font-medium flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap backdrop-blur-md shrink-0",
                 locationFilter
                   ? "bg-blue-500/30 border-blue-400/50 text-blue-200 hover:bg-blue-500/40"
                   : "bg-white/10 border-white/20 text-white/80 hover:bg-white/20"
               )}
             >
-              <Navigation className={cn("h-4 w-4", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
-              {locationLoading ? "Locating…" : locationFilter ? locationFilter : "Near me"}
+              <Navigation className={cn("h-4 w-4 shrink-0", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
+              <span className="hidden sm:inline">{locationLoading ? "Locating…" : locationFilter ? locationFilter : "Near me"}</span>
               {locationFilter && (
                 <button onClick={e => { e.stopPropagation(); setLocationFilter(null) }} className="ml-1 hover:text-white">
                   <X className="h-3 w-3" />
@@ -539,116 +539,29 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
         {/* ── Filter bar ─────────────────────────────────────────────────────── */}
         <div className="border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+          {/* Compact top row — Filters toggle instead of every control shown
+              inline at once (that wrapped into several rows of pills on
+              mobile and read as clutter rather than an obvious filter bar). */}
           <div className="flex items-center gap-2 flex-wrap">
-
-            {/* City picker */}
-            <div className="relative">
-              <button
-                onClick={() => setCityOpen(o => !o)}
-                className="flex items-center gap-1.5 h-8 pl-2.5 pr-3 rounded-lg border border-border hover:border-foreground/30 bg-background text-sm font-medium transition-all group"
-              >
-                <MapPin className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                <span className="text-foreground">{cityFilter}</span>
-                <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform ml-0.5", cityOpen && "rotate-180")} />
-              </button>
-
-              {cityOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setCityOpen(false)} />
-                  <div className="absolute left-0 top-full mt-1.5 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden w-64">
-                    <div className="px-3 pt-3 pb-2 border-b border-border">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Select City</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-0.5 p-2 max-h-64 overflow-y-auto">
-                      <button
-                        onClick={() => { setCityFilter("All"); setCityOpen(false) }}
-                        className={cn(
-                          "flex flex-col items-start px-3 py-2 rounded-lg text-left transition-all col-span-2",
-                          cityFilter === "All"
-                            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
-                            : "hover:bg-muted text-foreground"
-                        )}
-                      >
-                        <span className="text-sm font-medium leading-tight">All Cities</span>
-                      </button>
-                      {CITIES.map(city => (
-                        <button
-                          key={city.name}
-                          onClick={() => { setCityFilter(city.name); setCityOpen(false) }}
-                          className={cn(
-                            "flex flex-col items-start px-3 py-2 rounded-lg text-left transition-all",
-                            cityFilter === city.name
-                              ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
-                              : "hover:bg-muted text-foreground"
-                          )}
-                        >
-                          <span className="text-sm font-medium leading-tight">{city.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{city.state}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
+            <button
+              onClick={() => setShowFilters(o => !o)}
+              className={cn(
+                "flex items-center gap-1.5 h-8 px-3 rounded-lg border text-sm font-medium transition-all",
+                activeFilters.length > 0 || showFilters
+                  ? "border-fuchsia-400/60 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-700 dark:text-fuchsia-300"
+                  : "border-border hover:border-foreground/30 text-foreground"
               )}
-            </div>
+            >
+              <Filter className="h-3.5 w-3.5" /> Filters
+              {activeFilters.length > 0 && (
+                <span className="h-4 min-w-4 px-1 rounded-full bg-fuchsia-500 text-white text-[9px] font-bold flex items-center justify-center">
+                  {activeFilters.length}
+                </span>
+              )}
+              <ChevronDown className={cn("h-3 w-3 transition-transform", showFilters && "rotate-180")} />
+            </button>
 
-            <div className="w-px h-5 bg-border" />
-
-            {/* Date quick filters */}
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-              {DATE_FILTERS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => { setDateFilter(f.value); setCustomDate("") }}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all",
-                    !customDate && dateFilter === f.value
-                      ? "bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Pick a specific date */}
-            <div className="relative">
-              <input
-                type="date"
-                value={customDate}
-                onChange={(e) => setCustomDate(e.target.value)}
-                className={cn(
-                  "h-8 pl-2.5 pr-2 rounded-lg border text-xs font-medium bg-background transition-all",
-                  customDate ? "border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300" : "border-border text-muted-foreground hover:border-foreground/30"
-                )}
-              />
-            </div>
-
-            {/* Divider */}
-            <div className="h-6 w-px bg-border hidden sm:block" />
-
-            {/* Price filter */}
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-              {[["all","All"],["free","Free"],["paid","Paid"]].map(([v, l]) => (
-                <button key={v} onClick={() => setPriceFilter(v)}
-                  className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
-                    priceFilter === v ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}>{l}</button>
-              ))}
-            </div>
-
-            {/* Format filter */}
-            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-              {[["all","All formats"],["inperson","In-person"],["online","Online"],["hybrid","Hybrid"]].map(([v, l]) => (
-                <button key={v} onClick={() => setFormatFilter(v)}
-                  className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap",
-                    formatFilter === v ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
-                  )}>{l}</button>
-              ))}
-            </div>
-
-            {/* Location / Near me filter */}
+            {/* Near me — kept as a standalone quick action, not tucked in the panel */}
             <button
               onClick={locationFilter ? () => setLocationFilter(null) : requestLocation}
               disabled={locationLoading}
@@ -660,7 +573,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               )}
             >
               <Navigation className={cn("h-3.5 w-3.5", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
-              {locationLoading ? "Locating…" : locationFilter ? `Near ${locationFilter}` : "Near me"}
+              <span className="hidden sm:inline">{locationLoading ? "Locating…" : locationFilter ? `Near ${locationFilter}` : "Near me"}</span>
               {locationFilter && <X className="h-3 w-3 ml-0.5" />}
             </button>
 
@@ -672,31 +585,8 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               {filtered.length} event{filtered.length !== 1 ? "s" : ""}
             </span>
 
-            {/* Sort dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setSortOpen(o => !o)}
-                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg border border-border hover:border-foreground/20 transition-all"
-              >
-                <ArrowUpDown className="h-3.5 w-3.5" />
-                {SORT_OPTIONS.find(s => s.value === sort)?.label}
-                <ChevronDown className="h-3 w-3" />
-              </button>
-              {sortOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setSortOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-20 bg-card border border-border rounded-xl shadow-lg overflow-hidden min-w-[180px]">
-                    {SORT_OPTIONS.map(opt => (
-                      <button key={opt.value} onClick={() => { setSort(opt.value); setSortOpen(false) }}
-                        className={cn("w-full text-left px-3.5 py-2.5 text-sm transition-colors hover:bg-muted",
-                          sort === opt.value ? "text-primary-600 font-medium bg-primary-50 dark:bg-primary-950/30" : "text-foreground"
-                        )}
-                      >{opt.label}</button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+            {/* Sort — shared SortDropdown, same component used app-wide */}
+            <SortDropdown options={SORT_OPTIONS} value={sort} onChange={setSort} />
 
             {/* View toggle */}
             <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5">
@@ -708,6 +598,119 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               </button>
             </div>
           </div>
+
+          {/* Filter panel — City, Date, Price, Format — collapsed by default */}
+          {showFilters && (
+            <div className="mt-3 pt-3 border-t border-border space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* City picker */}
+                <div className="relative">
+                  <button
+                    onClick={() => setCityOpen(o => !o)}
+                    className="flex items-center gap-1.5 h-8 pl-2.5 pr-3 rounded-lg border border-border hover:border-foreground/30 bg-background text-sm font-medium transition-all group"
+                  >
+                    <MapPin className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                    <span className="text-foreground">{cityFilter}</span>
+                    <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform ml-0.5", cityOpen && "rotate-180")} />
+                  </button>
+
+                  {cityOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setCityOpen(false)} />
+                      <div className="absolute left-0 top-full mt-1.5 z-50 bg-card border border-border rounded-xl shadow-xl overflow-hidden w-64">
+                        <div className="px-3 pt-3 pb-2 border-b border-border">
+                          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Select City</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-0.5 p-2 max-h-64 overflow-y-auto">
+                          <button
+                            onClick={() => { setCityFilter("All"); setCityOpen(false) }}
+                            className={cn(
+                              "flex flex-col items-start px-3 py-2 rounded-lg text-left transition-all col-span-2",
+                              cityFilter === "All"
+                                ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                                : "hover:bg-muted text-foreground"
+                            )}
+                          >
+                            <span className="text-sm font-medium leading-tight">All Cities</span>
+                          </button>
+                          {CITIES.map(city => (
+                            <button
+                              key={city.name}
+                              onClick={() => { setCityFilter(city.name); setCityOpen(false) }}
+                              className={cn(
+                                "flex flex-col items-start px-3 py-2 rounded-lg text-left transition-all",
+                                cityFilter === city.name
+                                  ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"
+                                  : "hover:bg-muted text-foreground"
+                              )}
+                            >
+                              <span className="text-sm font-medium leading-tight">{city.name}</span>
+                              <span className="text-[10px] text-muted-foreground">{city.state}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="w-px h-5 bg-border hidden sm:block" />
+
+                {/* Date quick filters */}
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5 flex-wrap">
+                  {DATE_FILTERS.map(f => (
+                    <button
+                      key={f.value}
+                      onClick={() => { setDateFilter(f.value); setCustomDate("") }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all",
+                        !customDate && dateFilter === f.value
+                          ? "bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Pick a specific date */}
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                    className={cn(
+                      "h-8 pl-2.5 pr-2 rounded-lg border text-xs font-medium bg-background transition-all",
+                      customDate ? "border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300" : "border-border text-muted-foreground hover:border-foreground/30"
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Price filter */}
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                  {[["all","All"],["free","Free"],["paid","Paid"]].map(([v, l]) => (
+                    <button key={v} onClick={() => setPriceFilter(v)}
+                      className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
+                        priceFilter === v ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      )}>{l}</button>
+                  ))}
+                </div>
+
+                {/* Format filter */}
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5 flex-wrap">
+                  {[["all","All formats"],["inperson","In-person"],["online","Online"],["hybrid","Hybrid"]].map(([v, l]) => (
+                    <button key={v} onClick={() => setFormatFilter(v)}
+                      className={cn("px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap",
+                        formatFilter === v ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      )}>{l}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Active filter chips */}
           {activeFilters.length > 0 && (

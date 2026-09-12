@@ -252,8 +252,8 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {!isPremium && myId && (
-        <div className="flex justify-end mb-4">
-          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
+        <div className="flex justify-end mb-3 sm:mb-4">
+          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs">
             <span className="text-amber-700 dark:text-amber-300 font-medium">{myReferralsCount}/{FREE_LIMITS.referrals} posted</span>
           </div>
         </div>

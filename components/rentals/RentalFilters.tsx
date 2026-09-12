@@ -105,7 +105,7 @@ export function RentalFilters({ current }: Props) {
   return (
     <div className="space-y-3">
       {/* Sort + filters toggle row */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {/* Sort */}
         <SortDropdown
           options={SORT_OPTIONS}

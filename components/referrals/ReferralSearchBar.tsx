@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { SlidersHorizontal, ChevronDown, ChevronUp, X, Building2, MapPin } from "lucide-react"
+import { SlidersHorizontal, ChevronDown, ChevronUp, X, Building2, MapPin, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TagAutocomplete } from "@/components/ui/tag-autocomplete"
@@ -91,30 +91,31 @@ export function ReferralSearchBar() {
   const hasAny = !!query.trim() || !!company.trim() || activeFilterCount > 0
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-4 mb-6 space-y-3">
+    <div className="bg-card border border-border rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 space-y-3">
       {/* Company + filters row */}
-      <div className="flex gap-2">
-        <div className="relative flex-1 sm:flex-none sm:w-56 shrink-0">
-          <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
+      <div className="flex gap-1.5 sm:gap-2">
+        <div className="relative flex-1 min-w-0 sm:flex-none sm:w-56 shrink-0">
+          <Building2 className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-500" />
           <Input
             value={company}
             onChange={(e) => setCompany(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             placeholder="Company…"
-            className="pl-10 h-10 rounded-full border-2 border-violet-500 text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
+            className="pl-9 sm:pl-10 h-9 sm:h-10 rounded-full border-2 border-violet-500 text-sm sm:text-[15px] font-medium text-muted-foreground focus-visible:ring-violet-400/50"
           />
         </div>
         <Button
           onClick={() => setOpen((o) => !o)}
+          size="sm"
           className={cn(
-            "gap-2 shrink-0 rounded-full font-medium",
+            "gap-1.5 sm:gap-2 shrink-0 rounded-full font-medium px-2.5 sm:px-4 sm:h-10",
             open
               ? "bg-gradient-to-r from-violet-500 to-fuchsia-500 border-transparent text-white hover:from-violet-600 hover:to-fuchsia-600"
               : "bg-background border-2 border-violet-500 text-foreground hover:bg-violet-50 dark:hover:bg-violet-950/30"
           )}
         >
           <SlidersHorizontal className={cn("h-4 w-4", !open && "text-violet-500")} />
-          Filters
+          <span className="hidden sm:inline">Filters</span>
           {activeFilterCount > 0 && (
             <span className="h-5 w-5 rounded-full bg-violet-600 text-white text-[10px] font-bold flex items-center justify-center">
               {activeFilterCount}
@@ -122,7 +123,7 @@ export function ReferralSearchBar() {
           )}
           {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
-        <Button onClick={handleSearch} className="shrink-0 rounded-full">Search</Button>
+        <Button onClick={handleSearch} size="sm" className="shrink-0 rounded-full px-3 sm:px-4 sm:h-10">Search</Button>
       </div>
 
       {/* Filter panel */}
@@ -141,14 +142,18 @@ export function ReferralSearchBar() {
             />
           </div>
 
-          {/* Department */}
+          {/* Department — dropdown with search (same pattern as Location/City)
+              instead of a flat chip row, which got cramped/wrapped badly on
+              narrow screens with this many departments. */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Department</p>
-            <div className="flex flex-wrap gap-1.5">
-              {DEPARTMENTS.map((d) => (
-                <Chip key={d} label={d} active={depts.includes(d)} onClick={() => toggle(depts, setDepts, d)} />
-              ))}
-            </div>
+            <TagAutocomplete
+              options={DEPARTMENTS}
+              value={depts}
+              onChange={setDepts}
+              placeholder="Search a department…"
+              icon={<Briefcase className="h-3.5 w-3.5 text-violet-500 shrink-0" />}
+            />
           </div>
 
           {/* Work mode + Job type */}
