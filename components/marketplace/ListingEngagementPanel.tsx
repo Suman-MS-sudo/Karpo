@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
 import {
   Star, Calendar, ChevronDown, ChevronUp, Loader2,
   CheckCircle2, XCircle, User, Clock, Package, Handshake, ThumbsDown, MessageSquare,
@@ -10,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
+import { useChatContext } from "@/components/chat/ChatContext"
 
 interface Buyer {
   id:         string
@@ -36,6 +36,14 @@ interface Engagement {
 interface Props {
   listingId:    string
   initialCount: number
+  /** Auto-expand so the seller sees buyer details without an extra click —
+      used whenever the listing has pending engagement, not only when
+      arriving via the notification link. */
+  autoOpen?:    boolean
+  /** Also scroll the panel into view — used when arriving via the
+      "someone showed interest" notification link, since the seller came
+      here specifically to see who engaged. */
+  autoScroll?:  boolean
 }
 
 const TYPE_META = {
@@ -64,6 +72,7 @@ function EngagementCard({ engagement, listingId, onRefresh }: {
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [flash, setFlash]     = useState<string | null>(null)
+  const { openChat }          = useChatContext()
   const meta      = TYPE_META[engagement.type]
   const Icon      = meta.icon
   const buyer     = engagement.user
@@ -129,11 +138,19 @@ function EngagementCard({ engagement, listingId, onRefresh }: {
       {/* Message the buyer — always available, seller-initiated. We no
           longer auto-message on Accept/Confirm (that used to hand over the
           seller's phone number automatically); this is the deliberate way
-          to reach out instead. */}
-      <Button size="sm" variant="outline" className="w-full h-8 text-xs gap-1.5" asChild>
-        <Link href={`/messages/${buyer.id}?context=${listingId}&type=listing`}>
-          <MessageSquare className="h-3.5 w-3.5" /> Message Buyer
-        </Link>
+          to reach out instead. openChat opens a small floating window on
+          desktop instead of navigating away to the full /messages page. */}
+      <Button
+        size="sm" variant="outline" className="w-full h-8 text-xs gap-1.5"
+        onClick={() => openChat({
+          id:         buyer.id,
+          name:       buyer.name ?? "Anonymous",
+          avatarUrl:  buyer.avatarUrl ?? buyer.image ?? undefined,
+          isVerified: buyer.isVerified,
+          jobTitle:   buyer.jobTitle ?? undefined,
+        })}
+      >
+        <MessageSquare className="h-3.5 w-3.5" /> Message Buyer
       </Button>
 
       {/* Visit details */}
@@ -247,11 +264,12 @@ function Section({ title, icon: Icon, iconClass, count, children }: {
   )
 }
 
-export function ListingEngagementPanel({ listingId, initialCount }: Props) {
+export function ListingEngagementPanel({ listingId, initialCount, autoOpen, autoScroll }: Props) {
   const [open, setOpen]                     = useState(false)
   const [engagements, setEngagements]       = useState<Engagement[]>([])
   const [loadingPanel, setLoadingPanel]     = useState(false)
   const [count, setCount]                   = useState(initialCount)
+  const panelRef                            = useRef<HTMLDivElement>(null)
 
   async function fetchEngagements() {
     setLoadingPanel(true)
@@ -271,12 +289,19 @@ export function ListingEngagementPanel({ listingId, initialCount }: Props) {
     setOpen(true)
   }
 
+  useEffect(() => {
+    if (!autoOpen) return
+    loadEngagements()
+    if (autoScroll) panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpen, autoScroll])
+
   const interests    = engagements.filter((e) => e.type === "INTEREST")
   const visits       = engagements.filter((e) => e.type === "VISIT")
   const pendingCount = engagements.filter((e) => ["PENDING", "CONFIRMED", "DONE"].includes(e.status)).length
 
   return (
-    <div className="pt-4 border-t border-border">
+    <div ref={panelRef} className="pt-4 border-t border-border">
       <button
         onClick={() => (open ? setOpen(false) : loadEngagements())}
         className="flex items-center justify-between w-full text-sm font-semibold hover:text-foreground transition-colors">

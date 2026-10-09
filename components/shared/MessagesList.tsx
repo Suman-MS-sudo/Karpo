@@ -1,11 +1,12 @@
 "use client"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Search, MessageSquare } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
 import { ProfileLink } from "@/components/shared/ProfileLink"
 import { formatRelativeTime, getInitials, cn } from "@/lib/utils"
+import { useChatContext } from "@/components/chat/ChatContext"
 
 export interface ConversationItem {
   partnerId: string
@@ -22,8 +23,63 @@ export interface ConversationItem {
   isMine: boolean
 }
 
-export function MessagesList({ conversations }: { conversations: ConversationItem[] }) {
-  const [query, setQuery] = useState("")
+// Shape returned by GET /api/messages/conversations — used to refresh the
+// list live, same endpoint the MessageIcon dropdown already relies on.
+interface ApiConversation {
+  partnerId: string
+  partnerName: string
+  partnerAvatar: string
+  partnerJobTitle: string
+  isVerified: boolean
+  lastMessage: string
+  lastAt: string
+  unread: boolean
+}
+
+function fromApi(c: ApiConversation): ConversationItem {
+  return {
+    partnerId: c.partnerId,
+    partner: {
+      name:       c.partnerName,
+      avatarUrl:  c.partnerAvatar,
+      image:      null,
+      isVerified: c.isVerified,
+      jobTitle:   c.partnerJobTitle || null,
+    },
+    // The API already prefixes own messages with "You: ".
+    lastMessage: c.lastMessage,
+    lastAt:      c.lastAt,
+    isUnread:    c.unread,
+    isMine:      false,
+  }
+}
+
+export function MessagesList({ conversations: initialConversations }: { conversations: ConversationItem[] }) {
+  const [query, setQuery]               = useState("")
+  const [conversations, setConversations] = useState(initialConversations)
+  const { messageTick } = useChatContext()
+
+  // Refetch the instant a new message arrives over SSE, so this list stays
+  // live instead of only reflecting whatever was fetched on page load.
+  useEffect(() => {
+    fetch("/api/messages/conversations")
+      .then((r) => r.json())
+      .then((d) => setConversations((d.conversations ?? []).map(fromApi)))
+      .catch(() => {})
+  }, [messageTick])
+
+  // Opening a conversation marks it read on the server, but that only takes
+  // effect once the thread page's GET request resolves — leaving the
+  // highlight visible for a moment after tapping in. Clear it immediately
+  // instead of waiting. Desktop opens a floating chat window rather than
+  // navigating away from this list, so it's unaffected either way; this
+  // just makes the mobile full-page list feel instant.
+  const markReadNow = (partnerId: string) => {
+    if (typeof window !== "undefined" && !window.matchMedia("(max-width: 1023px)").matches) return
+    setConversations((prev) =>
+      prev.map((c) => (c.partnerId === partnerId ? { ...c, isUnread: false } : c))
+    )
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -65,6 +121,7 @@ export function MessagesList({ conversations }: { conversations: ConversationIte
             <Link
               key={c.partnerId}
               href={`/messages/${c.partnerId}`}
+              onClick={() => markReadNow(c.partnerId)}
               className={cn(
                 "flex items-center gap-3.5 p-4 hover:bg-muted/60 transition-colors relative",
                 c.isUnread && "bg-primary-50/40 dark:bg-primary-900/10"

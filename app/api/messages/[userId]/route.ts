@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
 import { emitNewMessage } from "@/lib/message-events"
 import { findContactInfo, contactInfoError } from "@/lib/contact-filter"
-import { pushNotification } from "@/lib/notify"
 
 export async function GET(_req: Request, { params }: { params: { userId: string } }) {
   const { session, error } = await requireVerified()
@@ -77,17 +76,9 @@ export async function POST(req: Request, { params }: { params: { userId: string 
     isRead:     message.isRead,
   })
 
-  // Create notification, then push it live over SSE so the bell/badge
-  // updates instantly instead of waiting for the 60s poll fallback.
-  prisma.notification.create({
-    data: {
-      userId: params.userId,
-      type:   "NEW_MESSAGE",
-      title:  "New message",
-      body:   `${session.user.name ?? "Someone"} sent you a message`,
-      link:   `/messages/${session.user.id}`,
-    },
-  }).then(pushNotification).catch(() => {})
+  // No bell notification for new messages — the Messages icon's own unread
+  // badge/dropdown already covers this, so a bell notification would just
+  // be a duplicate alert for the same thing.
 
   return NextResponse.json(message, { status: 201 })
 }

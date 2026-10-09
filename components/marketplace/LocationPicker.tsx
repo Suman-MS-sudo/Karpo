@@ -7,14 +7,16 @@ export interface PickedLocation {
   lat: number
   lng: number
   area?: string
+  city?: string
 }
 
 interface Props {
   value: PickedLocation | null
   onChange: (loc: PickedLocation | null) => void
+  onCityChange?: (city: string) => void
 }
 
-export function LocationPicker({ value, onChange }: Props) {
+export function LocationPicker({ value, onChange, onCityChange }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef        = useRef<any>(null)
@@ -22,6 +24,7 @@ export function LocationPicker({ value, onChange }: Props) {
 
   const [locating,  setLocating]  = useState(false)
   const [area,      setArea]      = useState(value?.area ?? "")
+  const [city,      setCity]      = useState(value?.city ?? "")
   const [center,    setCenter]    = useState<{ lat: number; lng: number } | null>(
     value ? { lat: value.lat, lng: value.lng } : null
   )
@@ -45,8 +48,11 @@ export function LocationPicker({ value, onChange }: Props) {
         a.suburb ?? a.neighbourhood ?? a.city_district ??
         a.town   ?? a.city          ?? data.display_name?.split(",")[0] ?? ""
       setArea(name)
+      const cityName = a.city ?? a.town ?? a.municipality ?? a.village ?? a.county ?? a.state_district ?? ""
+      setCity(cityName)
+      if (cityName) onCityChange?.(cityName)
     } catch { /* ignore */ }
-  }, [])
+  }, [onCityChange])
 
   // ─── Fly map to coords ───────────────────────────────────────────────────
   const flyTo = useCallback((lat: number, lng: number, zoom = 16) => {
@@ -85,9 +91,9 @@ export function LocationPicker({ value, onChange }: Props) {
   // ─── Confirm selection ───────────────────────────────────────────────────
   const handleConfirm = useCallback(() => {
     if (!center) return
-    onChange({ ...center, area })
+    onChange({ ...center, area, city })
     setConfirmed(true)
-  }, [center, area, onChange])
+  }, [center, area, city, onChange])
 
   // ─── Init Leaflet once ───────────────────────────────────────────────────
   useEffect(() => {

@@ -35,17 +35,19 @@ export function CityAutocomplete({
     ? CITIES.slice(0, 50)
     : CITIES.filter((c) => c.toLowerCase().includes(query.toLowerCase())).slice(0, 50)
 
-  // Close on outside click — keep whatever the user typed (custom city names
-  // that aren't in the predefined list are still valid filter/search values).
+  // Close on outside click — revert to the last confirmed value if the user
+  // leaves behind free text that doesn't match a city in the list, since only
+  // dropdown selections are allowed.
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false)
+        setQuery(value)
       }
     }
     document.addEventListener("mousedown", onMouseDown)
     return () => document.removeEventListener("mousedown", onMouseDown)
-  }, [])
+  }, [value])
 
   // Scroll highlighted item into view
   useEffect(() => {
@@ -77,7 +79,7 @@ export function CityAutocomplete({
       e.preventDefault()
       if (highlighted >= 0 && filtered[highlighted]) {
         select(filtered[highlighted])
-      } else if (filtered.length > 0) {
+      } else if (filtered.length === 1) {
         select(filtered[0])
       }
     } else if (e.key === "Escape") {
@@ -116,11 +118,9 @@ export function CityAutocomplete({
           placeholder={placeholder}
           onFocus={() => setOpen(true)}
           onChange={(e) => {
-            const v = e.target.value
-            setQuery(v)
-            // Propagate immediately so custom city names (not in the predefined
-            // list) are captured too, not just ones picked from the dropdown.
-            onChange(v)
+            // Typing only filters the dropdown — the value is committed only
+            // via select() so the field can hold nothing but a listed city.
+            setQuery(e.target.value)
             setOpen(true)
             setHighlighted(-1)
           }}

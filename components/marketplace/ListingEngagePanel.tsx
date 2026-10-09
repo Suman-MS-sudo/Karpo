@@ -95,14 +95,73 @@ export function ListingEngagePanel({ listingId, myEngagement, sellerName, isNego
       })
       const data = await res.json()
       if (!res.ok) {
-        if (data.existing) { router.refresh(); return }
+        if (data.existing) { setMode("options"); router.refresh(); return }
         setError(data.error ?? "Something went wrong")
         return
       }
+      // Reset out of the visit form so the refreshed myEngagement prop (now
+      // reflecting the just-submitted request) renders the status view
+      // instead of leaving the form stuck open — mode is local client state
+      // that router.refresh() alone doesn't touch.
+      setMode("options")
       router.refresh()
     } finally {
       setLoading(false)
     }
+  }
+
+  // ── Visit form — checked before the "already engaged" branch below, since
+  // upgrading an existing INTEREST engagement to a VISIT request also goes
+  // through this form (same POST call); otherwise myEngagement being set
+  // would always short-circuit past mode === "visit" and the "Schedule a
+  // Site Visit" button would appear to do nothing. ───────────────────────────
+  if (mode === "visit") {
+    const minDate = new Date(); minDate.setDate(minDate.getDate() + 1)
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-sm">Request a Site Visit</p>
+          <button onClick={() => setMode("options")} className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Cancel</button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">Preferred date</label>
+            <input
+              type="date"
+              value={visitDate}
+              min={minDate.toISOString().split("T")[0]}
+              onChange={(e) => setVisitDate(e.target.value)}
+              className="w-full text-sm px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">Preferred time</label>
+            <div className="grid grid-cols-3 gap-2">
+              {TIME_SLOTS.map((slot) => (
+                <button key={slot}
+                  onClick={() => setVisitTime(slot)}
+                  className={`text-xs py-2 rounded-lg border font-medium transition-all ${
+                    visitTime === slot
+                      ? "border-primary-600 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-400"
+                      : "border-border hover:border-border/70 text-muted-foreground"
+                  }`}>
+                  {slot.charAt(0) + slot.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {error && <p className="text-xs text-red-500">{error}</p>}
+
+        <Button className="w-full gap-2" disabled={!visitDate || loading}
+          onClick={() => post("VISIT", { visitDate, visitTime })}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+          Send Visit Request
+        </Button>
+      </div>
+    )
   }
 
   // ── Already engaged ────────────────────────────────────────────────────────
@@ -200,6 +259,13 @@ export function ListingEngagePanel({ listingId, myEngagement, sellerName, isNego
           </p>
         )}
 
+        {isDeclined && myEngagement.type === "VISIT" && (
+          <Button className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+            onClick={() => setMode("visit")}>
+            <Calendar className="h-4 w-4" /> Reschedule Visit
+          </Button>
+        )}
+
         {isDeclined && (
           <Button variant="outline" className="w-full gap-2" asChild>
             <a href="/messages">
@@ -207,56 +273,6 @@ export function ListingEngagePanel({ listingId, myEngagement, sellerName, isNego
             </a>
           </Button>
         )}
-      </div>
-    )
-  }
-
-  // ── Visit form ────────────────────────────────────────────────────────────
-  if (mode === "visit") {
-    const minDate = new Date(); minDate.setDate(minDate.getDate() + 1)
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="font-semibold text-sm">Request a Site Visit</p>
-          <button onClick={() => setMode("options")} className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Cancel</button>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">Preferred date</label>
-            <input
-              type="date"
-              value={visitDate}
-              min={minDate.toISOString().split("T")[0]}
-              onChange={(e) => setVisitDate(e.target.value)}
-              className="w-full text-sm px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground block mb-1.5">Preferred time</label>
-            <div className="grid grid-cols-3 gap-2">
-              {TIME_SLOTS.map((slot) => (
-                <button key={slot}
-                  onClick={() => setVisitTime(slot)}
-                  className={`text-xs py-2 rounded-lg border font-medium transition-all ${
-                    visitTime === slot
-                      ? "border-primary-600 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-400"
-                      : "border-border hover:border-border/70 text-muted-foreground"
-                  }`}>
-                  {slot.charAt(0) + slot.slice(1).toLowerCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {error && <p className="text-xs text-red-500">{error}</p>}
-
-        <Button className="w-full gap-2" disabled={!visitDate || loading}
-          onClick={() => post("VISIT", { visitDate, visitTime })}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-          Send Visit Request
-        </Button>
       </div>
     )
   }

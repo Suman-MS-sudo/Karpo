@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       type:   "OFFER",
       title:  type === "VISIT" ? "New visit request 📅" : "New interest 👀",
       body:   notifBody,
-      link:   `/marketplace/${params.id}`,
+      link:   `/marketplace/${params.id}?engagement=open`,
     },
   })
   pushNotification(notification)

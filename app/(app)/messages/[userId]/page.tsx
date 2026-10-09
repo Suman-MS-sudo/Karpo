@@ -11,6 +11,19 @@ import { VerifiedBadge } from "@/components/shared/VerifiedBadge"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
+// Response bodies can arrive empty (aborted nav mid-poll, a 204, a proxy
+// hiccup) — calling .json() on those throws "Unexpected end of JSON input"
+// and crashes the page. Parse defensively and treat empty/invalid as "no data".
+async function safeJson(res: Response): Promise<any | null> {
+  const text = await res.text().catch(() => "")
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
 interface Message {
   id: string
   senderId: string
@@ -133,10 +146,11 @@ export default function MessageThreadPage() {
   }, [keyboardOpen])
 
   useEffect(() => {
-    fetch(`/api/profile/${partnerId}`).then((r) => r.json()).then((d) => setPartner(d))
+    fetch(`/api/profile/${partnerId}`).then(safeJson).then((d) => { if (d) setPartner(d) })
 
     const fetchMessages = () =>
-      fetch(`/api/messages/${partnerId}`).then((r) => r.json()).then((d) => {
+      fetch(`/api/messages/${partnerId}`).then(safeJson).then((d) => {
+        if (!d) return
         setMessages(d.messages ?? [])
         setIsBlocked(!!d.isBlocked)
         setBlockedByOther(!!d.blockedByOther)
@@ -193,7 +207,8 @@ export default function MessageThreadPage() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ content }),
       })
-      const data = await res.json()
+      const data = await safeJson(res)
+      if (!res.ok || !data) throw new Error("Send failed")
       setMessages((prev) => prev.map((m) => m.id === tempMsg.id ? data : m))
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== tempMsg.id))

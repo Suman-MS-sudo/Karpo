@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
-import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
+import { findContactInfoField, contactInfoError, titleHasTooManyDigits, titleDigitLimitError } from "@/lib/contact-filter"
 
 export async function GET(req: Request) {
   const { error } = await requireVerified()
@@ -89,6 +89,10 @@ export async function POST(req: Request) {
 
   const isPremium = session.user.membershipPlan === "PREMIUM"
   const body = await req.json()
+
+  if (titleHasTooManyDigits(body.title)) {
+    return NextResponse.json({ error: titleDigitLimitError() }, { status: 400 })
+  }
 
   const violatingField = findContactInfoField({
     title: body.title, description: body.description,

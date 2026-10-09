@@ -1,8 +1,12 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+const MIN_ZOOM = 1
+const MAX_ZOOM = 4
+const ZOOM_STEP = 0.5
 
 interface Props {
   images: string[]
@@ -16,13 +20,30 @@ export function ListingImageGallery({ images, title, isSold, isBoostActive, boos
   const [current, setCurrent] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const [lightboxIdx, setLightboxIdx] = useState(0)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const dragRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null)
 
   const prev = useCallback(() => setCurrent((i) => (i - 1 + images.length) % images.length), [images.length])
   const next = useCallback(() => setCurrent((i) => (i + 1) % images.length), [images.length])
 
-  const openLightbox = (idx: number) => { setLightboxIdx(idx); setLightbox(true) }
-  const prevLightbox = useCallback(() => setLightboxIdx((i) => (i - 1 + images.length) % images.length), [images.length])
-  const nextLightbox = useCallback(() => setLightboxIdx((i) => (i + 1) % images.length), [images.length])
+  const openLightbox = (idx: number) => { setLightboxIdx(idx); setZoom(1); setPan({ x: 0, y: 0 }); setLightbox(true) }
+  const prevLightbox = useCallback(() => {
+    setZoom(1); setPan({ x: 0, y: 0 })
+    setLightboxIdx((i) => (i - 1 + images.length) % images.length)
+  }, [images.length])
+  const nextLightbox = useCallback(() => {
+    setZoom(1); setPan({ x: 0, y: 0 })
+    setLightboxIdx((i) => (i + 1) % images.length)
+  }, [images.length])
+
+  const zoomIn    = useCallback(() => setZoom((z) => Math.min(MAX_ZOOM, z + ZOOM_STEP)), [])
+  const zoomOut    = useCallback(() => setZoom((z) => {
+    const next = Math.max(MIN_ZOOM, z - ZOOM_STEP)
+    if (next === MIN_ZOOM) setPan({ x: 0, y: 0 })
+    return next
+  }), [])
+  const resetZoom  = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }) }, [])
 
   useEffect(() => {
     if (!lightbox) return
@@ -30,10 +51,33 @@ export function ListingImageGallery({ images, title, isSold, isBoostActive, boos
       if (e.key === "Escape")      setLightbox(false)
       if (e.key === "ArrowLeft")   prevLightbox()
       if (e.key === "ArrowRight")  nextLightbox()
+      if (e.key === "+" || e.key === "=") zoomIn()
+      if (e.key === "-")           zoomOut()
+      if (e.key === "0")           resetZoom()
     }
     document.addEventListener("keydown", handler)
     return () => document.removeEventListener("keydown", handler)
-  }, [lightbox, prevLightbox, nextLightbox])
+  }, [lightbox, prevLightbox, nextLightbox, zoomIn, zoomOut, resetZoom])
+
+  // Mouse-wheel zoom, centred on the cursor-relative pan already in place
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    if (e.deltaY < 0) zoomIn()
+    else zoomOut()
+  }, [zoomIn, zoomOut])
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (zoom <= 1) return
+    dragRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y }
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current) return
+    const dx = e.clientX - dragRef.current.x
+    const dy = e.clientY - dragRef.current.y
+    setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy })
+  }
+  const handlePointerUp = () => { dragRef.current = null }
 
   if (images.length === 0) return null
 
@@ -159,18 +203,63 @@ export function ListingImageGallery({ images, title, isSold, isBoostActive, boos
             {lightboxIdx + 1} / {images.length}
           </div>
 
+          {/* Zoom controls */}
+          <div className="absolute top-4 right-16 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={zoomOut}
+              disabled={zoom <= MIN_ZOOM}
+              className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors"
+              aria-label="Zoom out"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </button>
+            <span className="text-white/70 text-xs w-10 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
+            <button
+              onClick={zoomIn}
+              disabled={zoom >= MAX_ZOOM}
+              className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed text-white flex items-center justify-center transition-colors"
+              aria-label="Zoom in"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </button>
+            {zoom > MIN_ZOOM && (
+              <button
+                onClick={resetZoom}
+                className="h-9 w-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                aria-label="Reset zoom"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
           {/* Image */}
           <div
-            className="relative max-w-5xl max-h-[85vh] w-full mx-8"
+            className="relative max-w-5xl max-h-[85vh] w-full mx-8 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
+            onDoubleClick={() => (zoom > MIN_ZOOM ? resetZoom() : zoomIn())}
           >
-            <div className="relative w-full" style={{ aspectRatio: "16/10" }}>
+            <div
+              className="relative w-full"
+              style={{
+                aspectRatio: "16/10",
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transition: dragRef.current ? "none" : "transform 150ms ease-out",
+                cursor: zoom > MIN_ZOOM ? "grab" : "zoom-in",
+              }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+            >
               <Image
                 src={images[lightboxIdx]}
                 alt={title}
                 fill
-                className="object-contain"
+                className="object-contain pointer-events-none"
                 sizes="100vw"
+                draggable={false}
               />
             </div>
           </div>
@@ -199,7 +288,7 @@ export function ListingImageGallery({ images, title, isSold, isBoostActive, boos
               {images.map((img, i) => (
                 <button
                   key={i}
-                  onClick={(e) => { e.stopPropagation(); setLightboxIdx(i) }}
+                  onClick={(e) => { e.stopPropagation(); setZoom(1); setPan({ x: 0, y: 0 }); setLightboxIdx(i) }}
                   className={cn(
                     "relative h-14 w-14 shrink-0 rounded-lg overflow-hidden border-2 transition-all",
                     lightboxIdx === i ? "border-white" : "border-white/20 opacity-60 hover:opacity-90"

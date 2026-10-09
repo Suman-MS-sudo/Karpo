@@ -73,7 +73,8 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const newStatus = ACTION_STATUS[action]
 
   if (action === "ACCEPT") {
-    // Accept: reveal contact info + send message
+    // Accept: reveal contact info on the listing page — notify only, don't
+    // also drop a message in the requester's inbox for the same event.
     await prisma.$transaction([
       prisma.rentalInquiry.update({ where: { id: params.inquiryId }, data: { status: newStatus } }),
       prisma.notification.create({
@@ -83,15 +84,6 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
           title:  "Your request was accepted! 🎉",
           body:   `The owner of "${inquiry.rental.title}" accepted your request. Contact details are now available.`,
           link:   `/rentals/${inquiry.rental.id}`,
-        },
-      }),
-      prisma.message.create({
-        data: {
-          senderId:   session.user.id,
-          receiverId: inquiry.userId,
-          content: `Hi ${inquiry.user.name?.split(" ")[0] ?? "there"}! I've accepted your request for "${inquiry.rental.title}". Here's how to reach me:\n\n📞 Phone: ${inquiry.rental.user.phone ?? "Not provided"}\n📧 Email: ${inquiry.rental.user.email ?? "Not provided"}\n\nFeel free to schedule a visit!`,
-          listingId:   inquiry.rental.id,
-          listingType: "rental",
         },
       }),
     ])
@@ -112,15 +104,6 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
           link:   `/rentals/${inquiry.rental.id}`,
         },
       }),
-      prisma.message.create({
-        data: {
-          senderId:   session.user.id,
-          receiverId: inquiry.userId,
-          content: `Hi ${inquiry.user.name?.split(" ")[0] ?? "there"}! Your visit to "${inquiry.rental.title}" is confirmed for ${visitInfo}.\n\nMy contact:\n📞 ${inquiry.rental.user.phone ?? "Not provided"}\n📧 ${inquiry.rental.user.email ?? "Not provided"}`,
-          listingId:   inquiry.rental.id,
-          listingType: "rental",
-        },
-      }),
     ])
   } else if (action === "DONE") {
     await prisma.rentalInquiry.update({ where: { id: params.inquiryId }, data: { status: newStatus } })
@@ -136,15 +119,6 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
           title:  "Deal confirmed! 🎉",
           body:   `Your visit to "${inquiry.rental.title}" turned into a deal. Congratulations!`,
           link:   `/rentals/${inquiry.rental.id}`,
-        },
-      }),
-      prisma.message.create({
-        data: {
-          senderId:    session.user.id,
-          receiverId:  inquiry.userId,
-          content:     `Hi ${inquiry.user.name?.split(" ")[0] ?? "there"}! I'm happy to confirm that we've agreed on the deal for "${inquiry.rental.title}". Welcome! 🎉\n\nPlease reach out if you need anything for move-in.\n\n📞 ${inquiry.rental.user.phone ?? "Not provided"}\n📧 ${inquiry.rental.user.email ?? "Not provided"}`,
-          listingId:   inquiry.rental.id,
-          listingType: "rental",
         },
       }),
     ])

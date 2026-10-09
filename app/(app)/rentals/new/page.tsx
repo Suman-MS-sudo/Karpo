@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { CITIES } from "@/config/services"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
+import { titleHasTooManyDigits, titleDigitLimitError } from "@/lib/contact-filter"
 
 const MapPicker = dynamic(
   () => import("@/components/rentals/MapPicker").then((m) => m.MapPicker),
@@ -71,6 +72,12 @@ const SECTIONS = [
 ]
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
+
+function formatThousands(v: string) {
+  const digits = v.replace(/\D/g, "")
+  if (!digits) return ""
+  return Number(digits).toLocaleString("en-IN")
+}
 
 const SECTION_CLASS = "bg-card border border-border rounded-2xl overflow-hidden"
 const SH = "px-6 py-4 border-b border-border flex items-center gap-2.5"
@@ -235,6 +242,21 @@ export default function NewRentalPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (titleHasTooManyDigits(form.title)) {
+      alert(titleDigitLimitError())
+      scrollTo("basic")
+      return
+    }
+    if (!form.description.trim()) {
+      alert("Please add a description for your listing.")
+      scrollTo("description")
+      return
+    }
+    if (images.length === 0) {
+      alert("Please upload at least one photo of the property.")
+      scrollTo("photos")
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch("/api/rentals", {
@@ -408,7 +430,8 @@ export default function NewRentalPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={LABEL}>Monthly Rent (₹) *</label>
-                  <input required type="number" min="0" className={INPUT} placeholder="15,000" value={form.rent} onChange={setStr("rent")} />
+                  <input required inputMode="numeric" className={INPUT} placeholder="15,000" value={formatThousands(form.rent)}
+                    onChange={(e) => set("rent", e.target.value.replace(/\D/g, ""))} />
                 </div>
                 <div>
                   <label className={LABEL}>Security Deposit (₹)</label>
@@ -638,7 +661,8 @@ export default function NewRentalPage() {
           <div className={SECTION_CLASS}>
             <SectionHeader id="description" icon={Info} label="Description" num={10} />
             <div className={BODY}>
-              <textarea className={`${INPUT} resize-none`} rows={6}
+              <label className={LABEL}>Description *</label>
+              <textarea required className={`${INPUT} resize-none`} rows={6}
                 placeholder="Describe the property — neighbourhood feel, nearby transport, house rules, what kind of tenant you're looking for, special features…"
                 value={form.description} onChange={setStr("description")} />
               <p className="text-xs text-muted-foreground">A detailed description gets 3× more inquiries.</p>
@@ -649,7 +673,7 @@ export default function NewRentalPage() {
           <div className={SECTION_CLASS}>
             <SectionHeader id="photos" icon={Upload} label="Photos" num={11} />
             <div className={BODY}>
-              <p className="text-xs text-muted-foreground -mt-2">Upload up to 10 photos. First photo is the cover image.</p>
+              <p className="text-xs text-muted-foreground -mt-2">Upload up to 10 photos (at least 1 required). First photo is the cover image.</p>
 
               {uploadError && (
                 <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireVerified } from "@/lib/api-auth"
-import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
+import { findContactInfoField, contactInfoError, titleHasTooManyDigits, titleDigitLimitError } from "@/lib/contact-filter"
 
 type Ctx = { params: { id: string } }
 
@@ -40,6 +40,10 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const data: Record<string, unknown> = {}
   for (const key of allowed) {
     if (key in body) data[key] = body[key]
+  }
+
+  if (typeof data.title === "string" && titleHasTooManyDigits(data.title)) {
+    return NextResponse.json({ error: titleDigitLimitError() }, { status: 400 })
   }
 
   const violatingField = findContactInfoField({ title: data.title as string, description: data.description as string })

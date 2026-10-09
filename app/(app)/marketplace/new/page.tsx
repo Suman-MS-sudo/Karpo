@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { cn } from "@/lib/utils"
-import { LISTING_CATEGORIES, LISTING_CONDITIONS } from "@/config/services"
+import { LISTING_CATEGORIES, LISTING_CONDITIONS, CITIES } from "@/config/services"
 import type { PickedLocation } from "@/components/marketplace/LocationPicker"
 
 const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -100,6 +100,11 @@ export default function NewListingPage() {
   const maxImages = isPremium ? 10 : 5
   const set = (key: string, val: unknown) => setForm((f) => ({ ...f, [key]: val }))
 
+  // Only accept a map-resolved city if it matches one of the allowed cities
+  // the City field's dropdown offers — the field never holds free text.
+  const matchListedCity = (name: string) =>
+    CITIES.find((c) => c.toLowerCase() === name.toLowerCase())
+
   const selectedCat  = LISTING_CATEGORIES.find(c => c.value === form.category) ?? null
   const filteredSubs = selectedCat
     ? selectedCat.subcategories.filter(s => s.toLowerCase().includes(subcategorySearch.toLowerCase()))
@@ -115,9 +120,18 @@ export default function NewListingPage() {
         fd.append("file", file)
         const res  = await fetch("/api/upload", { method: "POST", body: fd })
         const data = await res.json()
-        if (data.url) setImages((prev) => [...prev, data.url])
+        if (res.ok && data.url) {
+          setImages((prev) => [...prev, data.url])
+        } else {
+          toast.error(data.error ?? "Failed to upload photo")
+        }
       }
-    } finally { setUploading(false) }
+    } catch {
+      toast.error("Failed to upload photo — please try again")
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -407,7 +421,18 @@ export default function NewListingPage() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Location</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Pin your location so buyers know how far you are</p>
           </div>
-          <LocationPickerMap value={location} onChange={setLocation} />
+          <LocationPickerMap
+            value={location}
+            onChange={(loc) => {
+              setLocation(loc)
+              const matched = loc?.city ? matchListedCity(loc.city) : undefined
+              if (matched) set("city", matched)
+            }}
+            onCityChange={(city) => {
+              const matched = matchListedCity(city)
+              if (matched) set("city", matched)
+            }}
+          />
         </section>
 
         {/* ── Section 4: Contact & Meetup ─────────────────────────────────── */}

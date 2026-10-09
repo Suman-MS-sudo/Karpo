@@ -278,6 +278,19 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
             </SectionCard>
           )}
 
+          {/* Viewer: connect-with-owner — mobile only, shown right below About.
+              Desktop keeps it in the sticky sidebar (below). */}
+          {!isOwner && !isFilled && !isExpired && (
+            <div className="lg:hidden">
+              <RentalEngagePanel
+                rentalId={params.id}
+                myEngagement={myEngagement as any}
+                ownerName={rental.user.name ?? "Owner"}
+                ownerAvatar={rental.user.avatarUrl ?? rental.user.image}
+              />
+            </div>
+          )}
+
           {/* Location */}
           <SectionCard title="Location" icon={MapPin}>
             <div className="space-y-3">
@@ -492,14 +505,16 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
             />
           )}
 
-          {/* Viewer: engage panel */}
+          {/* Viewer: engage panel — desktop only (mobile copy shown above, below About) */}
           {!isOwner && !isFilled && !isExpired && (
-            <RentalEngagePanel
-              rentalId={params.id}
-              myEngagement={myEngagement as any}
-              ownerName={rental.user.name ?? "Owner"}
-              ownerAvatar={rental.user.avatarUrl ?? rental.user.image}
-            />
+            <div className="hidden lg:block">
+              <RentalEngagePanel
+                rentalId={params.id}
+                myEngagement={myEngagement as any}
+                ownerName={rental.user.name ?? "Owner"}
+                ownerAvatar={rental.user.avatarUrl ?? rental.user.image}
+              />
+            </div>
           )}
 
           {/* Contact unlocked (confirmed visit or accepted) */}
