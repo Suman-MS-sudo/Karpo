@@ -124,6 +124,11 @@ export function ReferralSearchBar() {
           {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </Button>
         <Button onClick={handleSearch} size="sm" className="shrink-0 rounded-full px-3 sm:px-4 sm:h-10">Search</Button>
+        {hasAny && (
+          <Button variant="ghost" size="sm" className="h-9 sm:h-10 text-muted-foreground shrink-0" onClick={handleClear}>
+            <X className="h-4 w-4" /> <span className="hidden sm:inline">Clear</span>
+          </Button>
+        )}
       </div>
 
       {/* Filter panel */}

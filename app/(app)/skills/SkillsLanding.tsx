@@ -2,38 +2,12 @@ import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
 import {
-  Sparkles, Plus, Wrench, Star, Heart, CheckCircle2, ArrowRight,
-  Code2, Palette, Megaphone, PenTool, Briefcase, TrendingUp,
-  Database, Cpu, Scale, Languages, GraduationCap, HeartPulse,
-  MessageSquareText, Handshake, Camera,
+  Sparkles, Plus, Wrench, Star, Heart, CheckCircle2,
+  MessageSquareText, Handshake,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { SkillsHero } from "@/components/skills/SkillsHero"
 import { SkillCategoryStrip } from "@/components/skills/SkillCategoryStrip"
-
-// Primary 6 categories, styled and labeled to match the reference design.
-// The remaining real SkillListing categories still exist and are browsable — shown as a second, smaller row.
-const PRIMARY_CATEGORIES = [
-  { value: "TECH",     label: "Development",     Icon: Code2,      iconBg: "bg-blue-100 dark:bg-blue-500/20",     iconColor: "text-blue-600 dark:text-blue-400"   },
-  { value: "DESIGN",   label: "Design & Creative",Icon: Palette,    iconBg: "bg-pink-100 dark:bg-pink-500/20",     iconColor: "text-pink-600 dark:text-pink-400"   },
-  { value: "MARKETING",label: "Marketing",        Icon: Megaphone,  iconBg: "bg-purple-100 dark:bg-purple-500/20", iconColor: "text-purple-600 dark:text-purple-400" },
-  { value: "CREATIVE", label: "Writing & Content",Icon: PenTool,    iconBg: "bg-orange-100 dark:bg-orange-500/20", iconColor: "text-orange-600 dark:text-orange-400" },
-  { value: "BUSINESS", label: "Business",         Icon: Briefcase,  iconBg: "bg-amber-100 dark:bg-amber-500/20",   iconColor: "text-amber-700 dark:text-amber-400" },
-  { value: "FINANCE",  label: "Finance",          Icon: TrendingUp, iconBg: "bg-emerald-100 dark:bg-emerald-500/20", iconColor: "text-emerald-600 dark:text-emerald-400" },
-]
-
-const MORE_CATEGORIES = [
-  { value: "DATA",       label: "Data & AI",  Icon: Database,      iconBg: "bg-indigo-100 dark:bg-indigo-500/20", iconColor: "text-indigo-600 dark:text-indigo-400" },
-  { value: "ENGINEERING",label: "Engineering",Icon: Cpu,           iconBg: "bg-cyan-100 dark:bg-cyan-500/20",     iconColor: "text-cyan-600 dark:text-cyan-400"     },
-  { value: "LEGAL",      label: "Legal",      Icon: Scale,         iconBg: "bg-slate-100 dark:bg-slate-500/20",   iconColor: "text-slate-600 dark:text-slate-400"   },
-  { value: "LANGUAGE",   label: "Languages",  Icon: Languages,     iconBg: "bg-green-100 dark:bg-green-500/20",   iconColor: "text-green-600 dark:text-green-400"   },
-  { value: "COACHING",   label: "Coaching",   Icon: GraduationCap, iconBg: "bg-orange-100 dark:bg-orange-500/20", iconColor: "text-orange-600 dark:text-orange-400" },
-  { value: "WELLNESS",   label: "Wellness",   Icon: HeartPulse,    iconBg: "bg-rose-100 dark:bg-rose-500/20",     iconColor: "text-rose-600 dark:text-rose-400"     },
-  { value: "PHOTOGRAPHY",label: "Photography",Icon: Camera,        iconBg: "bg-fuchsia-100 dark:bg-fuchsia-500/20", iconColor: "text-fuchsia-600 dark:text-fuchsia-400" },
-]
-
-const ALL_CATEGORIES = [...PRIMARY_CATEGORIES, ...MORE_CATEGORIES]
 
 function initials(name: string | null) {
   if (!name) return "?"
@@ -115,58 +89,6 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <h3 className="text-sm font-semibold mb-1.5">{title}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Categories ───────────────────────────────────────────────────────── */}
-        <section>
-          <div className="flex items-center justify-between mb-1">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1.5 flex items-center gap-2">
-                <span className="h-px w-5 bg-primary/50" />Categories
-              </p>
-              <h2 className="text-2xl font-bold tracking-tight">Explore Top Categories</h2>
-            </div>
-            <Link href={`/skills?category=${PRIMARY_CATEGORIES[0].value}`} className="group flex items-center gap-1 text-sm font-medium text-primary">
-              View all <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-          <p className="text-sm text-muted-foreground mb-6">Browse professionals by category</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {PRIMARY_CATEGORIES.map(c => (
-              <Link
-                key={c.value}
-                href={`/skills?category=${c.value}`}
-                className="group relative flex flex-col items-center gap-3 p-5 rounded-3xl bg-card ring-1 ring-black/5 dark:ring-white/10 hover:ring-primary/30 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_20px_40px_-12px_rgba(99,102,241,0.25)] hover:-translate-y-1.5 transition-all duration-300 text-center overflow-hidden"
-              >
-                <span className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary to-accent scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" aria-hidden />
-                <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-sm group-hover:scale-110 transition-transform duration-300", c.iconBg)}>
-                  <c.Icon className={cn("h-6 w-6", c.iconColor)} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">{c.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{countByCategory[c.value] ?? 0} experts</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-4">
-            {MORE_CATEGORIES.map(c => (
-              <Link
-                key={c.value}
-                href={`/skills?category=${c.value}`}
-                className="group relative flex flex-col items-center gap-3 p-5 rounded-3xl bg-card ring-1 ring-black/5 dark:ring-white/10 hover:ring-primary/30 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_20px_40px_-12px_rgba(99,102,241,0.25)] hover:-translate-y-1.5 transition-all duration-300 text-center overflow-hidden"
-              >
-                <span className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary to-accent scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" aria-hidden />
-                <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center bg-gradient-to-br shadow-sm group-hover:scale-110 transition-transform duration-300", c.iconBg)}>
-                  <c.Icon className={cn("h-6 w-6", c.iconColor)} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">{c.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{countByCategory[c.value] ?? 0} experts</p>
-                </div>
-              </Link>
             ))}
           </div>
         </section>

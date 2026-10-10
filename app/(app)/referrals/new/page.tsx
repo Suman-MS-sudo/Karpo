@@ -22,7 +22,7 @@ function isValidLpa(value: string): boolean {
 
 const REQUIRED_FIELDS = [
   "title", "companyName", "department", "jobType", "workMode",
-  "experienceMin", "experienceMax", "description", "consent",
+  "experienceMin", "description", "consent",
 ] as const
 type RequiredField = (typeof REQUIRED_FIELDS)[number]
 
@@ -33,7 +33,6 @@ const FIELD_LABELS: Record<RequiredField, string> = {
   jobType:       "Job Type",
   workMode:      "Work Mode",
   experienceMin: "Min Experience",
-  experienceMax: "Max Experience",
   description:   "Job Description",
   consent:       "the consent checkbox",
 }
@@ -95,7 +94,6 @@ export default function NewReferralPage() {
     experienceMax:   "",
     salaryMin:       "",
     salaryMax:       "",
-    internalCode:    "",
     deadline:        "",
     interviewProcess: "",
     description:     "",
@@ -119,7 +117,6 @@ export default function NewReferralPage() {
     if (!form.jobType)              missing.push("jobType")
     if (!form.workMode)             missing.push("workMode")
     if (!form.experienceMin.trim()) missing.push("experienceMin")
-    if (!form.experienceMax.trim()) missing.push("experienceMax")
     if (!form.description.trim())  missing.push("description")
     if (!consent)                   missing.push("consent")
     return missing
@@ -150,7 +147,10 @@ export default function NewReferralPage() {
           companyName,
           companyId,
           experienceMin: parseInt(form.experienceMin),
-          experienceMax: parseInt(form.experienceMax),
+          // Falls back to Min Experience when left blank — Max isn't
+          // required, and the DB column is a non-null Int (an "X–X yrs"
+          // range reads fine as "X yrs exactly").
+          experienceMax: form.experienceMax ? parseInt(form.experienceMax) : parseInt(form.experienceMin),
           salaryMin:     form.salaryMin     ? parseFloat(form.salaryMin)   : undefined,
           salaryMax:     form.salaryMax     ? parseFloat(form.salaryMax)   : undefined,
           deadline:      form.deadline      ? new Date(form.deadline)      : undefined,
@@ -256,10 +256,6 @@ export default function NewReferralPage() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Internal Job Code / Req ID <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-            <Input placeholder="e.g. ENG-2024-042" value={form.internalCode} onChange={(e) => set("internalCode", e.target.value)} />
-          </div>
         </section>
 
         {/* ── Section 2: Compensation ──────────────────────────── */}
@@ -311,15 +307,13 @@ export default function NewReferralPage() {
               />
               {fieldErrors.experienceMin && <p className="text-xs text-red-500">Required.</p>}
             </div>
-            <div ref={(el) => { fieldRefs.current.experienceMax = el }} className="space-y-1.5">
-              <Label>Max Experience (years) <span className="text-red-500">*</span></Label>
+            <div className="space-y-1.5">
+              <Label>Max Experience (years) <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
               <Input
-                required type="number" min="0" max="30" placeholder="8"
+                type="number" min="0" max="30" placeholder="8"
                 value={form.experienceMax}
                 onChange={(e) => set("experienceMax", e.target.value)}
-                className={cn(fieldErrors.experienceMax && "border-red-500 focus-visible:ring-red-400")}
               />
-              {fieldErrors.experienceMax && <p className="text-xs text-red-500">Required.</p>}
             </div>
           </div>
 

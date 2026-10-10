@@ -150,7 +150,7 @@ export default async function MyReferralsPage({ searchParams }: PageProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
-                      <span>{r.experienceMin}–{r.experienceMax} yrs</span>
+                      <span>{r.experienceMin === r.experienceMax ? `${r.experienceMin} yrs` : `${r.experienceMin}–${r.experienceMax} yrs`}</span>
                       {r.location && <span>{r.location}</span>}
                       {r.workMode && <span className="capitalize">{r.workMode.toLowerCase()}</span>}
                       {r.referralBonus && (

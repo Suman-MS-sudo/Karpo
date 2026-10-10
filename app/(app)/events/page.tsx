@@ -2,7 +2,6 @@ import { Suspense } from "react"
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
-import { FREE_LIMITS } from "@/lib/limits"
 import { EventsClient } from "./EventsClient"
 import type { EventItem } from "./EventsClient"
 import { getWishlistedIds } from "@/lib/wishlist"
@@ -14,18 +13,19 @@ export const metadata: Metadata = {
   description: "Discover treks, meetups, workshops, and networking events organized by members with verified corporate emails near you.",
 }
 
+// Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx.
+// Boosted events no longer get the "shown first" sort/spotlight treatment
+// while this is off; re-enable by flipping this back to true.
+const BOOST_ENABLED = false
+
 export default async function EventsPage() {
   const session   = await auth()
-  const isPremium = session?.user?.membershipPlan === "PREMIUM"
   const userId    = session?.user?.id
 
-  const [myEventsCount, events, totalEvents, totalRsvps] = await Promise.all([
-    userId && !isPremium
-      ? prisma.event.count({ where: { organizerId: userId, isActive: true } })
-      : Promise.resolve(0),
+  const [events, totalEvents, totalRsvps] = await Promise.all([
     prisma.event.findMany({
       where:   { isActive: true, date: { gte: new Date() } },
-      orderBy: [{ isBoosted: "desc" }, { date: "asc" }],
+      orderBy: [...(BOOST_ENABLED ? [{ isBoosted: "desc" as const }] : []), { date: "asc" as const }],
       take:    100,
       include: {
         organizer: { include: { company: { select: { name: true } } } },
@@ -54,7 +54,7 @@ export default async function EventsPage() {
       maxParticipants:  ev.maxParticipants ?? null,
       images,
       tags,
-      isBoosted:        ev.isBoosted,
+      isBoosted:        BOOST_ENABLED && ev.isBoosted,
       format:           ((ev as any).format as "IN_PERSON" | "ONLINE" | "HYBRID") ?? "IN_PERSON",
       isOnline:         !!((ev as any).onlineLink),
       requiresApproval: !!((ev as any).requiresApproval),
@@ -84,9 +84,6 @@ export default async function EventsPage() {
         events={serialized}
         totalEvents={totalEvents}
         totalRsvps={totalRsvps}
-        isPremium={isPremium}
-        myEventsCount={myEventsCount}
-        eventsLimit={FREE_LIMITS.events}
         initialCity={session?.user?.city ?? undefined}
         wishlistedIds={[...wishlistedIds]}
       />

@@ -5,10 +5,10 @@ import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
 import { Plus, Building2, Clock, Briefcase, MapPin, MonitorSmartphone, Zap } from "lucide-react"
-import { FREE_LIMITS } from "@/lib/limits"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
 import { getWishlistedIds } from "@/lib/wishlist"
+import { DEPARTMENTS } from "@/config/services"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UserCard } from "@/components/shared/UserCard"
@@ -28,6 +28,12 @@ export const metadata: Metadata = {
   description: "Get your resume in front of an employee already on the inside — job referrals from verified colleagues on Korpo.",
 }
 
+// Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx.
+// Boosted referrals no longer get the "shown first" sort/banner/badge
+// treatment while this is off; re-enable by flipping this back to true.
+const BOOST_ENABLED = false
+const BOOST_ORDER = BOOST_ENABLED ? [{ isBoosted: "desc" as const }] : []
+
 const WORK_MODE_LABELS: Record<string, string> = {
   REMOTE: "Remote", HYBRID: "Hybrid", ONSITE: "On-site",
 }
@@ -35,10 +41,24 @@ const JOB_TYPE_LABELS: Record<string, string> = {
   FULL_TIME: "Full-time", PART_TIME: "Part-time", CONTRACT: "Contract", INTERNSHIP: "Internship",
 }
 
-const DEPARTMENT_ICONS: Record<string, string> = {
-  Engineering: "Cpu", Data: "Database", Product: "LayoutDashboard", Design: "Palette",
-  Marketing: "Megaphone", Sales: "TrendingUp", Finance: "Briefcase", HR: "Users", Legal: "Scale",
+// Keyed by the exact DEPARTMENTS strings (config/services.ts → data/departments.ts)
+// — the same canonical, now-consolidated list the posting form's dropdown
+// uses — so every department a referral can be posted under also gets a
+// filter chip here. Departments without a specific match fall back to Briefcase.
+const DEPARTMENT_ICON_MAP: Record<string, string> = {
+  "Engineering & IT": "Cpu",
+  "Product & Design": "Palette",
+  "Data & AI/ML": "Database",
+  "Sales & Business Development": "TrendingUp",
+  "Marketing & Communications": "Megaphone",
+  "Customer Success & Support": "Users",
+  "Finance & Legal": "Scale",
+  "Human Resources": "Users",
+  "Operations & Strategy": "Repeat",
 }
+const DEPARTMENT_ICONS: Record<string, string> = Object.fromEntries(
+  DEPARTMENTS.map((dept) => [dept, DEPARTMENT_ICON_MAP[dept] ?? "Briefcase"])
+)
 
 interface Props {
   searchParams: {
@@ -68,7 +88,6 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
   const session   = await auth()
   const myId      = session?.user?.id
-  const isPremium = session?.user?.membershipPlan === "PREMIUM"
   // myReferralsCount/openCount/hiringCompanies-count folded into one round
   // trip (was: a sequential await before the Promise.all, plus a
   // findMany-just-for-.length inside it — 3 avoidable round trips). groupBy
@@ -90,7 +109,6 @@ export default async function ReferralsPage({ searchParams }: Props) {
     statsQuery,
     prisma.jobReferral.groupBy({ by: ["department"], where: { status: "OPEN" }, _count: true }),
   ])
-  const myReferralsCount = myId && !isPremium ? stats.myReferralsCount : 0
   const { openCount, hiringCompanies } = stats
   const wishlistedIds = await getWishlistedIds(myId, "REFERRAL")
   const deptCounts = Object.fromEntries(deptCountRows.map((r) => [r.department, r._count]))
@@ -157,14 +175,14 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
     referrals = await prisma.jobReferral.findMany({
       where: { ...baseWhere, AND: exactAnd },
-      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+      orderBy: [...BOOST_ORDER, { createdAt: "desc" }],
       take,
       include: includeArgs,
     })
     if (referrals.length === 0) {
       const candidates = await prisma.jobReferral.findMany({
         where: baseWhere,
-        orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+        orderBy: [...BOOST_ORDER, { createdAt: "desc" }],
         take: 500,
         include: includeArgs,
       })
@@ -177,7 +195,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
   } else {
     referrals = await prisma.jobReferral.findMany({
       where: baseWhere,
-      orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+      orderBy: [...BOOST_ORDER, { createdAt: "desc" }],
       take,
       include: includeArgs,
     })
@@ -192,7 +210,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
       )
     : new Set<string>()
 
-  const boostedCount = referrals.filter((r) => r.isBoosted).length
+  const boostedCount = BOOST_ENABLED ? referrals.filter((r) => r.isBoosted).length : 0
 
   // Build active filter summary
   const filterParts: string[] = []
@@ -222,7 +240,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
         focusRing="focus:ring-sky-400/50"
         stats={[
           { value: openCount.toLocaleString(), label: "Open Referrals", gradient: "from-sky-300 to-blue-200" },
-          { value: hiringCompanies.toLocaleString(), label: "Companies Hiring", gradient: "from-indigo-300 to-violet-200" },
+          { value: hiringCompanies.toLocaleString(), label: "Companies", gradient: "from-indigo-300 to-violet-200" },
           { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/referrals/new", label: "Post Referral", icon: Plus }}
@@ -251,13 +269,6 @@ export default async function ReferralsPage({ searchParams }: Props) {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {!isPremium && myId && (
-        <div className="flex justify-end mb-3 sm:mb-4">
-          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs">
-            <span className="text-amber-700 dark:text-amber-300 font-medium">{myReferralsCount}/{FREE_LIMITS.referrals} posted</span>
-          </div>
-        </div>
-      )}
 
       <SearchBarWrapper />
 
@@ -292,7 +303,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {referrals.map((ref) => {
-            const isBoosted = ref.isBoosted
+            const isBoosted = BOOST_ENABLED && ref.isBoosted
             const isOwn     = myId === ref.userId
             const hasApplied = myAppliedIds.has(ref.id)
             return (
@@ -339,7 +350,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
                     <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{ref.description}</p>
 
                     <div className="flex flex-wrap gap-1.5 mt-3">
-                      <Badge variant="secondary" className="text-[11px]">{ref.experienceMin}–{ref.experienceMax} yrs</Badge>
+                      <Badge variant="secondary" className="text-[11px]">{ref.experienceMin === ref.experienceMax ? `${ref.experienceMin} yrs` : `${ref.experienceMin}–${ref.experienceMax} yrs`}</Badge>
                       {ref.referralBonus && <Badge variant="warning" className="text-[11px]">₹{ref.referralBonus.toLocaleString()} bonus</Badge>}
                       {ref.workMode && (
                         <Badge variant="outline" className="text-[11px] flex items-center gap-1">

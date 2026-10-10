@@ -82,15 +82,106 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
   const workMode  = ref.workMode ? WORK_MODE_LABEL[ref.workMode] : null
   const WorkModeIcon = workMode?.icon
 
+  // Rendered twice below — once near the top for mobile (lg:hidden), once in
+  // the sticky sidebar for desktop (hidden lg:block) — since only the mobile
+  // placement moves; desktop keeps Quick Facts in the sidebar. No card
+  // wrapper here, since mobile and desktop each need their own (the
+  // sidebar's is shared with the Referrer section below it).
+  const quickFacts = (
+    <div>
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Facts</p>
+      <div className="space-y-2.5">
+        {ref.salaryMin && ref.salaryMax && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Salary</span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">₹{ref.salaryMin}–{ref.salaryMax} LPA</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Department</span>
+          <span className="font-medium">{ref.department}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Experience</span>
+          <span className="font-medium">{ref.experienceMin === ref.experienceMax ? `${ref.experienceMin} years` : `${ref.experienceMin}–${ref.experienceMax} years`}</span>
+        </div>
+        {ref.jobType && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Job type</span>
+            <span className="font-medium">{JOB_TYPE_LABEL[ref.jobType] ?? ref.jobType}</span>
+          </div>
+        )}
+        {ref.workMode && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Work mode</span>
+            <span className="font-medium">{WORK_MODE_LABEL[ref.workMode]?.label ?? ref.workMode}</span>
+          </div>
+        )}
+        {ref.location && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Location</span>
+            <span className="font-medium">{ref.location}</span>
+          </div>
+        )}
+        {ref.referralBonus && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Referral bonus</span>
+            <span className="font-semibold text-amber-600 dark:text-amber-400">₹{ref.referralBonus.toLocaleString()}</span>
+          </div>
+        )}
+        {ref.internalCode && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Job code</span>
+            <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{ref.internalCode}</span>
+          </div>
+        )}
+        {deadline && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Deadline</span>
+            <span className={`font-medium ${isExpired ? "text-red-500" : ""}`}>{formatDate(deadline)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Posted</span>
+          <span className="font-medium">{formatDate(ref.createdAt)}</span>
+        </div>
+      </div>
+    </div>
+  )
+
+  // Same reasoning as quickFacts above — rendered once as a variable, used
+  // at both the mobile and desktop placements so there's exactly one
+  // implementation to keep in sync.
+  const applyPanel = !isOwner && !isClosed ? (
+    <ReferralApplyPanel
+      referralId={ref.id}
+      myApplication={myApplication as any}
+      referrerId={ref.userId}
+      referrerName={ref.user.name ?? "Referrer"}
+      referrerAvatar={ref.user.avatarUrl ?? ref.user.image ?? undefined}
+      referrerJobTitle={ref.user.jobTitle ?? undefined}
+      referralTitle={ref.title}
+    />
+  ) : null
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link href="/referrals" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back to Referrals
       </Link>
 
+      {/*
+        Explicit grid placement (not just document order) so "How referrals
+        work" + the disclaimer can render LAST in source — on mobile (where
+        lg: column/row placement doesn't apply) that puts them at the very
+        bottom of the page, below the sidebar's Quick Facts/Referrer/Apply
+        sections, instead of appearing above them. On desktop the explicit
+        lg:col-start-1 placement still keeps them in their usual spot at the
+        bottom of the main (left) column.
+      */}
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* ── Main ──────────────────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* ── Main, part 1 (through Company card) ──────────────────── */}
+        <div className="lg:col-start-1 lg:row-start-1 lg:col-span-2 space-y-6">
 
           {/* Header */}
           <div className="bg-card border border-border rounded-2xl p-6">
@@ -127,7 +218,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
                     </Badge>
                   )}
                   <Badge variant="secondary"><Briefcase className="h-3 w-3 mr-1" />{ref.department}</Badge>
-                  <Badge variant="secondary"><GraduationCap className="h-3 w-3 mr-1" />{ref.experienceMin}–{ref.experienceMax} yrs</Badge>
+                  <Badge variant="secondary"><GraduationCap className="h-3 w-3 mr-1" />{ref.experienceMin === ref.experienceMax ? `${ref.experienceMin} yrs` : `${ref.experienceMin}–${ref.experienceMax} yrs`}</Badge>
                   {isClosed
                     ? <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Closed</Badge>
                     : <Badge variant="success"><CheckCircle2 className="h-3 w-3 mr-1" />Open</Badge>}
@@ -138,6 +229,11 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
               </div>
             </div>
           </div>
+
+          {/* Quick facts — mobile only, shown right under the title/header
+              instead of being buried down in the sidebar. Desktop keeps it
+              in the sticky sidebar, below. */}
+          <div className="lg:hidden bg-card border border-border rounded-2xl p-5">{quickFacts}</div>
 
           {/* Key numbers bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -174,6 +270,12 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
               </div>
             </div>
           )}
+
+          {/* Apply CTA — mobile only, shown right above the job description
+              instead of making mobile visitors scroll past every sidebar
+              section (Quick Facts, Referrer) to find it. Desktop keeps it
+              in its usual sticky sidebar spot, below. */}
+          {applyPanel && <div className="lg:hidden">{applyPanel}</div>}
 
           {/* Description */}
           <div className="bg-card border border-border rounded-2xl p-6">
@@ -228,89 +330,14 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
             </div>
           </div>
 
-          {/* How it works */}
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5">
-            <p className="font-semibold text-amber-800 dark:text-amber-300 mb-3 text-sm">How referrals work</p>
-            <ol className="space-y-2 text-sm text-amber-700 dark:text-amber-400">
-              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">1.</span>Express interest or submit a full application</li>
-              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">2.</span>The referrer reviews your profile and shortlists candidates</li>
-              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">3.</span>If shortlisted, they formally refer you to {ref.company.name} internally</li>
-              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">4.</span>The company contacts you directly for their interview process</li>
-              {ref.referralBonus && <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">5.</span>If hired, the referrer receives a ₹{ref.referralBonus.toLocaleString()} bonus</li>}
-            </ol>
-          </div>
-
-          {/* Disclaimer */}
-          <p className="text-xs text-muted-foreground bg-muted/40 rounded-xl px-4 py-3">
-            Referral posts are shared by individual employees in their personal capacity. Korpo is not affiliated
-            with, and does not verify claims on behalf of, the referenced employer. Users should verify any
-            opportunity independently.
-          </p>
         </div>
 
         {/* ── Sidebar ───────────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="lg:col-start-3 lg:row-start-1 lg:row-span-2 space-y-4">
           <div className="bg-card border border-border rounded-2xl p-5 space-y-5 sticky top-4">
-            {/* Quick facts */}
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Facts</p>
-              <div className="space-y-2.5">
-                {ref.salaryMin && ref.salaryMax && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Salary</span>
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">₹{ref.salaryMin}–{ref.salaryMax} LPA</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Department</span>
-                  <span className="font-medium">{ref.department}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Experience</span>
-                  <span className="font-medium">{ref.experienceMin}–{ref.experienceMax} years</span>
-                </div>
-                {ref.jobType && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Job type</span>
-                    <span className="font-medium">{JOB_TYPE_LABEL[ref.jobType] ?? ref.jobType}</span>
-                  </div>
-                )}
-                {ref.workMode && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Work mode</span>
-                    <span className="font-medium">{WORK_MODE_LABEL[ref.workMode]?.label ?? ref.workMode}</span>
-                  </div>
-                )}
-                {ref.location && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Location</span>
-                    <span className="font-medium">{ref.location}</span>
-                  </div>
-                )}
-                {ref.referralBonus && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Referral bonus</span>
-                    <span className="font-semibold text-amber-600 dark:text-amber-400">₹{ref.referralBonus.toLocaleString()}</span>
-                  </div>
-                )}
-                {ref.internalCode && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Job code</span>
-                    <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{ref.internalCode}</span>
-                  </div>
-                )}
-                {deadline && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Deadline</span>
-                    <span className={`font-medium ${isExpired ? "text-red-500" : ""}`}>{formatDate(deadline)}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Posted</span>
-                  <span className="font-medium">{formatDate(ref.createdAt)}</span>
-                </div>
-              </div>
-            </div>
+            {/* Quick facts — desktop only here; mobile shows it near the top
+                instead (see the `quickFacts` usage above). */}
+            <div className="hidden lg:block">{quickFacts}</div>
 
             {/* Posted by */}
             <div className="pt-3 border-t border-border">
@@ -333,15 +360,33 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
                   This referral is no longer accepting applications.
                 </div>
               ) : (
-                <ReferralApplyPanel
-                  referralId={ref.id}
-                  myApplication={myApplication as any}
-                  referrerName={ref.user.name ?? "Referrer"}
-                  referralTitle={ref.title}
-                />
+                <div className="hidden lg:block">{applyPanel}</div>
               )}
             </div>
           </div>
+        </div>
+
+        {/* ── Main, part 2 (How it works + disclaimer) — see placement
+            note above. ─────────────────────────────────────────── */}
+        <div className="lg:col-start-1 lg:row-start-2 lg:col-span-2 space-y-6">
+          {/* How it works */}
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-5">
+            <p className="font-semibold text-amber-800 dark:text-amber-300 mb-3 text-sm">How referrals work</p>
+            <ol className="space-y-2 text-sm text-amber-700 dark:text-amber-400">
+              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">1.</span>Express interest or submit a full application</li>
+              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">2.</span>The referrer reviews your profile and shortlists candidates</li>
+              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">3.</span>If shortlisted, they formally refer you to {ref.company.name} internally</li>
+              <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">4.</span>The company contacts you directly for their interview process</li>
+              {ref.referralBonus && <li className="flex gap-2.5"><span className="font-bold shrink-0 mt-0.5">5.</span>If hired, the referrer receives a ₹{ref.referralBonus.toLocaleString()} bonus</li>}
+            </ol>
+          </div>
+
+          {/* Disclaimer */}
+          <p className="text-xs text-muted-foreground bg-muted/40 rounded-xl px-4 py-3">
+            Referral posts are shared by individual employees in their personal capacity. Korpo is not affiliated
+            with, and does not verify claims on behalf of, the referenced employer. Users should verify any
+            opportunity independently.
+          </p>
         </div>
       </div>
     </div>

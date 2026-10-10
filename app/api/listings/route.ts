@@ -56,17 +56,10 @@ export async function POST(req: Request) {
   const { session, error } = await requireVerified()
   if (error) return error
 
-  // Rate limit: max 5 active listings for free users
+  // Free-plan active-listing cap — temporarily disabled; re-enable by
+  // restoring the count check below once subscription-based restriction
+  // is ready to launch.
   const isPremium = session.user.membershipPlan === "PREMIUM"
-  if (!isPremium) {
-    const count = await prisma.listing.count({ where: { userId: session.user.id, status: "ACTIVE" } })
-    if (count >= 5) {
-      return NextResponse.json(
-        { error: "Free plan allows max 5 active listings. Upgrade to Premium for unlimited." },
-        { status: 429 }
-      )
-    }
-  }
 
   const body = await req.json()
 

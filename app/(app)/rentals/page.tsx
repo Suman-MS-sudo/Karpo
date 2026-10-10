@@ -8,7 +8,6 @@ import {
   Wifi, Car, Dumbbell, Shield, Utensils, Zap, Home,
   BedDouble, Bath,
 } from "lucide-react"
-import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
@@ -61,8 +60,13 @@ interface PageProps {
   }
 }
 
+// Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx.
+// Boosted listings no longer get the "shown first" sort/banner/badge
+// treatment while this is off; re-enable by flipping this back to true.
+const BOOST_ENABLED = false
+
 const SORT_MAP = {
-  newest:     [{ isBoosted: "desc" as const }, { createdAt: "desc" as const }],
+  newest:     [...(BOOST_ENABLED ? [{ isBoosted: "desc" as const }] : []), { createdAt: "desc" as const }],
   price_asc:  [{ rent: "asc" as const }],
   price_desc: [{ rent: "desc" as const }],
   views:      [{ viewCount: "desc" as const }, { createdAt: "desc" as const }],
@@ -194,7 +198,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         focusRing="focus:ring-emerald-400/50"
         stats={[
           { value: allActiveCount.toLocaleString(), label: "Live Listings", gradient: "from-emerald-300 to-teal-200" },
-          { value: `${myRentalsCount}/${FREE_LIMITS.rentals}`, label: "You've Posted", gradient: "from-cyan-300 to-blue-200" },
+          { value: `${myRentalsCount}`, label: "You've Posted", gradient: "from-cyan-300 to-blue-200" },
           { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/rentals/new", label: "Post Listing", icon: Plus }}
@@ -224,19 +228,12 @@ export default async function RentalsPage({ searchParams }: PageProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-      {!isPremium && session?.user?.id && (
-        <div className="flex justify-end">
-          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-            <span className="text-amber-700 dark:text-amber-300 font-medium">{myRentalsCount}/{FREE_LIMITS.rentals} posted</span>
-          </div>
-        </div>
-      )}
 
       {/* Filters */}
       <RentalFilters current={sp} />
 
       {/* Premium listings label */}
-      {rentals.some((r) => r.isBoosted) && (
+      {BOOST_ENABLED && rentals.some((r) => r.isBoosted) && (
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-amber-500" />
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Boosted listings — shown first</span>
@@ -255,7 +252,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {rentals.map((rental) => {
             const typeColor  = TYPE_COLOR[rental.type] ?? "bg-muted text-muted-foreground"
-            const isBoosted  = rental.isBoosted
+            const isBoosted  = BOOST_ENABLED && rental.isBoosted
             return (
               <Link key={rental.id} href={`/rentals/${rental.id}`} className="group flex h-full">
                 <div className={`flex flex-col w-full bg-card border rounded-2xl overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${

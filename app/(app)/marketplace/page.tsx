@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { Plus, TrendingUp, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react"
-import { FREE_LIMITS } from "@/lib/limits"
 import { Button } from "@/components/ui/button"
 import { ListingCard } from "@/components/shared/ListingCard"
 import { MarketplaceFilters } from "@/components/marketplace/MarketplaceFilters"
@@ -77,8 +76,8 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     } : {}),
   }
 
-  // ── Featured section: SUPER + FEATURED boosts still active ────────────────
-  const featuredListings = searchParams.q ? [] : await prisma.listing.findMany({
+  // ── Featured section: temporarily disabled along with BOOST_ENABLED ───────
+  const featuredListings = (!BOOST_ENABLED || searchParams.q) ? [] : await prisma.listing.findMany({
     where: {
       ...baseWhere,
       boostLevel: { in: ["SUPER", "FEATURED"] },
@@ -110,8 +109,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
     boosted:    [{ isBoosted: "desc" as const }, { createdAt: "desc" as const }],
     newest:     [{ createdAt: "desc" as const }],
   }
-  const orderBy = sortMap[(searchParams.sort as keyof typeof sortMap) ?? "newest"] ??
-    [{ isBoosted: "desc" as const }, { createdAt: "desc" as const }]
+  const orderBy = sortMap[(searchParams.sort as keyof typeof sortMap) ?? "newest"] ?? sortMap.newest
 
   // ── Main grid listings (exclude featured dupes, with pagination) ──────────
   const gridWhere = {
@@ -135,7 +133,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       ...(featuredIds.length ? { NOT: { id: { in: featuredIds } } } : {}),
     },
     distinct: ["category"],
-    orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+    orderBy: [...(BOOST_ENABLED ? [{ isBoosted: "desc" as const }] : []), { createdAt: "desc" as const }],
     select: {
       id: true, title: true, description: true, price: true, images: true,
       category: true, condition: true, isNegotiable: true, boostLevel: true,
@@ -219,7 +217,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         focusRing="focus:ring-blue-400/50"
         stats={[
           { value: allActiveCount.toLocaleString(), label: "Live Listings", gradient: "from-blue-300 to-cyan-200" },
-          { value: `${myListingsCount}/${FREE_LIMITS.marketplace}`, label: "You've Posted", gradient: "from-emerald-300 to-teal-200" },
+          { value: `${myListingsCount}`, label: "You've Posted", gradient: "from-emerald-300 to-teal-200" },
           { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/marketplace/new", label: "Post Item", icon: Plus }}
@@ -248,13 +246,6 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {!isPremium && session?.user?.id && (
-        <div className="flex justify-end mb-4">
-          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-            <span className="text-amber-700 dark:text-amber-300 font-medium">{myListingsCount}/{FREE_LIMITS.marketplace} listed</span>
-          </div>
-        </div>
-      )}
 
       {/* ── Filters ─────────────────────────────────────────────────────────── */}
       <MarketplaceFilters current={searchParams} />
@@ -282,7 +273,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                 createdAt={listing.createdAt}
                 condition={listing.condition}
                 isNegotiable={listing.isNegotiable}
-                boostLevel={listing.boostLevel}
+                boostLevel={BOOST_ENABLED ? listing.boostLevel : undefined}
                 viewCount={listing.viewCount}
                 serviceBorderColor="border-l-amber-400"
                 isOwn={listing.userId === session?.user?.id}
@@ -318,7 +309,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                 createdAt={listing.createdAt}
                 condition={listing.condition}
                 isNegotiable={listing.isNegotiable}
-                boostLevel={listing.boostLevel}
+                boostLevel={BOOST_ENABLED ? listing.boostLevel : undefined}
                 viewCount={listing.viewCount}
                 serviceBorderColor="border-l-violet-400"
                 isOwn={listing.userId === session?.user?.id}
@@ -365,7 +356,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
                     createdAt={listing.createdAt}
                     condition={listing.condition}
                     isNegotiable={listing.isNegotiable}
-                    boostLevel={listing.boostLevel}
+                    boostLevel={BOOST_ENABLED ? listing.boostLevel : undefined}
                     viewCount={listing.viewCount}
                     serviceBorderColor="border-l-blue-400"
                     isOwn={listing.userId === session?.user?.id}

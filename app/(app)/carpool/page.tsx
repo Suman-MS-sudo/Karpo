@@ -14,7 +14,6 @@ import { UserCard } from "@/components/shared/UserCard"
 import { PremiumBadge, PremiumStrip } from "@/components/shared/PremiumBadge"
 import { CarpoolSearchBar } from "@/components/carpool/CarpoolSearchBar"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { FREE_LIMITS } from "@/lib/limits"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 
 export const dynamic = "force-dynamic"
@@ -23,6 +22,12 @@ export const metadata: Metadata = {
   title: "Carpool",
   description: "Find or offer a daily commute carpool with verified colleagues in your city and split the cost of your ride.",
 }
+
+// Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx.
+// Boosted routes no longer get the "shown first" sort/banner/badge
+// treatment while this is off; re-enable by flipping this back to true.
+const BOOST_ENABLED = false
+const BOOST_ORDER = BOOST_ENABLED ? [{ isBoosted: "desc" as const }] : []
 
 // ── Geo helpers (server-side) ─────────────────────────────────────────────────
 
@@ -163,7 +168,7 @@ export default async function CarpoolPage({
       ...(acOnly                   ? { acAvailable:  true                  } : {}),
       ...(maxPrice !== null        ? { pricePerSeat: { lte: maxPrice }      } : {}),
     },
-    orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
+    orderBy: [...BOOST_ORDER, { createdAt: "desc" }],
     take:    isFiltered ? 200 : 40,
     include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
   })
@@ -174,10 +179,6 @@ export default async function CarpoolPage({
     .filter((r) => !isSearching || routeMatchesSearch(r, pickupLat!, pickupLng!, dropoffLat!, dropoffLng!))
     .slice(0, 40)
 
-  const isPremium = session?.user?.membershipPlan === "PREMIUM"
-  const myCarpoolCount = session?.user?.id && !isPremium
-    ? await prisma.carpoolRoute.count({ where: { userId: session.user.id, isActive: true } })
-    : 0
   const wishlistedIds = await getWishlistedIds(session?.user?.id, "CARPOOL")
 
   const [activeRouteCount, seatsAgg, freqCountRows] = await Promise.all([
@@ -187,7 +188,7 @@ export default async function CarpoolPage({
   ])
   const freqCounts = Object.fromEntries(freqCountRows.map((r) => [r.frequency, r._count]))
 
-  const boostedCount = routes.filter((r) => r.isBoosted).length
+  const boostedCount = BOOST_ENABLED ? routes.filter((r) => r.isBoosted).length : 0
 
   // Build a human-readable description of active filters
   const filterSummaryParts: string[] = []
@@ -238,13 +239,6 @@ export default async function CarpoolPage({
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {!isPremium && session?.user?.id && (
-        <div className="flex justify-end mb-4">
-          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-1.5 text-xs">
-            <span className="text-amber-700 dark:text-amber-300 font-medium">{myCarpoolCount}/{FREE_LIMITS.carpool} route posted</span>
-          </div>
-        </div>
-      )}
 
       {/* Search + filter bar */}
       <Suspense fallback={<div className="h-24 rounded-2xl bg-muted animate-pulse mb-6" />}>
@@ -300,7 +294,7 @@ export default async function CarpoolPage({
       ) : routes.length === 0 && isFiltered ? null : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {routes.map((route) => {
-            const isBoosted = route.isBoosted
+            const isBoosted = BOOST_ENABLED && route.isBoosted
             return (
               <Link key={route.id} href={`/carpool/${route.id}`} className="group flex flex-col">
                 <div className={`bg-card border-2 rounded-3xl overflow-hidden flex flex-col h-full transition-all duration-200 hover:-translate-y-1 ${

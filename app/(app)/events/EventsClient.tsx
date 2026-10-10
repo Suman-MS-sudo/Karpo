@@ -151,14 +151,11 @@ interface Props {
   events:          EventItem[]
   totalEvents:     number
   totalRsvps:      number
-  isPremium:       boolean
-  myEventsCount:   number
-  eventsLimit:     number
   initialCity?:    string
   wishlistedIds?:  string[]
 }
 
-export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEventsCount, eventsLimit, initialCity, wishlistedIds }: Props) {
+export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wishlistedIds }: Props) {
   const searchParams = useSearchParams()
   const router       = useRouter()
   const [search,      setSearch]      = useState("")
@@ -384,11 +381,6 @@ export function EventsClient({ events, totalEvents, totalRsvps, isPremium, myEve
               <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Treks, sports, networking &amp; hobby clubs — only members with verified corporate emails.</p>
             </div>
             <div className="flex flex-row flex-wrap sm:flex-col items-center sm:items-end gap-1.5 sm:gap-2 shrink-0">
-              {!isPremium && (
-                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs backdrop-blur-sm whitespace-nowrap">
-                  <span className="text-amber-300 font-medium">{myEventsCount}/{eventsLimit} events</span>
-                </div>
-              )}
               <Button asChild size="sm" variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full sm:h-10 sm:px-4 sm:text-sm">
                 <Link href="/my-events"><Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1.5" /> <span className="hidden sm:inline">My Events</span></Link>
               </Button>

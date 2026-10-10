@@ -71,12 +71,12 @@ export default async function DashboardPage() {
       (SELECT COUNT(*) FROM "Listing" WHERE "userId" = ${userId} AND status = 'ACTIVE') AS "myListingsCount",
       (SELECT COUNT(*) FROM "Message" WHERE "receiverId" = ${userId} AND "isRead" = 0) AS "myMessages",
       (SELECT COALESCE(SUM("viewCount"),0) FROM "Listing" WHERE "userId" = ${userId}) AS "viewsSum",
-      (SELECT COUNT(*) FROM "Listing" WHERE status = 'ACTIVE' ${cityCond}) AS "marketplaceCount",
-      (SELECT COUNT(*) FROM "RentalPost" WHERE status = 'ACTIVE' ${cityCond}) AS "rentalCount",
-      (SELECT COUNT(*) FROM "JobReferral" WHERE status = 'OPEN' ${locationCond}) AS "referralCount",
-      (SELECT COUNT(*) FROM "SkillListing" WHERE status = 'ACTIVE' ${locationCond}) AS "skillCount",
+      (SELECT COUNT(*) FROM "Listing" WHERE status = 'ACTIVE') AS "marketplaceCount",
+      (SELECT COUNT(*) FROM "RentalPost" WHERE status = 'ACTIVE') AS "rentalCount",
+      (SELECT COUNT(*) FROM "JobReferral" WHERE status = 'OPEN') AS "referralCount",
+      (SELECT COUNT(*) FROM "SkillListing" WHERE status = 'ACTIVE') AS "skillCount",
       (SELECT COUNT(*) FROM "Deal" WHERE "isActive" = 1 AND "validUntil" >= ${now}) AS "dealCount",
-      (SELECT COUNT(*) FROM "Event" WHERE "isActive" = 1 AND date >= ${now} ${locationCond}) AS "eventCount"
+      (SELECT COUNT(*) FROM "Event" WHERE "isActive" = 1 AND date >= ${now}) AS "eventCount"
   `).then(([r]) => ({
     myListingsCount:  Number(r.myListingsCount),
     myMessages:       Number(r.myMessages),
@@ -430,9 +430,7 @@ export default async function DashboardPage() {
 
         {/* Services hero cards (desktop) */}
         <div className="hidden md:block">
-          <h2 className="text-base font-semibold mb-4">
-            Top Services{userCity && <span className="text-muted-foreground font-normal text-sm ml-2">in {userCity}</span>}
-          </h2>
+          <h2 className="text-base font-semibold mb-4">Top Services</h2>
           <ServiceHeroCards
             cards={[
               {

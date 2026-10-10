@@ -65,15 +65,15 @@ export function SkillCategoryStrip({ activeCategory, counts, total }: { activeCa
                   href={cat.value === "All" ? "/skills" : `/skills?category=${cat.value}`}
                   className={cn(
                     "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group",
-                    "flex-1 min-w-[84px]",
+                    "flex-1 min-w-[92px]",
                     isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
                   )}
                 >
                   <div className={cn(
-                    "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
+                    "h-12 w-12 sm:h-14 sm:w-14 rounded-2xl flex items-center justify-center transition-all duration-150",
                     isActive ? cn(cat.iconBg, "ring-2 ring-indigo-400 scale-110 shadow-[0_0_12px_rgba(99,102,241,0.4)]") : cn(cat.iconBg, "group-hover:scale-105")
                   )}>
-                    <cat.Icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                    <cat.Icon className={cn(cat.iconColor)} style={{ width: 22, height: 22 }} strokeWidth={isActive ? 2.5 : 2} />
                   </div>
                   <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
                     {cat.label}

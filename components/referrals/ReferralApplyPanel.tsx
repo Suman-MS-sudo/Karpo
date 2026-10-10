@@ -7,6 +7,7 @@ import {
   ExternalLink, MessageSquare, X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useChatContext } from "@/components/chat/ChatContext"
 
 type AppStatus = "PENDING" | "SHORTLISTED" | "REFERRED" | "HIRED" | "REJECTED"
 type AppType   = "INTEREST" | "APPLICATION"
@@ -29,7 +30,10 @@ interface MyApplication {
 interface Props {
   referralId:    string
   myApplication: MyApplication | null
+  referrerId:    string
   referrerName:  string
+  referrerAvatar?: string
+  referrerJobTitle?: string
   referralTitle: string
 }
 
@@ -52,10 +56,18 @@ const JOURNEY_STEPS = [
   { label: "Hired",                statuses: ["HIRED"] },
 ]
 
-export function ReferralApplyPanel({ referralId, myApplication, referrerName, referralTitle }: Props) {
+export function ReferralApplyPanel({ referralId, myApplication, referrerId, referrerName, referrerAvatar, referrerJobTitle, referralTitle }: Props) {
   const router = useRouter()
+  const { openChat } = useChatContext()
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState("")
+
+  const messageReferrer = () => openChat({
+    id:        referrerId,
+    name:      referrerName,
+    avatarUrl: referrerAvatar,
+    jobTitle:  referrerJobTitle,
+  })
 
   async function submit(type: AppType) {
     setLoading(true); setError("")
@@ -168,10 +180,8 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
 
         {error && <p className="text-xs text-red-500">{error}</p>}
 
-        <Button variant="outline" className="w-full gap-2" asChild>
-          <a href="/messages">
-            <MessageSquare className="h-4 w-4" />Message {referrerName.split(" ")[0]}
-          </a>
+        <Button variant="outline" className="w-full gap-2" onClick={messageReferrer}>
+          <MessageSquare className="h-4 w-4" />Message {referrerName.split(" ")[0]}
         </Button>
 
         {canRevoke && (
@@ -207,15 +217,15 @@ export function ReferralApplyPanel({ referralId, myApplication, referrerName, re
         </div>
       </button>
 
-      <button className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-violet-200 dark:border-violet-700 bg-violet-50/60 dark:bg-violet-950/20 hover:bg-violet-100/60 dark:hover:bg-violet-900/30 transition-all text-left group">
+      <button onClick={messageReferrer}
+        className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-violet-200 dark:border-violet-700 bg-violet-50/60 dark:bg-violet-950/20 hover:bg-violet-100/60 dark:hover:bg-violet-900/30 transition-all text-left group">
         <div className="h-9 w-9 rounded-full bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
           <MessageSquare className="h-4 w-4 text-violet-600 dark:text-violet-400" />
         </div>
-        <a href="/messages" className="flex-1">
-          <p className="font-semibold text-sm">Ask a Question</p>
+        <div className="flex-1">
+          <p className="font-semibold text-sm">Send Message</p>
           <p className="text-xs text-muted-foreground">Message the referrer directly</p>
-        </a>
-        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
       </button>
     </div>
   )

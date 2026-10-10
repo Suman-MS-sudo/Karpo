@@ -262,7 +262,7 @@ function ReferralsSection({ referrals, limit }: { referrals: any[]; limit?: numb
             <MetaRow>
               <span>{r.company?.name}</span>
               <span>{r.department}</span>
-              <span>{r.experienceMin}–{r.experienceMax} yrs</span>
+              <span>{r.experienceMin === r.experienceMax ? `${r.experienceMin} yrs` : `${r.experienceMin}–${r.experienceMax} yrs`}</span>
               {r.referralBonus && <span className="text-green-600 dark:text-green-400 flex items-center gap-1"><DollarSign className="h-3 w-3" />Bonus: {formatCurrency(r.referralBonus)}</span>}
               <span>{formatRelativeTime(r.createdAt)}</span>
             </MetaRow>

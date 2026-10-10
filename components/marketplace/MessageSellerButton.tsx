@@ -9,6 +9,7 @@ interface Props {
   sellerAvatar: string
   sellerJobTitle?: string
   isVerified?:  boolean
+  label?:       string
 }
 
 export function MessageSellerButton({
@@ -17,6 +18,7 @@ export function MessageSellerButton({
   sellerAvatar,
   sellerJobTitle,
   isVerified,
+  label = "Message Seller",
 }: Props) {
   const { openChat } = useChatContext()
 
@@ -34,7 +36,7 @@ export function MessageSellerButton({
       }
     >
       <MessageSquare className="h-4 w-4" />
-      Message Seller
+      {label}
     </Button>
   )
 }

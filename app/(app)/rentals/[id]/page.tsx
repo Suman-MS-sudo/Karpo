@@ -164,8 +164,6 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
     ? (rental.inquiries.find((i) => i.userId === userId) ?? null)
     : null
 
-  const isAccepted  = myEngagement?.status === "ACCEPTED"
-  const isConfirmed = myEngagement?.status === "CONFIRMED"
   const pendingCount = rental.inquiries.filter((i) => ["PENDING", "CONFIRMED"].includes(i.status)).length
 
   if (!isOwner) {
@@ -237,7 +235,9 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
                 </span>
               </div>
             </div>
-            <div className="text-right shrink-0">
+            {/* Price — mobile/tablet only here; desktop shows it once, in
+                the sticky sidebar card, instead of duplicating it here too. */}
+            <div className="text-right shrink-0 lg:hidden">
               <p className="text-3xl font-bold text-primary-600">{formatCurrency(rental.rent)}<span className="text-base font-normal text-muted-foreground">/mo</span></p>
               {rental.deposit && <p className="text-sm text-muted-foreground mt-0.5">Deposit: {formatCurrency(rental.deposit)}</p>}
               {rental.maintenanceAmt && (
@@ -285,8 +285,11 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
               <RentalEngagePanel
                 rentalId={params.id}
                 myEngagement={myEngagement as any}
+                ownerId={rental.userId}
                 ownerName={rental.user.name ?? "Owner"}
                 ownerAvatar={rental.user.avatarUrl ?? rental.user.image}
+                ownerJobTitle={rental.user.jobTitle}
+                ownerVerified={rental.user.isVerified}
               />
             </div>
           )}
@@ -436,12 +439,19 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         {/* ── Right sidebar ────────────────────────────────────────── */}
         <div className="space-y-4 lg:sticky lg:top-8">
 
-          {/* Price card */}
-          <div className="bg-card border border-border rounded-2xl p-5">
+          {/* Price card — desktop sidebar only; mobile already shows the
+              price attached to the title header above, so this would be a
+              redundant duplicate. */}
+          <div className="hidden lg:block bg-card border border-border rounded-2xl p-5">
             <div className="flex items-baseline justify-between gap-2">
               <div>
                 <p className="text-2xl font-bold text-primary-600">{formatCurrency(rental.rent)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
                 {rental.deposit && <p className="text-xs text-muted-foreground mt-0.5">Deposit: {formatCurrency(rental.deposit)}</p>}
+                {rental.maintenanceAmt && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    + {formatCurrency(rental.maintenanceAmt)}/mo maintenance {rental.maintenanceIncluded ? "(included)" : "(extra)"}
+                  </p>
+                )}
               </div>
               <Badge variant="outline" className={typeColor}>{rental.type}</Badge>
             </div>
@@ -457,30 +467,33 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
             )}
           </div>
 
-          {/* Posted by */}
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Posted by</h3>
-            <div className="flex items-center gap-3">
-              <ProfileLink userId={rental.userId}>
-                <Avatar className="h-11 w-11 ring-2 ring-border">
-                  <AvatarImage src={rental.user.avatarUrl ?? rental.user.image ?? ""} />
-                  <AvatarFallback className="font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
-                    {getInitials(rental.user.name)}
-                  </AvatarFallback>
-                </Avatar>
-              </ProfileLink>
-              <div className="min-w-0">
-                <ProfileLink userId={rental.userId} className="block font-semibold text-sm">{rental.user.name}</ProfileLink>
-                {rental.user.jobTitle && <p className="text-xs text-muted-foreground">{rental.user.jobTitle}</p>}
-                {rental.user.isVerified && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
-                    <CheckCircle2 className="h-3 w-3" /> Verified
-                  </p>
-                )}
+          {/* Posted by — owner's own view only. For non-owner viewers this
+              same name/avatar/verified info already appears at the top of
+              RentalEngagePanel, right above "Connect with owner", so a
+              second copy down here would just be a duplicate. */}
+          {isOwner && (
+            <div className="bg-card border border-border rounded-2xl p-5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Posted by</h3>
+              <div className="flex items-center gap-3">
+                <ProfileLink userId={rental.userId}>
+                  <Avatar className="h-11 w-11 ring-2 ring-border">
+                    <AvatarImage src={rental.user.avatarUrl ?? rental.user.image ?? ""} />
+                    <AvatarFallback className="font-semibold bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300">
+                      {getInitials(rental.user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileLink>
+                <div className="min-w-0">
+                  <ProfileLink userId={rental.userId} className="block font-semibold text-sm">{rental.user.name}</ProfileLink>
+                  {rental.user.jobTitle && <p className="text-xs text-muted-foreground">{rental.user.jobTitle}</p>}
+                  {rental.user.isVerified && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-0.5">
+                      <CheckCircle2 className="h-3 w-3" /> Verified
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {isOwner && (
               <div className="mt-4 pt-4 border-t border-border space-y-2">
                 {rental.phone && (
                   <a href={`tel:${rental.phone}`} className="flex items-center gap-2 text-sm text-foreground hover:text-primary-600 transition-colors">
@@ -493,8 +506,8 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
                   </Link>
                 </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Owner: leads panel */}
           {isOwner && (
@@ -511,33 +524,15 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
               <RentalEngagePanel
                 rentalId={params.id}
                 myEngagement={myEngagement as any}
+                ownerId={rental.userId}
                 ownerName={rental.user.name ?? "Owner"}
                 ownerAvatar={rental.user.avatarUrl ?? rental.user.image}
+                ownerJobTitle={rental.user.jobTitle}
+                ownerVerified={rental.user.isVerified}
               />
             </div>
           )}
 
-          {/* Contact unlocked (confirmed visit or accepted) */}
-          {!isOwner && (isAccepted || isConfirmed) && (
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Owner contact</p>
-              {rental.phone && (
-                <a href={`tel:${rental.phone}`} className="flex items-center gap-2 text-sm hover:text-primary-600 transition-colors">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />{rental.phone}
-                </a>
-              )}
-              {rental.user.phone && rental.user.phone !== rental.phone && (
-                <a href={`tel:${rental.user.phone}`} className="flex items-center gap-2 text-sm hover:text-primary-600 transition-colors">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />{rental.user.phone}
-                </a>
-              )}
-              <Button size="sm" variant="outline" className="w-full gap-2 mt-1" asChild>
-                <Link href={`/messages/${rental.userId}`}>
-                  <MessageSquare className="h-3.5 w-3.5" /> Message owner
-                </Link>
-              </Button>
-            </div>
-          )}
 
           {/* Filled / expired state for viewers */}
           {!isOwner && (isFilled || isExpired) && !myEngagement && (

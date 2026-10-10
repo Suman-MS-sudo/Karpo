@@ -3,14 +3,14 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Star, Calendar, MessageSquare, Users, Check, X,
-  Phone, Mail, ChevronDown, ChevronUp, CheckCircle2,
+  ChevronDown, ChevronUp, CheckCircle2,
   Loader2, Flag, Handshake, ThumbsDown,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { formatRelativeTime, getInitials } from "@/lib/utils"
-import Link from "next/link"
 import { ProfileLink } from "@/components/shared/ProfileLink"
+import { useChatContext } from "@/components/chat/ChatContext"
 
 interface Inquirer {
   id: string; name: string | null; email: string | null; phone: string | null
@@ -68,6 +68,7 @@ function InquiryCard({
   onUpdate: (id: string, newStatus: string) => void
 }) {
   const [acting, setActing] = useState<string | null>(null)
+  const { openChat } = useChatContext()
 
   const act = async (action: string) => {
     setActing(action)
@@ -135,21 +136,20 @@ function InquiryCard({
         </div>
       )}
 
-      {/* Contact info if accepted */}
+      {/* Message — contact details (phone/email) are intentionally not
+          surfaced here; in-app messaging is the only contact path shown. */}
       {(inquiry.status === "ACCEPTED" || inquiry.status === "CONFIRMED") && (
         <div className="space-y-1 pt-1 border-t border-border">
-          {inquiry.user.phone && (
-            <a href={`tel:${inquiry.user.phone}`} className="flex items-center gap-1.5 text-xs text-foreground hover:text-primary-600 transition-colors">
-              <Phone className="h-3 w-3 text-muted-foreground" />{inquiry.user.phone}
-            </a>
-          )}
-          {inquiry.user.email && (
-            <a href={`mailto:${inquiry.user.email}`} className="flex items-center gap-1.5 text-xs text-foreground hover:text-primary-600 transition-colors">
-              <Mail className="h-3 w-3 text-muted-foreground" />{inquiry.user.email}
-            </a>
-          )}
-          <Button size="sm" variant="ghost" className="h-7 w-full gap-1.5 text-xs mt-1" asChild>
-            <Link href={`/messages/${inquiry.user.id}`}><MessageSquare className="h-3 w-3" /> Message</Link>
+          <Button
+            size="sm" variant="ghost" className="h-7 w-full gap-1.5 text-xs mt-1"
+            onClick={() => openChat({
+              id:        inquiry.user.id,
+              name:      inquiry.user.name ?? "User",
+              avatarUrl: inquiry.user.avatarUrl ?? inquiry.user.image ?? undefined,
+              jobTitle:  inquiry.user.jobTitle ?? undefined,
+            })}
+          >
+            <MessageSquare className="h-3 w-3" /> Message
           </Button>
         </div>
       )}

@@ -7,6 +7,8 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ProfileLink } from "@/components/shared/ProfileLink"
+import { MessageSellerButton } from "@/components/marketplace/MessageSellerButton"
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -22,8 +24,11 @@ interface MyEngagement {
 interface Props {
   rentalId: string
   myEngagement: MyEngagement | null
+  ownerId: string
   ownerName: string
   ownerAvatar?: string | null
+  ownerJobTitle?: string | null
+  ownerVerified?: boolean
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -48,7 +53,7 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string; ic
     icon:  CheckCircle2,
   },
   ACCEPTED: {
-    label: "Accepted — contact details unlocked!",
+    label: "Accepted",
     color: "text-emerald-600 dark:text-emerald-400",
     bg:    "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800",
     icon:  CheckCircle2,
@@ -184,11 +189,14 @@ function MessageForm({
 // ─── Status Card ───────────────────────────────────────────────────────────
 
 function StatusCard({
-  engagement, ownerName, ownerAvatar, onUpgrade, onRevoke, revoking,
+  engagement, ownerId, ownerName, ownerAvatar, ownerJobTitle, ownerVerified, onUpgrade, onRevoke, revoking,
 }: {
   engagement: MyEngagement
+  ownerId: string
   ownerName: string
   ownerAvatar?: string | null
+  ownerJobTitle?: string | null
+  ownerVerified?: boolean
   onUpgrade: (mode: "visit" | "message") => void
   onRevoke: () => void
   revoking: boolean
@@ -237,15 +245,26 @@ function StatusCard({
 
       {/* Owner card */}
       <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={ownerAvatar ?? ""} />
-          <AvatarFallback className="text-xs font-semibold">{ownerName.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <ProfileLink userId={ownerId}>
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={ownerAvatar ?? ""} />
+            <AvatarFallback className="text-xs font-semibold">{ownerName.charAt(0)}</AvatarFallback>
+          </Avatar>
+        </ProfileLink>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium truncate">{ownerName}</p>
+          <ProfileLink userId={ownerId} className="block text-xs font-medium truncate">{ownerName}</ProfileLink>
           <p className="text-[10px] text-muted-foreground">Property Owner</p>
         </div>
       </div>
+
+      <MessageSellerButton
+        sellerId={ownerId}
+        sellerName={ownerName}
+        sellerAvatar={ownerAvatar ?? ""}
+        sellerJobTitle={ownerJobTitle ?? ""}
+        isVerified={ownerVerified}
+        label="Message Owner"
+      />
 
       {/* Upgrade options */}
       {engagement.type === "INTEREST" && (isPending || engagement.status === "ACCEPTED") && (
@@ -268,14 +287,6 @@ function StatusCard({
         </div>
       )}
 
-      {engagement.type === "VISIT" && (isPending || engagement.status === "CONFIRMED") && (
-        <button onClick={() => onUpgrade("message")}
-          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-border hover:border-primary-600/50 hover:bg-primary-50 dark:hover:bg-primary-950/10 transition-all text-left group">
-          <MessageSquare className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary-600 shrink-0" />
-          <span className="text-xs font-medium">Also send a message</span>
-          <ChevronRight className="h-3 w-3 text-muted-foreground ml-auto" />
-        </button>
-      )}
 
       {/* Revoke — interest or visit request, while not yet accepted/done */}
       {(engagement.type === "INTEREST" || engagement.type === "VISIT") &&
@@ -284,6 +295,13 @@ function StatusCard({
           className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all text-xs font-semibold disabled:opacity-50">
           {revoking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
           {revoking ? "Revoking…" : engagement.type === "VISIT" ? "Cancel Visit Request" : "Revoke Interest"}
+        </button>
+      )}
+
+      {isDeclined && engagement.type === "VISIT" && (
+        <button onClick={() => onUpgrade("visit")}
+          className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <Calendar className="h-3.5 w-3.5" /> Reschedule Visit
         </button>
       )}
 
@@ -300,7 +318,7 @@ function StatusCard({
 
 type Mode = "options" | "visit" | "message"
 
-export function RentalEngagePanel({ rentalId, myEngagement: initial, ownerName, ownerAvatar }: Props) {
+export function RentalEngagePanel({ rentalId, myEngagement: initial, ownerId, ownerName, ownerAvatar, ownerJobTitle, ownerVerified }: Props) {
   const router = useRouter()
   const [engagement, setEngagement] = useState<MyEngagement | null>(initial)
   const [mode,    setMode]    = useState<Mode>("options")
@@ -370,8 +388,11 @@ export function RentalEngagePanel({ rentalId, myEngagement: initial, ownerName, 
         {error && <p className="text-xs text-destructive">{error}</p>}
         <StatusCard
           engagement={engagement}
+          ownerId={ownerId}
           ownerName={ownerName}
           ownerAvatar={ownerAvatar}
+          ownerJobTitle={ownerJobTitle}
+          ownerVerified={ownerVerified}
           onUpgrade={(m) => setMode(m)}
           onRevoke={revoke}
           revoking={revoking}
@@ -411,18 +432,29 @@ export function RentalEngagePanel({ rentalId, myEngagement: initial, ownerName, 
   if (mode === "options") {
     return (
       <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
-        <div className="flex items-center gap-2.5 mb-4">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={ownerAvatar ?? ""} />
-            <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700">{ownerName.charAt(0)}</AvatarFallback>
-          </Avatar>
+        <div className="flex items-center gap-2.5">
+          <ProfileLink userId={ownerId}>
+            <Avatar className="h-9 w-9">
+              <AvatarImage src={ownerAvatar ?? ""} />
+              <AvatarFallback className="text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-700">{ownerName.charAt(0)}</AvatarFallback>
+            </Avatar>
+          </ProfileLink>
           <div>
-            <p className="text-sm font-semibold">{ownerName}</p>
+            <ProfileLink userId={ownerId} className="block text-sm font-semibold">{ownerName}</ProfileLink>
             <p className="text-xs text-muted-foreground">Property Owner</p>
           </div>
         </div>
 
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Connect with owner</h3>
+        <MessageSellerButton
+          sellerId={ownerId}
+          sellerName={ownerName}
+          sellerAvatar={ownerAvatar ?? ""}
+          sellerJobTitle={ownerJobTitle ?? ""}
+          isVerified={ownerVerified}
+          label="Message Owner"
+        />
+
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-1">Connect with owner</h3>
 
         {/* Show Interest */}
         <button onClick={showInterest} disabled={loading}

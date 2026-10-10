@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   Users, ChevronDown, ChevronUp, Loader2, CheckCircle2,
   XCircle, Clock, ExternalLink, Download, Star, FileText, Briefcase,
@@ -89,8 +89,6 @@ function ApplicationCard({ app, referralId, onStatusChange }: { app: Application
 
   const isPending     = app.status === "PENDING"
   const isShortlisted = app.status === "SHORTLISTED"
-  const isReferred    = app.status === "REFERRED"
-  const isSettled     = app.status === "HIRED" || app.status === "REJECTED"
 
   async function act(action: string) {
     setLoading(action)
@@ -246,7 +244,7 @@ function ApplicationCard({ app, referralId, onStatusChange }: { app: Application
       </p>
 
       {/* Pipeline actions */}
-      {!isSettled && (
+      {(isPending || isShortlisted) && (
         <div className="pt-2 border-t border-border space-y-2">
           {isPending && (
             <div className="grid grid-cols-2 gap-2">
@@ -273,20 +271,6 @@ function ApplicationCard({ app, referralId, onStatusChange }: { app: Application
                 onClick={() => act("REJECT")} disabled={!!loading}>
                 {loading === "REJECT" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
                 Pass
-              </Button>
-            </div>
-          )}
-          {isReferred && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" className="gap-1.5 h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => act("HIRE")} disabled={!!loading}>
-                {loading === "HIRE" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                Mark Hired
-              </Button>
-              <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50"
-                onClick={() => act("REJECT")} disabled={!!loading}>
-                {loading === "REJECT" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
-                Rejected by company
               </Button>
             </div>
           )}
@@ -343,6 +327,13 @@ export function ReferralApplicationsPanel({ referralId, initialCount }: Props) {
       setLoading(false)
     }
   }
+
+  // Auto-expand when there are applicants, so the referrer sees them
+  // immediately instead of having to notice and click the collapsed row.
+  useEffect(() => {
+    if (initialCount > 0) load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function updateStatus(id: string, status: string) {
     setApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)))

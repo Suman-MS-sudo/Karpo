@@ -83,7 +83,7 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
               const href =
                 item.value === "All"      ? basePath :
                 item.value.startsWith("/") ? item.value :
-                `${basePath}?${paramName}=${item.value}`
+                `${basePath}?${paramName}=${encodeURIComponent(item.value)}`
               const Icon = ICON_REGISTRY[item.icon] ?? Package
               return (
                 <Link
@@ -129,7 +129,7 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
                       </>
                     )}
                   </div>
-                  <span className={cn("font-outfit", "text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                  <span className={cn("font-outfit", "text-xs sm:text-sm font-bold tracking-tight text-center leading-tight line-clamp-2 max-w-[100px] sm:max-w-[132px]", isActive ? "text-foreground" : "text-muted-foreground")}>
                     {item.label}
                   </span>
                   <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>

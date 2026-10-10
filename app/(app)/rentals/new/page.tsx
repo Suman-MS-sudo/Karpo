@@ -131,7 +131,7 @@ function RuleRow({ label, desc, checked, onChange }: { label:string; desc?:strin
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type FormState = {
-  title: string; type: string; phone: string
+  title: string; type: string; phone: string; postedAs: string
   city: string; area: string; societyName: string; landmark: string; fullAddress: string
   latitude: number | null; longitude: number | null
   rent: string; deposit: string; maintenanceAmt: string; maintenanceIncluded: boolean
@@ -160,39 +160,62 @@ function loadDraft(): { form?: FormState; images?: string[]; amenities?: string[
   }
 }
 
+const INITIAL_FORM: FormState = {
+  title:"", type:"APARTMENT", phone:"", postedAs:"",
+  city:"", area:"", societyName:"", landmark:"", fullAddress:"",
+  latitude: null, longitude: null,
+  rent:"", deposit:"", maintenanceAmt:"", maintenanceIncluded: false,
+  brokerage:"NONE", availableFrom:"",
+  bhk:"", furnished:"UNFURNISHED", carpetArea:"",
+  floor:"", totalFloors:"", bathrooms:"1", balconies:"0",
+  propertyAge:"", facing:"",
+  gender:"ANY", occupancy:"SINGLE",
+  twoWheelerParking:"NONE", fourWheelerParking:"NONE", visitorParking: false,
+  waterSupply:"24_7", powerBackup:"NONE", gasType:"NONE", internet:"NOT_INCLUDED",
+  workingProfOnly:false, studentsAllowed:true, couplesAllowed:false,
+  familiesAllowed:true, smokingAllowed:false, alcoholAllowed:false,
+  vegetarianOnly:false, visitorsAllowed:true, nonVegAllowed:true, petsAllowed:false,
+  description:"",
+}
+
 export default function NewRentalPage() {
   const router = useRouter()
   const { data: session } = useSession()
-  const draft = useRef(loadDraft())
+  // Draft (and the user's city default) can only be known once mounted on
+  // the client — reading sessionStorage during the initial render would
+  // make the server-rendered HTML and the client's first render disagree
+  // (a hydration mismatch). So render plain defaults first, then apply the
+  // saved draft/city in an effect right after mount.
   const [loading, setLoading]         = useState(false)
-  const [images, setImages]           = useState<string[]>(draft.current?.images ?? [])
+  const [images, setImages]           = useState<string[]>([])
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState("")
   const fileInputRef                  = useRef<HTMLInputElement>(null)
-  const [amenities, setAmenities]     = useState<string[]>(draft.current?.amenities ?? [])
-  const [furnishingItems, setFurnishingItems] = useState<string[]>(draft.current?.furnishingItems ?? [])
+  const [amenities, setAmenities]     = useState<string[]>([])
+  const [furnishingItems, setFurnishingItems] = useState<string[]>([])
+  const [form, setForm]               = useState<FormState>(INITIAL_FORM)
+  const hydrated = useRef(false)
 
-  const [form, setForm] = useState<FormState>(draft.current?.form ?? {
-    title:"", type:"APARTMENT", phone:"",
-    city: session?.user?.city ?? "", area:"", societyName:"", landmark:"", fullAddress:"",
-    latitude: null, longitude: null,
-    rent:"", deposit:"", maintenanceAmt:"", maintenanceIncluded: false,
-    brokerage:"NONE", availableFrom:"",
-    bhk:"", furnished:"UNFURNISHED", carpetArea:"",
-    floor:"", totalFloors:"", bathrooms:"1", balconies:"0",
-    propertyAge:"", facing:"",
-    gender:"ANY", occupancy:"SINGLE",
-    twoWheelerParking:"NONE", fourWheelerParking:"NONE", visitorParking: false,
-    waterSupply:"24_7", powerBackup:"NONE", gasType:"NONE", internet:"NOT_INCLUDED",
-    workingProfOnly:false, studentsAllowed:true, couplesAllowed:false,
-    familiesAllowed:true, smokingAllowed:false, alcoholAllowed:false,
-    vegetarianOnly:false, visitorsAllowed:true, nonVegAllowed:true, petsAllowed:false,
-    description:"",
-  })
+  useEffect(() => {
+    const draft = loadDraft()
+    if (draft) {
+      if (draft.form) setForm(draft.form)
+      if (draft.images) setImages(draft.images)
+      if (draft.amenities) setAmenities(draft.amenities)
+      if (draft.furnishingItems) setFurnishingItems(draft.furnishingItems)
+    } else if (session?.user?.city) {
+      setForm((p) => ({ ...p, city: session.user!.city! }))
+    }
+    hydrated.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Persist a draft on every change so entered details survive an accidental
-  // reload/navigation (e.g. while the native photo picker is open).
+  // reload/navigation (e.g. while the native photo picker is open). Skipped
+  // until the post-mount draft load above has run, so it doesn't immediately
+  // overwrite a saved draft with the pre-hydration empty defaults.
   useEffect(() => {
+    if (!hydrated.current) return
     try {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, images, amenities, furnishingItems }))
     } catch {
@@ -244,6 +267,11 @@ export default function NewRentalPage() {
     e.preventDefault()
     if (titleHasTooManyDigits(form.title)) {
       alert(titleDigitLimitError())
+      scrollTo("basic")
+      return
+    }
+    if (!form.postedAs) {
+      alert("Please select whether you're posting as the Owner or a Referrer.")
       scrollTo("basic")
       return
     }
@@ -349,6 +377,19 @@ export default function NewRentalPage() {
                 <label className={LABEL}>Listing Title *</label>
                 <input required className={INPUT} placeholder="e.g. Spacious 2BHK near Metro, Whitefield" value={form.title} onChange={setStr("title")} />
               </div>
+              <div>
+                <label className={LABEL}>Posting As *</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {["OWNER", "REFERRER"].map((role) => (
+                    <button key={role} type="button" onClick={() => set("postedAs", role)}
+                      className={`py-2 px-1 rounded-xl text-xs font-medium border text-center transition-all ${
+                        form.postedAs === role ? "bg-primary-600 text-white border-primary-600 shadow-sm" : "border-border text-muted-foreground hover:border-primary-400 hover:text-foreground"
+                      }`}>
+                      {role.charAt(0) + role.slice(1).toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={LABEL}>Property Type *</label>
@@ -435,7 +476,8 @@ export default function NewRentalPage() {
                 </div>
                 <div>
                   <label className={LABEL}>Security Deposit (₹)</label>
-                  <input type="number" min="0" className={INPUT} placeholder="30,000" value={form.deposit} onChange={setStr("deposit")} />
+                  <input inputMode="numeric" className={INPUT} placeholder="30,000" value={formatThousands(form.deposit)}
+                    onChange={(e) => set("deposit", e.target.value.replace(/\D/g, ""))} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

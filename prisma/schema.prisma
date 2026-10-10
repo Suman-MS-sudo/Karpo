@@ -427,6 +427,7 @@ model RentalPost {
   availableFrom DateTime
   status        String   @default("ACTIVE") // ACTIVE, FILLED, EXPIRED
   description   String?
+  postedAs      String?  // OWNER, REFERRER — who the poster is in relation to the property
   // Extra detail fields
   bhk           String?  // "1BHK", "2BHK", "3BHK", "4BHK+", "Studio", "Room", "PG Room"
   furnished     String   @default("UNFURNISHED") // UNFURNISHED, SEMI, FULLY

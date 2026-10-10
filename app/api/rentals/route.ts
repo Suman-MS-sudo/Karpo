@@ -36,6 +36,7 @@ function coreData(userId: string, body: any) {
     images:       body.images       ?? [],
     availableFrom:new Date(body.availableFrom),
     description:  body.description  ?? null,
+    postedAs:     body.postedAs,
   }
 }
 
@@ -92,6 +93,10 @@ export async function POST(req: Request) {
 
   if (titleHasTooManyDigits(body.title)) {
     return NextResponse.json({ error: titleDigitLimitError() }, { status: 400 })
+  }
+
+  if (body.postedAs !== "OWNER" && body.postedAs !== "REFERRER") {
+    return NextResponse.json({ error: "postedAs must be OWNER or REFERRER" }, { status: 400 })
   }
 
   const violatingField = findContactInfoField({
