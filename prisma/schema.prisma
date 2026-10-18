@@ -87,6 +87,7 @@ model User {
   username        String?   @unique
   companyId       String?
   workEmail       String?   @unique
+  personalEmail   String?             // personal (non-corporate) contact email — required at registration, null for accounts created before it was collected
   passwordHash    String?
   userCode        String?   @unique  // KP00001, KP00002, ... — assigned sequentially on signup
   batchCode       String?             // 4-digit cohort code, e.g. "0001" for the first 100 users

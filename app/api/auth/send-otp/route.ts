@@ -4,11 +4,12 @@ import { isDomainBlocked } from "@/lib/domains"
 import { RESERVED_DOMAINS, matchesReservedDomainTypo } from "@/lib/auth-provision"
 import { sendOTPEmail } from "@/lib/email"
 import { normalizePhone } from "@/lib/phone"
+import { validatePersonalEmail } from "@/lib/personal-email"
 import { randomInt } from "crypto"
 
 export async function POST(req: Request) {
   try {
-  const { email, phone: rawPhone, intent } = await req.json()
+  const { email, phone: rawPhone, intent, personalEmail } = await req.json()
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Email is required" }, { status: 400 })
@@ -42,6 +43,13 @@ export async function POST(req: Request) {
         ? "Temporary or disposable email addresses are not allowed."
         : "Please enter a valid corporate email address."
     return NextResponse.json({ error: message }, { status: 400 })
+  }
+
+  // ── Registration requires a personal email (mandatory) ─────────────────────
+  // (the register form is identified by intent "register" and/or a phone number)
+  if ((intent === "register" || phone) && !isAdmin) {
+    const personalEmailError = validatePersonalEmail(personalEmail, normalized)
+    if (personalEmailError) return NextResponse.json({ error: personalEmailError }, { status: 400 })
   }
 
   // ── Rate limit, ID-verification, existing-user, and phone-owner lookups ────

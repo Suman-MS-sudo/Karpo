@@ -61,6 +61,7 @@ export async function provisionUser(
     phone?: string | null
     passwordHash?: string | null
     workEmail?: string | null
+    personalEmail?: string | null
     // Callers that already know whether a User row exists for this email
     // (e.g. the OTP credentials flow, which has to look this up itself
     // beforehand anyway) can pass it through here to skip a redundant
@@ -109,6 +110,7 @@ export async function provisionUser(
       ...(phone ? { phone } : {}),
       ...(opts.passwordHash ? { passwordHash: opts.passwordHash } : {}),
       ...(workEmail ? { workEmail } : {}),
+      ...(opts.personalEmail ? { personalEmail: opts.personalEmail } : {}),
     },
     create: {
       email,
@@ -119,6 +121,7 @@ export async function provisionUser(
       role: opts.isAdmin ? "ADMIN" : "USER",
       ...(company ? { companyId: company.id } : {}),
       ...(workEmail ? { workEmail } : {}),
+      ...(opts.personalEmail ? { personalEmail: opts.personalEmail } : {}),
       membership: { create: { plan: opts.isAdmin ? "PREMIUM" : "FREE" } },
     },
   })

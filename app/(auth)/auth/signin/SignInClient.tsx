@@ -11,6 +11,7 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { LegalModal } from "@/components/legal/LegalModal"
 import { isDomainBlocked } from "@/lib/domains"
+import { validatePersonalEmail } from "@/lib/personal-email"
 import { normalizePhone } from "@/lib/phone"
 import type { ConfirmationResult, RecaptchaVerifier as RecaptchaVerifierType } from "firebase/auth"
 
@@ -56,6 +57,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   // ── Registration (Name/Corp email/Phone/Password, upfront) ─────────────────
   const [regName, setRegName]         = useState("")
   const [regPhone, setRegPhone]       = useState("")
+  const [regPersonalEmail, setRegPersonalEmail] = useState("")
   const [regPassword, setRegPassword] = useState("")
   const [regPasswordConfirm, setRegPasswordConfirm] = useState("")
   const [registering, setRegistering] = useState(false)
@@ -65,6 +67,8 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
   const regEmailLooksComplete = trimmedRegEmail.includes("@") && trimmedRegEmail.split("@")[1]?.includes(".")
   const regEmailCheck = regEmailLooksComplete ? isDomainBlocked(trimmedRegEmail) : undefined
   const regEmailBlockedReason = regEmailCheck?.blocked ? regEmailCheck.reason : undefined
+  // Only show the inline error once they have typed something (the Required rule is enforced by `required` + the disabled submit button)
+  const regPersonalEmailError = regPersonalEmail.trim() ? validatePersonalEmail(regPersonalEmail, email) : null
   const passwordMismatch = regPassword.length > 0 && regPasswordConfirm.length > 0 && regPassword !== regPasswordConfirm
 
   // ── WhatsApp OTP login (returning users) ────────────────────────────────────
@@ -121,7 +125,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           // signup once registering starts — otherwise a resend would get
           // rejected as "no account found" for a brand-new email.
           ...(registering
-            ? { intent: "register", phone: regPhone.trim() }
+            ? { intent: "register", phone: regPhone.trim(), personalEmail: regPersonalEmail.trim().toLowerCase() }
             : { intent: "signin" }),
         }),
       })
@@ -140,7 +144,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setLoading(false)
     }
-  }, [email, registering, regPhone])
+  }, [email, registering, regPhone, regPersonalEmail])
 
   // ── OTP box keyboard handling ───────────────────────────────────────────────
   const handleOtpChange = (index: number, value: string) => {
@@ -190,7 +194,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         redirect: false,
         email: email.trim().toLowerCase(),
         otp: finalCode,
-        ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword } : {}),
+        ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword, personalEmail: regPersonalEmail.trim().toLowerCase() } : {}),
       })
       let sessionData: any = null
       if (result?.error) {
@@ -246,12 +250,14 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
     } finally {
       setLoading(false)
     }
-  }, [email, otp, isNewUser, callbackUrl, router, registering, regName, regPhone, regPassword])
+  }, [email, otp, isNewUser, callbackUrl, router, registering, regName, regPhone, regPassword, regPersonalEmail])
 
   // ── Registration: submit Name/Email/Phone/Password, then send email OTP ───
   const handleRegisterSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault()
     setError("")
+    const personalEmailError = validatePersonalEmail(regPersonalEmail, email)
+    if (personalEmailError) { setError(personalEmailError); return }
     if (regPassword.length < 8) { setError("Password must be at least 8 characters."); return }
     if (regPassword !== regPasswordConfirm) { setError("Passwords don't match."); return }
     if (!regAgreed) { setError("Please agree to the Terms and Conditions and Privacy Policy to continue."); return }
@@ -260,7 +266,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
       const res  = await fetch("/api/auth/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), phone: regPhone.trim() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), intent: "register", phone: regPhone.trim(), personalEmail: regPersonalEmail.trim().toLowerCase() }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Failed to send code"); return }
@@ -1260,6 +1266,16 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="reg-personal-email">Personal email</Label>
+            <Input id="reg-personal-email" type="email" autoComplete="off" placeholder="you@gmail.com"
+              value={regPersonalEmail} onChange={(e) => setRegPersonalEmail(e.target.value)} required />
+            {regPersonalEmailError && (
+              <p className="text-xs text-red-600 dark:text-red-400">{regPersonalEmailError}</p>
+            )}
+            <p className="text-xs text-muted-foreground">Used to reach you if you ever lose access to your work email.</p>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="reg-phone">Phone number</Label>
             <Input id="reg-phone" type="tel" placeholder="+91 98765 43210"
               value={regPhone} onChange={(e) => setRegPhone(e.target.value)} required />
@@ -1302,7 +1318,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
           </label>
 
           <Button type="submit" className="w-full" size="lg"
-            disabled={loading || !regName || !email.includes("@") || !!regEmailBlockedReason || !regPhone || !regPassword || !regPasswordConfirm || passwordMismatch || !regAgreed}>
+            disabled={loading || !regName || !email.includes("@") || !!regEmailBlockedReason || !regPersonalEmail.trim() || !!regPersonalEmailError || !regPhone || !regPassword || !regPasswordConfirm || passwordMismatch || !regAgreed}>
             {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Sending code…</> : "Verify email & create account →"}
           </Button>
 

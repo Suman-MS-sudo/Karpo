@@ -9,6 +9,7 @@ import { provisionUser } from "@/lib/auth-provision"
 import { getLinkedInVerificationReport } from "@/lib/linkedin-verification"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
+import { validatePersonalEmail } from "@/lib/personal-email"
 import { randomUUID } from "crypto"
 
 // Firebase phone-auth login is temporarily disabled (see FIREBASE_PHONE_AUTH_ENABLED
@@ -130,6 +131,7 @@ const providers: Provider[] = [
         name: { type: "text" },
         phone: { type: "tel" },
         newPassword: { type: "password" },
+        personalEmail: { type: "email" },
         whatsappOtp: { type: "text" },
         firebaseIdToken: { type: "text" },
       },
@@ -140,6 +142,7 @@ const providers: Provider[] = [
         const regName         = credentials?.name as string | undefined
         const regPhone        = credentials?.phone as string | undefined
         const newPassword     = credentials?.newPassword as string | undefined
+        const personalEmail   = (credentials?.personalEmail as string | undefined)?.trim().toLowerCase()
         const whatsappOtp     = credentials?.whatsappOtp as string | undefined
         const firebaseIdToken = credentials?.firebaseIdToken as string | undefined
 
@@ -253,6 +256,13 @@ const providers: Provider[] = [
           if (idRequest && idRequest.status !== "APPROVED") return null
         }
 
+        // A registration submission must carry a valid personal email. Checked
+        // before the token is consumed so the same OTP still works on retry.
+        if (!isAdmin && !existingUser?.passwordHash && regName && regPhone && newPassword
+            && validatePersonalEmail(personalEmail, email)) {
+          return null
+        }
+
         await clearFailedAttempts(email)
 
         // Consume the token immediately
@@ -267,7 +277,7 @@ const providers: Provider[] = [
         const needsRegistration = !existingUser || !existingUser.passwordHash
         const regProvision =
           needsRegistration && regName && regPhone && newPassword
-            ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword) }
+            ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword), personalEmail }
             : {}
 
         const { dbUser } = await provisionUser(email, { isAdmin, isExisting: !!existingUser, ...regProvision })
