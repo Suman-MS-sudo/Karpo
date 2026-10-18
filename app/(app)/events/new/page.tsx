@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation"
 import {
   ArrowLeft, Upload, X, Loader2, Plus, Trash2, MapPin, Clock,
   Users, Link2, Tag, ListChecks, Image as ImageIcon,
-  Mountain, Trophy, Handshake, Palette, MoreHorizontal, Calendar,
+  Trophy, Handshake, Palette, MoreHorizontal, Calendar,
   ChevronRight, CheckCircle2, Globe, Lock, Video,
   Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
-  Clapperboard, Dumbbell, BookOpen, Plane, Brush,
+  Dumbbell, BookOpen, Plane, Brush,
 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,6 @@ type EventFormat = "IN_PERSON" | "ONLINE" | "HYBRID"
 interface AgendaItem { time: string; title: string; speaker: string }
 
 const CATEGORIES = [
-  { value: "TREK",       label: "Trek",        Icon: Mountain,       iconColor: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-500/20", bg: "bg-emerald-50 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800", active: "ring-emerald-500",  text: "text-emerald-700 dark:text-emerald-300" },
   { value: "SPORTS",     label: "Sports",      Icon: Trophy,         iconColor: "text-blue-600 dark:text-blue-400",       iconBg: "bg-blue-100 dark:bg-blue-500/20",       bg: "bg-blue-50 dark:bg-blue-950/30",       border: "border-blue-200 dark:border-blue-800",       active: "ring-blue-500",    text: "text-blue-700 dark:text-blue-300"       },
   { value: "NETWORKING", label: "Networking",  Icon: Handshake,      iconColor: "text-violet-600 dark:text-violet-400",   iconBg: "bg-violet-100 dark:bg-violet-500/20",   bg: "bg-violet-50 dark:bg-violet-950/30",   border: "border-violet-200 dark:border-violet-800",   active: "ring-violet-500",  text: "text-violet-700 dark:text-violet-300"   },
   { value: "MUSIC",      label: "Music",       Icon: Music,          iconColor: "text-purple-600 dark:text-purple-400",   iconBg: "bg-purple-100 dark:bg-purple-500/20",   bg: "bg-purple-50 dark:bg-purple-950/30",   border: "border-purple-200 dark:border-purple-800",   active: "ring-purple-500",  text: "text-purple-700 dark:text-purple-300"   },
@@ -32,7 +31,6 @@ const CATEGORIES = [
   { value: "TECH",       label: "Tech",        Icon: Cpu,            iconColor: "text-cyan-600 dark:text-cyan-400",       iconBg: "bg-cyan-100 dark:bg-cyan-500/20",       bg: "bg-cyan-50 dark:bg-cyan-950/30",       border: "border-cyan-200 dark:border-cyan-800",       active: "ring-cyan-500",    text: "text-cyan-700 dark:text-cyan-300"       },
   { value: "WORKSHOP",   label: "Workshop",    Icon: Hammer,         iconColor: "text-slate-600 dark:text-slate-400",     iconBg: "bg-slate-100 dark:bg-slate-500/20",     bg: "bg-slate-50 dark:bg-slate-950/30",     border: "border-slate-200 dark:border-slate-700",     active: "ring-slate-500",   text: "text-slate-700 dark:text-slate-300"     },
   { value: "GAMING",     label: "Gaming",      Icon: Gamepad2,       iconColor: "text-indigo-600 dark:text-indigo-400",   iconBg: "bg-indigo-100 dark:bg-indigo-500/20",   bg: "bg-indigo-50 dark:bg-indigo-950/30",   border: "border-indigo-200 dark:border-indigo-800",   active: "ring-indigo-500",  text: "text-indigo-700 dark:text-indigo-300"   },
-  { value: "MOVIE",      label: "Movie",       Icon: Clapperboard,   iconColor: "text-red-600 dark:text-red-400",         iconBg: "bg-red-100 dark:bg-red-500/20",         bg: "bg-red-50 dark:bg-red-950/30",         border: "border-red-200 dark:border-red-800",         active: "ring-red-500",     text: "text-red-700 dark:text-red-300"         },
   { value: "FITNESS",    label: "Fitness",     Icon: Dumbbell,       iconColor: "text-lime-600 dark:text-lime-400",       iconBg: "bg-lime-100 dark:bg-lime-500/20",       bg: "bg-lime-50 dark:bg-lime-950/30",       border: "border-lime-200 dark:border-lime-800",       active: "ring-lime-500",    text: "text-lime-700 dark:text-lime-300"       },
   { value: "HOBBY",      label: "Hobby",       Icon: Palette,        iconColor: "text-rose-600 dark:text-rose-400",       iconBg: "bg-rose-100 dark:bg-rose-500/20",       bg: "bg-rose-50 dark:bg-rose-950/30",       border: "border-rose-200 dark:border-rose-800",       active: "ring-rose-500",    text: "text-rose-700 dark:text-rose-300"       },
   { value: "TRAVEL",     label: "Travel",      Icon: Plane,          iconColor: "text-sky-600 dark:text-sky-400",         iconBg: "bg-sky-100 dark:bg-sky-500/20",         bg: "bg-sky-50 dark:bg-sky-950/30",         border: "border-sky-200 dark:border-sky-800",         active: "ring-sky-500",     text: "text-sky-700 dark:text-sky-300"         },
@@ -197,7 +195,9 @@ export default function NewEventPage() {
             <div
               className={cn(
                 "relative rounded-3xl border-2 border-dashed overflow-hidden transition-all group cursor-pointer",
-                dragging ? "border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-950/20" : "border-border hover:border-fuchsia-300/60",
+                dragging
+                  ? "border-white bg-gradient-to-br from-fuchsia-600 via-violet-600 to-cyan-500"
+                  : "border-white/50 bg-gradient-to-br from-fuchsia-500 via-violet-500 to-cyan-400 hover:brightness-110 shadow-lg",
                 images[0] ? "h-[240px]" : "h-[180px]"
               )}
               onClick={() => fileRef.current?.click()}
@@ -236,12 +236,12 @@ export default function NewEventPage() {
                 </>
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Upload className="h-5 w-5 text-muted-foreground" />
+                  <div className="h-12 w-12 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Upload className="h-5 w-5 text-white" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-medium">Drop a cover photo here</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">or click to browse · PNG, JPG up to 10 MB</p>
+                    <p className="text-sm font-bold text-white">Drop a cover photo here</p>
+                    <p className="text-xs text-white/80 mt-0.5">or click to browse · PNG, JPG up to 10 MB</p>
                   </div>
                 </div>
               )}
@@ -257,7 +257,7 @@ export default function NewEventPage() {
                 <Label>Event Title <span className="text-red-500">*</span></Label>
                 <Input
                   required
-                  placeholder="e.g. Weekend Trek to Nandi Hills"
+                  placeholder="e.g. Weekend Cricket Match at Cubbon Park"
                   value={form.title}
                   onChange={(e) => set("title", e.target.value)}
                   className="text-base h-11"
@@ -426,24 +426,25 @@ export default function NewEventPage() {
                   />
                 </div>
               </div>
-              <label className="flex items-start gap-3 p-3 rounded-2xl border border-border hover:bg-muted/40 cursor-pointer transition-colors group">
+              {/* Real button (not a hidden input in a label): a focused off-screen sr-only input made the page scroll away to blank */}
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={form.requiresApproval}
+                onClick={() => set("requiresApproval", !form.requiresApproval)}
+                className="w-full text-left flex items-start gap-3 p-3 rounded-2xl border border-border hover:bg-muted/40 cursor-pointer transition-colors group"
+              >
                 <div className={cn(
                   "mt-0.5 h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors",
                   form.requiresApproval ? "bg-gradient-to-br from-fuchsia-500 to-violet-500 border-transparent" : "border-muted-foreground/40 group-hover:border-muted-foreground"
                 )}>
                   {form.requiresApproval && <CheckCircle2 className="h-3 w-3 text-white" />}
                 </div>
-                <input
-                  type="checkbox"
-                  checked={form.requiresApproval}
-                  onChange={(e) => set("requiresApproval", e.target.checked)}
-                  className="sr-only"
-                />
                 <div>
                   <p className="text-sm font-medium">Require RSVP approval</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">You'll manually approve each attendee before they're confirmed</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">You&apos;ll manually approve each attendee before they&apos;re confirmed</p>
                 </div>
-              </label>
+              </button>
             </SectionCard>
 
             {/* Tags */}

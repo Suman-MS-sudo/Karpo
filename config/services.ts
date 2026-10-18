@@ -100,7 +100,7 @@ export const SERVICES: ServiceConfig[] = [
     id: "events",
     name: "Events",
     icon: "Users",
-    description: "Join treks, sports groups, networking events and hobby communities",
+    description: "Join sports groups, networking events and hobby communities",
     color: "text-amber-600 dark:text-amber-400",
     bgColor: "bg-amber-100 dark:bg-amber-500/15",
     borderColor: "border-amber-200 dark:border-amber-800",

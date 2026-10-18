@@ -26,6 +26,8 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
               "connect-src 'self' https:",
+              // Event-creation venue preview embeds Google Maps in an iframe
+              "frame-src 'self' https://maps.google.com https://www.google.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
@@ -43,6 +45,7 @@ const nextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "https", hostname: "logo.clearbit.com" },
+      { protocol: "https", hostname: "t2.gstatic.com" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "logos-world.net" },
       { protocol: "https", hostname: "b.zmtcdn.com" },

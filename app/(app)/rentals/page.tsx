@@ -207,6 +207,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         defaultQuery={searchParams.q ?? ""}
       />
       <CategoryStrip
+        compact
         activeValue={searchParams.type ?? "All"}
         basePath="/rentals"
         paramName="type"

@@ -249,6 +249,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
         defaultQuery={searchParams.q ?? ""}
       />
       <CategoryStrip
+        compact
         activeValue={deptFilter[0] ?? "All"}
         basePath="/referrals"
         paramName="dept"

@@ -226,6 +226,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         defaultQuery={searchParams.q ?? ""}
       />
       <CategoryStrip
+        compact
         activeValue={searchParams.category ?? "All"}
         basePath="/marketplace"
         paramName="category"

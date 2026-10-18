@@ -58,18 +58,12 @@ export default async function DealsPage() {
 
   const activeWhere = { isActive: true, validUntil: { gte: now }, source: "MANUAL" }
 
-  const [rawDeals, rawFeatured, rawTrending, rawExpiringSoon, redemptionCount] = await Promise.all([
+  const [rawDeals, rawTrending, rawExpiringSoon, redemptionCount] = await Promise.all([
     // All active deals — default sort: highest discount
     prisma.deal.findMany({
       where:   activeWhere,
       orderBy: [{ discount: "desc" }, { createdAt: "desc" }],
       take:    100,
-    }),
-    // Featured deals
-    prisma.deal.findMany({
-      where:   { ...activeWhere, featured: true },
-      orderBy: { discount: "desc" },
-      take:    8,
     }),
     // Trending deals
     prisma.deal.findMany({
@@ -96,7 +90,6 @@ export default async function DealsPage() {
   return (
     <DealsClient
       initialDeals={rawDeals.map(serializeDeal)}
-      featuredDeals={rawFeatured.map(serializeDeal)}
       trendingDeals={rawTrending.map(serializeDeal)}
       expiringSoon={rawExpiringSoon.map(serializeDeal)}
       redemptionCount={redemptionCount}

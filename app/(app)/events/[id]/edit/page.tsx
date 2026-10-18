@@ -117,7 +117,7 @@ export default function EditEventPage() {
               <Select required value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["TREK","SPORTS","NETWORKING","HOBBY","OTHER"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {["SPORTS","NETWORKING","HOBBY","OTHER"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

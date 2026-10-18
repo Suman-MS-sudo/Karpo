@@ -43,9 +43,10 @@ interface Props {
   ringClass:      string // e.g. "ring-blue-400"
   glowShadow:     string // e.g. "shadow-[0_0_12px_rgba(59,130,246,0.4)]"
   underlineGradient: string // e.g. "from-blue-500 to-cyan-400"
+  compact?:       boolean // Skills-sized tiles (72px) instead of the default larger ones — keep in sync with SkillCategoryStrip
 }
 
-export function CategoryStrip({ items, activeValue, basePath, paramName, ringClass, glowShadow, underlineGradient }: Props) {
+export function CategoryStrip({ items, activeValue, basePath, paramName, ringClass, glowShadow, underlineGradient, compact = false }: Props) {
   const catRef = useRef<HTMLDivElement>(null)
   const [scrolled, setScrolled] = useState({ left: false, right: true })
 
@@ -67,9 +68,9 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
         <button
           onClick={() => scrollCat("left")}
           disabled={!scrolled.left}
-          className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+          className={cn("shrink-0 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed", compact ? "w-10 h-10" : "w-7 h-7")}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className={compact ? "h-5 w-5" : "h-4 w-4"} />
         </button>
 
         <div ref={catRef} onScroll={onScroll} className="flex-1 overflow-x-auto scrollbar-hide">
@@ -90,12 +91,13 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
                   key={item.value}
                   href={href}
                   className={cn(
-                    "flex flex-col items-center gap-2 py-3 relative transition-all duration-150 group",
-                    "flex-1 min-w-[104px] sm:min-w-[136px]"
+                    "flex flex-col items-center gap-2 relative transition-all duration-150 group",
+                    compact ? "py-4 flex-1 min-w-[108px]" : "py-3 flex-1 min-w-[104px] sm:min-w-[136px]"
                   )}
                 >
                   <div className={cn(
-                    "relative h-16 w-16 sm:h-24 sm:w-24 rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                    "relative rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                    compact ? "h-[72px] w-[72px]" : "h-16 w-16 sm:h-24 sm:w-24",
                     // Grounding shadow + a subtle bottom-heavy gradient give the tile
                     // itself some depth even before the glossy highlight is added.
                     "shadow-[0_3px_0_rgba(0,0,0,0.06)_inset,0_6px_14px_-6px_rgba(0,0,0,0.35)] dark:shadow-[0_3px_0_rgba(0,0,0,0.25)_inset,0_6px_14px_-6px_rgba(0,0,0,0.6)]",
@@ -123,19 +125,19 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
                         <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-white/5 to-transparent dark:from-white/15 dark:via-white/0" aria-hidden />
                         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/10 to-transparent dark:from-black/25" aria-hidden />
                         <Icon
-                          className={cn("relative h-7 w-7 sm:h-10 sm:w-10 drop-shadow-sm", item.iconColor)}
+                          className={cn("relative drop-shadow-sm", compact ? "h-[38px] w-[38px]" : "h-7 w-7 sm:h-10 sm:w-10", item.iconColor)}
                           strokeWidth={2.5}
                         />
                       </>
                     )}
                   </div>
-                  <span className={cn("font-outfit", "text-xs sm:text-sm font-bold tracking-tight text-center leading-tight line-clamp-2 max-w-[100px] sm:max-w-[132px]", isActive ? "text-foreground" : "text-muted-foreground")}>
+                  <span className={cn("font-outfit", "font-bold tracking-tight text-center leading-tight line-clamp-2", compact ? "text-sm max-w-[100px]" : "text-xs sm:text-sm max-w-[100px] sm:max-w-[132px]", isActive ? "text-foreground" : "text-muted-foreground")}>
                     {item.label}
                   </span>
-                  <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                  <span className={cn("tabular-nums leading-none", compact ? "text-xs" : "text-[10px]", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
                     {item.count}
                   </span>
-                  <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r transition-all duration-150", underlineGradient, isActive ? "w-8" : "w-0")} />
+                  <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r transition-all duration-150", underlineGradient, compact ? "h-1" : "h-0.5", isActive ? (compact ? "w-12" : "w-8") : "w-0")} />
                 </Link>
               )
             })}
@@ -145,9 +147,9 @@ export function CategoryStrip({ items, activeValue, basePath, paramName, ringCla
         <button
           onClick={() => scrollCat("right")}
           disabled={!scrolled.right}
-          className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+          className={cn("shrink-0 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed", compact ? "w-10 h-10" : "w-7 h-7")}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className={compact ? "h-5 w-5" : "h-4 w-4"} />
         </button>
       </div>
     </div>

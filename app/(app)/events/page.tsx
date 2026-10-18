@@ -84,7 +84,6 @@ export default async function EventsPage() {
         events={serialized}
         totalEvents={totalEvents}
         totalRsvps={totalRsvps}
-        initialCity={session?.user?.city ?? undefined}
         wishlistedIds={[...wishlistedIds]}
       />
     </Suspense>

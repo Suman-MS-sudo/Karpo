@@ -6,12 +6,12 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   Search, Plus, X, LayoutGrid, List, Package,
-  Calendar, MapPin, Users, Clock, Bookmark, BookmarkCheck,
-  TrendingUp, Sparkles, Globe, Video, ChevronDown,
+  Calendar, MapPin, Users, Clock, BookmarkCheck,
+  Sparkles, Globe, Video, ChevronDown,
   Filter, LayoutDashboard, ChevronLeft, ChevronRight, Navigation, Flag,
-  Mountain, Trophy, Handshake, Palette, MoreHorizontal,
+  Trophy, Handshake, Palette, MoreHorizontal,
   Music, Mic2, UtensilsCrossed, Heart, Cpu, Hammer, Gamepad2,
-  Clapperboard, Dumbbell, Plane,
+  Dumbbell, Plane,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ProfileLink } from "@/components/shared/ProfileLink"
 import { cn } from "@/lib/utils"
 import { SortDropdown } from "@/components/ui/sort-dropdown"
+import { WishlistButton } from "@/components/shared/WishlistButton"
+import { SocialShare } from "@/components/shared/SocialShare"
 
 // A bold, rounded display font for headings/labels — gives the Events section
 // a distinct, friendly identity (Zepto-style) separate from the app's default UI font.
@@ -50,7 +52,6 @@ export interface EventItem {
 
 const CATEGORIES = [
   { value: "All",        label: "All",         Icon: LayoutDashboard, iconBg: "bg-slate-100 dark:bg-white/10",          iconColor: "text-slate-600 dark:text-white"           },
-  { value: "TREK",       label: "Trek",         Icon: Mountain,        iconBg: "bg-emerald-100 dark:bg-emerald-500/20",  iconColor: "text-emerald-600 dark:text-emerald-400"  },
   { value: "SPORTS",     label: "Sports",       Icon: Trophy,          iconBg: "bg-blue-100 dark:bg-blue-500/20",        iconColor: "text-blue-600 dark:text-blue-400"        },
   { value: "NETWORKING", label: "Networking",   Icon: Handshake,       iconBg: "bg-violet-100 dark:bg-violet-500/20",    iconColor: "text-violet-600 dark:text-violet-400"    },
   { value: "MUSIC",      label: "Music",        Icon: Music,           iconBg: "bg-purple-100 dark:bg-purple-500/20",    iconColor: "text-purple-600 dark:text-purple-400"    },
@@ -60,7 +61,6 @@ const CATEGORIES = [
   { value: "TECH",       label: "Tech",         Icon: Cpu,             iconBg: "bg-cyan-100 dark:bg-cyan-500/20",        iconColor: "text-cyan-600 dark:text-cyan-400"        },
   { value: "WORKSHOP",   label: "Workshop",     Icon: Hammer,          iconBg: "bg-slate-100 dark:bg-slate-500/20",      iconColor: "text-slate-600 dark:text-slate-400"      },
   { value: "GAMING",     label: "Gaming",       Icon: Gamepad2,        iconBg: "bg-indigo-100 dark:bg-indigo-500/20",    iconColor: "text-indigo-600 dark:text-indigo-400"    },
-  { value: "MOVIE",      label: "Movie",        Icon: Clapperboard,    iconBg: "bg-red-100 dark:bg-red-500/20",          iconColor: "text-red-600 dark:text-red-400"          },
   { value: "FITNESS",    label: "Fitness",      Icon: Dumbbell,        iconBg: "bg-lime-100 dark:bg-lime-500/20",        iconColor: "text-lime-600 dark:text-lime-400"        },
   { value: "HOBBY",      label: "Hobbies",      Icon: Palette,         iconBg: "bg-rose-100 dark:bg-rose-500/20",        iconColor: "text-rose-600 dark:text-rose-400"        },
   { value: "TRAVEL",     label: "Travel",       Icon: Plane,           iconBg: "bg-sky-100 dark:bg-sky-500/20",          iconColor: "text-sky-600 dark:text-sky-400"          },
@@ -151,11 +151,10 @@ interface Props {
   events:          EventItem[]
   totalEvents:     number
   totalRsvps:      number
-  initialCity?:    string
   wishlistedIds?:  string[]
 }
 
-export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wishlistedIds }: Props) {
+export function EventsClient({ events, totalEvents, totalRsvps, wishlistedIds }: Props) {
   const searchParams = useSearchParams()
   const router       = useRouter()
   const [search,      setSearch]      = useState("")
@@ -166,14 +165,11 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
   const [formatFilter,setFormatFilter]= useState("all")   // all | online | inperson | hybrid
   const [sort,        setSort]        = useState("date")
   const [view,        setView]        = useState<"grid" | "list">("grid")
-  // "Bookmark" is this page's existing save-for-later affordance — wired to
-  // the real cross-app Wishlist (itemType EVENT) so it persists, rather than
-  // adding a second, redundant heart icon next to it.
+  // Ids of wishlisted events (itemType EVENT) — drives the "Saved" section.
   const [bookmarks,   setBookmarks]   = useState<Set<string>>(() => new Set(wishlistedIds ?? []))
   const [showFilters, setShowFilters] = useState(false)
-  // Default to the user's own city (set via the top-nav location switcher)
-  // so switching location scopes Events too, unless they pick a different one.
-  const [cityFilter,      setCityFilter]      = useState<string>(() => initialCity && CITIES.some(c => c.name === initialCity) ? initialCity : "All")
+  // No city is pre-selected — all events show until the user picks one.
+  const [cityFilter,      setCityFilter]      = useState<string>("All")
   const [cityOpen,        setCityOpen]        = useState(false)
   const [locationFilter, setLocationFilter] = useState<string | null>(null) // detected city/area
   const [locationLoading, setLocationLoading] = useState(false)
@@ -262,27 +258,16 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
     )
   }
 
-  const toggleBookmark = useCallback((id: string, e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation()
-    const wasBookmarked = bookmarks.has(id)
+  // WishlistButton persists to /api/wishlist itself; this only mirrors the result
+  // so the "Saved" section above the grid stays in sync.
+  const setWished = useCallback((id: string, wished: boolean) => {
     setBookmarks(prev => {
       const next = new Set(prev)
-      wasBookmarked ? next.delete(id) : next.add(id)
+      if (wished) next.add(id)
+      else next.delete(id)
       return next
     })
-    fetch("/api/wishlist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemId: id, itemType: "EVENT" }),
-    }).catch(() => {
-      // Roll back on failure
-      setBookmarks(prev => {
-        const next = new Set(prev)
-        wasBookmarked ? next.add(id) : next.delete(id)
-        return next
-      })
-    })
-  }, [bookmarks])
+  }, [])
 
   // ── Filtering ────────────────────────────────────────────────────────────────
 
@@ -323,8 +308,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
     return list
   }, [events, search, category, dateFilter, customDate, priceFilter, formatFilter, sort, cityFilter, locationFilter])
 
-  const spotlight  = filtered.find(e => e.isBoosted) ?? filtered[0]
-  const gridEvents = spotlight ? filtered.filter(e => e.id !== spotlight.id) : []
+  const gridEvents = filtered
 
   // Active filter count (excluding category since it's a tab)
   const activeFilters = [
@@ -378,7 +362,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
                 <span className="bg-gradient-to-r from-white via-fuchsia-200 to-cyan-200 bg-clip-text text-transparent">Events</span>
                 {" "}<span className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">&amp; Communities</span>
               </h1>
-              <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Treks, sports, networking &amp; hobby clubs — only members with verified corporate emails.</p>
+              <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Sports, networking &amp; hobby clubs — only members with verified corporate emails.</p>
             </div>
             <div className="flex flex-row flex-wrap sm:flex-col items-center sm:items-end gap-1.5 sm:gap-2 shrink-0">
               <Button asChild size="sm" variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full sm:h-10 sm:px-4 sm:text-sm">
@@ -477,9 +461,9 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
           <button
             onClick={() => scrollCat("left")}
             disabled={!catScrolled.left}
-            className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+            className="shrink-0 w-10 h-10 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
 
           {/* Fixed 10-slot window */}
@@ -493,24 +477,26 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
                     key={cat.value}
                     onClick={() => setCategory(cat.value)}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group",
-                      "flex-1 min-w-[80px]",
-                      isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
+                      "flex flex-col items-center gap-2 py-4 relative transition-all duration-150 group",
+                      "flex-1 min-w-[108px]"
                     )}
                   >
                     <div className={cn(
-                      "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
-                      isActive ? cn(cat.iconBg, "ring-2 ring-fuchsia-400 scale-110 shadow-[0_0_12px_rgba(217,70,239,0.4)]") : cn(cat.iconBg, "group-hover:scale-105")
+                      "relative h-[72px] w-[72px] rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                      "shadow-[0_3px_0_rgba(0,0,0,0.06)_inset,0_6px_14px_-6px_rgba(0,0,0,0.35)] dark:shadow-[0_3px_0_rgba(0,0,0,0.25)_inset,0_6px_14px_-6px_rgba(0,0,0,0.6)]",
+                      isActive ? cn(cat.iconBg, "ring-2 ring-fuchsia-400 scale-110 shadow-[0_0_12px_rgba(217,70,239,0.4)]") : cn(cat.iconBg, "group-hover:scale-105 group-hover:ring-2 ring-fuchsia-400")
                     )}>
-                      <cat.Icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-white/5 to-transparent dark:from-white/15 dark:via-white/0" aria-hidden />
+                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/10 to-transparent dark:from-black/25" aria-hidden />
+                      <cat.Icon className={cn("relative drop-shadow-sm", cat.iconColor)} style={{ width: 38, height: 38 }} strokeWidth={2.5} />
                     </div>
-                    <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                    <span className={cn("font-outfit", "text-sm font-bold tracking-tight text-center leading-tight line-clamp-2 max-w-[100px]", isActive ? "text-foreground" : "text-muted-foreground")}>
                       {cat.label}
                     </span>
-                    <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                    <span className={cn("text-xs tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
                       {count}
                     </span>
-                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
+                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 transition-all duration-150", isActive ? "w-12" : "w-0")} />
                   </button>
                 )
               })}
@@ -521,9 +507,9 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
           <button
             onClick={() => scrollCat("right")}
             disabled={!catScrolled.right}
-            className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+            className="shrink-0 w-10 h-10 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </button>
           </div>{/* end max-w-7xl */}
         </div>
@@ -538,13 +524,13 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
             <button
               onClick={() => setShowFilters(o => !o)}
               className={cn(
-                "flex items-center gap-1.5 h-8 px-3 rounded-lg border text-sm font-medium transition-all",
+                "flex items-center gap-1.5 h-10 px-4 rounded-lg border text-sm font-medium transition-all",
                 activeFilters.length > 0 || showFilters
                   ? "border-fuchsia-400/60 bg-fuchsia-50 dark:bg-fuchsia-950/30 text-fuchsia-700 dark:text-fuchsia-300"
                   : "border-border hover:border-foreground/30 text-foreground"
               )}
             >
-              <Filter className="h-3.5 w-3.5" /> Filters
+              <Filter className="h-5 w-5" /> Filters
               {activeFilters.length > 0 && (
                 <span className="h-4 min-w-4 px-1 rounded-full bg-fuchsia-500 text-white text-[9px] font-bold flex items-center justify-center">
                   {activeFilters.length}
@@ -564,7 +550,7 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
                   : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/20"
               )}
             >
-              <Navigation className={cn("h-3.5 w-3.5", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
+              <Navigation className={cn("h-5 w-5", locationLoading && "animate-pulse", locationFilter && "fill-current")} />
               <span className="hidden sm:inline">{locationLoading ? "Locating…" : locationFilter ? `Near ${locationFilter}` : "Near me"}</span>
               {locationFilter && <X className="h-3 w-3 ml-0.5" />}
             </button>
@@ -583,10 +569,10 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
             {/* View toggle */}
             <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5">
               <button onClick={() => setView("grid")} className={cn("p-1.5 rounded-md transition-all", view === "grid" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                <LayoutGrid className="h-3.5 w-3.5" />
+                <LayoutGrid className="h-5 w-5" />
               </button>
               <button onClick={() => setView("list")} className={cn("p-1.5 rounded-md transition-all", view === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                <List className="h-3.5 w-3.5" />
+                <List className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -770,22 +756,9 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
         ) : (
           <div className="space-y-10">
 
-            {/* ── Spotlight ──────────────────────────────────────────────────── */}
-            {spotlight && (
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="h-6 w-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center shrink-0">
-                    <TrendingUp className="h-3.5 w-3.5 text-white" />
-                  </span>
-                  <h2 className={cn("font-outfit", "text-sm font-extrabold uppercase tracking-widest bg-gradient-to-r from-fuchsia-600 to-pink-500 dark:from-fuchsia-400 dark:to-pink-300 bg-clip-text text-transparent")}>🔥 Featured</h2>
-                </div>
-                <SpotlightCard event={spotlight} bookmarks={bookmarks} onBookmark={toggleBookmark} />
-              </section>
-            )}
-
             {/* ── Bookmarked (if any) ────────────────────────────────────────── */}
             {bookmarks.size > 0 && (() => {
-              const saved = filtered.filter(e => bookmarks.has(e.id) && e.id !== spotlight?.id)
+              const saved = filtered.filter(e => bookmarks.has(e.id))
               if (saved.length === 0) return null
               return (
                 <section>
@@ -801,8 +774,8 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
                     : "space-y-3"
                   )}>
                     {saved.map(ev => view === "grid"
-                      ? <GridCard key={ev.id} event={ev} bookmarks={bookmarks} onBookmark={toggleBookmark} />
-                      : <ListCard key={ev.id} event={ev} bookmarks={bookmarks} onBookmark={toggleBookmark} />
+                      ? <GridCard key={ev.id} event={ev} bookmarks={bookmarks} onWish={setWished} />
+                      : <ListCard key={ev.id} event={ev} bookmarks={bookmarks} onWish={setWished} />
                     )}
                   </div>
                 </section>
@@ -824,11 +797,11 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
 
                 {view === "grid" ? (
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
-                    {gridEvents.map(ev => <GridCard key={ev.id} event={ev} bookmarks={bookmarks} onBookmark={toggleBookmark} />)}
+                    {gridEvents.map(ev => <GridCard key={ev.id} event={ev} bookmarks={bookmarks} onWish={setWished} />)}
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {gridEvents.map(ev => <ListCard key={ev.id} event={ev} bookmarks={bookmarks} onBookmark={toggleBookmark} />)}
+                    {gridEvents.map(ev => <ListCard key={ev.id} event={ev} bookmarks={bookmarks} onWish={setWished} />)}
                   </div>
                 )}
               </section>
@@ -841,107 +814,36 @@ export function EventsClient({ events, totalEvents, totalRsvps, initialCity, wis
   )
 }
 
-// ── Spotlight Card ─────────────────────────────────────────────────────────────
+// ── Wish + Share ──────────────────────────────────────────────────────────────
+// Same heart (→ Wishlist, itemType EVENT) and share icons as Rentals and Buy & Sell.
+// Cards are wrapped in a <Link>, so clicks here must not navigate to the event.
 
-function SpotlightCard({ event: ev, bookmarks, onBookmark }: {
+function CardActions({ event: ev, wished, onWish, className }: {
   event: EventItem
-  bookmarks: Set<string>
-  onBookmark: (id: string, e: React.MouseEvent) => void
+  wished: boolean
+  onWish: (id: string, wished: boolean) => void
+  className?: string
 }) {
-  const cc    = CAT_COLORS[ev.category]
-  const eDate = new Date(ev.date)
-  const saved = bookmarks.has(ev.id)
-
   return (
-    <Link href={`/events/${ev.id}`} className="group block">
-      <div className="relative rounded-3xl overflow-hidden min-h-[340px] lg:min-h-[400px] flex bg-slate-900 ring-2 ring-transparent group-hover:ring-fuchsia-400/60 transition-all duration-300 shadow-[0_8px_40px_rgba(0,0,0,0.25)]">
-        {ev.images[0] ? (
-          <Image src={ev.images[0]} alt={ev.title} fill className="object-cover opacity-45 group-hover:opacity-55 group-hover:scale-105 transition-all duration-500" />
-        ) : (
-          <div className={`absolute inset-0 bg-gradient-to-br ${cc?.gradient ?? "from-slate-700 to-slate-900"} opacity-70`} />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/70 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-950/20 via-transparent to-cyan-950/20 pointer-events-none" />
-
-        {/* Bookmark */}
-        <button
-          onClick={e => onBookmark(ev.id, e)}
-          className="absolute top-4 right-4 z-10 h-9 w-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
-        >
-          {saved
-            ? <BookmarkCheck className="h-4 w-4 text-amber-400" />
-            : <Bookmark className="h-4 w-4 text-white" />
-          }
-        </button>
-
-        <div className="relative z-10 flex flex-col justify-end p-8 lg:p-10 flex-1">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {cc && (
-              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cc.bg} ${cc.text}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${cc.dot}`} /> {ev.category}
-              </span>
-            )}
-            {ev.format === "ONLINE" && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 flex items-center gap-1">
-                <Video className="h-3 w-3" /> Online
-              </span>
-            )}
-            {ev.format === "HYBRID" && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-500/20 text-violet-300 flex items-center gap-1">
-                <Globe className="h-3 w-3" /> Hybrid
-              </span>
-            )}
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ev.fee === 0 ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white"}`}>
-              {fmtFee(ev.fee)}
-            </span>
-          </div>
-
-          <h2 className={cn("font-outfit", "text-2xl lg:text-3xl font-extrabold tracking-tight text-white group-hover:text-fuchsia-200 transition-colors leading-tight max-w-2xl")}>
-            {ev.title}
-          </h2>
-          <p className="text-slate-300 text-sm mt-2 line-clamp-2 max-w-xl">{ev.description}</p>
-
-          <div className="flex flex-wrap gap-5 mt-5 text-sm text-slate-300">
-            <div className="flex items-center gap-2"><Calendar className="h-4 w-4 shrink-0" />{fmtDate(eDate)} · {fmtTime(eDate)}</div>
-            <div className="flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0" />{ev.location}</div>
-            <div className="flex items-center gap-2"><Users className="h-4 w-4 shrink-0" />{ev.rsvpCount} going</div>
-          </div>
-
-          <div className="flex items-center justify-between mt-6">
-            <div className="flex items-center gap-3">
-              {ev.rsvps.length > 0 && (
-                <div className="flex -space-x-2">
-                  {ev.rsvps.slice(0, 6).map(r => (
-                    <ProfileLink key={r.userId} userId={r.userId}>
-                      <Avatar className="h-7 w-7 ring-2 ring-slate-900">
-                        <AvatarImage src={r.avatarUrl ?? r.image ?? ""} />
-                        <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(r.name)}</AvatarFallback>
-                      </Avatar>
-                    </ProfileLink>
-                  ))}
-                </div>
-              )}
-              <span className="text-xs text-slate-400">
-                Hosted by <ProfileLink userId={ev.organizer.id} className="text-white font-medium">{ev.organizer.name?.split(" ")[0]}</ProfileLink>
-                {ev.organizer.company && <span className="text-slate-500"> · {ev.organizer.company.name}</span>}
-              </span>
-            </div>
-            <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-gradient-to-r from-fuchsia-500 to-cyan-500 hover:brightness-110 transition-all px-4 py-2 rounded-full shadow-[0_4px_16px_rgba(217,70,239,0.4)]">
-              View details →
-            </span>
-          </div>
-        </div>
-      </div>
-    </Link>
+    <div className={cn("flex items-center gap-1.5", className)} onClickCapture={e => e.preventDefault()}>
+      <WishlistButton
+        itemId={ev.id}
+        itemType="EVENT"
+        initialWishlisted={wished}
+        onChange={w => onWish(ev.id, w)}
+        className="h-9 w-9 [&_svg]:h-4 [&_svg]:w-4"
+      />
+      <SocialShare title={ev.title} path={`/events/${ev.id}`} variant="icon" className="[&>button]:rounded-full [&>button]:bg-white/90 dark:[&>button]:bg-gray-900/90 [&>button]:border-0 shadow-sm" />
+    </div>
   )
 }
 
 // ── Grid Card ─────────────────────────────────────────────────────────────────
 
-function GridCard({ event: ev, bookmarks, onBookmark }: {
+function GridCard({ event: ev, bookmarks, onWish }: {
   event: EventItem
   bookmarks: Set<string>
-  onBookmark: (id: string, e: React.MouseEvent) => void
+  onWish: (id: string, wished: boolean) => void
 }) {
   const cc    = CAT_COLORS[ev.category]
   const eDate = new Date(ev.date)
@@ -958,7 +860,7 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
           ) : (
             <div className={`absolute inset-0 bg-gradient-to-br ${cc?.gradient ?? "from-slate-700 to-slate-800"} opacity-60 flex items-center justify-center`}>
               <span className="text-5xl">
-                {ev.category === "TREK" ? "🥾" : ev.category === "SPORTS" ? "⚽" : ev.category === "NETWORKING" ? "🤝" : ev.category === "HOBBY" ? "🎨" : "🎉"}
+                {ev.category === "SPORTS" ? "⚽" : ev.category === "NETWORKING" ? "🤝" : ev.category === "HOBBY" ? "🎨" : "🎉"}
               </span>
             </div>
           )}
@@ -969,16 +871,7 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
             <p className="text-xl font-black text-foreground leading-tight">{fmtDay(eDate)}</p>
           </div>
 
-          {/* Bookmark */}
-          <button
-            onClick={e => onBookmark(ev.id, e)}
-            className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
-          >
-            {saved
-              ? <BookmarkCheck className="h-3.5 w-3.5 text-amber-400" />
-              : <Bookmark className="h-3.5 w-3.5 text-white" />
-            }
-          </button>
+          <CardActions event={ev} wished={saved} onWish={onWish} className="absolute top-3 right-3 z-20" />
 
           {/* Fee badge */}
           <div className="absolute bottom-3 right-3">
@@ -1073,10 +966,10 @@ function GridCard({ event: ev, bookmarks, onBookmark }: {
 
 // ── List Card ─────────────────────────────────────────────────────────────────
 
-function ListCard({ event: ev, bookmarks, onBookmark }: {
+function ListCard({ event: ev, bookmarks, onWish }: {
   event: EventItem
   bookmarks: Set<string>
-  onBookmark: (id: string, e: React.MouseEvent) => void
+  onWish: (id: string, wished: boolean) => void
 }) {
   const cc    = CAT_COLORS[ev.category]
   const eDate = new Date(ev.date)
@@ -1126,15 +1019,7 @@ function ListCard({ event: ev, bookmarks, onBookmark }: {
             <span className={`text-sm font-bold ${ev.fee === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"}`}>
               {fmtFee(ev.fee)}
             </span>
-            <button
-              onClick={e => onBookmark(ev.id, e)}
-              className="h-7 w-7 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
-            >
-              {saved
-                ? <BookmarkCheck className="h-3.5 w-3.5 text-amber-500" />
-                : <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />
-              }
-            </button>
+            <CardActions event={ev} wished={saved} onWish={onWish} className="[&_button]:border [&_button]:border-border" />
           </div>
         </div>
       </div>

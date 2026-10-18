@@ -171,7 +171,6 @@ function DealCard({ deal, isNew, isWishlisted }: { deal: Deal; isNew: boolean; i
     <div className={cn(
       "bg-card border-2 rounded-3xl overflow-hidden flex flex-col group relative transition-all duration-200 hover:-translate-y-1",
       isNew       ? "border-rose-400 ring-1 ring-rose-400/30 hover:shadow-[0_12px_36px_rgba(244,63,94,0.18)]" :
-      deal.featured ? "border-amber-300 dark:border-amber-700 ring-1 ring-amber-200/50 dark:ring-amber-700/30 hover:shadow-[0_12px_36px_rgba(245,158,11,0.18)]" :
       "border-border hover:border-rose-400/60 hover:shadow-[0_12px_36px_rgba(244,63,94,0.14)]"
     )}>
 
@@ -189,9 +188,6 @@ function DealCard({ deal, isNew, isWishlisted }: { deal: Deal; isNew: boolean; i
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white shadow-sm">
                   {BADGE_LABELS[effectiveBadge]}
                 </span>
-              )}
-              {deal.featured && !effectiveBadge && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white shadow-sm">⭐ Featured</span>
               )}
               {isExpiringSoon && !isLimitReached && (
                 <span className="bg-black/30 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -415,7 +411,6 @@ function SectionHeader({ icon: Icon, title, gradient, count }: {
 
 interface DealsClientProps {
   initialDeals:    Deal[]
-  featuredDeals:   Deal[]
   trendingDeals:   Deal[]
   expiringSoon:    Deal[]
   redemptionCount: number
@@ -424,7 +419,7 @@ interface DealsClientProps {
 }
 
 export function DealsClient({
-  initialDeals, featuredDeals, trendingDeals, expiringSoon,
+  initialDeals, trendingDeals, expiringSoon,
   redemptionCount, isPremium, wishlistedIds,
 }: DealsClientProps) {
   const wishlistedSet = new Set(wishlistedIds)
@@ -594,24 +589,26 @@ export function DealsClient({
                     key={cat.value}
                     onClick={() => setCategory(cat.value)}
                     className={cn(
-                      "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group shrink-0",
-                      "flex-1 min-w-[84px]",
-                      isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
+                      "flex flex-col items-center gap-2 py-4 relative transition-all duration-150 group shrink-0",
+                      "flex-1 min-w-[108px]"
                     )}
                   >
                     <div className={cn(
-                      "h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-150",
-                      isActive ? cn(cat.iconBg, "ring-2 ring-rose-400 scale-110 shadow-[0_0_12px_rgba(244,63,94,0.4)]") : cn(cat.iconBg, "group-hover:scale-105")
+                      "relative h-[72px] w-[72px] rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                      "shadow-[0_3px_0_rgba(0,0,0,0.06)_inset,0_6px_14px_-6px_rgba(0,0,0,0.35)] dark:shadow-[0_3px_0_rgba(0,0,0,0.25)_inset,0_6px_14px_-6px_rgba(0,0,0,0.6)]",
+                      isActive ? cn(cat.iconBg, "ring-2 ring-rose-400 scale-110 shadow-[0_0_12px_rgba(244,63,94,0.4)]") : cn(cat.iconBg, "group-hover:scale-105 group-hover:ring-2 ring-rose-400")
                     )}>
-                      <cat.icon className={cn("h-4.5 w-4.5", cat.iconColor)} style={{ width: 18, height: 18 }} strokeWidth={isActive ? 2.5 : 2} />
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-white/5 to-transparent dark:from-white/15 dark:via-white/0" aria-hidden />
+                      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/10 to-transparent dark:from-black/25" aria-hidden />
+                      <cat.icon className={cn("relative drop-shadow-sm", cat.iconColor)} style={{ width: 38, height: 38 }} strokeWidth={2.5} />
                     </div>
-                    <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                    <span className={cn("font-outfit", "text-sm font-bold tracking-tight text-center leading-tight line-clamp-2 max-w-[100px]", isActive ? "text-foreground" : "text-muted-foreground")}>
                       {cat.label.split(" ")[0]}
                     </span>
-                    <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                    <span className={cn("text-xs tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
                       {count}
                     </span>
-                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
+                    <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-150", isActive ? "w-12" : "w-0")} />
                   </button>
                 )
               })}
@@ -842,16 +839,6 @@ export function DealsClient({
 
       {/* ── Content ──────────────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-10">
-
-        {/* Featured carousel */}
-        {featuredDeals.length > 0 && !isFiltered && (
-          <section>
-            <SectionHeader icon={Star} title="Featured Deals" gradient="from-amber-400 to-orange-500" count={featuredDeals.length} />
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {featuredDeals.map((d) => <SpotlightCard key={d.id} deal={d} variant="featured" />)}
-            </div>
-          </section>
-        )}
 
         {/* Trending */}
         {trendingDeals.length > 0 && !isFiltered && (

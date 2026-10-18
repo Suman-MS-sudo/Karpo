@@ -49,9 +49,9 @@ export function SkillCategoryStrip({ activeCategory, counts, total }: { activeCa
         <button
           onClick={() => scrollCat("left")}
           disabled={!scrolled.left}
-          className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+          className="shrink-0 w-10 h-10 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
 
         <div ref={catRef} onScroll={onScroll} className="flex-1 overflow-x-auto scrollbar-hide">
@@ -64,24 +64,26 @@ export function SkillCategoryStrip({ activeCategory, counts, total }: { activeCa
                   key={cat.value}
                   href={cat.value === "All" ? "/skills" : `/skills?category=${cat.value}`}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 py-3 relative transition-all duration-150 group",
-                    "flex-1 min-w-[92px]",
-                    isActive ? "opacity-100" : "opacity-40 hover:opacity-75"
+                    "flex flex-col items-center gap-2 py-4 relative transition-all duration-150 group",
+                    "flex-1 min-w-[108px]"
                   )}
                 >
                   <div className={cn(
-                    "h-12 w-12 sm:h-14 sm:w-14 rounded-2xl flex items-center justify-center transition-all duration-150",
-                    isActive ? cn(cat.iconBg, "ring-2 ring-indigo-400 scale-110 shadow-[0_0_12px_rgba(99,102,241,0.4)]") : cn(cat.iconBg, "group-hover:scale-105")
+                    "relative h-[72px] w-[72px] rounded-2xl flex items-center justify-center transition-all duration-150 overflow-hidden",
+                    "shadow-[0_3px_0_rgba(0,0,0,0.06)_inset,0_6px_14px_-6px_rgba(0,0,0,0.35)] dark:shadow-[0_3px_0_rgba(0,0,0,0.25)_inset,0_6px_14px_-6px_rgba(0,0,0,0.6)]",
+                    isActive ? cn(cat.iconBg, "ring-2 ring-indigo-400 scale-110 shadow-[0_0_12px_rgba(99,102,241,0.4)]") : cn(cat.iconBg, "group-hover:scale-105 group-hover:ring-2 ring-indigo-400")
                   )}>
-                    <cat.Icon className={cn(cat.iconColor)} style={{ width: 22, height: 22 }} strokeWidth={isActive ? 2.5 : 2} />
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/50 via-white/5 to-transparent dark:from-white/15 dark:via-white/0" aria-hidden />
+                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/10 to-transparent dark:from-black/25" aria-hidden />
+                    <cat.Icon className={cn("relative drop-shadow-sm", cat.iconColor)} style={{ width: 38, height: 38 }} strokeWidth={2.5} />
                   </div>
-                  <span className={cn("font-outfit", "text-[11px] font-bold tracking-tight whitespace-nowrap", isActive ? "text-foreground" : "text-muted-foreground")}>
+                  <span className={cn("font-outfit", "text-sm font-bold tracking-tight text-center leading-tight line-clamp-2 max-w-[100px]", isActive ? "text-foreground" : "text-muted-foreground")}>
                     {cat.label}
                   </span>
-                  <span className={cn("text-[10px] tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
+                  <span className={cn("text-xs tabular-nums leading-none", isActive ? "text-muted-foreground" : "text-muted-foreground/40")}>
                     {count}
                   </span>
-                  <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-400 transition-all duration-150", isActive ? "w-8" : "w-0")} />
+                  <div className={cn("absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-gradient-to-r from-indigo-500 to-violet-400 transition-all duration-150", isActive ? "w-12" : "w-0")} />
                 </Link>
               )
             })}
@@ -91,9 +93,9 @@ export function SkillCategoryStrip({ activeCategory, counts, total }: { activeCa
         <button
           onClick={() => scrollCat("right")}
           disabled={!scrolled.right}
-          className="shrink-0 w-7 h-7 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+          className="shrink-0 w-10 h-10 my-auto rounded-full flex items-center justify-center bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
     </div>
