@@ -36,7 +36,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
 
   const [listings, grouped] = await Promise.all([
     prisma.listing.findMany({
-      where:   { userId, ...(statusFilter ? { status: statusFilter } : {}) },
+      where:   { userId, status: statusFilter ?? { not: "REMOVED" } },
       orderBy: { createdAt: "desc" },
       include: {
         offers: {
@@ -48,7 +48,7 @@ export default async function MyListingsPage({ searchParams }: PageProps) {
     }),
     prisma.listing.groupBy({
       by:    ["status"],
-      where: { userId },
+      where: { userId, status: { not: "REMOVED" } },
       _count: { id: true },
       _sum:   { viewCount: true },
     }),

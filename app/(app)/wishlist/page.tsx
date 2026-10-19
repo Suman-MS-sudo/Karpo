@@ -31,7 +31,7 @@ export default async function WishlistPage() {
 
   if (idsByType.LISTING?.length) {
     const rows = await prisma.listing.findMany({
-      where: { id: { in: idsByType.LISTING } },
+      where: { id: { in: idsByType.LISTING }, status: { not: "REMOVED" } },
       select: { id: true, title: true, description: true, price: true, images: true, category: true },
     })
     for (const r of rows) items.push({

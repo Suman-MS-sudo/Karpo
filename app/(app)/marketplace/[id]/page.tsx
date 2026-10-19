@@ -125,6 +125,12 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
   if (!raw) return <GoneNotice backHref="/marketplace" backLabel="Back to Buy & Sell" />
 
+  // Admin-removed listings (via Reports) must not stay reachable by direct
+  // link, wishlist, notification, etc. Admins can still open them to review.
+  if (raw.status === "REMOVED" && session?.user?.role !== "ADMIN") {
+    return <GoneNotice backHref="/marketplace" backLabel="Back to Buy & Sell" />
+  }
+
   const isOwner   = session?.user?.id === raw.userId
   const isSold    = raw.status === "SOLD"
   const isExpired = raw.status === "EXPIRED"

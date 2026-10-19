@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { ContentReportButton } from "@/components/shared/ContentReportButton"
 import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -345,6 +346,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
                   {!isOwner && (
                     <WishlistButton itemId={params.id} itemType="EVENT" initialWishlisted={isWishlisted} />
                   )}
+                  {!isOwner && <ContentReportButton itemType="EVENT" itemId={params.id} noun="event" iconOnly />}
                   <SocialShare
                     title={`${event.title} — Event on Korpo`}
                     description={event.description ?? undefined}

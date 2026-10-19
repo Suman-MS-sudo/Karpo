@@ -157,16 +157,17 @@ async function fetchAll(userId: string) {
 
   const [listings, rentals, referrals, carpools, services, events] = await Promise.all([
     prisma.listing.findMany({
-      where: { userId },
+      // Admin-removed posts are hidden from the owner too (they get a notification).
+      where: { userId, status: { not: "REMOVED" } },
       orderBy: { createdAt: "desc" },
       include: { offers: { where: { status: "ACCEPTED" }, select: { amount: true }, take: 1 } },
     }),
     prisma.rentalPost.findMany({
-      where: { userId },
+      where: { userId, status: { not: "REMOVED" } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.jobReferral.findMany({
-      where: { userId },
+      where: { userId, status: { not: "REMOVED" } },
       orderBy: { createdAt: "desc" },
       include: { company: { select: { name: true } } },
     }),
@@ -175,7 +176,7 @@ async function fetchAll(userId: string) {
       orderBy: { createdAt: "desc" },
     }),
     prisma.skillListing.findMany({
-      where: { userId },
+      where: { userId, status: { not: "REMOVED" } },
       orderBy: { createdAt: "desc" },
     }),
     prisma.event.findMany({

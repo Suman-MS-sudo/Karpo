@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils"
 import { RentalInquiryPanel } from "@/components/rentals/RentalInquiryPanel"
 import { RentalEngagePanel }  from "@/components/rentals/RentalEngagePanel"
-import { RentalReportButton } from "@/components/rentals/RentalReportButton"
+import { ContentReportButton } from "@/components/shared/ContentReportButton"
 import { RentalDeleteButton } from "@/components/rentals/RentalDeleteButton"
 import { RentalImageGallery } from "@/components/rentals/RentalImageGallery"
 import { RentalPhotoManager } from "@/components/rentals/RentalPhotoManager"
@@ -152,6 +152,11 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
 
   if (!rental) return <GoneNotice backHref="/rentals" backLabel="Back to Rentals" />
 
+  // Admin-removed (via Reports): unreachable except to admins reviewing it.
+  if (rental.status === "REMOVED" && session?.user?.role !== "ADMIN") {
+    return <GoneNotice backHref="/rentals" backLabel="Back to Rentals" />
+  }
+
   const isOwner   = userId === rental.userId
   const isFilled  = rental.status === "FILLED"
   const isExpired = rental.status === "EXPIRED"
@@ -190,7 +195,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
               </Button>
             </>
           )}
-          {!isOwner && !isFilled && <RentalReportButton rentalId={params.id} />}
+          {!isOwner && !isFilled && <ContentReportButton itemType="RENTAL" itemId={params.id} noun="rental" />}
           {!isOwner && (
             <WishlistButton itemId={params.id} itemType="RENTAL" initialWishlisted={isWishlisted} />
           )}

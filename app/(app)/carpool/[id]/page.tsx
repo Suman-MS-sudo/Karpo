@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { ContentReportButton } from "@/components/shared/ContentReportButton"
 import { getWishlistedIds } from "@/lib/wishlist"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -177,6 +178,7 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
                 {!isOwner && (
                   <WishlistButton itemId={params.id} itemType="CARPOOL" initialWishlisted={isWishlisted} />
                 )}
+                {!isOwner && <ContentReportButton itemType="CARPOOL" itemId={params.id} noun="ride" iconOnly />}
                 <SocialShare
                   title={`Carpool: ${route.fromLocation} → ${route.toLocation} on Korpo`}
                   path={`/carpool/${params.id}`}

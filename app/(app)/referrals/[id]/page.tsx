@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { ContentReportButton } from "@/components/shared/ContentReportButton"
 import { getWishlistedIds } from "@/lib/wishlist"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,11 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
   })
 
   if (!ref) return <GoneNotice backHref="/referrals" backLabel="Back to Referrals" />
+
+  // Admin-removed (via Reports): unreachable except to admins reviewing it.
+  if (ref.status === "REMOVED" && session?.user?.role !== "ADMIN") {
+    return <GoneNotice backHref="/referrals" backLabel="Back to Referrals" />
+  }
 
   const isOwner  = session?.user?.id === ref.userId
   const isClosed = ref.status !== "OPEN"
@@ -198,6 +204,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
                     {!isOwner && (
                       <WishlistButton itemId={params.id} itemType="REFERRAL" initialWishlisted={isWishlisted} />
                     )}
+                    {!isOwner && <ContentReportButton itemType="REFERRAL" itemId={params.id} noun="referral" iconOnly />}
                     <SocialShare
                       title={`${ref.title} at ${ref.company.name} — Referral on Korpo`}
                       description={ref.description ?? undefined}

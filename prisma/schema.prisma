@@ -110,6 +110,7 @@ model User {
   listings         Listing[]
   listingOffers       ListingOffer[]       @relation("BuyerOffers")
   listingReports      ListingReport[]
+  contentReports      ContentReport[]
   listingEngagements  ListingEngagement[]  @relation("BuyerEngagements")
   skillListings        SkillListing[]
   skillOrdersBuying    SkillOrder[]        @relation("SkillBuyer")
@@ -338,6 +339,24 @@ model UserReport {
   reported User @relation("UserReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
 
   @@index([reportedId])
+  @@index([status])
+}
+
+// Generic report for every post type other than marketplace Listings (which
+// keep ListingReport): RENTAL | SKILL | EVENT | REFERRAL | CARPOOL.
+model ContentReport {
+  id        String   @id @default(cuid())
+  itemType  String
+  itemId    String
+  userId    String
+  reason    String
+  details   String?
+  status    String   @default("PENDING") // PENDING | RESOLVED | DISMISSED
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([itemType, itemId, userId])
   @@index([status])
 }
 
