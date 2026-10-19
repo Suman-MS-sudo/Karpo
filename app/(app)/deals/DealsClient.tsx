@@ -469,6 +469,28 @@ export function DealsClient({
   const deals = fetchedDeals
     .filter((d) => !brandFilter || d.merchantName === brandFilter)
     .filter((d) => !minRupee || dealRupeeAmount(d) >= minRupee)
+    // Sort on the client too, so the dropdown takes effect immediately and
+    // even if the background refetch is slow or fails (e.g. 403 for accounts
+    // that aren't verified yet) — the server applies the same ordering.
+    .sort((a, b) => {
+      // Many deals carry no % in `discount` (the saving is a ₹ amount in the
+      // title, or implied by original vs sale price), so rank on an effective
+      // percentage, then the ₹ amount, so "Highest Discount" actually orders them.
+      const pct = (d: Deal) =>
+        d.discount > 0 ? d.discount
+        : d.originalPrice && d.salePrice && d.originalPrice > d.salePrice
+          ? ((d.originalPrice - d.salePrice) / d.originalPrice) * 100
+        : 0
+      const byDiscount = () => (pct(b) - pct(a)) || (dealRupeeAmount(b) - dealRupeeAmount(a))
+      const byNewest   = () => b.createdAt.localeCompare(a.createdAt)
+      const byTitle    = () => a.title.localeCompare(b.title)
+      switch (filters.sortBy) {
+        case "newest":   return byNewest()   || byDiscount() || byTitle()
+        case "expiring": return a.validUntil.localeCompare(b.validUntil) || byDiscount() || byTitle()
+        case "popular":  return (b.viewCount - a.viewCount) || (b.usedCount - a.usedCount) || byDiscount() || byTitle()
+        default:         return byDiscount() || byNewest() || byTitle()
+      }
+    })
 
   const isNewDeal = (id: string) => newDealsCount > 0 && !seenIds.has(id)
   const isFiltered = !!(filters.category || filters.minDiscount || filters.search || brandFilter || minRupee)
