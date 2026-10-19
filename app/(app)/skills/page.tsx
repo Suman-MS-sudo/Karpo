@@ -24,16 +24,43 @@ const PAGE_SIZE = 8
 
 const CATEGORY_LABELS: Record<string, string> = {
   TECH: "Tech & Dev", DATA: "Data & AI", DESIGN: "Design & UX", ENGINEERING: "Engineering",
-  MARKETING: "Marketing", BUSINESS: "Business", FINANCE: "Finance", LEGAL: "Legal",
+  MARKETING: "Marketing", BUSINESS: "Business", FINANCE: "Finance",
   LANGUAGE: "Languages", COACHING: "Coaching", CREATIVE: "Creative", WELLNESS: "Wellness",
   MUSIC: "Music", PHOTOGRAPHY: "Photography",
 }
 
-const SKILL_OPTIONS = ["React", "Next.js", "TypeScript", "Node.js", "Python", "AWS", "Docker", "Figma", "SQL"]
+// Skill checkboxes in the filter sidebar, per category. "ALL" is the fallback
+// when no category is selected.
+const SKILL_OPTIONS_BY_CATEGORY: Record<string, string[]> = {
+  ALL:         ["React", "Python", "Figma", "SEO", "Financial Modelling", "Public Speaking", "Photography", "Guitar"],
+  TECH:        ["React", "Next.js", "TypeScript", "Node.js", "Python", "AWS", "Docker", "SQL"],
+  DATA:        ["Python", "SQL", "Machine Learning", "Power BI", "Tableau", "Excel", "Statistics", "Deep Learning"],
+  DESIGN:      ["Figma", "UI Design", "UX Research", "Prototyping", "Branding", "Illustration", "Adobe Photoshop", "Motion Design"],
+  ENGINEERING: ["AutoCAD", "SolidWorks", "Embedded Systems", "IoT", "PLC", "MATLAB", "Robotics", "CAD/CAM"],
+  MARKETING:   ["SEO", "Google Ads", "Social Media", "Content Marketing", "Email Marketing", "Analytics", "Branding", "Copywriting"],
+  BUSINESS:    ["Strategy", "Product Management", "Operations", "Sales", "Startups", "Project Management", "Consulting", "Negotiation"],
+  FINANCE:     ["Financial Modelling", "Taxation", "Accounting", "Investing", "Budgeting", "Valuation", "Excel", "Audit"],
+  LANGUAGE:    ["English", "Hindi", "Spanish", "French", "German", "Japanese", "IELTS", "Public Speaking"],
+  COACHING:    ["Career Coaching", "Interview Prep", "Leadership", "Mentoring", "Public Speaking", "Resume Review", "Productivity", "Life Coaching"],
+  CREATIVE:    ["Content Writing", "Copywriting", "Editing", "Video Editing", "Storytelling", "Blogging", "Scriptwriting", "Proofreading"],
+  WELLNESS:    ["Yoga", "Meditation", "Fitness", "Nutrition", "Mental Health", "Pilates", "Zumba", "Stress Management"],
+  MUSIC:       ["Guitar", "Piano", "Vocals", "Music Production", "Carnatic", "Hindustani", "Drums", "Music Theory"],
+  PHOTOGRAPHY: ["Portrait", "Wedding", "Product", "Lightroom", "Photoshop", "Videography", "Editing", "Landscape"],
+}
+
+// Hourly rate for hourly listings, lowest package price for packaged ones.
+function effectivePrice(l: { hourlyRate: number | null; packages: string | null }): number | null {
+  if (l.hourlyRate != null) return l.hourlyRate
+  try {
+    const prices = (JSON.parse(l.packages ?? "[]") as Array<{ price?: number | string }>)
+      .map((p) => Number(p.price)).filter((n) => Number.isFinite(n) && n > 0)
+    return prices.length ? Math.min(...prices) : null
+  } catch { return null }
+}
 
 interface PageProps {
   searchParams: {
-    q?: string; category?: string; format?: string
+    q?: string; category?: string; format?: string; pricing?: string
     minPrice?: string; maxPrice?: string; minRating?: string; minExp?: string
     location?: string; skills?: string; ai?: string
     sort?: string; page?: string
@@ -47,7 +74,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   const aiMatch = searchParams.ai !== "off"
 
   const isFiltered = !!(
-    searchParams.q || searchParams.category || searchParams.format || searchParams.minRating ||
+    searchParams.q || searchParams.category || searchParams.format || searchParams.pricing || searchParams.minRating ||
     searchParams.minPrice || searchParams.maxPrice || searchParams.minExp || searchParams.location || searchParams.skills
   )
 
@@ -61,21 +88,29 @@ export default async function SkillsPage({ searchParams }: PageProps) {
   if (searchParams.format)    baseWhere.format      = searchParams.format
   if (searchParams.minRating) baseWhere.avgRating   = { gte: parseFloat(searchParams.minRating) }
   if (searchParams.minExp)    baseWhere.yearsExp    = { gte: parseInt(searchParams.minExp) }
-  if (searchParams.maxPrice)  baseWhere.hourlyRate  = { lte: parseInt(searchParams.maxPrice) }
+  // Listings are priced either hourly (hourlyRate) or by package (packages JSON,
+  // hourlyRate is null), so a price filter on hourlyRate alone hides every
+  // packaged listing. `pricing` narrows to one model; the price filter itself
+  // is applied on each listing's effective price (see below).
+  const pricing  = searchParams.pricing === "HOURLY" || searchParams.pricing === "PACKAGE" ? searchParams.pricing : ""
+  const minPrice = parseInt(searchParams.minPrice ?? "") || 0
+  if (pricing) baseWhere.pricingModel = pricing
+  const priceSort = sort === "price_asc" || sort === "price_desc"
+  // Hourly-only can be filtered/sorted in SQL; anything that can include
+  // packaged listings has to be done in memory over a bounded pool.
+  const memPrice = pricing !== "HOURLY" && (minPrice > 0 || priceSort)
+  if (pricing === "HOURLY" && minPrice > 0) baseWhere.hourlyRate = { gte: minPrice }
   // Collect extra AND-conditions here instead of assigning `baseWhere.OR` /
   // `baseWhere.AND` directly — the text-search branch below also needs its
   // own top-level `OR`, and a second assignment would silently clobber it.
   const andConditions: any[] = []
 
-  // Default to the user's own city when no explicit location filter is set —
-  // but skills listings are frequently remote/unlocated (location: null),
-  // unlike marketplace/rentals which are always tied to a physical city, so
-  // a strict equality match would silently hide every remote professional.
-  // Include null-location rows alongside the city match.
+  // Only filter by location when the user explicitly picks one. Skills are
+  // often remote/unlocated, and the category strip counts are global, so an
+  // implicit "my city" default made category pages show fewer (or no)
+  // listings than the count on the category chip.
   if (searchParams.location) {
     baseWhere.location = { in: searchParams.location.split(",") }
-  } else if (session?.user?.city) {
-    andConditions.push({ OR: [{ location: session.user.city }, { location: null }] })
   }
   if (searchParams.skills) {
     andConditions.push(...searchParams.skills.split(",").map(s => ({ skills: { contains: `"${s}"` } })))
@@ -108,7 +143,17 @@ export default async function SkillsPage({ searchParams }: PageProps) {
 
   let listings: any[], total: number
 
-  if (q) {
+  if (memPrice) {
+    const pool = await prisma.skillListing.findMany({ where, orderBy: { createdAt: "desc" }, take: 500, include: listingInclude })
+    const withPrice = pool.map((l) => ({ l, price: effectivePrice(l) }))
+    let kept = withPrice.filter((x) => minPrice <= 0 || (x.price !== null && x.price >= minPrice))
+    if (priceSort) {
+      const dir = sort === "price_asc" ? 1 : -1
+      kept = kept.sort((a, b) => ((a.price ?? Infinity) - (b.price ?? Infinity)) * dir)
+    }
+    total = kept.length
+    listings = kept.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((x) => x.l)
+  } else if (q) {
     // Exact substring match first; if a typo yields nothing, fall back to a
     // fuzzy (typo-tolerant) match over a bounded candidate pool — same
     // pattern used for rentals search.
@@ -158,13 +203,47 @@ export default async function SkillsPage({ searchParams }: PageProps) {
 
   const [byCategory, locationRows, stats] = await Promise.all([
     prisma.skillListing.groupBy({ by: ["category"], where: { status: "ACTIVE" }, _count: { _all: true } }),
-    prisma.skillListing.findMany({ where: { status: "ACTIVE", location: { not: null } }, select: { location: true }, distinct: ["location"] }),
+    prisma.skillListing.groupBy({ by: ["location"], where: { status: "ACTIVE", location: { not: null } }, _count: { _all: true } }),
     statsQuery,
   ])
   const { allActiveCount, completedOrders: orderAggSum, avgRating: ratingAggAvg, verifiedCount } = stats
 
+  // Skills / Topics checkboxes: the tags posters actually entered for this
+  // category (most common first), so every option returns results. The curated
+  // list only tops up when there are few real tags.
+  const skillRows = await prisma.skillListing.findMany({
+    where: { status: "ACTIVE", ...(searchParams.category ? { category: searchParams.category } : {}) },
+    select: { skills: true },
+  })
+  const tagCounts = new Map<string, { label: string; n: number }>()
+  for (const r of skillRows) {
+    let tags: unknown
+    try { tags = JSON.parse(r.skills || "[]") } catch { continue }
+    if (!Array.isArray(tags)) continue
+    for (const t of tags) {
+      const label = typeof t === "string" ? t.trim() : ""
+      if (!label) continue
+      const key = label.toLowerCase()
+      const cur = tagCounts.get(key)
+      if (cur) cur.n++; else tagCounts.set(key, { label, n: 1 })
+    }
+  }
+  const skillOptions = [...tagCounts.values()].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label)).slice(0, 15).map((t) => t.label)
+  if (skillOptions.length < 6) {
+    const have = new Set(skillOptions.map((s) => s.toLowerCase()))
+    for (const s of SKILL_OPTIONS_BY_CATEGORY[searchParams.category ?? "ALL"] ?? SKILL_OPTIONS_BY_CATEGORY.ALL) {
+      if (skillOptions.length >= 8) break
+      if (!have.has(s.toLowerCase())) skillOptions.push(s)
+    }
+  }
+
   const categoryCounts = Object.fromEntries(byCategory.map(c => [c.category, c._count._all]))
   const locations       = locationRows.map(r => r.location).filter((l): l is string => !!l).sort()
+  const topLocations    = [...locationRows]
+    .filter((r): r is typeof r & { location: string } => !!r.location)
+    .sort((a, b) => b._count._all - a._count._all || a.location.localeCompare(b.location))
+    .slice(0, 5)
+    .map(r => r.location)
   const pages            = Math.ceil(total / PAGE_SIZE)
   const catLabel          = searchParams.category ? CATEGORY_LABELS[searchParams.category] ?? searchParams.category : "All Skills"
 
@@ -199,7 +278,7 @@ export default async function SkillsPage({ searchParams }: PageProps) {
         <p className="text-sm text-muted-foreground mt-1">{total.toLocaleString()} professionals available</p>
       </div>
 
-      <SkillListFilters locations={locations} skillOptions={SKILL_OPTIONS}>
+      <SkillListFilters locations={locations} topLocations={topLocations} skillOptions={skillOptions}>
         {aiMatch && (
           <div className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent ring-1 ring-primary/20 px-5 py-4 mb-6">
             <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">

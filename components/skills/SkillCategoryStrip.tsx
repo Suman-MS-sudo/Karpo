@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRef, useState } from "react"
 import {
   LayoutDashboard, Code2, Palette, Megaphone, PenTool, Briefcase, TrendingUp,
-  Database, Cpu, Scale, Languages, GraduationCap, HeartPulse, Camera,
+  Database, Cpu, Music, Languages, GraduationCap, HeartPulse, Camera,
   ChevronLeft, ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -20,7 +20,7 @@ const CATEGORIES = [
   { value: "FINANCE",     label: "Finance",      Icon: TrendingUp,      iconBg: "bg-emerald-100 dark:bg-emerald-500/20",   iconColor: "text-emerald-600 dark:text-emerald-400"  },
   { value: "DATA",        label: "Data & AI",    Icon: Database,        iconBg: "bg-indigo-100 dark:bg-indigo-500/20",     iconColor: "text-indigo-600 dark:text-indigo-400"    },
   { value: "ENGINEERING", label: "Engineering",  Icon: Cpu,             iconBg: "bg-cyan-100 dark:bg-cyan-500/20",         iconColor: "text-cyan-600 dark:text-cyan-400"        },
-  { value: "LEGAL",       label: "Legal",        Icon: Scale,           iconBg: "bg-slate-100 dark:bg-slate-500/20",       iconColor: "text-slate-600 dark:text-slate-400"      },
+  { value: "MUSIC",       label: "Music",        Icon: Music,           iconBg: "bg-violet-100 dark:bg-violet-500/20",     iconColor: "text-violet-600 dark:text-violet-400"    },
   { value: "LANGUAGE",    label: "Languages",    Icon: Languages,       iconBg: "bg-green-100 dark:bg-green-500/20",       iconColor: "text-green-600 dark:text-green-400"      },
   { value: "COACHING",    label: "Coaching",     Icon: GraduationCap,   iconBg: "bg-orange-100 dark:bg-orange-500/20",     iconColor: "text-orange-600 dark:text-orange-400"    },
   { value: "WELLNESS",    label: "Wellness",     Icon: HeartPulse,      iconBg: "bg-rose-100 dark:bg-rose-500/20",         iconColor: "text-rose-600 dark:text-rose-400"        },

@@ -61,37 +61,12 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
       />
       <SkillCategoryStrip activeCategory="All" counts={countByCategory} total={total} />
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-14">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-14 space-y-14">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
           <div className="absolute top-24 -left-32 h-[300px] w-[300px] rounded-full bg-primary/[0.04] blur-[110px]" />
           <div className="absolute top-1/2 -right-32 h-[340px] w-[340px] rounded-full bg-accent/[0.05] blur-[110px]" />
           <div className="absolute bottom-0 left-1/3 h-[260px] w-[260px] rounded-full bg-amber-400/[0.04] blur-[110px]" />
         </div>
-
-        {/* ── How it works ─────────────────────────────────────────────────────── */}
-        <section>
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1.5 flex items-center gap-2">
-            <span className="h-px w-5 bg-primary/50" />Process
-          </p>
-          <h2 className="text-2xl font-bold tracking-tight">How SkillHub Works</h2>
-          <p className="text-sm text-muted-foreground mb-6 mt-1">From request to hire, in three simple steps</p>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {[
-              { Icon: MessageSquareText, title: "Describe what you need", desc: "Post a request or search a category to find the right expertise." },
-              { Icon: Sparkles,          title: "Get AI-matched",        desc: "We rank verified colleagues by reputation, skills, and availability." },
-              { Icon: Handshake,         title: "Hire & collaborate securely", desc: "Chat, agree on a package, and track delivery — all inside Korpo." },
-            ].map(({ Icon, title, desc }, i) => (
-              <div key={title} className="relative rounded-3xl bg-card ring-1 ring-black/5 dark:ring-white/10 shadow-sm p-6">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center mb-4">
-                  <Icon className="h-5 w-5 text-primary" />
-                </div>
-                <p className="text-xs font-semibold text-primary/70 mb-1">Step {i + 1}</p>
-                <h3 className="text-sm font-semibold mb-1.5">{title}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* ── Recommended ──────────────────────────────────────────────────────── */}
         {featured.length > 0 && (
@@ -167,6 +142,31 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
             </div>
           </section>
         )}
+
+        {/* ── How it works ─────────────────────────────────────────────────────── */}
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1.5 flex items-center gap-2">
+            <span className="h-px w-5 bg-primary/50" />Process
+          </p>
+          <h2 className="text-2xl font-bold tracking-tight">How SkillHub Works</h2>
+          <p className="text-sm text-muted-foreground mb-6 mt-1">From request to hire, in three simple steps</p>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {[
+              { Icon: MessageSquareText, title: "Describe what you need", desc: "Post a request or search a category to find the right expertise." },
+              { Icon: Sparkles,          title: "Get AI-matched",        desc: "We rank verified colleagues by reputation, skills, and availability." },
+              { Icon: Handshake,         title: "Hire & collaborate securely", desc: "Chat, agree on a package, and track delivery — all inside Korpo." },
+            ].map(({ Icon, title, desc }, i) => (
+              <div key={title} className="relative rounded-3xl bg-card ring-1 ring-black/5 dark:ring-white/10 shadow-sm p-6">
+                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10 flex items-center justify-center mb-4">
+                  <Icon className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-xs font-semibold text-primary/70 mb-1">Step {i + 1}</p>
+                <h3 className="text-sm font-semibold mb-1.5">{title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ── CTA ──────────────────────────────────────────────────────────────── */}
         <section className="group/cta relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-primary/[0.08] via-accent/[0.06] to-primary/[0.08] ring-1 ring-primary/10 shadow-[0_2px_16px_-6px_rgba(99,102,241,0.15)] p-7">

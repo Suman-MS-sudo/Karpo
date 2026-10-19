@@ -2,16 +2,17 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Plus, X, Loader2, Lightbulb } from "lucide-react"
+import { ArrowLeft, Plus, X, Loader2, Lightbulb, MapPin, Check } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MapEmbed } from "@/components/ui/map-embed"
 import { cn } from "@/lib/utils"
 
-const CATEGORIES = ["TECH","DATA","DESIGN","ENGINEERING","MARKETING","BUSINESS","FINANCE","LEGAL","LANGUAGE","COACHING","CREATIVE","WELLNESS","MUSIC","PHOTOGRAPHY"]
+const CATEGORIES = ["TECH","DATA","DESIGN","ENGINEERING","MARKETING","BUSINESS","FINANCE","LANGUAGE","COACHING","CREATIVE","WELLNESS","MUSIC","PHOTOGRAPHY"]
 const DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"]
 const SLOTS = ["08:00–09:00","09:00–10:00","10:00–11:00","11:00–12:00","12:00–13:00","13:00–14:00","14:00–15:00","15:00–16:00","16:00–17:00","17:00–18:00","18:00–19:00","19:00–20:00","20:00–21:00"]
 
@@ -77,11 +78,16 @@ export default function NewSkillPage() {
   const [requirements,  setRequirements]  = useState("")
   const [format,        setFormat]        = useState("ONLINE")
   const [location,      setLocation]      = useState("")
+  const [mapKey,        setMapKey]        = useState(0)
   const [faqs,          setFaqs]          = useState<FAQ[]>([{ q: "", a: "" }])
 
   // Step 2 — Packages
   const [pricingModel, setPricingModel] = useState("PACKAGE")
   const [hourlyRate,   setHourlyRate]   = useState("")
+  const [tiers,        setTiers]        = useState<number[]>([0]) // indexes into `packages` the user chose to offer (at least one)
+  function toggleTier(i: number) {
+    setTiers((prev) => prev.includes(i) ? (prev.length > 1 ? prev.filter((x) => x !== i) : prev) : [...prev, i].sort())
+  }
   const [packages, setPackages] = useState<Pkg[]>([
     { name: "Basic",    price: "", durationHrs: "1",  description: "", features: [""] },
     { name: "Standard", price: "", durationHrs: "3",  description: "", features: ["",""] },
@@ -113,7 +119,7 @@ export default function NewSkillPage() {
   const canNext = [
     category.length > 0 && subcategory.trim().length > 0,
     title.length > 3 && description.length > 20,
-    pricingModel === "HOURLY" ? !!hourlyRate : packages.some((p) => !!p.price),
+    pricingModel === "HOURLY" ? !!hourlyRate : tiers.every((i) => !!packages[i].price),
     availDays.length > 0,
   ]
 
@@ -128,7 +134,7 @@ export default function NewSkillPage() {
         faqs: faqs.filter((f) => f.q && f.a),
         pricingModel,
         hourlyRate:   pricingModel === "HOURLY" ? Number(hourlyRate) : undefined,
-        packages:     pricingModel === "PACKAGE" ? packages.filter((p) => p.price).map((p) => ({
+        packages:     pricingModel === "PACKAGE" ? tiers.map((i) => packages[i]).filter((p) => p.price).map((p) => ({
           name:        p.name,
           price:       Number(p.price),
           durationHrs: Number(p.durationHrs),
@@ -209,7 +215,9 @@ export default function NewSkillPage() {
             <div className="space-y-1.5">
               <Label>Title <span className="text-red-500">*</span></Label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Python for Data Science — 1:1 Mentoring" maxLength={100} />
-              <p className="text-xs text-muted-foreground text-right">{title.length}/100</p>
+              <p className={cn("text-xs text-right", title.length > 0 && title.length <= 3 ? "text-red-500" : "text-muted-foreground")}>
+                {title.length > 0 && title.length <= 3 ? "Title must be at least 4 characters · " : ""}{title.length}/100
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Tagline</Label>
@@ -218,6 +226,9 @@ export default function NewSkillPage() {
             <div className="space-y-1.5">
               <Label>Description <span className="text-red-500">*</span></Label>
               <Textarea rows={5} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Explain your expertise, approach, and what the client can expect. The more detail the better." />
+              <p className={cn("text-xs text-right", description.length <= 20 ? "text-red-500" : "text-muted-foreground")}>
+                {description.length <= 20 ? `Description needs more than 20 characters · ${description.length}/21` : `${description.length} characters`}
+              </p>
             </div>
             <TagInput label="Skills / Topics" tags={skills} onAdd={(t) => setSkills((p) => [...p, t])} onRemove={(t) => setSkills((p) => p.filter((x) => x !== t))} placeholder="e.g. Python, Machine Learning, pandas" />
             <TagInput label="What you'll deliver" tags={deliverables} onAdd={(t) => setDeliverables((p) => [...p, t])} onRemove={(t) => setDeliverables((p) => p.filter((x) => x !== t))} placeholder="e.g. Session recording, homework exercises, notes" />
@@ -235,7 +246,21 @@ export default function NewSkillPage() {
                   </button>
                 ))}
               </div>
-              {format !== "ONLINE" && <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City / area for in-person sessions" />}
+              {format !== "ONLINE" && (
+                <div className="space-y-1.5">
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      onBlur={() => setMapKey((k) => k + 1)}
+                      placeholder="Search for a venue or enter full address"
+                      className="pl-9"
+                    />
+                  </div>
+                  {location && <MapEmbed key={mapKey} location={location} title="Session location" />}
+                </div>
+              )}
             </div>
 
             {/* FAQs */}
@@ -281,7 +306,25 @@ export default function NewSkillPage() {
               </div>
             ) : (
               <div className="space-y-5">
-                {packages.map((pkg, pi) => (
+                <div className="space-y-2">
+                  <Label>Package type</Label>
+                  <div role="group" className="grid grid-cols-3 gap-3">
+                    {packages.map((p, pi) => {
+                      const on = tiers.includes(pi)
+                      return (
+                        <button key={p.name} type="button" role="checkbox" aria-checked={on} onClick={() => toggleTier(pi)}
+                          className={cn("flex items-center gap-2 text-sm py-2.5 px-4 rounded-xl border font-medium transition-all", on ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300" : "border-border text-muted-foreground")}>
+                          <span className={cn("h-4 w-4 rounded border-2 flex items-center justify-center shrink-0", on ? "border-primary-500 bg-primary-500 text-white" : "border-muted-foreground/40")}>
+                            {on && <Check className="h-3 w-3" strokeWidth={3} />}
+                          </span>
+                          {p.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Choose one or more. Only the selected packages are listed.</p>
+                </div>
+                {packages.map((pkg, pi) => !tiers.includes(pi) ? null : (
                   <div key={pi} className="border border-border rounded-2xl p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-sm">{pkg.name} Package</h3>

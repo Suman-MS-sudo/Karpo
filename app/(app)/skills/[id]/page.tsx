@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SocialShare } from "@/components/shared/SocialShare"
 import { WishlistButton } from "@/components/shared/WishlistButton"
+import { ContentReportButton } from "@/components/shared/ContentReportButton"
 import { getWishlistedIds } from "@/lib/wishlist"
 import { Button } from "@/components/ui/button"
 import { UserCard } from "@/components/shared/UserCard"
@@ -83,6 +84,11 @@ export default async function SkillDetailPage({ params }: { params: { id: string
   })
 
   if (!listing) return <GoneNotice backHref="/skills" backLabel="Back to Skills" />
+
+  // Admin-removed (via Reports): unreachable except to admins reviewing it.
+  if (listing.status === "REMOVED" && session?.user?.role !== "ADMIN") {
+    return <GoneNotice backHref="/skills" backLabel="Back to Skills" />
+  }
 
   if (listing.status === "ARCHIVED") {
     return (
@@ -217,6 +223,10 @@ export default async function SkillDetailPage({ params }: { params: { id: string
                 itemType="SKILL"
                 initialWishlisted={isWishlisted}
                 className="bg-white/15 hover:bg-white/25 ring-1 ring-white/30"
+              />
+              <ContentReportButton
+                itemType="SKILL" itemId={listing.id} noun="skill listing" iconOnly
+                className="h-9 w-9 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/25 ring-1 ring-white/30 text-white transition-colors"
               />
               <SocialShare
                 title={`${listing.user.name} — ${listing.title} on Korpo`}

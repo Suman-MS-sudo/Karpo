@@ -30,6 +30,7 @@ const SORTS = [
 
 interface Props {
   locations: string[]
+  topLocations: string[]
   skillOptions: string[]
   children: React.ReactNode
 }
@@ -63,25 +64,39 @@ function FilterDropdown({ label, active, children }: { label: string; active?: b
   )
 }
 
-export function SkillListFilters({ locations, skillOptions, children }: Props) {
+export function SkillListFilters({ locations, topLocations, skillOptions, children }: Props) {
   const router   = useRouter()
   const pathname = usePathname()
   const sp       = useSearchParams()
   const [, startT] = useTransition()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const category  = sp.get("category")  ?? ""
   const format    = sp.get("format")    ?? ""
   const minExp    = sp.get("minExp")    ?? ""
   const minPrice  = sp.get("minPrice")  ?? ""
-  const maxPrice  = sp.get("maxPrice")  ?? "5000"
+  const pricing   = sp.get("pricing")   ?? ""
   const minRating = sp.get("minRating") ?? ""
+  // Local slider value so dragging is smooth; the URL is only updated on release.
+  const [priceDraft, setPriceDraft] = useState<string | null>(null)
+  const sliderPrice = priceDraft ?? (minPrice || "0")
+  // Drop the draft only once the URL has caught up, otherwise the thumb snaps
+  // back to the old value while the navigation is still in flight.
+  useEffect(() => { setPriceDraft(null) }, [minPrice])
   const sort      = sp.get("sort")      ?? "featured"
   const location  = sp.get("location")  ?? ""
   const skills    = sp.get("skills")    ?? ""
   const aiMatch   = sp.get("ai") !== "off"
 
   const selectedLocations = location ? location.split(",") : []
+  const [locationQuery, setLocationQuery] = useState("")
+  // Top 5 locations by listing count, plus any other selected location so it
+  // stays visible (and can be unticked) after picking it from the search box.
+  const shownLocations = [...topLocations, ...selectedLocations.filter(l => !topLocations.includes(l))]
+  // Typeahead: matching locations that aren't already selected.
+  const lq = locationQuery.trim().toLowerCase()
+  const suggestions = lq
+    ? locations.filter(l => l.toLowerCase().includes(lq) && !selectedLocations.includes(l)).slice(0, 8)
+    : []
   const selectedSkills    = skills ? skills.split(",") : []
 
   function push(overrides: Record<string, string>) {
@@ -90,7 +105,7 @@ export function SkillListFilters({ locations, skillOptions, children }: Props) {
       if (v) params.set(k, v); else params.delete(k)
     })
     params.delete("page")
-    startT(() => router.push(`${pathname}?${params.toString()}`))
+    startT(() => router.push(`${pathname}?${params.toString()}`, { scroll: false }))
   }
 
   function toggleListParam(key: string, current: string[], value: string) {
@@ -98,10 +113,15 @@ export function SkillListFilters({ locations, skillOptions, children }: Props) {
     push({ [key]: next.join(",") })
   }
 
-  const hasFilters = !!(category || format || minExp || minPrice || minRating || location || skills || sort !== "featured" || (maxPrice && maxPrice !== "5000"))
+  const hasFilters = !!(format || pricing || minExp || minPrice || minRating || location || skills || sort !== "featured")
 
   function clearAll() {
-    startT(() => router.push(pathname))
+    // Reset only the sidebar filters; keep category, search and other params.
+    const params = new URLSearchParams(sp.toString())
+    ;["format", "pricing", "minExp", "minPrice", "maxPrice", "minRating", "sort", "location", "skills", "page"].forEach(k => params.delete(k))
+    const qs = params.toString()
+    setPriceDraft(null)
+    startT(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }))
   }
 
   return (
@@ -112,6 +132,41 @@ export function SkillListFilters({ locations, skillOptions, children }: Props) {
           <h3 className="text-sm font-semibold">Filters</h3>
           {hasFilters && <button onClick={clearAll} className="text-xs text-primary hover:underline">Clear all</button>}
         </div>
+
+        {locations.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Location</p>
+            <div className="relative mb-2.5">
+              <input
+                type="text"
+                value={locationQuery}
+                onChange={e => setLocationQuery(e.target.value)}
+                placeholder="Type a location…"
+                className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              {lq && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg border border-border bg-card shadow-lg max-h-48 overflow-y-auto py-1">
+                  {suggestions.map(l => (
+                    <button key={l} type="button"
+                      onClick={() => { toggleListParam("location", selectedLocations, l); setLocationQuery("") }}
+                      className="block w-full text-left px-3 py-1.5 text-sm hover:bg-muted">
+                      {l}
+                    </button>
+                  ))}
+                  {suggestions.length === 0 && <p className="px-3 py-1.5 text-xs text-muted-foreground">No matching locations</p>}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              {shownLocations.map(l => (
+                <label key={l} className="flex items-center gap-2 text-sm cursor-pointer text-foreground/90">
+                  <input type="checkbox" checked={selectedLocations.includes(l)} onChange={() => toggleListParam("location", selectedLocations, l)} className="rounded accent-primary" />
+                  {l}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Format</p>
@@ -138,13 +193,31 @@ export function SkillListFilters({ locations, skillOptions, children }: Props) {
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Price (Hourly)</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">
+            Price {pricing === "HOURLY" ? "(Hourly)" : pricing === "PACKAGE" ? "(Package, from)" : ""}
+          </p>
+          <div className="grid grid-cols-3 gap-1.5 mb-3">
+            {[["", "Any"], ["HOURLY", "Hourly"], ["PACKAGE", "Package"]].map(([v, l]) => (
+              <button key={v} type="button" onClick={() => push({ pricing: v })}
+                className={cn("text-xs py-1.5 rounded-lg border font-medium transition-all", pricing === v ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:text-foreground")}>
+                {l}
+              </button>
+            ))}
+          </div>
           <input
-            type="range" min={0} max={5000} step={100} value={maxPrice}
-            onChange={e => push({ maxPrice: e.target.value })}
-            className="w-full accent-primary"
+            type="range" min={0} max={5000} step={100} value={sliderPrice}
+            onChange={e => setPriceDraft(e.target.value)}
+            onPointerUp={e => {
+              const v = e.currentTarget.value
+              push({ minPrice: v === "0" ? "" : v })
+            }}
+            onKeyUp={e => {
+              const v = e.currentTarget.value
+              push({ minPrice: v === "0" ? "" : v })
+            }}
+            className="w-full accent-primary touch-none cursor-pointer"
           />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>₹0</span><span>₹{Number(maxPrice).toLocaleString()}+</span></div>
+          <div className="flex justify-between text-xs text-muted-foreground mt-1"><span>₹0</span><span>₹{Number(sliderPrice).toLocaleString()}+</span></div>
         </div>
 
         <div>
@@ -161,26 +234,12 @@ export function SkillListFilters({ locations, skillOptions, children }: Props) {
 
         {skillOptions.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Skills</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Skills / Topics</p>
             <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
               {skillOptions.map(s => (
                 <label key={s} className="flex items-center gap-2 text-sm cursor-pointer text-foreground/90">
                   <input type="checkbox" checked={selectedSkills.includes(s)} onChange={() => toggleListParam("skills", selectedSkills, s)} className="rounded accent-primary" />
                   {s}
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {locations.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">Location</p>
-            <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-              {locations.map(l => (
-                <label key={l} className="flex items-center gap-2 text-sm cursor-pointer text-foreground/90">
-                  <input type="checkbox" checked={selectedLocations.includes(l)} onChange={() => toggleListParam("location", selectedLocations, l)} className="rounded accent-primary" />
-                  {l}
                 </label>
               ))}
             </div>
