@@ -2,7 +2,7 @@
 import { useSession } from "next-auth/react"
 import {
   Crown, Check, Zap, TrendingUp, Star, Shield, Users, MessageSquare,
-  Gift, GraduationCap, Tag, ArrowUpCircle, ChevronDown, ChevronUp,
+  Tag, ChevronDown, ChevronUp,
   Rocket, Eye, BadgeCheck, Infinity,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,6 @@ const FREE_PERKS = [
   { icon: Users,       text: "Buy & Sell Marketplace — up to 5 active listings" },
   { icon: Shield,      text: "Rental & Flatmate Hub — post & browse rentals" },
   { icon: MessageSquare, text: "Job Referrals — post & apply for referrals" },
-  { icon: ArrowUpCircle, text: "Corporate Carpool — offer & join rides" },
   { icon: Star,        text: "Skill Marketplace — list & hire skills" },
   { icon: Users,       text: "Events & Communities — RSVP & join groups" },
   { icon: MessageSquare, text: "In-app Messaging — unlimited messages" },
@@ -27,7 +26,7 @@ const PREMIUM_PERKS = [
   {
     icon: Rocket,
     title: "Auto-Boost on Every Listing",
-    desc:  "Your listings appear at the top of every browse feed — marketplace, rentals, referrals, carpool, and skills. No manual boost needed, ever.",
+    desc:  "Your listings appear at the top of every browse feed — marketplace, rentals, referrals, and skills. No manual boost needed, ever.",
     highlight: true,
   },
   {
@@ -39,21 +38,6 @@ const PREMIUM_PERKS = [
     icon: Tag,
     title: "Employee Deals",
     desc:  "Exclusive discounts from curated brands — gadgets, food, travel, subscriptions and more.",
-  },
-  {
-    icon: GraduationCap,
-    title: "Learning Hub",
-    desc:  "Access workshops, mentoring sessions and certification prep from verified peer professionals.",
-  },
-  {
-    icon: Shield,
-    title: "Concierge Services",
-    desc:  "Tax filing, legal advice, insurance guidance and financial planning from vetted experts.",
-  },
-  {
-    icon: Gift,
-    title: "Employee Benefits",
-    desc:  "Salary advances, personal loans, travel packages and investment products — tailored for salaried professionals.",
   },
   {
     icon: Crown,
@@ -78,8 +62,8 @@ const PREMIUM_PERKS = [
 ]
 
 const FAQS = [
-  { q: "What does 'Auto-Boost' actually mean?", a: "When you post any listing (buy/sell, rental, referral, carpool, or skill), it is automatically marked as boosted. All browse pages sort boosted listings first, so your content appears before free-plan posts." },
-  { q: "Can I still use all services for free?", a: "Yes — every core service is free. Premium gives you boostings, priority placement, and exclusive access to Deals, Learning Hub, Concierge, and Employee Benefits. Free users can use everything else with no hard limits except the 5-listing cap on marketplace." },
+  { q: "What does 'Auto-Boost' actually mean?", a: "When you post any listing (buy/sell, rental, referral, or skill), it is automatically marked as boosted. All browse pages sort boosted listings first, so your content appears before free-plan posts." },
+  { q: "Can I still use all services for free?", a: "Yes — every core service is free. Premium gives you boostings, priority placement, and exclusive access to Deals. Free users can use everything else with no hard limits except the 5-listing cap on marketplace." },
   { q: "Can I cancel anytime?", a: "Absolutely. You can cancel from your account settings at any time. Your premium features remain active until the end of the current billing month." },
   { q: "Is my payment information secure?", a: "Yes. Payments are processed by Razorpay, a PCI-DSS certified payment gateway. Korpo never stores your card details." },
   { q: "Do my old listings get boosted when I upgrade?", a: "Auto-boost applies to listings created after your upgrade. You can re-post older listings or use manual boost for existing ones." },
@@ -166,9 +150,6 @@ export default function MembershipPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { href: "/deals",     icon: Tag,           label: "Deals"      },
-            { href: "/learning",  icon: GraduationCap, label: "Learning"   },
-            { href: "/concierge", icon: Shield,         label: "Concierge"  },
-            { href: "/benefits",  icon: Gift,           label: "Benefits"   },
           ].map((l) => (
             <Link key={l.href} href={l.href} className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40 transition-colors text-center">
               <l.icon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -256,7 +237,6 @@ export default function MembershipPage() {
             { service: "Buy & Sell",      color: "blue",   icon: "🛒", detail: "Your items appear above all free listings in every search and category browse" },
             { service: "Rentals",         color: "emerald",icon: "🏠", detail: "Your rental or PG appears at the top of every city and type filter" },
             { service: "Job Referrals",   color: "violet", icon: "💼", detail: "Your referral posting is pinned first in the job board for maximum visibility" },
-            { service: "Carpool",         color: "orange", icon: "🚗", detail: "Your route is shown first to colleagues looking for a commute match" },
             { service: "Skill Marketplace", color: "cyan", icon: "⚡", detail: "Your skill listing is featured with an amber border and appears before free listings" },
             { service: "All Future Services", color: "amber", icon: "✨", detail: "Auto-boost automatically extends to every new service added to Korpo" },
           ].map((item) => (
@@ -285,9 +265,6 @@ export default function MembershipPage() {
             { feature: "Featured listing strip",          free: "✗",        premium: "✓ Amber border" },
             { feature: "Premium profile crown",           free: "✗",        premium: "✓" },
             { feature: "Employee Deals",                  free: "✗",        premium: "✓" },
-            { feature: "Learning Hub",                    free: "✗",        premium: "✓" },
-            { feature: "Concierge Services",              free: "✗",        premium: "✓" },
-            { feature: "Employee Benefits",               free: "✗",        premium: "✓" },
             { feature: "Priority support",                free: "Standard", premium: "Priority" },
           ].map((row, i) => (
             <div key={i} className={`grid grid-cols-3 text-sm border-b border-border last:border-b-0 ${i % 2 === 0 ? "" : "bg-muted/20"}`}>

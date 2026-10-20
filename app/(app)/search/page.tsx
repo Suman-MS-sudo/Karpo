@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
-import { Search, ShoppingBag, Home, Briefcase, Car, Users, Wrench } from "lucide-react"
+import { Search, ShoppingBag, Home, Briefcase, Users, Wrench } from "lucide-react"
 import { PageTitle } from "@/components/ui/page-title"
 
 export const dynamic = "force-dynamic"
@@ -27,7 +27,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
   const contains = { contains: q }
 
-  const [listings, referrals, rentals, carpool, skills, events] = await Promise.all([
+  const [listings, referrals, rentals, skills, events] = await Promise.all([
     prisma.listing.findMany({
       where: { status: "ACTIVE", OR: [{ title: contains }, { description: contains }] },
       take: 6,
@@ -46,12 +46,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
       select: { id: true, title: true, rent: true, area: true },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.carpoolRoute.findMany({
-      where: { isActive: true, OR: [{ fromLocation: contains }, { toLocation: contains }] },
-      take: 4,
-      select: { id: true, fromLocation: true, toLocation: true, pricePerSeat: true },
-      orderBy: { createdAt: "desc" },
-    }),
     prisma.skillListing.findMany({
       where: { status: "ACTIVE", OR: [{ title: contains }, { tagline: contains }, { description: contains }] },
       take: 6,
@@ -66,7 +60,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     }),
   ])
 
-  const total = listings.length + referrals.length + rentals.length + carpool.length + skills.length + events.length
+  const total = listings.length + referrals.length + rentals.length + skills.length + events.length
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
@@ -152,28 +146,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
                   ₹{Number(r.rent).toLocaleString("en-IN")}/mo
                 </p>
                 {r.area && <p className="text-[11px] text-muted-foreground mt-0.5">{r.area}</p>}
-              </Link>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* Carpool */}
-      {carpool.length > 0 && (
-        <Section
-          title="Carpool Routes"
-          icon={<Car className="h-4 w-4" />}
-          color="text-orange-600"
-          href={`/carpool?q=${encodeURIComponent(q)}`}
-        >
-          <div className="grid grid-cols-2 gap-3">
-            {carpool.map((c) => (
-              <Link key={c.id} href={`/carpool/${c.id}`}
-                className="border border-border rounded-xl px-4 py-3 hover:bg-muted/50 transition-colors">
-                <p className="text-sm font-semibold">{c.fromLocation} → {c.toLocation}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  ₹{Number(c.pricePerSeat).toLocaleString("en-IN")}/seat
-                </p>
               </Link>
             ))}
           </div>

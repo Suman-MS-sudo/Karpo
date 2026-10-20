@@ -4,11 +4,11 @@ import {
   ArrowRight, ShieldCheck, Users, MapPin, Sparkles,
   FolderCheck, Gauge, Download, UserPlus, Compass, TrendingUp, Lock, Search,
   Bell, MessageSquare, BadgeCheck, Clock, Building2, PlugZap, Zap,
-  Layers, MessageCircle, Briefcase, Home as HomeIcon, Car, GraduationCap,
-  Gift, ShoppingBag, Wrench, Tag, Heart, Target, ChevronDown,
+  Layers, MessageCircle, Briefcase, Home as HomeIcon,
+  ShoppingBag, Wrench, Tag, Heart, Target, ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SERVICES } from "@/config/services"
+import { ACTIVE_SERVICES } from "@/config/services"
 import { HeroNetworkBackground } from "@/components/home/HeroNetworkBackground"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { ContactForm } from "@/components/shared/ContactForm"
@@ -20,7 +20,7 @@ import { prisma } from "@/lib/prisma"
 const heroStats = [
   { value: "", label: "Corporate emails verified" },
   { value: "", label: "Eligible company domains" },
-  { value: String(SERVICES.length), label: "Services in one app" },
+  { value: String(ACTIVE_SERVICES.length), label: "Services in one app" },
 ]
 
 const quickSteps = [
@@ -46,9 +46,9 @@ const showcaseSections = [
     img: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&auto=format&fit=crop",
   },
   {
-    eyebrow: "Carpool & Community",
+    eyebrow: "Skills, Deals & Events",
     title: "Collaborate from anywhere",
-    desc: "Share a ride with coworkers heading your way, join events, and build a network that follows you across every company on Korpo.",
+    desc: "Hire or offer skills, unlock employee deals, and join events with coworkers — a network that follows you across every company on Korpo.",
     cta: "Join the network",
     img: "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=1200&q=80&auto=format&fit=crop",
   },
@@ -69,9 +69,6 @@ const integrations = [
   { icon: Briefcase,      color: "text-violet-600 dark:text-violet-400" },
   { icon: HomeIcon,       color: "text-emerald-600 dark:text-emerald-400" },
   { icon: ShoppingBag,    color: "text-blue-600 dark:text-blue-400" },
-  { icon: Car,            color: "text-orange-600 dark:text-orange-400" },
-  { icon: GraduationCap,  color: "text-pink-600 dark:text-pink-400" },
-  { icon: Gift,           color: "text-rose-600 dark:text-rose-400" },
   { icon: Wrench,         color: "text-cyan-600 dark:text-cyan-400" },
   { icon: Tag,            color: "text-amber-600 dark:text-amber-400" },
   { icon: ShieldCheck,    color: "text-indigo-600 dark:text-indigo-400" },
@@ -87,7 +84,7 @@ const productivitySteps = [
 const aboutStats = [
   { value: "", label: "Corporate emails verified" },
   { value: "", label: "Eligible company domains" },
-  { value: String(SERVICES.length), label: "Services on platform" },
+  { value: String(ACTIVE_SERVICES.length), label: "Services on platform" },
 ]
 
 const aboutValues = [
@@ -316,7 +313,7 @@ export default async function LandingPage() {
             <p className="mt-3 text-muted-foreground text-lg">Everything you need, with people you can trust.</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
-            {SERVICES.filter((s) => s.isActive).map((service) => (
+            {ACTIVE_SERVICES.map((service) => (
               <Link key={service.id} href="/auth/signin" className="group h-full block">
                 <div className="relative flex h-full flex-col items-center gap-3 p-6 rounded-2xl border border-border bg-card text-center overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.15)]">
                   {service.badge && (
@@ -544,7 +541,7 @@ export default async function LandingPage() {
             >
               <div className="h-full w-full flex items-center justify-center">
                 <div className="h-28 w-28 rounded-full bg-card flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-foreground">{SERVICES.length}</span>
+                  <span className="text-2xl font-bold text-foreground">{ACTIVE_SERVICES.length}</span>
                   <span className="text-[10px] text-muted-foreground">services, 1 sign-in</span>
                 </div>
               </div>
@@ -684,7 +681,7 @@ export default async function LandingPage() {
             <div>
               <p className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground/80">Services</p>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                {SERVICES.slice(0, 5).map((s) => (
+                {ACTIVE_SERVICES.slice(0, 3).map((s) => (
                   <li key={s.id}><Link href="/auth/signin" className="hover:text-foreground transition-colors">{s.name}</Link></li>
                 ))}
               </ul>
@@ -692,7 +689,7 @@ export default async function LandingPage() {
             <div>
               <p className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground/80">Premium</p>
               <ul className="space-y-2.5 text-sm text-muted-foreground">
-                {SERVICES.slice(5).map((s) => (
+                {ACTIVE_SERVICES.slice(3).map((s) => (
                   <li key={s.id}><Link href="/auth/signin" className="hover:text-foreground transition-colors">{s.name}</Link></li>
                 ))}
               </ul>

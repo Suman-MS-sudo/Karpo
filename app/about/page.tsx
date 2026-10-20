@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
 import { prisma } from "@/lib/prisma"
-import { SERVICES } from "@/config/services"
+import { ACTIVE_SERVICES } from "@/config/services"
 
 // Live figures only — marketing numbers must be substantiable.
 export const revalidate = 3600
@@ -58,7 +58,7 @@ const values = [
 const milestones = [
   { year: "2023", title: "The idea", desc: "Two engineers frustrated by anonymous online listings realised the problem: no simple way to know who you're dealing with." },
   { year: "2024", title: "Private beta", desc: "Marketplace, rentals and referrals went live for an early group of corporate professionals." },
-  { year: "2025", title: "Expanding", desc: "Premium launched. Carpool, events, deals and more went live." },
+  { year: "2025", title: "Expanding", desc: "Premium launched. Skills, events, deals and more went live." },
   { year: "2026+", title: "The vision", desc: "More cities, more companies — one corporate-email network for working professionals." },
 ]
 
@@ -75,7 +75,7 @@ export default async function AboutPage() {
   const stats = [
     { value: verifiedUsers.toLocaleString("en-IN"),  label: "Corporate Emails Verified" },
     { value: companyDomains.toLocaleString("en-IN"), label: "Eligible Company Domains"  },
-    { value: String(SERVICES.length),                 label: "Services on Platform"      },
+    { value: String(ACTIVE_SERVICES.length),                 label: "Services on Platform"      },
   ]
 
   return (
@@ -174,7 +174,7 @@ export default async function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#1E3A5F] mb-6">Our mission</h2>
           <p className="text-xl text-gray-600 leading-relaxed">
-            To make every interaction between corporate professionals — buying, selling, renting, commuting, hiring, learning — as safe and straightforward as talking to a trusted colleague.
+            To make every interaction between corporate professionals — buying, selling, renting, hiring, networking — as safe and straightforward as talking to a trusted colleague.
           </p>
           <div className="mt-10 grid sm:grid-cols-3 gap-6 text-left">
             {[

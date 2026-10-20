@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
   const contains = { contains: q }
 
   const [
-    listingsExact, referralsExact, rentalsExact, carpoolExact, skillsExact, eventsExact,
-    listingsPool, referralsPool, rentalsPool, carpoolPool, skillsPool, eventsPool,
+    listingsExact, referralsExact, rentalsExact, skillsExact, eventsExact,
+    listingsPool, referralsPool, rentalsPool, skillsPool, eventsPool,
   ] = await Promise.all([
     prisma.listing.findMany({
       where: { status: "ACTIVE", OR: [{ title: contains }, { description: contains }] },
@@ -34,11 +34,6 @@ export async function GET(req: NextRequest) {
       where: { status: "ACTIVE", OR: [{ title: contains }, { description: contains }] },
       take: PER_TYPE_LIMIT, orderBy: { createdAt: "desc" },
       select: { id: true, title: true, description: true, rent: true, area: true },
-    }),
-    prisma.carpoolRoute.findMany({
-      where: { isActive: true, OR: [{ fromLocation: contains }, { toLocation: contains }] },
-      take: PER_TYPE_LIMIT, orderBy: { createdAt: "desc" },
-      select: { id: true, fromLocation: true, toLocation: true, pricePerSeat: true },
     }),
     prisma.skillListing.findMany({
       where: { status: "ACTIVE", OR: [{ title: contains }, { tagline: contains }] },
@@ -68,11 +63,6 @@ export async function GET(req: NextRequest) {
       take: CANDIDATE_POOL, orderBy: { createdAt: "desc" },
       select: { id: true, title: true, description: true, rent: true, area: true },
     }),
-    prisma.carpoolRoute.findMany({
-      where: { isActive: true },
-      take: CANDIDATE_POOL, orderBy: { createdAt: "desc" },
-      select: { id: true, fromLocation: true, toLocation: true, pricePerSeat: true },
-    }),
     prisma.skillListing.findMany({
       where: { status: "ACTIVE" },
       take: CANDIDATE_POOL, orderBy: { createdAt: "desc" },
@@ -97,7 +87,6 @@ export async function GET(req: NextRequest) {
   const listings  = withFuzzyFallback(listingsExact,  listingsPool,  (l) => [l.title, l.description])
   const referrals = withFuzzyFallback(referralsExact, referralsPool, (r) => [r.title, r.department])
   const rentals   = withFuzzyFallback(rentalsExact,   rentalsPool,   (r) => [r.title, r.description])
-  const carpool   = withFuzzyFallback(carpoolExact,   carpoolPool,   (c) => [c.fromLocation, c.toLocation])
   const skills    = withFuzzyFallback(skillsExact,    skillsPool,    (s) => [s.title, s.tagline])
   const events    = withFuzzyFallback(eventsExact,    eventsPool,    (e) => [e.title, e.description])
 
@@ -113,10 +102,6 @@ export async function GET(req: NextRequest) {
     ...rentals.map((r) => ({
       type: "Rental", href: `/rentals/${r.id}`, title: r.title,
       subtitle: [`₹${r.rent.toLocaleString("en-IN")}/mo`, r.area].filter(Boolean).join(" · "),
-    })),
-    ...carpool.map((c) => ({
-      type: "Carpool", href: `/carpool/${c.id}`, title: `${c.fromLocation} → ${c.toLocation}`,
-      subtitle: `₹${c.pricePerSeat.toLocaleString("en-IN")}/seat`,
     })),
     ...skills.map((s) => ({
       type: "Skill", href: `/skills/${s.id}`, title: s.title,

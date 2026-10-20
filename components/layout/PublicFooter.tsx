@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { SERVICES } from "@/config/services"
+import { ACTIVE_SERVICES } from "@/config/services"
 import { LegalModal } from "@/components/legal/LegalModal"
 import { CookieSettingsButton } from "@/components/legal/CookieConsentBanner"
 
@@ -22,7 +22,7 @@ export function PublicFooter() {
           <div>
             <p className="font-semibold mb-3 text-sm">Services</p>
             <ul className="space-y-2 text-sm text-blue-200">
-              {SERVICES.slice(0, 5).map((s) => (
+              {ACTIVE_SERVICES.slice(0, 3).map((s) => (
                 <li key={s.id}>
                   <Link href="/auth/signin" className="hover:text-white transition-colors">{s.name}</Link>
                 </li>
@@ -31,9 +31,9 @@ export function PublicFooter() {
           </div>
 
           <div>
-            <p className="font-semibold mb-3 text-sm">Premium</p>
+            <p className="font-semibold mb-3 text-sm">More</p>
             <ul className="space-y-2 text-sm text-blue-200">
-              {SERVICES.slice(5).map((s) => (
+              {ACTIVE_SERVICES.slice(3).map((s) => (
                 <li key={s.id}>
                   <Link href="/auth/signin" className="hover:text-white transition-colors">{s.name}</Link>
                 </li>

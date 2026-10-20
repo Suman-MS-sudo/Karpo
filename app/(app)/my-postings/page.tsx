@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import Image from "next/image"
 import {
-  ShoppingBag, Home, Briefcase, Car, Wrench, Users,
+  ShoppingBag, Home, Briefcase, Wrench, Users,
   Plus, Eye, MapPin, Clock, CheckCircle2, XCircle,
   ExternalLink, Pencil, Package, Calendar, DollarSign,
   TrendingUp, LayoutGrid, ChevronRight,
@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { PageTitle } from "@/components/ui/page-title"
 import { formatCurrency, formatRelativeTime, formatDate } from "@/lib/utils"
-import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 import { deleteExpiredReferrals } from "@/lib/referrals"
 
 export const metadata = { title: "My Postings" }
@@ -24,7 +23,6 @@ const TABS = [
   { key: "marketplace",label: "Buy & Sell",   icon: ShoppingBag,  color: "text-blue-600 dark:text-blue-400",      bg: "bg-blue-100 dark:bg-blue-500/15"      },
   { key: "rentals",    label: "Rentals",      icon: Home,         color: "text-emerald-600 dark:text-emerald-400",bg: "bg-emerald-100 dark:bg-emerald-500/15"},
   { key: "referrals",  label: "Referrals",    icon: Briefcase,    color: "text-violet-600 dark:text-violet-400",  bg: "bg-violet-100 dark:bg-violet-500/15"  },
-  { key: "carpool",    label: "Carpool",      icon: Car,          color: "text-orange-600 dark:text-orange-400",  bg: "bg-orange-100 dark:bg-orange-500/15"  },
   { key: "services",   label: "Services",     icon: Wrench,       color: "text-cyan-600 dark:text-cyan-400",      bg: "bg-cyan-100 dark:bg-cyan-500/15"      },
   { key: "events",     label: "Events",       icon: Users,        color: "text-amber-600 dark:text-amber-400",    bg: "bg-amber-100 dark:bg-amber-500/15"    },
 ] as const
@@ -35,7 +33,6 @@ const NEW_ROUTES: Record<string, string> = {
   marketplace: "/marketplace/new",
   rentals:     "/rentals/new",
   referrals:   "/referrals/new",
-  carpool:     "/carpool/new",
   services:    "/skills/new",
   events:      "/events/new",
 }
@@ -153,9 +150,7 @@ function EmptyState({ icon: Icon, label, newRoute }: { icon: any; label: string;
 // ─── Fetch helpers ─────────────────────────────────────────────────────────────
 
 async function fetchAll(userId: string) {
-  await expireOneTimeCarpoolRoutes()
-
-  const [listings, rentals, referrals, carpools, services, events] = await Promise.all([
+  const [listings, rentals, referrals, services, events] = await Promise.all([
     prisma.listing.findMany({
       // Admin-removed posts are hidden from the owner too (they get a notification).
       where: { userId, status: { not: "REMOVED" } },
@@ -171,10 +166,6 @@ async function fetchAll(userId: string) {
       orderBy: { createdAt: "desc" },
       include: { company: { select: { name: true } } },
     }),
-    prisma.carpoolRoute.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    }),
     prisma.skillListing.findMany({
       where: { userId, status: { not: "REMOVED" } },
       orderBy: { createdAt: "desc" },
@@ -184,7 +175,7 @@ async function fetchAll(userId: string) {
       orderBy: { createdAt: "desc" },
     }),
   ])
-  return { listings, rentals, referrals, carpools, services, events }
+  return { listings, rentals, referrals, services, events }
 }
 
 // ─── Section renderers ────────────────────────────────────────────────────────
@@ -275,40 +266,6 @@ function ReferralsSection({ referrals, limit }: { referrals: any[]; limit?: numb
   )
 }
 
-function CarpoolSection({ carpools, limit }: { carpools: any[]; limit?: number }) {
-  const items = limit ? carpools.slice(0, limit) : carpools
-  if (!items.length) return <EmptyState icon={Car} label="carpool routes" newRoute="/carpool/new" />
-  return (
-    <div className="space-y-3">
-      {items.map((c) => (
-        <PostCard key={c.id} href={`/carpool/${c.id}`}>
-          <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 flex items-center justify-center shrink-0">
-            <Car className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2 justify-between flex-wrap">
-              <p className="font-semibold text-sm leading-tight truncate">{c.fromLocation} → {c.toLocation}</p>
-              <StatusBadge active={c.isActive} />
-            </div>
-            <MetaRow>
-              {c.frequency === "ONCE" && c.departureAt && (
-                <span>{formatDate(c.departureAt)}</span>
-              )}
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{c.departureTime}</span>
-              <span>{c.seatsAvailable} seat{c.seatsAvailable !== 1 ? "s" : ""}</span>
-              <span>{formatCurrency(c.pricePerSeat)}/seat</span>
-              <span>{c.vehicleType}</span>
-              <span>{c.frequency}</span>
-              <span>{formatRelativeTime(c.createdAt)}</span>
-            </MetaRow>
-            <Actions href={`/carpool/${c.id}`} editHref={`/carpool/${c.id}/edit`} />
-          </div>
-        </PostCard>
-      ))}
-    </div>
-  )
-}
-
 function ServicesSection({ services, limit }: { services: any[]; limit?: number }) {
   const items = limit ? services.slice(0, limit) : services
   if (!items.length) return <EmptyState icon={Wrench} label="skill listings" newRoute="/skills/new" />
@@ -368,18 +325,17 @@ function EventsSection({ events, limit }: { events: any[]; limit?: number }) {
 // ─── Overview section ──────────────────────────────────────────────────────────
 
 function OverviewSection({
-  counts, listings, rentals, referrals, carpools, services, events,
+  counts, listings, rentals, referrals, services, events,
 }: {
   counts: Record<string, number>
-  listings: any[]; rentals: any[]; referrals: any[]; carpools: any[]; services: any[]; events: any[]
+  listings: any[]; rentals: any[]; referrals: any[]; services: any[]; events: any[]
 }) {
   const serviceCards = [
     { key: "marketplace", tab: TABS[1], count: counts.marketplace, items: listings,  href: "/my-listings"   },
     { key: "rentals",     tab: TABS[2], count: counts.rentals,     items: rentals,   href: "/my-rentals"    },
     { key: "referrals",   tab: TABS[3], count: counts.referrals,   items: referrals, href: "/my-referrals"  },
-    { key: "carpool",     tab: TABS[4], count: counts.carpool,     items: carpools,  href: "/my-carpool"    },
-    { key: "services",    tab: TABS[5], count: counts.services,    items: services,  href: "/my-services"   },
-    { key: "events",      tab: TABS[6], count: counts.events,      items: events,    href: "/my-events"     },
+    { key: "services",    tab: TABS[4], count: counts.services,    items: services,  href: "/my-services"   },
+    { key: "events",      tab: TABS[5], count: counts.events,      items: events,    href: "/my-events"     },
   ]
 
   const total = Object.values(counts).reduce((s, v) => s + v, 0)
@@ -439,7 +395,6 @@ function OverviewSection({
               ...listings.map(l  => ({ ...l, _type: "marketplace", _href: `/marketplace/${l.id}` })),
               ...rentals.map(r   => ({ ...r, _type: "rentals",     _href: `/rentals/${r.id}` })),
               ...referrals.map(r => ({ ...r, _type: "referrals",   _href: `/referrals/${r.id}` })),
-              ...carpools.map(c  => ({ ...c, _type: "carpool",     _href: `/carpool/${c.id}` })),
               ...services.map(s  => ({ ...s, _type: "services",    _href: `/skills/${s.id}` })),
               ...events.map(e    => ({ ...e, _type: "events",      _href: `/events/${e.id}` })),
             ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
@@ -453,7 +408,7 @@ function OverviewSection({
                   {all.map((item) => {
                     const tabInfo = TABS.find(t => t.key === item._type)!
                     const Icon = tabInfo.icon
-                    const title = item.title ?? `${item.fromLocation} → ${item.toLocation}`
+                    const title = item.title
                     return (
                       <Link key={`${item._type}-${item.id}`} href={item._href}
                         className="flex items-center gap-3 px-4 py-3 bg-card border border-border rounded-xl hover:border-border/60 hover:shadow-sm transition-all group">
@@ -488,13 +443,12 @@ export default async function MyPostingsPage({ searchParams }: { searchParams: {
 
   const tab = (TABS.find(t => t.key === searchParams.tab)?.key ?? "overview") as TabKey
 
-  const { listings, rentals, referrals, carpools, services, events } = await fetchAll(userId)
+  const { listings, rentals, referrals, services, events } = await fetchAll(userId)
 
   const counts = {
     marketplace: listings.length,
     rentals:     rentals.length,
     referrals:   referrals.length,
-    carpool:     carpools.length,
     services:    services.length,
     events:      events.length,
   }
@@ -551,7 +505,7 @@ export default async function MyPostingsPage({ searchParams }: { searchParams: {
         <OverviewSection
           counts={counts}
           listings={listings} rentals={rentals} referrals={referrals}
-          carpools={carpools} services={services} events={events}
+          services={services} events={events}
         />
       )}
 
@@ -576,23 +530,16 @@ export default async function MyPostingsPage({ searchParams }: { searchParams: {
         </>
       )}
 
-      {tab === "carpool" && (
-        <>
-          <SectionHeader icon={Car} label="Carpool Routes" color={TABS[4].color} bg={TABS[4].bg} count={counts.carpool} newRoute="/carpool/new" />
-          <CarpoolSection carpools={carpools} />
-        </>
-      )}
-
       {tab === "services" && (
         <>
-          <SectionHeader icon={Wrench} label="Services" color={TABS[5].color} bg={TABS[5].bg} count={counts.services} newRoute="/skills/new" />
+          <SectionHeader icon={Wrench} label="Services" color={TABS[4].color} bg={TABS[4].bg} count={counts.services} newRoute="/skills/new" />
           <ServicesSection services={services} />
         </>
       )}
 
       {tab === "events" && (
         <>
-          <SectionHeader icon={Users} label="Events" color={TABS[6].color} bg={TABS[6].bg} count={counts.events} newRoute="/events/new" />
+          <SectionHeader icon={Users} label="Events" color={TABS[5].color} bg={TABS[5].bg} count={counts.events} newRoute="/events/new" />
           <EventsSection events={events} />
         </>
       )}

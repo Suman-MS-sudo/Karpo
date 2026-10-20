@@ -8,7 +8,7 @@ import {
   ShoppingBag, Home, Briefcase, Car, Wrench, Tag, Users, GraduationCap, Gift,
 } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { SERVICES } from "@/config/services"
+import { ACTIVE_SERVICES as SERVICES } from "@/config/services"
 import { cn } from "@/lib/utils"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {

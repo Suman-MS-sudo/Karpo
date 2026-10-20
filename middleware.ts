@@ -33,6 +33,16 @@ const STATIC_ASSET_RE = /\.(png|jpe?g|svg|webp|gif|ico|avif)$/i
 // Landing page is public; everything else under "/" requires auth
 const PUBLIC_EXACT = new Set(["/"])
 
+// Sections that are switched off (isActive: false in config/services.ts).
+// Their code and data stay in place; requests are turned away here so no
+// deep link, bookmark or direct API call can reach them.
+const DISABLED_PREFIXES = [
+  "/carpool", "/my-carpool", "/api/carpool",
+  "/learning", "/my-learning", "/concierge", "/benefits",
+]
+const isDisabledPath = (pathname: string) =>
+  DISABLED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+
 // HTTP methods that mutate state — blocked for the read-only GUEST role.
 // GET/HEAD/OPTIONS (browsing) always pass through.
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"])
@@ -56,6 +66,16 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone()
     url.pathname = "/auth/signin"
     url.searchParams.set("callbackUrl", pathname)
+    return NextResponse.redirect(url)
+  }
+
+  if (isDisabledPath(pathname)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "This service is not available." }, { status: 404 })
+    }
+    const url = req.nextUrl.clone()
+    url.pathname = "/dashboard"
+    url.search = ""
     return NextResponse.redirect(url)
   }
 
