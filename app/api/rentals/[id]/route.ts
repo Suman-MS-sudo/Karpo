@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { requireVerified } from "@/lib/api-auth"
 import { findContactInfoField, contactInfoError, titleHasTooManyDigits, titleDigitLimitError } from "@/lib/contact-filter"
 
@@ -12,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
   const rental = await prisma.rentalPost.findUnique({
     where: { id: params.id },
     include: {
-      user: { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      user: { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       inquiries: {
         include: { user: { select: { id: true, name: true, avatarUrl: true, image: true, phone: true, email: true, department: true, jobTitle: true, company: { select: { name: true } } } } },
         orderBy: { createdAt: "desc" },

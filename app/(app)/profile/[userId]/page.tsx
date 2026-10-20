@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
@@ -88,12 +89,12 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
   const user = await prisma.user.findUnique({
     where: { id: params.userId },
     include: {
-      company:         true,
+      company:         { select: { name: true } },
       membership:      true,
       listings: {
         where:   { status: "ACTIVE" },
         take:    8,
-        include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+        include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
       },
       skillListings: {
         where:   { status: "ACTIVE" },
@@ -101,7 +102,7 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
         orderBy: { createdAt: "desc" },
       },
       reviewsReceived: {
-        include:  { reviewer: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+        include:  { reviewer: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
         orderBy:  { createdAt: "desc" },
         take:     10,
       },
@@ -244,15 +245,6 @@ export default async function PublicProfilePage({ params }: { params: { userId: 
             {isOwn && user.company && (
               <span className="flex items-center gap-1.5">
                 <Building2 className="h-4 w-4 shrink-0" />
-                {user.company.logo && (
-                  <Image
-                    src={user.company.logo}
-                    alt={user.company.name}
-                    width={14}
-                    height={14}
-                    className="rounded-sm"
-                  />
-                )}
                 {user.company.name}
               </span>
             )}

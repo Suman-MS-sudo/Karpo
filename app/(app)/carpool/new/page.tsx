@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn, formatCurrency } from "@/lib/utils"
 import type { RouteData } from "@/components/carpool/CarpoolRouteMapPicker"
 import { VehiclePhotoUpload } from "@/components/carpool/VehiclePhotoUpload"
+import { ListingDeclaration } from "@/components/shared/ListingDeclaration"
 
 const CarpoolRouteMapPicker = dynamic(
   () => import("@/components/carpool/CarpoolRouteMapPicker").then((m) => m.CarpoolRouteMapPicker),
@@ -55,6 +56,7 @@ const FREQ_TRIPS: Record<string, number> = { DAILY: 30, WEEKDAYS: 22, WEEKENDS: 
 export default function NewCarpoolPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [declared, setDeclared] = useState(false)
   const [error,   setError]   = useState("")
 
   // Route data from map
@@ -399,7 +401,9 @@ export default function NewCarpoolPage() {
 
         {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-4 py-3">{error}</p>}
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
+        <ListingDeclaration kind="ride" checked={declared} onChange={setDeclared} />
+
+        <Button type="submit" className="w-full" size="lg" disabled={loading || !declared}>
           {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Posting…</> : "Post Route"}
         </Button>
       </form>

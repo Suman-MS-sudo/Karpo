@@ -44,7 +44,7 @@ export function SkillsHero({ totalListings, verifiedCount, completedProjects, av
               <span className="bg-gradient-to-r from-white via-indigo-200 to-violet-200 bg-clip-text text-transparent">Skill</span>
               {" "}<span className="bg-gradient-to-r from-violet-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent">Marketplace</span>
             </h1>
-            <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Hire verified colleagues for freelance work — AI matched, human approved.</p>
+            <p className="text-white/60 mt-1.5 sm:mt-2 text-xs sm:text-sm line-clamp-2 sm:line-clamp-none">Hire fellow professionals for freelance work — you agree terms directly with them.</p>
           </div>
           <div className="flex items-center sm:flex-col sm:items-end gap-2 shrink-0">
             <Button asChild size="sm" variant="outline" className="border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm font-medium rounded-full sm:h-10 sm:px-4 sm:text-sm">

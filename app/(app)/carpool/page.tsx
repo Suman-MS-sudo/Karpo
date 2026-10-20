@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { Suspense } from "react"
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Carpool",
-  description: "Find or offer a daily commute carpool with verified colleagues in your city and split the cost of your ride.",
+  description: "Find or offer a daily commute carpool with corporate-email-verified members in your city and split the cost of your ride.",
 }
 
 // Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx.
@@ -170,7 +171,7 @@ export default async function CarpoolPage({
     },
     orderBy: [...BOOST_ORDER, { createdAt: "desc" }],
     take:    isFiltered ? 200 : 40,
-    include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+    include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
   })
 
   // Post-filter: time of day (string-based), then geo if location is set
@@ -205,7 +206,7 @@ export default async function CarpoolPage({
         eyebrow="Corporate Carpool"
         titleWhite="Share Your"
         titleAccent="Commute"
-        description="Split the cost and the drive with verified colleagues."
+        description="Split commute costs with corporate-email-verified members."
         overlayFrom="from-orange-950/50" overlayTo="to-amber-950/40"
         blobFrom="bg-orange-500/30" blobTo="bg-amber-400/20"
         eyebrowGradient="from-orange-500/30 via-amber-500/30 to-yellow-400/30"
@@ -214,7 +215,7 @@ export default async function CarpoolPage({
         stats={[
           { value: activeRouteCount.toLocaleString(), label: "Active Routes", gradient: "from-orange-300 to-amber-200" },
           { value: (seatsAgg._sum.seatsAvailable ?? 0).toLocaleString(), label: "Seats Available", gradient: "from-emerald-300 to-teal-200" },
-          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+          { value: "Corp", label: "Email verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/carpool/new", label: "Offer Ride", icon: Plus }}
       />

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -18,6 +19,7 @@ import { formatCurrency, getInitials } from "@/lib/utils"
 import { RsvpButton } from "@/components/events/RsvpButton"
 import { PendingRequestsPanel } from "@/components/events/PendingRequestsPanel"
 import { ProfileLink } from "@/components/shared/ProfileLink"
+import { VerificationNotice } from "@/components/shared/VerificationNotice"
 
 type AgendaItem = { time: string; title: string; speaker?: string }
 
@@ -64,7 +66,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const event   = await prisma.event.findUnique({
     where:   { id: params.id },
     include: {
-      organizer: { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      organizer: { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       rsvps:     { include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 50 },
     },
   })
@@ -440,6 +442,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
 
           </div>
         </div>
+        <VerificationNotice kind="event" className="mt-6" />
       </div>
     </div>
   )

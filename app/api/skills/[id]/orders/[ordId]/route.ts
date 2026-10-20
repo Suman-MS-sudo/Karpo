@@ -35,8 +35,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string;
   const order = await prisma.skillOrder.findUnique({
     where:   { id: params.ordId },
     include: {
-      buyer:  { select: { id: true, name: true, avatarUrl: true, image: true, email: true, phone: true, jobTitle: true, department: true, isVerified: true, company: { select: { name: true } } } },
-      seller: { select: { id: true, name: true, avatarUrl: true, image: true, email: true, phone: true, jobTitle: true, isVerified: true } },
+      buyer:  { select: { id: true, name: true, avatarUrl: true, image: true, phone: true, jobTitle: true, department: true, isVerified: true, company: { select: { name: true } } } },
+      seller: { select: { id: true, name: true, avatarUrl: true, image: true, phone: true, jobTitle: true, isVerified: true } },
       review: true,
     },
   })

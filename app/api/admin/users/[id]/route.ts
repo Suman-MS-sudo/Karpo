@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth, invalidateSessionFreshnessCache } from "@/auth"
+import { archiveAndDeleteUser } from "@/lib/user-retention"
 
 async function requireAdmin() {
   const session = await auth()
@@ -52,7 +53,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
   }
 
   try {
-    await prisma.user.delete({ where: { id: params.id } })
+    // Archived for the 180-day statutory retention period before removal.
+    await archiveAndDeleteUser(params.id, session!.user!.id)
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: "Failed to delete user." }, { status: 500 })

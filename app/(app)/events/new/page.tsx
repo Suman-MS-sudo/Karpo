@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { TimeSelect } from "@/components/events/TimeSelect"
 import { cn } from "@/lib/utils"
+import { MapEmbed } from "@/components/ui/map-embed"
 
 type EventFormat = "IN_PERSON" | "ONLINE" | "HYBRID"
 
@@ -42,25 +43,6 @@ const STEPS = [
   { id: "details", label: "Details", Icon: ListChecks },
   { id: "media",   label: "Media",   Icon: ImageIcon  },
 ]
-
-function MapEmbed({ location }: { location: string }) {
-  if (!location.trim()) return null
-  const q = encodeURIComponent(location)
-  return (
-    <div className="rounded-xl overflow-hidden border border-border h-[200px] w-full mt-2">
-      <iframe
-        title="Event location"
-        src={`https://maps.google.com/maps?q=${q}&output=embed&z=15`}
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      />
-    </div>
-  )
-}
 
 function SectionCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -384,7 +366,7 @@ export default function NewEventPage() {
                       className="pl-9"
                     />
                   </div>
-                  {form.location && <MapEmbed key={mapKey} location={form.location} />}
+                  {form.location && <MapEmbed key={mapKey} location={form.location} title="Event location" />}
                 </div>
               )}
 

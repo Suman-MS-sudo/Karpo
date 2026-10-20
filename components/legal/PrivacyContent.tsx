@@ -43,9 +43,11 @@ export function PrivacyContent() {
       <h2 id="collection">3. Information We Collect</h2>
       <p><strong>3.1 Information you provide directly:</strong></p>
       <ul>
-        <li>Account information: name, corporate email address, phone number, profile photo, company/employer, designation, and city;</li>
-        <li>Verification data: OTPs and verification status linked to your corporate email domain;</li>
-        <li>Listing and content data: marketplace listings, rental posts, referral posts, carpool routes, skill listings, event RSVPs, reviews, ratings, messages, and any images or documents you upload;</li>
+        <li>Account information: name, corporate email address, personal (non-corporate) contact email, phone number, profile photo, company/employer, designation, department and city, and — if you set one — a password, which we store only as a one-way cryptographic hash;</li>
+        <li>Verification data: OTPs and verification status linked to your corporate email domain; if you choose ID-card verification, images of your organisation ID card; and if you choose to sign in with LinkedIn, your LinkedIn name, email, profile identifier and LinkedIn workplace-verification status;</li>
+        <li>Records of your acceptance of these policies (version, date and time) and of your cookie choices;</li>
+        <li>Listing and content data: marketplace listings, rental posts, referral posts and applications (including any résumé you upload), carpool routes and requests, skill listings and orders, events and RSVPs, reviews, ratings, messages, and any images or documents you upload;</li>
+        <li>Safety data: users you block, and reports you make or that are made about you or your Content;</li>
         <li>Communications: messages exchanged with other Users through in-app messaging, and correspondence with our support team, including via the Contact form;</li>
         <li>Payment-related information: billing name, transaction identifiers, and subscription/purchase history (see Section 9 — card, UPI and net-banking details themselves are collected and stored by our payment gateway partner, not by Korpo); and</li>
         <li>Any other information you choose to provide, such as through surveys, feedback forms, or optional profile fields.</li>
@@ -96,8 +98,9 @@ export function PrivacyContent() {
       <h2 id="sharing">7. How We Share Your Information</h2>
       <p>We do not sell your Personal Data. We may share your information in the following circumstances:</p>
       <ul>
-        <li><strong>With other Users:</strong> information you choose to make visible as part of your profile, listings, reviews, ratings, or messages is shared with other Users as necessary to operate the Platform. Your phone number and email address are never displayed publicly to other Users; contact between Users is intended to occur through in-app messaging;</li>
-        <li><strong>Service providers:</strong> we share information with third-party vendors who perform services on our behalf, such as cloud hosting, email/OTP delivery, payment processing (e.g., Razorpay), analytics, and customer support tools, under contractual obligations of confidentiality and purpose limitation;</li>
+        <li><strong>With other Users:</strong> information you choose to make visible as part of your profile, listings, reviews, ratings, or messages is shared with other Users as necessary to operate the Platform. Your corporate email address is used only for verification and account purposes and is never displayed to other Users. Your phone number is not displayed publicly; it is shared only with a specific User where you choose to share it or accept their request (for example, an accepted carpool seat or rental visit);</li>
+        <li><strong>Not with your employer:</strong> we do not share your information or activity with your employer merely because its email domain was used to verify you, and no employer has access to your account, listings or messages. Korpo does not represent any employer as a partner or endorser unless it has an actual arrangement with that employer;</li>
+        <li><strong>Service providers:</strong> we share information with third-party vendors who perform services on our behalf, such as cloud hosting and database providers, email/OTP delivery, payment processing (e.g., Razorpay), maps and location search (OpenStreetMap; Google Maps only where you allow it), and customer support tools, under contractual obligations of confidentiality and purpose limitation;</li>
         <li><strong>Legal and safety reasons:</strong> we may disclose information where required to comply with Applicable Law, a court order, or a lawful request from a government or regulatory authority, or where necessary to protect the rights, property or safety of Korpo, our Users, or the public;</li>
         <li><strong>Business transfers:</strong> in connection with a merger, acquisition, restructuring, or sale of assets, your information may be transferred as part of that transaction, subject to this Policy or a policy offering at least equivalent protections; and</li>
         <li><strong>With your consent:</strong> in any other circumstance where you have given your explicit consent to share information with a specific third party.</li>
@@ -105,10 +108,11 @@ export function PrivacyContent() {
 
       <h2 id="cookies">8. Cookies &amp; Tracking Technologies</h2>
       <p>
-        We use cookies, local storage, and similar tracking technologies to keep you signed in, remember your
-        preferences (e.g., selected city), understand how the Platform is used, and improve performance. You
-        can control or disable cookies through your browser settings; however, disabling certain cookies may
-        limit your ability to use some features of the Platform.
+        We use strictly necessary cookies and browser storage to keep you signed in, secure the Platform and
+        remember your preferences, and — only with your consent — optional third-party embeds such as Google
+        Maps. We do not use advertising or cross-site tracking cookies. Our{" "}
+        <Link href="/cookies">Cookie Policy</Link> lists every cookie and third-party service we use, and you
+        can change your choice at any time from the &quot;Cookie settings&quot; link.
       </p>
 
       <h2 id="payments">9. Payments &amp; Financial Data</h2>
@@ -136,8 +140,17 @@ export function PrivacyContent() {
         We retain your Personal Data for as long as your account remains active, and thereafter for such
         period as is reasonably necessary to fulfil the purposes described in this Policy, comply with our
         legal, accounting, or reporting obligations, resolve disputes, prevent fraud and abuse, and enforce
-        our agreements. When Personal Data is no longer required for these purposes, we will delete it or
-        anonymise it in accordance with Applicable Law.
+        our agreements. In particular:
+      </p>
+      <ul>
+        <li>after your account is cancelled or deleted, the information collected at registration and associated records are retained for 180 days, as required under the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, and then permanently deleted;</li>
+        <li>Content that is removed or disabled (for example after a report or a lawful order), and associated records, is preserved for at least 180 days, or longer where required by law or a lawful request, for investigation purposes;</li>
+        <li>payment and invoice records are retained for the period required by tax and accounting laws; and</li>
+        <li>records of policy acceptance and cookie consent are retained for as long as needed to evidence that consent.</li>
+      </ul>
+      <p>
+        When Personal Data is no longer required for these purposes, we will delete it or anonymise it in
+        accordance with Applicable Law.
       </p>
 
       <h2 id="rights">12. Your Rights &amp; Choices</h2>
@@ -247,4 +260,4 @@ export const PRIVACY_SECTIONS = [
   { id: "contact", title: "19. Contact Us" },
 ]
 
-export const PRIVACY_LAST_UPDATED = "17 August 2026"
+export const PRIVACY_LAST_UPDATED = "20 October 2026"

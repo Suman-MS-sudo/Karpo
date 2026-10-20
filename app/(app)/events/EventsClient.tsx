@@ -393,8 +393,8 @@ export function EventsClient({ events, totalEvents, totalRsvps, wishlistedIds }:
             </div>
             <div className="w-px h-7 sm:h-10 bg-white/15" />
             <div>
-              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>100%</p>
-              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Verified</p>
+              <p className={cn("font-outfit", "text-lg sm:text-3xl font-extrabold bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent")}>Corp</p>
+              <p className="text-[9px] sm:text-xs text-white/50 mt-0.5 uppercase tracking-wide whitespace-nowrap">Email verified</p>
             </div>
           </div>
 

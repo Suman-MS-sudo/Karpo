@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -47,7 +48,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   return {
     title,
     description,
-    openGraph: ref.company?.logo ? { images: [{ url: ref.company.logo }] } : undefined,
   }
 }
 
@@ -59,7 +59,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
   const ref = await prisma.jobReferral.findUnique({
     where: { id: params.id },
     include: {
-      user:    { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      user:    { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       company: true,
       _count:  { select: { applications: true } },
     },
@@ -193,9 +193,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
           <div className="bg-card border border-border rounded-2xl p-6">
             <div className="flex items-start gap-4">
               <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center overflow-hidden shrink-0 border border-border">
-                {ref.company.logo
-                  ? <Image src={ref.company.logo} alt={ref.company.name} width={64} height={64} className="object-contain" />
-                  : <Building2 className="h-8 w-8 text-muted-foreground" />}
+                <Building2 className="h-8 w-8 text-muted-foreground" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
@@ -327,9 +325,7 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
             <h2 className="font-semibold mb-4 text-sm">About {ref.company.name}</h2>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0 border border-border">
-                {ref.company.logo
-                  ? <Image src={ref.company.logo} alt={ref.company.name} width={48} height={48} className="object-contain" />
-                  : <Building2 className="h-6 w-6 text-muted-foreground" />}
+                <Building2 className="h-6 w-6 text-muted-foreground" />
               </div>
               <div>
                 <p className="font-semibold text-sm">{ref.company.name}</p>
@@ -390,9 +386,11 @@ export default async function ReferralDetailPage({ params }: { params: { id: str
 
           {/* Disclaimer */}
           <p className="text-xs text-muted-foreground bg-muted/40 rounded-xl px-4 py-3">
-            Referral posts are shared by individual employees in their personal capacity. Korpo is not affiliated
-            with, and does not verify claims on behalf of, the referenced employer. Users should verify any
-            opportunity independently.
+            Referral posts are shared by individual members in their personal capacity. Korpo does not recruit or
+            employ, is not affiliated with, and does not verify claims on behalf of, the referenced employer.
+            &quot;Corporate email verified&quot; only means the poster could receive a code at a corporate email
+            address — it does not confirm their current employment or that the opening exists. Verify any
+            opportunity independently, never pay to be referred, and report suspicious posts.
           </p>
         </div>
       </div>

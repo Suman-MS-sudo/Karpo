@@ -2,12 +2,13 @@ import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const listing = await prisma.listing.findUnique({
     where: { id: params.id },
-    include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+    include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
   })
   if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 })
   return NextResponse.json(listing)

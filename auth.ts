@@ -10,6 +10,7 @@ import { getLinkedInVerificationReport } from "@/lib/linkedin-verification"
 import { verifyPassword, hashPassword } from "@/lib/password"
 import { normalizePhone } from "@/lib/phone"
 import { validatePersonalEmail } from "@/lib/personal-email"
+import { TERMS_VERSION } from "@/lib/legal-versions"
 import { randomUUID } from "crypto"
 
 // Firebase phone-auth login is temporarily disabled (see FIREBASE_PHONE_AUTH_ENABLED
@@ -134,6 +135,7 @@ const providers: Provider[] = [
         personalEmail: { type: "email" },
         whatsappOtp: { type: "text" },
         firebaseIdToken: { type: "text" },
+        acceptedTerms: { type: "text" },
       },
       async authorize(credentials) {
         const email           = (credentials?.email as string | undefined)?.trim().toLowerCase()
@@ -145,6 +147,9 @@ const providers: Provider[] = [
         const personalEmail   = (credentials?.personalEmail as string | undefined)?.trim().toLowerCase()
         const whatsappOtp     = credentials?.whatsappOtp as string | undefined
         const firebaseIdToken = credentials?.firebaseIdToken as string | undefined
+        // Registration form's required Terms/Privacy checkbox — recorded with a
+        // timestamp as click-wrap evidence (see lib/legal-versions.ts).
+        const acceptedTerms   = credentials?.acceptedTerms === TERMS_VERSION
 
         // ── WhatsApp OTP login (returning users, phone-based, no email) ────────
         if (!email && regPhone && whatsappOtp && WHATSAPP_OTP_LOGIN_ENABLED) {
@@ -277,7 +282,7 @@ const providers: Provider[] = [
         const needsRegistration = !existingUser || !existingUser.passwordHash
         const regProvision =
           needsRegistration && regName && regPhone && newPassword
-            ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword), personalEmail }
+            ? { name: regName, phone: normalizePhone(regPhone), passwordHash: await hashPassword(newPassword), personalEmail, ...(acceptedTerms ? { termsVersion: TERMS_VERSION } : {}) }
             : {}
 
         const { dbUser } = await provisionUser(email, { isAdmin, isExisting: !!existingUser, ...regProvision })

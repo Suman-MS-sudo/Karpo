@@ -20,7 +20,7 @@ export async function GET(_req: Request, { params }: { params: { userId: string 
       socialLinks: true,
       reputationScore: true,
       createdAt: true,
-      company: { select: { name: true, logo: true, domain: true } },
+      company: { select: { name: true } },
     },
   })
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 })

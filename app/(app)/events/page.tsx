@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { auth } from "@/auth"
 import { EventsClient } from "./EventsClient"
 import type { EventItem } from "./EventsClient"
@@ -28,7 +29,7 @@ export default async function EventsPage() {
       orderBy: [...(BOOST_ENABLED ? [{ isBoosted: "desc" as const }] : []), { date: "asc" as const }],
       take:    100,
       include: {
-        organizer: { include: { company: { select: { name: true } } } },
+        organizer: { select: PUBLIC_USER_WITH_COMPANY_SELECT },
         rsvps:     { where: { status: "CONFIRMED" }, include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 8 },
         _count:    { select: { rsvps: { where: { status: "CONFIRMED" } } } },
       },

@@ -146,7 +146,6 @@ function ApplicationCard({ app, referralId, onStatusChange }: { app: Application
             <p className="text-xs text-muted-foreground truncate">
               {user.jobTitle ?? user.department ?? ""}
             </p>
-            {user.email && <p className="text-[11px] text-muted-foreground/70">{user.email}</p>}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">

@@ -153,7 +153,7 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div className="grid sm:grid-cols-3 gap-4">
             {[
               { Icon: MessageSquareText, title: "Describe what you need", desc: "Post a request or search a category to find the right expertise." },
-              { Icon: Sparkles,          title: "Get AI-matched",        desc: "We rank verified colleagues by reputation, skills, and availability." },
+              { Icon: Sparkles,          title: "Get AI-matched",        desc: "We rank members by reputation, skills, and availability." },
               { Icon: Handshake,         title: "Hire & collaborate securely", desc: "Chat, agree on a package, and track delivery — all inside Korpo." },
             ].map(({ Icon, title, desc }, i) => (
               <div key={title} className="relative rounded-3xl bg-card ring-1 ring-black/5 dark:ring-white/10 shadow-sm p-6">
@@ -187,7 +187,7 @@ export async function SkillsLanding({ isLoggedIn }: { isLoggedIn: boolean }) {
             </div>
             <div>
               <p className="font-semibold text-sm">Have a skill to offer?</p>
-              <p className="text-xs text-muted-foreground mt-0.5">List your services and get discovered by verified colleagues.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">List your services and get discovered by fellow professionals.</p>
             </div>
           </div>
           <Button asChild className="shrink-0 relative rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 active:scale-95 transition-all">

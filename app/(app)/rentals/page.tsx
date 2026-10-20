@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { auth } from "@/auth"
 import Link from "next/link"
 import Image from "next/image"
@@ -139,14 +140,14 @@ export default async function RentalsPage({ searchParams }: PageProps) {
       ;[rentals, total] = await Promise.all([
         prisma.rentalPost.findMany({
           where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
-          include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+          include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
         }),
         Promise.resolve(exactCount),
       ])
     } else {
       const candidates = await prisma.rentalPost.findMany({
         where: baseWhere, orderBy, take: 500,
-        include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+        include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
       })
       const matched = fuzzyFilter(candidates, q, (r) => [r.title, r.description, r.area, r.societyName, r.landmark, r.city])
       total = matched.length
@@ -156,7 +157,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
     ;[rentals, total] = await Promise.all([
       prisma.rentalPost.findMany({
         where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
-        include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+        include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
       }),
       prisma.rentalPost.count({ where }),
     ])
@@ -190,7 +191,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         eyebrow="Rentals & Flatmates"
         titleWhite="Rental &"
         titleAccent="Flatmate Hub"
-        description="Apartments, PGs, studios & flatmates — from verified colleagues."
+        description="Apartments, PGs, studios & flatmates — from corporate-email-verified members."
         overlayFrom="from-emerald-950/50" overlayTo="to-teal-950/40"
         blobFrom="bg-emerald-500/30" blobTo="bg-teal-400/20"
         eyebrowGradient="from-emerald-500/30 via-teal-500/30 to-lime-400/30"
@@ -199,7 +200,7 @@ export default async function RentalsPage({ searchParams }: PageProps) {
         stats={[
           { value: allActiveCount.toLocaleString(), label: "Live Listings", gradient: "from-emerald-300 to-teal-200" },
           { value: `${myRentalsCount}`, label: "You've Posted", gradient: "from-cyan-300 to-blue-200" },
-          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+          { value: "Corp", label: "Email verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/rentals/new", label: "Post Listing", icon: Plus }}
         searchAction="/rentals"

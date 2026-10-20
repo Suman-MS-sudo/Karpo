@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { LegalModal } from "@/components/legal/LegalModal"
+import { TERMS_VERSION } from "@/lib/legal-versions"
 import { isDomainBlocked } from "@/lib/domains"
 import { validatePersonalEmail } from "@/lib/personal-email"
 import { normalizePhone } from "@/lib/phone"
@@ -194,7 +195,7 @@ function SignInContent({ linkedinAvailable }: { linkedinAvailable: boolean }) {
         redirect: false,
         email: email.trim().toLowerCase(),
         otp: finalCode,
-        ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword, personalEmail: regPersonalEmail.trim().toLowerCase() } : {}),
+        ...(registering ? { name: regName.trim(), phone: regPhone.trim(), newPassword: regPassword, personalEmail: regPersonalEmail.trim().toLowerCase(), acceptedTerms: TERMS_VERSION } : {}),
       })
       let sessionData: any = null
       if (result?.error) {

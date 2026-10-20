@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { requireVerified } from "@/lib/api-auth"
 import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
@@ -10,7 +11,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const event = await prisma.event.findUnique({
     where: { id: params.id },
     include: {
-      organizer: { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      organizer: { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       rsvps: { include: { user: { select: { id: true, name: true, image: true, avatarUrl: true } } }, take: 50 },
       _count: { select: { rsvps: true } },
     },

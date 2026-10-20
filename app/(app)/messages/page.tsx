@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { MessageSquare } from "lucide-react"
 import { PageBanner } from "@/components/shared/PageBanner"
 import { MessagesBackButton } from "@/components/shared/MessagesBackButton"
@@ -17,8 +18,8 @@ export default async function MessagesPage() {
     where: { OR: [{ senderId: userId }, { receiverId: userId }] },
     orderBy: { createdAt: "desc" },
     include: {
-      sender:   { include: { company: { select: { name: true, logo: true, domain: true } } } },
-      receiver: { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      sender:   { select: PUBLIC_USER_WITH_COMPANY_SELECT },
+      receiver: { select: PUBLIC_USER_WITH_COMPANY_SELECT },
     },
   })
 

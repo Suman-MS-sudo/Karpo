@@ -25,6 +25,7 @@ import { RentalDeleteButton } from "@/components/rentals/RentalDeleteButton"
 import { RentalImageGallery } from "@/components/rentals/RentalImageGallery"
 import { RentalPhotoManager } from "@/components/rentals/RentalPhotoManager"
 import { ProfileLink } from "@/components/shared/ProfileLink"
+import { VerificationNotice } from "@/components/shared/VerificationNotice"
 
 const MapView = loadDynamic(
   () => import("@/components/rentals/MapView").then((m) => m.MapView),
@@ -128,7 +129,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
     include: {
       user: {
         select: {
-          id: true, name: true, email: true, phone: true,
+          id: true, name: true, phone: true,
           avatarUrl: true, image: true, department: true, jobTitle: true,
           isVerified: true, reputationScore: true,
           company: { select: { name: true, logo: true } },
@@ -139,7 +140,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
         include: {
           user: {
             select: {
-              id: true, name: true, email: true, phone: true,
+              id: true, name: true, phone: true,
               avatarUrl: true, image: true, department: true, jobTitle: true,
               company: { select: { name: true } },
             },
@@ -549,6 +550,7 @@ export default async function RentalDetailPage({ params }: { params: { id: strin
           )}
         </div>
       </div>
+      <VerificationNotice kind="rental" className="mt-6" />
     </div>
   )
 }

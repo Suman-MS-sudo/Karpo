@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { GoneNotice } from "@/components/shared/GoneNotice"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -22,6 +23,7 @@ import { CarpoolRidersPanel } from "@/components/carpool/CarpoolRidersPanel"
 import { CarpoolRideControls } from "@/components/carpool/CarpoolRideControls"
 import { CarpoolLiveTrack } from "@/components/carpool/CarpoolLiveTrack"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
+import { VerificationNotice } from "@/components/shared/VerificationNotice"
 
 export const dynamic = "force-dynamic"
 
@@ -83,7 +85,7 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
   const route = await prisma.carpoolRoute.findUnique({
     where: { id: params.id },
     include: {
-      user:   { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      user:   { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       _count: { select: { requests: true } },
     },
   })
@@ -474,6 +476,7 @@ export default async function CarpoolDetailPage({ params }: { params: { id: stri
           </div>
         </div>
       </div>
+      <VerificationNotice kind="ride" className="mt-6" />
     </div>
   )
 }

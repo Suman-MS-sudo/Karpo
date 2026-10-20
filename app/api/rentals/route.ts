@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { requireVerified } from "@/lib/api-auth"
 import { findContactInfoField, contactInfoError, titleHasTooManyDigits, titleDigitLimitError } from "@/lib/contact-filter"
 
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
     },
     orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
     take: 40,
-    include: { user: { include: { company: { select: { name: true, logo: true, domain: true } } } } },
+    include: { user: { select: PUBLIC_USER_WITH_COMPANY_SELECT } },
   })
   return NextResponse.json({ data: rentals })
 }

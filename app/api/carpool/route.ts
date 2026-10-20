@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { requireVerified } from "@/lib/api-auth"
 import { expireOneTimeCarpoolRoutes } from "@/lib/carpool"
 import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
@@ -16,7 +17,7 @@ export async function GET() {
     orderBy: [{ isBoosted: "desc" }, { createdAt: "desc" }],
     take:    40,
     include: {
-      user:   { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      user:   { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       _count: { select: { requests: true } },
     },
   })

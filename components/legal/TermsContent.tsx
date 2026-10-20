@@ -33,6 +33,11 @@ export function TermsContent() {
         warrant that you have the authority to bind that entity to these Terms, and &quot;you&quot; shall refer to
         that entity as well as yourself.
       </p>
+      <p>
+        1.4. You accept these Terms and the Privacy Policy by ticking the acceptance box at registration (or when
+        prompted after a material update). Korpo records the version you accepted and the date and time of
+        acceptance as evidence of your agreement.
+      </p>
 
       <h2 id="definitions">2. Definitions</h2>
       <ul>
@@ -50,8 +55,11 @@ export function TermsContent() {
         meet this requirement.
       </p>
       <p>
-        3.2. Access to the Platform is restricted to individuals who register and verify their identity using a
-        Verified Corporate Email address, through a one-time password or equivalent verification mechanism.
+        3.2. Access to the Platform is restricted to individuals who register and demonstrate access to a
+        Verified Corporate Email address, through a one-time password or equivalent verification mechanism
+        (&quot;<strong>Corporate Email Verification</strong>&quot;). Corporate Email Verification confirms only
+        that you could receive a code at that address at that time; it does not verify your identity or your
+        current employment.
         Korpo reserves the sole and absolute discretion to approve, reject or revoke the approval of any
         corporate domain or account at any time, without liability, and without being obliged to provide
         reasons.
@@ -72,8 +80,8 @@ export function TermsContent() {
       <h2 id="nature-of-platform">4. Nature of the Platform</h2>
       <p>
         4.1. Korpo is an <strong>intermediary</strong> as defined under Section 2(1)(w) of the Information
-        Technology Act, 2000, and functions as a marketplace and community platform that enables verified
-        corporate employees to connect, list, discover, and transact with one another across various categories
+        Technology Act, 2000, and functions as a discovery and communication platform that enables Users who
+        have completed Corporate Email Verification to connect, list, discover, and deal with one another across various categories
         (buy/sell, rentals, referrals, carpooling, skills, deals, events, learning, concierge and benefits).
       </p>
       <p>
@@ -89,7 +97,20 @@ export function TermsContent() {
         fraudulent use of the Platform and does <strong>not</strong> constitute, and shall not be construed as,
         a certification, endorsement, guarantee or warranty by Korpo of that User&apos;s identity, character,
         conduct, creditworthiness, employment status, or the genuineness, quality, safety, legality or fitness
-        of any Content, Listing, item, service or claim posted by such User.
+        of any Content, Listing, item, service or claim posted by such User. Badges or labels reading
+        &quot;Corporate email verified&quot; (or similar) carry only this limited meaning.
+      </p>
+      <p>
+        4.4. <strong>Employers.</strong> Korpo is independent of the employers whose email domains are used
+        for Corporate Email Verification. Unless Korpo expressly states otherwise for a named organisation, no
+        employer is a partner of, sponsors, endorses or is affiliated with Korpo or any User&apos;s Content.
+        A domain is used solely to check that you can access a mailbox on it; Korpo does not use employer
+        names, logos or trademarks for branding or endorsement without authorisation. Employers have no
+        access to your account, listings, messages or activity on the Platform, and Korpo does not share your
+        information with your employer merely because its domain was used to verify you. An organisation
+        that objects to its domain being used for verification may write to{" "}
+        <a href="mailto:grievance@korpo.in">grievance@korpo.in</a>, and Korpo will review and, where
+        appropriate, remove the domain from the list of eligible domains.
       </p>
 
       <h2 id="services">5. Description of Services</h2>
@@ -109,6 +130,21 @@ export function TermsContent() {
         5.3. Some Services may be offered free of charge and others may require a Premium subscription or a
         one-time payment, as indicated on the Platform from time to time.
       </p>
+      <p>5.4. In relation to specific Services, and without limiting Sections 4 and 8:</p>
+      <ul>
+        <li><strong>Buy &amp; Sell:</strong> Korpo does not verify, warrant or guarantee any product, its condition, title, authenticity or price, or any seller or buyer, and does not collect payment for, deliver or fulfil any item.</li>
+        <li><strong>Rentals &amp; Flatmates:</strong> Korpo only publishes listings. It does not own, inspect, lease, manage or guarantee any property, and is not a party to any tenancy, licence or deposit arrangement. A User who posts a rental confirms that they own the property or are authorised by the owner to post it.</li>
+        <li><strong>Job Referrals:</strong> Korpo only publishes opportunities shared by Users in their personal capacity. Korpo does not recruit, employ, or endorse any employer or opening, and does not guarantee any interview, offer or referral bonus. Users must not post openings they are not genuinely in a position to refer for, or impersonate an employer.</li>
+        <li><strong>Skills Marketplace:</strong> freelancers are independent and contract directly with their clients. Korpo does not verify qualifications or claims, and is not responsible for the quality, performance, payment or delivery of any service.</li>
+        <li><strong>Carpool:</strong> Korpo is a matching platform only. It does not provide, operate or control any transport service, and does not set fares or receive any consideration for rides. Carpooling is permitted only as non-commercial sharing of commuting costs between colleagues. Drivers must hold a valid driving licence, and a registered, roadworthy and insured vehicle, and must comply with all applicable motor vehicle laws. The Platform must not be used to operate an unauthorised commercial passenger transport service. Participants travel at their own risk and should report safety incidents to Korpo and, where appropriate, to the police.</li>
+        <li><strong>Events:</strong> unless Korpo is expressly named as the organiser, Korpo only publishes information supplied by the organiser and does not organise, sponsor or guarantee any event, its safety, its occurrence, or any refund. Where a paid-event feature is used, the organiser remains responsible for the event and any cancellation or refund.</li>
+      </ul>
+      <p>
+        5.5. The same framework applies across all Services: each User is solely responsible for the accuracy,
+        legality and authorisation of what they post, and Korpo does not guarantee the accuracy, completeness,
+        legality, quality, safety, availability or suitability of any Listing, User or service unless it
+        specifically says otherwise.
+      </p>
 
       <h2 id="user-conduct">6. User Conduct &amp; Prohibited Activities</h2>
       <p>You agree that you shall not, and shall not permit any third party to, use the Platform to:</p>
@@ -124,7 +160,8 @@ export function TermsContent() {
         <li>Introduce any virus, worm, trojan, spyware, adware, or other malicious code, or engage in any activity that disrupts, damages, disables or impairs the Platform or its servers/networks;</li>
         <li>Use any automated means, scraper, bot, crawler, or data-mining tool to access, collect data from, or interact with the Platform, without Korpo&apos;s prior written consent;</li>
         <li>Reverse engineer, decompile or disassemble any portion of the Platform, or attempt to derive its source code;</li>
-        <li>Harass, stalk, threaten, defraud or otherwise harm another User, or collect or store another User&apos;s personal data for any purpose not permitted under these Terms; or</li>
+        <li>Harass, stalk, threaten, defraud or otherwise harm another User, send spam or unsolicited commercial messages, or collect or store another User&apos;s personal data for any purpose not permitted under these Terms;</li>
+        <li>Disclose, sell, rent or otherwise use any confidential, proprietary or trade-secret information, or any property or asset, belonging to your employer or any other organisation without its authorisation; or</li>
         <li>Violate any Applicable Law in connection with your use of the Platform.</li>
       </ul>
       <p>
@@ -155,9 +192,26 @@ export function TermsContent() {
         use Korpo&apos;s trademarks, logos or branding without prior written consent.
       </p>
       <p>
-        7.4. Korpo respects the intellectual property rights of others. If you believe your intellectual
-        property rights have been infringed by any Content on the Platform, please contact us at{" "}
-        <a href="mailto:legal@korpo.in">legal@korpo.in</a> with sufficient detail for us to investigate.
+        7.4. <strong>Notice and takedown.</strong> Korpo respects the intellectual property rights of others.
+        If you believe Content on the Platform infringes your copyright, trademark or other rights, write to{" "}
+        <a href="mailto:legal@korpo.in">legal@korpo.in</a> (or our Grievance Officer) with: (a) your name and
+        contact details; (b) the work or mark concerned and evidence of your rights in it; (c) the link to, or
+        identifier of, the Content complained of; and (d) a statement that the information is accurate and
+        that you are the rights-holder or authorised to act for them. Korpo will review the notice and may
+        remove or disable the Content and notify the User who posted it, who may respond.
+      </p>
+      <p>
+        7.5. Before a Listing goes live, you must confirm the declaration shown for that category (for example,
+        that you own or are authorised to sell or let the item or property). You are responsible for the truth
+        of that declaration.
+      </p>
+      <p>
+        7.6. Korpo does not pre-screen Content but may remove or disable access to any Content that it
+        believes breaches these Terms, the{" "}
+        <a href="/prohibited-content">Prohibited Content Policy</a> or Applicable Law, including on receipt of
+        a valid court order or notice from an appropriate Government agency. Removed or disabled Content and
+        associated records are preserved for at least 180 (one hundred and eighty) days, or longer where
+        required by law or a lawful request, for investigation purposes.
       </p>
 
       <h2 id="transactions">8. Transactions Between Users</h2>
@@ -231,7 +285,8 @@ export function TermsContent() {
         that every User is who they claim to be, is genuinely employed by the company associated with their
         email domain, or will act honestly, lawfully or in good faith. You acknowledge that no verification
         system is infallible and agree to exercise your own judgment and caution in all interactions on the
-        Platform.
+        Platform. Corporate Email Verification is <strong>not</strong> a verification of any product,
+        property, job, service, ride, event or transaction.
       </p>
 
       <h2 id="privacy">12. Privacy &amp; Data Protection</h2>
@@ -241,7 +296,8 @@ export function TermsContent() {
         the Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or
         Information) Rules, 2011, and, once notified, the Digital Personal Data Protection Act, 2023. By using
         the Platform, you consent to the collection and use of your information as described in the Privacy
-        Policy.
+        Policy. Our use of cookies and similar technologies is described in our{" "}
+        <a href="/cookies">Cookie Policy</a>.
       </p>
 
       <h2 id="disclaimers">13. Disclaimers &amp; No Warranty</h2>
@@ -315,11 +371,17 @@ export function TermsContent() {
         harmful conduct, or that such action is necessary to protect the Platform, Korpo, or other Users.
       </p>
       <p>
-        16.2. You may deactivate your account at any time through your account settings, or by writing to us
-        at <a href="mailto:support@korpo.in">support@korpo.in</a>.
+        16.2. You may ask us to delete your account at any time by writing to us at{" "}
+        <a href="mailto:support@korpo.in">support@korpo.in</a>.
       </p>
       <p>
-        16.3. Upon termination, your right to use the Platform ceases immediately. Sections 4, 7.2 (to the
+        16.3. After an account is cancelled or deleted, Korpo retains the information collected at
+        registration, together with associated records, for 180 (one hundred and eighty) days, or longer where
+        required by law, as required under the Information Technology (Intermediary Guidelines and Digital
+        Media Ethics Code) Rules, 2021. It is then permanently deleted.
+      </p>
+      <p>
+        16.4. Upon termination, your right to use the Platform ceases immediately. Sections 4, 7.2 (to the
         extent stated), 8, 9.3, 11, 13, 14, 15, 17, 18, 19, 20 and 21 of these Terms shall survive termination.
       </p>
 
@@ -384,9 +446,9 @@ export function TermsContent() {
         Korpo may amend or update these Terms from time to time, at its sole discretion, to reflect changes in
         the Platform, applicable law, or our business practices. The revised Terms will be posted on this page
         with an updated &quot;Last updated&quot; date, and, where the changes are material, we will make
-        reasonable efforts to notify you (such as by email or an in-app notice). Your continued use of the
-        Platform after such changes take effect constitutes your acceptance of the revised Terms. If you do
-        not agree with the revised Terms, you must stop using the Platform.
+        reasonable efforts to notify you (such as by email or an in-app notice), and will ask you to accept the
+        revised Terms before you continue using the signed-in Platform. If you do not agree with the revised
+        Terms, you must stop using the Platform.
       </p>
 
       <h2 id="misc">21. Miscellaneous</h2>
@@ -461,4 +523,4 @@ export const TERMS_SECTIONS = [
   { id: "contact", title: "22. Contact Us" },
 ]
 
-export const TERMS_LAST_UPDATED = "17 August 2026"
+export const TERMS_LAST_UPDATED = "20 October 2026"

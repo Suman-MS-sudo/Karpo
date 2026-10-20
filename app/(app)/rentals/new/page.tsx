@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { CITIES } from "@/config/services"
 import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { titleHasTooManyDigits, titleDigitLimitError } from "@/lib/contact-filter"
+import { ListingDeclaration } from "@/components/shared/ListingDeclaration"
 
 const MapPicker = dynamic(
   () => import("@/components/rentals/MapPicker").then((m) => m.MapPicker),
@@ -187,6 +188,7 @@ export default function NewRentalPage() {
   // (a hydration mismatch). So render plain defaults first, then apply the
   // saved draft/city in an effect right after mount.
   const [loading, setLoading]         = useState(false)
+  const [declared, setDeclared]       = useState(false)
   const [images, setImages]           = useState<string[]>([])
   const [uploading, setUploading]     = useState(false)
   const [uploadError, setUploadError] = useState("")
@@ -764,12 +766,14 @@ export default function NewRentalPage() {
             </div>
           </div>
 
+          <ListingDeclaration kind="rental" checked={declared} onChange={setDeclared} />
+
           {/* Submit */}
           <div className="flex gap-3">
             <Button type="button" variant="outline" size="lg" className="flex-1" onClick={handleLeave}>
               Cancel
             </Button>
-            <Button type="submit" size="lg" className="flex-2 flex-1" disabled={loading}>
+            <Button type="submit" size="lg" className="flex-2 flex-1" disabled={loading || !declared}>
               {loading ? (
                 <><Loader2 className="h-4 w-4 animate-spin mr-2" />Publishing…</>
               ) : (

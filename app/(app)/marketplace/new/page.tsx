@@ -19,6 +19,7 @@ import { CityAutocomplete } from "@/components/ui/city-autocomplete"
 import { cn } from "@/lib/utils"
 import { LISTING_CATEGORIES, LISTING_CONDITIONS, CITIES } from "@/config/services"
 import type { PickedLocation } from "@/components/marketplace/LocationPicker"
+import { ListingDeclaration } from "@/components/shared/ListingDeclaration"
 
 const CATEGORY_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ELECTRONICS: Cpu, VEHICLE: Car, FURNITURE: Armchair, APPLIANCE: Tv,
@@ -62,6 +63,7 @@ export default function NewListingPage() {
   const isPremium = session?.user?.membershipPlan === "PREMIUM"
 
   const [loading, setLoading]               = useState(false)
+  const [declared, setDeclared]             = useState(false)
   const [uploading, setUploading]           = useState(false)
   const [images, setImages]                 = useState<string[]>([])
   const [location, setLocation]             = useState<PickedLocation | null>(null)
@@ -541,7 +543,9 @@ export default function NewListingPage() {
           <p className="text-xs text-muted-foreground">First photo is the cover. Clear photos get 3× more responses.</p>
         </section>
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading || uploading}>
+        <ListingDeclaration kind="listing" checked={declared} onChange={setDeclared} />
+
+        <Button type="submit" className="w-full" size="lg" disabled={loading || uploading || !declared}>
           {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Posting…</> : "Post Listing"}
         </Button>
       </form>

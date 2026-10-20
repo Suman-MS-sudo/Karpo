@@ -1,4 +1,4 @@
-export const PROHIBITED_CONTENT_LAST_UPDATED = "September 2026"
+export const PROHIBITED_CONTENT_LAST_UPDATED = "20 October 2026"
 
 export const PROHIBITED_CONTENT_SECTIONS = [
   { id: "scope",           title: "1. Scope" },
@@ -58,10 +58,18 @@ export function ProhibitedContentPolicyContent() {
 
       <h2 id="category-rules">4. Category-specific rules</h2>
       <p>
-        Some services carry additional rules published within that section of the Platform (for example,
-        Carpooling participants must hold a valid driving licence and comply with applicable motor vehicle law,
-        and must not use the Platform to operate an unauthorised commercial passenger transport service). Where
-        a category-specific rule conflicts with this Policy, the more restrictive rule applies.
+        Before a post goes live, you confirm a short declaration for its category. In addition:
+      </p>
+      <ul>
+        <li><strong>Buy &amp; Sell:</strong> list only items you own or are authorised to sell, describe their condition honestly, and use your own photos;</li>
+        <li><strong>Rentals:</strong> post only property you own or are authorised by the owner to let, with accurate rent, deposit and details;</li>
+        <li><strong>Job Referrals:</strong> post only genuine openings you are in a position to refer for, never charge candidates, and do not impersonate an employer;</li>
+        <li><strong>Skills:</strong> describe only qualifications and experience you actually hold, and do not offer your employer&apos;s confidential work or resources;</li>
+        <li><strong>Carpool:</strong> hold a valid driving licence and a registered, insured vehicle, comply with motor vehicle law, share commuting costs only, and never operate an unauthorised commercial passenger transport service;</li>
+        <li><strong>Events:</strong> describe the event, venue, organiser and any fee accurately, and take responsibility for the event&apos;s safety and any cancellation.</li>
+      </ul>
+      <p>
+        Where a category-specific rule conflicts with this Policy, the more restrictive rule applies.
       </p>
 
       <h2 id="reporting">5. Reporting &amp; takedown</h2>
@@ -77,8 +85,8 @@ export function ProhibitedContentPolicyContent() {
       <p>
         Violating this Policy may result in removal of the specific content, suspension or termination of your
         account, and — where the violation may involve a criminal offence — a report to the appropriate
-        law-enforcement authority. Korpo preserves removed content and associated records for the period
-        required under applicable law.
+        law-enforcement authority. Korpo preserves removed content and associated records for at least 180
+        days, or longer where required by law or a lawful request.
       </p>
     </>
   )

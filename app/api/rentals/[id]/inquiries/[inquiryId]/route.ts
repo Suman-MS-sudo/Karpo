@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
       rental: {
         select: {
           userId: true, title: true, id: true,
-          user: { select: { phone: true, email: true, name: true } },
+          user: { select: { phone: true, name: true } },
         },
       },
       user: { select: { name: true } },

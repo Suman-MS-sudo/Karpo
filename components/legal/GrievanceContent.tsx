@@ -1,4 +1,4 @@
-export const GRIEVANCE_LAST_UPDATED = "September 2026"
+export const GRIEVANCE_LAST_UPDATED = "20 October 2026"
 
 export const GRIEVANCE_SECTIONS = [
   { id: "who-this-is-for", title: "1. Who this is for" },
@@ -6,6 +6,9 @@ export const GRIEVANCE_SECTIONS = [
   { id: "officer",         title: "3. Grievance Officer" },
   { id: "timelines",       title: "4. Timelines" },
   { id: "government",      title: "5. Government / law-enforcement requests" },
+  { id: "ip",              title: "6. Intellectual-property complaints" },
+  { id: "employer",        title: "7. Employer & domain objections" },
+  { id: "takedown",        title: "8. How we handle takedowns" },
 ]
 
 export function GrievanceContent() {
@@ -57,8 +60,38 @@ export function GrievanceContent() {
       <p>
         Authorised government or law-enforcement agencies seeking information or assistance in connection with
         identity verification, the prevention, detection, investigation or prosecution of an offence, or a
-        cybersecurity incident, may contact us at the email address above. We respond to such requests in
-        accordance with applicable law.
+        cybersecurity incident, may contact us at the email address above. Requests should be in writing,
+        identify the requesting officer and the legal provision relied on, and state the information or
+        assistance sought. We verify each request and respond in accordance with applicable law.
+      </p>
+
+      <h2 id="ip">6. Intellectual-property complaints</h2>
+      <p>
+        If you believe Content on Korpo infringes your copyright, trademark or other intellectual property,
+        write to <a href="mailto:legal@korpo.in">legal@korpo.in</a> or the Grievance Officer with: your name
+        and contact details; the work or mark concerned and evidence of your rights; the link to or identifier
+        of the Content; and a statement that the information is accurate and that you are the rights-holder or
+        authorised to act for them. We may remove or disable the Content and notify the User who posted it.
+      </p>
+
+      <h2 id="employer">7. Employer &amp; domain objections</h2>
+      <p>
+        Korpo uses corporate email domains only to check that a member can access a mailbox on that domain.
+        It does not display employer logos or represent any employer as a partner or endorser without
+        authorisation, and employers have no access to member activity. An organisation that objects to its
+        domain being used for verification, or to any representation about it on the Platform, can write to the
+        Grievance Officer from an official address. We will review the objection and, where appropriate,
+        remove the domain from the list of eligible domains or correct the representation.
+      </p>
+
+      <h2 id="takedown">8. How we handle takedowns</h2>
+      <p>
+        Every report, grievance, court order or Government notice we receive follows the same steps: receipt
+        and logging in our complaint register → verification of the complaint or order → review against our
+        Terms, the Prohibited Content Policy and applicable law → action (removing or disabling the Content,
+        or suspending the account) → notifying the complainant and, where appropriate, the User concerned →
+        preserving the removed Content and associated records for at least 180 days, or longer where required
+        by law. We act on valid court orders and Government notices within the timelines prescribed by law.
       </p>
     </>
   )

@@ -16,7 +16,7 @@ import { getWishlistedIds } from "@/lib/wishlist"
 
 export const metadata: Metadata = {
   title: "Buy & Sell",
-  description: "Buy and sell electronics, furniture, vehicles and more with verified colleagues on Korpo's corporate marketplace.",
+  description: "Buy and sell electronics, furniture, vehicles and more with corporate-email-verified members on Korpo's corporate marketplace.",
 }
 
 // Temporarily disabled — matching BOOST_ENABLED in MarketplaceFilters.tsx and
@@ -209,7 +209,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         eyebrow="Buy & Sell"
         titleWhite="Buy &"
         titleAccent="Sell"
-        description="Verified sellers from your corporate network."
+        description="Buy and sell within a corporate-email-verified network."
         overlayFrom="from-blue-950/50" overlayTo="to-cyan-950/40"
         blobFrom="bg-blue-500/30" blobTo="bg-cyan-400/20"
         eyebrowGradient="from-blue-500/30 via-cyan-500/30 to-teal-400/30"
@@ -218,7 +218,7 @@ export default async function MarketplacePage({ searchParams }: PageProps) {
         stats={[
           { value: allActiveCount.toLocaleString(), label: "Live Listings", gradient: "from-blue-300 to-cyan-200" },
           { value: `${myListingsCount}`, label: "You've Posted", gradient: "from-emerald-300 to-teal-200" },
-          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+          { value: "Corp", label: "Email verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/marketplace/new", label: "Post Item", icon: Plus }}
         searchAction="/marketplace"

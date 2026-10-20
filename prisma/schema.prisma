@@ -94,6 +94,8 @@ model User {
   referralCode    String?   @unique  // referral code users can share to invite others (currently first 100 users only)
   lastLoginAt     DateTime?           // stamped on every successful sign-in, any method — powers the admin Users table's "Last logged in" column
   loginCount      Int       @default(0) // incremented alongside lastLoginAt; also drives the GUEST role's auto-delete-after-5-logins
+  termsVersion    String?             // TERMS_VERSION (lib/legal-versions.ts) the user last accepted via click-wrap — null = never recorded
+  termsAcceptedAt DateTime?           // when that acceptance happened (evidence of acceptance, IT Rules / Contract Act)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -344,6 +346,37 @@ model UserReport {
 
 // Generic report for every post type other than marketplace Listings (which
 // keep ListingReport): RENTAL | SKILL | EVENT | REFERRAL | CARPOOL.
+// Evidence log of cookie-consent decisions (one row per decision). userId is
+// set when the visitor was signed in; consentId ties the row to the
+// korpo_cookie_consent cookie in the visitor's browser.
+model CookieConsentLog {
+  id         String   @id @default(cuid())
+  consentId  String
+  userId     String?
+  version    String
+  functional Boolean
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([consentId])
+}
+
+// Registration info + posts of a deleted account, kept for the 180-day
+// post-cancellation retention period required by the IT (Intermediary
+// Guidelines) Rules, 2021 r.3(1)(h). Purged by /api/cron/retention-purge.
+model DeletedUserArchive {
+  id          String   @id @default(cuid())
+  userId      String
+  email       String?
+  data        String   // JSON snapshot of the User row and their posts at deletion time
+  deletedById String?  // admin who deleted the account
+  deletedAt   DateTime @default(now())
+  purgeAfter  DateTime
+
+  @@index([purgeAfter])
+  @@index([userId])
+}
+
 model ContentReport {
   id        String   @id @default(cuid())
   itemType  String

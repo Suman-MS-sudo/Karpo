@@ -8,8 +8,13 @@ const PUBLIC_PREFIXES = [
   "/api/id-verification",
   "/_next/",
   "/favicon.ico",
+  // Legal pages must be readable by anyone, signed in or not.
   "/terms",
   "/privacy",
+  "/cookies",
+  "/grievance",
+  "/prohibited-content",
+  "/api/cookie-consent",
   "/about",
   "/contact",
   "/robots.txt",

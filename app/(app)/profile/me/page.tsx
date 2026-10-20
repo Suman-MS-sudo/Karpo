@@ -439,11 +439,7 @@ export default function EditProfilePage() {
               {company ? (
                 <>
                   <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/40 cursor-not-allowed opacity-70">
-                    {company.logo ? (
-                      <Image src={company.logo} alt={company.name} width={18} height={18} className="rounded-sm shrink-0" />
-                    ) : (
-                      <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                    )}
+                    <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-sm">{company.name}</span>
                   </div>
                   <p className="text-[10px] text-muted-foreground">Linked to your work email — cannot be changed here.</p>

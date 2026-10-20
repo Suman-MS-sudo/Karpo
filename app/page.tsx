@@ -1,7 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import {
-  ArrowRight, ShieldCheck, Users, MapPin, Star, Sparkles, Quote,
+  ArrowRight, ShieldCheck, Users, MapPin, Sparkles,
   FolderCheck, Gauge, Download, UserPlus, Compass, TrendingUp, Lock, Search,
   Bell, MessageSquare, BadgeCheck, Clock, Building2, PlugZap, Zap,
   Layers, MessageCircle, Briefcase, Home as HomeIcon, Car, GraduationCap,
@@ -12,12 +12,15 @@ import { SERVICES } from "@/config/services"
 import { HeroNetworkBackground } from "@/components/home/HeroNetworkBackground"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { ContactForm } from "@/components/shared/ContactForm"
+import { CookieSettingsButton } from "@/components/legal/CookieConsentBanner"
 import { prisma } from "@/lib/prisma"
 
+// Every figure here must be substantiable — the email and domain counts are
+// read live from the DB in LandingPage(); don't hard-code marketing numbers.
 const heroStats = [
-  { value: "50,000+", label: "Corporate emails verified" },
-  { value: "200+",    label: "Companies onboarded" },
-  { value: "4",       label: "Cities active" },
+  { value: "", label: "Corporate emails verified" },
+  { value: "", label: "Eligible company domains" },
+  { value: String(SERVICES.length), label: "Services in one app" },
 ]
 
 const quickSteps = [
@@ -31,14 +34,14 @@ const showcaseSections = [
   {
     eyebrow: "Buy & Sell",
     title: "Stay focused, wherever you work",
-    desc: "List electronics, furniture, vehicles and more. Every buyer and seller is a verified colleague — no scammers, no strangers off the street.",
+    desc: "List electronics, furniture, vehicles and more. Every member has signed in with a corporate email — a useful first signal, but always inspect before you pay.",
     cta: "Browse marketplace",
     img: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&q=80&auto=format&fit=crop",
   },
   {
     eyebrow: "Rentals & Referrals",
     title: "Share what matters at the right time",
-    desc: "Search PGs and flats near your office, or get your resume in front of an employee already on the inside. Same trusted network, both ways.",
+    desc: "Search PGs and flats near your office, or get your resume in front of an employee already on the inside. Same corporate-email network, both ways.",
     cta: "See open listings",
     img: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&q=80&auto=format&fit=crop",
   },
@@ -52,11 +55,11 @@ const showcaseSections = [
 ]
 
 const featureGrid = [
-  { icon: Lock,        title: "Protect your data",     desc: "OTP-only auth, no passwords stored, ever." },
+  { icon: Lock,        title: "Protect your data",     desc: "OTP sign-in; passwords, if you set one, are stored only as secure hashes." },
   { icon: Search,      title: "Super smart search",    desc: "Typo-tolerant search across every module." },
   { icon: ShieldCheck, title: "Control everything",    desc: "Approve, hide or report any listing instantly." },
-  { icon: Users,       title: "Work better together",  desc: "Reputation scores keep every interaction honest." },
-  { icon: Clock,       title: "24/7 live support",     desc: "Reports reviewed and actioned within a day." },
+  { icon: Users,       title: "Work better together",  desc: "Reviews and reputation scores help you choose who to deal with." },
+  { icon: Clock,       title: "Report & block",        desc: "Report any listing or user, or block them, in one tap." },
   { icon: Compass,     title: "City-first discovery",  desc: "See what's near your office, not just your inbox." },
   { icon: Layers,      title: "Workflow builder",      desc: "Post once, manage every reply from one inbox." },
   { icon: MessageCircle, title: "Bring your team in",  desc: "Invite coworkers and grow the network together." },
@@ -77,21 +80,21 @@ const integrations = [
 
 const productivitySteps = [
   { icon: Zap,     title: "Use a simple way",       desc: "One sign-in for every service on Korpo." },
-  { icon: Layers,  title: "A productivity platform", desc: "Six modules, one verified network." },
-  { icon: Clock,   title: "Save your time",         desc: "Verified colleagues only — no vetting needed." },
+  { icon: Layers,  title: "A productivity platform", desc: "Six modules, one corporate-email network." },
+  { icon: Clock,   title: "Save your time",         desc: "Deal with corporate-email-verified members, then do your own checks." },
 ]
 
 const aboutStats = [
-  { value: "50,000+", label: "Corporate emails verified" },
-  { value: "200+",    label: "Companies onboarded" },
-  { value: "10+",     label: "Services on platform" },
+  { value: "", label: "Corporate emails verified" },
+  { value: "", label: "Eligible company domains" },
+  { value: String(SERVICES.length), label: "Services on platform" },
 ]
 
 const aboutValues = [
-  { icon: ShieldCheck, title: "Trust first",        desc: "Every member is verified via their corporate email. No exceptions, no shortcuts." },
+  { icon: ShieldCheck, title: "Trust first",        desc: "Members sign in by proving access to a corporate email — a first signal of trust, not a background or employment check." },
   { icon: Users,       title: "Community driven",   desc: "We build the features our members ask for, and measure success by their satisfaction." },
-  { icon: Heart,       title: "Privacy respected",  desc: "Phone numbers and personal details stay private — all contact happens in-app." },
-  { icon: Target,      title: "Quality over quantity", desc: "A smaller, verified network beats a massive, fake one every time." },
+  { icon: Heart,       title: "Privacy respected",  desc: "Your corporate email is never shown to other members, and your employer gets no access to your activity." },
+  { icon: Target,      title: "Quality over quantity", desc: "A focused network of corporate professionals, built to grow carefully." },
 ]
 
 const contactMethods = [
@@ -104,13 +107,8 @@ const contactMethods = [
 const contactFaqs = [
   { q: "How do I get my company added to Korpo?", a: "Request it from the sign-in page. We review company domain requests within 1–2 business days." },
   { q: "Can I use a personal Gmail or Yahoo account?", a: "No — Korpo is exclusively for verified corporate emails. Free email providers are blocked by design." },
-  { q: "How do I report a listing or a user?", a: "Every listing has a Report button for signed-in users. Reports are reviewed within 24 hours." },
-]
-
-const testimonials = [
-  { name: "Priya K.", role: "Software Engineer", text: "Found my flatmate in 2 days. Knowing they're a verified colleague made all the difference." },
-  { name: "Rahul M.", role: "Analyst", text: "Got 3 referral requests within a week of posting. The quality is just better here." },
-  { name: "Anjali S.", role: "Product Manager", text: "Sold my laptop in 4 hours. Knowing buyers had verified corporate emails made it far less stressful." },
+  { q: "How do I report a listing or a user?", a: "Every listing and profile has a Report button for signed-in users, and you can block any user. You can also write to our Grievance Officer — see the Grievance Redressal page." },
+  { q: "Does 'Corporate email verified' mean Korpo has checked the person or listing?", a: "No. It only confirms the member could receive a one-time code at a corporate email address. Korpo does not verify identity, employment, products, properties, jobs, services, rides or events — please do your own checks before you transact." },
 ]
 
 function Eyebrow({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
@@ -129,7 +127,12 @@ export const revalidate = 3600
 
 export default async function LandingPage() {
   const verifiedUserCount = await prisma.user.count({ where: { isVerified: true } })
-  const verifiedEmployeesLabel = verifiedUserCount > 0 ? `${verifiedUserCount.toLocaleString("en-IN")}+` : "0"
+  const verifiedEmployeesLabel = verifiedUserCount.toLocaleString("en-IN")
+  const companyDomainCount = await prisma.company.count({ where: { isApproved: true } })
+  const statValue = (stat: { label: string; value: string }) =>
+    stat.label === "Corporate emails verified" ? verifiedEmployeesLabel
+    : stat.label === "Eligible company domains" ? companyDomainCount.toLocaleString("en-IN")
+    : stat.value
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,7 +217,7 @@ export default async function LandingPage() {
             </span>.
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Organize your whole professional network in one place — buy and sell, find flatmates, share rides, and get referrals, exclusively with verified colleagues from IT, MNC, banking and consulting firms.
+            Organize your whole professional network in one place — buy and sell, find flatmates, share rides, and get referrals, with fellow professionals who have signed in using a corporate email.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="h-12 rounded-xl px-7 shadow-sm hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 transition-all">
@@ -246,7 +249,7 @@ export default async function LandingPage() {
             <div className="relative flex flex-col justify-center h-full p-8 sm:p-14 max-w-md">
               <p className="text-foreground font-bold text-2xl sm:text-3xl tracking-tight">Keeping it all together</p>
               <p className="text-muted-foreground text-sm sm:text-base mt-3 leading-relaxed">
-                One corporate-verified network for everything you need at work — and outside it.
+                One corporate-email network for everything you need at work — and outside it.
               </p>
               <Button asChild size="lg" className="mt-7 rounded-xl w-fit">
                 <Link href="/auth/signin?mode=register">Register</Link>
@@ -254,7 +257,7 @@ export default async function LandingPage() {
             </div>
             <div className="absolute top-8 right-8 hidden sm:flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-lg animate-blob-float-slow">
               <ShieldCheck className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold text-foreground">OTP Verified</span>
+              <span className="text-xs font-semibold text-foreground">Corporate email OTP</span>
             </div>
             <div className="absolute bottom-8 right-8 hidden sm:flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur-md px-3.5 py-2.5 shadow-lg animate-blob-float-slow" style={{ animationDelay: "-6s" }}>
               <Users className="h-4 w-4 text-accent" />
@@ -272,7 +275,7 @@ export default async function LandingPage() {
                 className={`px-8 py-8 text-center ${i === 1 ? "bg-primary text-primary-foreground" : "bg-card text-foreground border border-border"}`}
               >
                 <p className="text-3xl sm:text-4xl font-bold tracking-tight tabular-nums">
-                  {stat.label === "Corporate emails verified" ? verifiedEmployeesLabel : stat.value}
+                  {statValue(stat)}
                 </p>
                 <p className="text-xs sm:text-sm mt-1.5 opacity-70">{stat.label}</p>
               </div>
@@ -354,7 +357,7 @@ export default async function LandingPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
                   <div className="absolute top-5 left-5 flex items-center gap-2 rounded-xl bg-white/95 backdrop-blur-md px-3 py-2 shadow-lg">
                     <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
-                    <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">Verified colleagues only</span>
+                    <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">Corporate email verified members</span>
                   </div>
                 </div>
                 <div>
@@ -460,7 +463,7 @@ export default async function LandingPage() {
             {aboutStats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-2xl sm:text-3xl font-bold text-foreground">
-                  {stat.label === "Corporate emails verified" ? verifiedEmployeesLabel : stat.value}
+                  {statValue(stat)}
                 </p>
                 <p className="text-muted-foreground text-xs sm:text-sm mt-1">{stat.label}</p>
               </div>
@@ -497,7 +500,7 @@ export default async function LandingPage() {
             <Eyebrow>Wherever you are</Eyebrow>
             <h3 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mb-4">Your busy life deserves this</h3>
             <p className="text-muted-foreground leading-relaxed mb-7 max-w-md">
-              We're a growing family of 50,000+ designers and makers from around the world, always ready to help.
+              Buy, sell, rent, commute and refer — all from one sign-in, wherever you are.
             </p>
             <Button asChild className="rounded-full">
               <Link href="/auth/signin"><PlugZap className="h-4 w-4" />Launch Korpo now</Link>
@@ -537,12 +540,12 @@ export default async function LandingPage() {
           <div className="rounded-[2rem] bg-card border border-border shadow-sm p-10 sm:p-14 grid md:grid-cols-[auto,1fr] gap-10 md:gap-16 items-center">
             <div
               className="mx-auto h-40 w-40 rounded-full shrink-0"
-              style={{ background: "conic-gradient(hsl(var(--primary)) 0% 78%, hsl(var(--border)) 78% 100%)" }}
+              style={{ background: "conic-gradient(hsl(var(--primary)) 0% 100%, hsl(var(--border)) 100% 100%)" }}
             >
               <div className="h-full w-full flex items-center justify-center">
                 <div className="h-28 w-28 rounded-full bg-card flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-foreground">78%</span>
-                  <span className="text-[10px] text-muted-foreground">faster hiring</span>
+                  <span className="text-2xl font-bold text-foreground">{SERVICES.length}</span>
+                  <span className="text-[10px] text-muted-foreground">services, 1 sign-in</span>
                 </div>
               </div>
             </div>
@@ -566,39 +569,6 @@ export default async function LandingPage() {
                 <Link href="/auth/signin?mode=register">Sign up now</Link>
               </Button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="relative py-24 sm:py-28 bg-surface overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-          <div className="absolute bottom-0 left-1/3 h-[360px] w-[360px] rounded-full bg-accent/10 blur-[120px] animate-blob-float-slow" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <div className="flex justify-center"><Eyebrow>Voices from the network</Eyebrow></div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">What people are saying</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-5">
-            {testimonials.map((t) => (
-              <div key={t.name} className="relative bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow">
-                <Quote className="absolute top-5 right-5 h-8 w-8 text-border" />
-                <div className="flex gap-1 mb-3">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
-                </div>
-                <p className="text-foreground/85 text-sm mb-4 leading-relaxed max-w-[90%]">&ldquo;{t.text}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">{t.name}</p>
-                    <p className="text-muted-foreground text-xs">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -684,7 +654,7 @@ export default async function LandingPage() {
                   Get started with Korpo today
                 </h2>
                 <p className="text-muted-foreground text-lg max-w-md">
-                  Verify your corporate email and get instant access to a network of colleagues from verified companies.
+                  Verify your corporate email and get access to a network of fellow corporate professionals.
                 </p>
                 <p className="mt-5 text-muted-foreground/70 text-sm">Free forever for core services · Premium from ₹99/month</p>
               </div>
@@ -709,7 +679,7 @@ export default async function LandingPage() {
                 <Image src="/logo.png" alt="Korpo" width={26} height={26} className="rounded-lg object-contain" />
                 <span className="font-semibold text-lg">Korpo</span>
               </div>
-              <p className="text-muted-foreground text-sm leading-relaxed">India&apos;s first verified corporate employee marketplace.</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">A corporate-email-verified marketplace for working professionals.</p>
             </div>
             <div>
               <p className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground/80">Services</p>
@@ -734,6 +704,10 @@ export default async function LandingPage() {
                 <li><Link href="#contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
                 <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
                 <li><Link href="/terms"   className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+                <li><Link href="/cookies" className="hover:text-foreground transition-colors">Cookie Policy</Link></li>
+                <li><Link href="/prohibited-content" className="hover:text-foreground transition-colors">Prohibited Content Policy</Link></li>
+                <li><Link href="/grievance" className="hover:text-foreground transition-colors">Grievance Redressal</Link></li>
+                <li><CookieSettingsButton className="hover:text-foreground transition-colors" /></li>
               </ul>
             </div>
           </div>

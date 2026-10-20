@@ -4,18 +4,17 @@ import { ArrowRight, ShieldCheck, Users, Zap, Heart, Target, Globe, CheckCircle2
 import { Button } from "@/components/ui/button"
 import { PublicHeader } from "@/components/layout/PublicHeader"
 import { PublicFooter } from "@/components/layout/PublicFooter"
+import { prisma } from "@/lib/prisma"
+import { SERVICES } from "@/config/services"
 
-const stats = [
-  { value: "50,000+", label: "Corporate Emails Verified" },
-  { value: "200+",    label: "Companies Onboarded"       },
-  { value: "10+",     label: "Services on Platform"      },
-]
+// Live figures only — marketing numbers must be substantiable.
+export const revalidate = 3600
 
 const values = [
   {
     icon: ShieldCheck,
     title: "Trust First",
-    desc: "Every member's corporate email is verified before they join. Trust is the foundation everything else is built on.",
+    desc: "Members prove access to a corporate email before they join. It's a first signal of trust — not a background or employment check.",
     color: "text-blue-600",
     bg: "bg-blue-50",
   },
@@ -36,7 +35,7 @@ const values = [
   {
     icon: Heart,
     title: "Privacy Respected",
-    desc: "Your phone number, email and personal details are never shown publicly. All contact happens through our secure in-app messaging.",
+    desc: "Your corporate email is never shown to other members, your phone number is shared only with people you choose to deal with, and your employer has no access to your activity.",
     color: "text-rose-600",
     bg: "bg-rose-50",
   },
@@ -57,10 +56,10 @@ const values = [
 ]
 
 const milestones = [
-  { year: "2023", title: "The idea", desc: "Two engineers frustrated by sketchy OLX listings realised the problem: no way to verify who you're dealing with." },
-  { year: "2024", title: "Private beta", desc: "Launched to 500 employees across 3 Bangalore IT companies. Marketplace, rentals and referrals went live." },
-  { year: "2025", title: "Scale & expand", desc: "10 services, 4 cities, 200+ companies. Premium launched. Rides, events, deals and more went live." },
-  { year: "2026+", title: "The vision", desc: "Every major Indian city. Every Fortune 500 company with an India office. One verified corporate network." },
+  { year: "2023", title: "The idea", desc: "Two engineers frustrated by anonymous online listings realised the problem: no simple way to know who you're dealing with." },
+  { year: "2024", title: "Private beta", desc: "Marketplace, rentals and referrals went live for an early group of corporate professionals." },
+  { year: "2025", title: "Expanding", desc: "Premium launched. Carpool, events, deals and more went live." },
+  { year: "2026+", title: "The vision", desc: "More cities, more companies — one corporate-email network for working professionals." },
 ]
 
 export const metadata = {
@@ -68,7 +67,17 @@ export const metadata = {
   description: "Learn about Korpo — a corporate-email-verified marketplace built on trust.",
 }
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const [verifiedUsers, companyDomains] = await Promise.all([
+    prisma.user.count({ where: { isVerified: true } }),
+    prisma.company.count({ where: { isApproved: true } }),
+  ])
+  const stats = [
+    { value: verifiedUsers.toLocaleString("en-IN"),  label: "Corporate Emails Verified" },
+    { value: companyDomains.toLocaleString("en-IN"), label: "Eligible Company Domains"  },
+    { value: String(SERVICES.length),                 label: "Services on Platform"      },
+  ]
+
   return (
     <div className="min-h-screen bg-white">
       <PublicHeader />
@@ -115,7 +124,7 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-4 text-gray-600 leading-relaxed">
                 <p>
-                  India has millions of corporate employees — engineers, analysts, consultants, bankers — who work in the same buildings, commute the same routes, and live in the same neighbourhoods. Yet when they needed to sell a laptop, find a flatmate or get a job referral, they had to turn to public marketplaces filled with strangers, scammers and fake listings.
+                  India has millions of corporate employees — engineers, analysts, consultants, bankers — who work in the same buildings, commute the same routes, and live in the same neighbourhoods. Yet when they needed to sell a laptop, find a flatmate or get a job referral, they had to turn to open marketplaces where it's hard to know who you're dealing with.
                 </p>
                 <p>
                   Existing solutions had no way to confirm someone actually holds a corporate email at a real company. Trust was luck, not structure.
@@ -129,7 +138,7 @@ export default function AboutPage() {
                   "Corporate email access verified via OTP before signup",
                   "Domain whitelist: only approved companies get access",
                   "Reputation scores and reviews after every transaction",
-                  "Phone/email not exposed publicly — in-app messaging by default",
+                  "Corporate email never shown to other members — in-app messaging by default",
                 ].map((point) => (
                   <div key={point} className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
@@ -151,8 +160,8 @@ export default function AboutPage() {
                   />
                 </div>
                 <div className="absolute -bottom-4 -right-4 bg-white border border-gray-100 rounded-2xl shadow-lg px-4 py-3 text-center">
-                  <p className="text-2xl font-bold text-[#1E3A5F]">100%</p>
-                  <p className="text-xs text-gray-500">Corporate email<br />verified</p>
+                  <p className="text-2xl font-bold text-[#1E3A5F]">OTP</p>
+                  <p className="text-xs text-gray-500">Corporate email<br />sign-in</p>
                 </div>
               </div>
             </div>
@@ -169,7 +178,7 @@ export default function AboutPage() {
           </p>
           <div className="mt-10 grid sm:grid-cols-3 gap-6 text-left">
             {[
-              { title: "For individuals", desc: "Access a verified peer network that makes every transaction safer, faster and less stressful." },
+              { title: "For individuals", desc: "Deal with a corporate-email-verified peer network — an extra layer of confidence on top of your own checks." },
               { title: "For companies",   desc: "Give employees a trusted private marketplace as part of their benefits — at zero cost to the organisation." },
               { title: "For India",       desc: "Build the trust layer that corporate India has always needed but never had." },
             ].map((item) => (
@@ -208,7 +217,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold">Our journey</h2>
-            <p className="mt-3 text-blue-200">From an idea to a growing corporate-verified network.</p>
+            <p className="mt-3 text-blue-200">From an idea to a growing corporate-email network.</p>
           </div>
           <div className="relative">
             <div className="absolute left-6 sm:left-1/2 top-0 bottom-0 w-px bg-white/20" />
@@ -237,10 +246,10 @@ export default function AboutPage() {
       <section className="py-20 bg-[#F8FAFC]">
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-[#1E3A5F] mb-4">
-            Join the verified network
+            Join the network
           </h2>
           <p className="text-gray-600 text-lg mb-8">
-            Sign in with your corporate email and become part of a growing corporate-verified professional community. It takes under a minute.
+            Sign in with your corporate email and become part of a growing professional community. It takes under a minute.
           </p>
           <Button asChild size="xl">
             <Link href="/auth/signin">

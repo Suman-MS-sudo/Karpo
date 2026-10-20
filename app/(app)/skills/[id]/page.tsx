@@ -23,6 +23,7 @@ import { SkillOrdersPanel } from "@/components/skills/SkillOrdersPanel"
 import { SkillReviewsList } from "@/components/skills/SkillReviewsList"
 import { SkillReviewForm } from "@/components/skills/SkillReviewForm"
 import { SkillDetailTabs } from "@/components/skills/SkillDetailTabs"
+import { VerificationNotice } from "@/components/shared/VerificationNotice"
 
 export const dynamic = "force-dynamic"
 
@@ -610,6 +611,7 @@ export default async function SkillDetailPage({ params }: { params: { id: string
           )}
         </div>
       </div>
+        <VerificationNotice kind="skill" className="mt-6" />
       </div>
     </div>
   )

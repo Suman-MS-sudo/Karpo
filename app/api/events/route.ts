@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { requireVerified } from "@/lib/api-auth"
 import { findContactInfoField, contactInfoError } from "@/lib/contact-filter"
 
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
     orderBy: { date: "asc" },
     take: 40,
     include: {
-      organizer: { include: { company: { select: { name: true, logo: true, domain: true } } } },
+      organizer: { select: PUBLIC_USER_WITH_COMPANY_SELECT },
       _count: { select: { rsvps: true } },
     },
   })

@@ -17,7 +17,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://korpo.in"
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: "Korpo — Your work ID. Your pass to everything else.", template: "%s | Korpo" },
-  description: "Korpo is a corporate-email-verified marketplace — buy/sell, find flatmates, get referrals and share rides with colleagues from verified companies.",
+  description: "Korpo is a corporate-email-verified marketplace — buy/sell, find flatmates, get referrals and share rides with fellow professionals from approved company domains.",
   keywords: ["corporate marketplace", "employee benefits", "corporate email verified", "IT professionals", "job referrals", "corporate carpool"],
   authors: [{ name: "Korpo" }],
   creator: "Korpo",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Korpo — Your work ID. Your pass to everything else.",
-    description: "Korpo is a corporate-email-verified marketplace — buy/sell, find flatmates, get referrals and share rides with colleagues from verified companies.",
+    description: "Korpo is a corporate-email-verified marketplace — buy/sell, find flatmates, get referrals and share rides with fellow professionals from approved company domains.",
     images: ["/logo.png"],
   },
 }

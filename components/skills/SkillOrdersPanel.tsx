@@ -116,7 +116,7 @@ function OrderCard({ order, listingId }: { order: Order; listingId: string }) {
             <ProfileLink userId={order.buyer.id} className="block font-semibold text-sm truncate">{order.buyer.name}</ProfileLink>
             {order.buyer.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500 shrink-0" />}
           </div>
-          <p className="text-xs text-muted-foreground truncate">{order.buyer.jobTitle ?? order.buyer.department ?? order.buyer.email}</p>
+          <p className="text-xs text-muted-foreground truncate">{order.buyer.jobTitle ?? order.buyer.department}</p>
         </div>
         <div className="text-right shrink-0 space-y-1">
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_STYLE[order.status]}`}>{order.status.replace("_"," ")}</span>

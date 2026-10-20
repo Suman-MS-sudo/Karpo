@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { AppShell } from "@/components/layout/AppShell"
+import { TERMS_VERSION } from "@/lib/legal-versions"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -26,8 +27,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!isAdmin) {
     const account = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { workEmail: true, accounts: { where: { provider: "linkedin" }, select: { id: true } } },
+      select: { workEmail: true, termsVersion: true, accounts: { where: { provider: "linkedin" }, select: { id: true } } },
     })
+    // Click-wrap: every user must have accepted the current Terms/Privacy
+    // version (recorded with a timestamp). GUEST is a read-only demo role that
+    // can't POST the acceptance, so it's exempt.
+    if (account && account.termsVersion !== TERMS_VERSION && session.user.role !== "GUEST") {
+      redirect("/auth/accept-terms")
+    }
     if (account && account.accounts.length > 0 && !account.workEmail) {
       redirect("/auth/corp-email")
     }

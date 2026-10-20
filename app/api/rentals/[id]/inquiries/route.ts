@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       user: {
         select: {
           id: true, name: true, avatarUrl: true, image: true,
-          phone: true, email: true, department: true, jobTitle: true,
+          phone: true, department: true, jobTitle: true,
           company: { select: { name: true } },
         },
       },

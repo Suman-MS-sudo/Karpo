@@ -62,6 +62,9 @@ export async function provisionUser(
     passwordHash?: string | null
     workEmail?: string | null
     personalEmail?: string | null
+    // Terms/Privacy version the user just accepted via click-wrap — stamped
+    // with the current time as evidence of acceptance.
+    termsVersion?: string
     // Callers that already know whether a User row exists for this email
     // (e.g. the OTP credentials flow, which has to look this up itself
     // beforehand anyway) can pass it through here to skip a redundant
@@ -111,6 +114,7 @@ export async function provisionUser(
       ...(opts.passwordHash ? { passwordHash: opts.passwordHash } : {}),
       ...(workEmail ? { workEmail } : {}),
       ...(opts.personalEmail ? { personalEmail: opts.personalEmail } : {}),
+      ...(opts.termsVersion ? { termsVersion: opts.termsVersion, termsAcceptedAt: new Date() } : {}),
     },
     create: {
       email,
@@ -122,6 +126,7 @@ export async function provisionUser(
       ...(company ? { companyId: company.id } : {}),
       ...(workEmail ? { workEmail } : {}),
       ...(opts.personalEmail ? { personalEmail: opts.personalEmail } : {}),
+      ...(opts.termsVersion ? { termsVersion: opts.termsVersion, termsAcceptedAt: new Date() } : {}),
       membership: { create: { plan: opts.isAdmin ? "PREMIUM" : "FREE" } },
     },
   })

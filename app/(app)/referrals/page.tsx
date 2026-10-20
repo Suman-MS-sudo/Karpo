@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
+import { PUBLIC_USER_WITH_COMPANY_SELECT } from "@/lib/public-user"
 import { Prisma } from "@prisma/client"
 import { auth } from "@/auth"
 import Link from "next/link"
@@ -25,7 +26,7 @@ export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Job Referrals",
-  description: "Get your resume in front of an employee already on the inside — job referrals from verified colleagues on Korpo.",
+  description: "Get your resume in front of an employee already on the inside — job referrals from corporate-email-verified members on Korpo.",
 }
 
 // Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx.
@@ -150,7 +151,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
   }
 
   const includeArgs = {
-    user:    { include: { company: { select: { name: true, logo: true, domain: true } } } },
+    user:    { select: PUBLIC_USER_WITH_COMPANY_SELECT },
     company: true,
     _count:  { select: { applications: true } },
   } as const
@@ -232,7 +233,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
         eyebrow="Corporate Referrals"
         titleWhite="Job"
         titleAccent="Referrals"
-        description="Get referred by verified colleagues at top companies."
+        description="Get referred by members working at companies you want to join."
         overlayFrom="from-sky-950/50" overlayTo="to-indigo-950/40"
         blobFrom="bg-sky-500/30" blobTo="bg-indigo-400/20"
         eyebrowGradient="from-sky-500/30 via-blue-500/30 to-indigo-400/30"
@@ -241,7 +242,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
         stats={[
           { value: openCount.toLocaleString(), label: "Open Referrals", gradient: "from-sky-300 to-blue-200" },
           { value: hiringCompanies.toLocaleString(), label: "Companies", gradient: "from-indigo-300 to-violet-200" },
-          { value: "100%", label: "Verified", gradient: "from-fuchsia-300 to-pink-200" },
+          { value: "Corp", label: "Email verified", gradient: "from-fuchsia-300 to-pink-200" },
         ]}
         primaryCta={{ href: "/referrals/new", label: "Post Referral", icon: Plus }}
         searchAction="/referrals"
@@ -328,11 +329,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
                       <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${
                         isOwn ? "ring-2 ring-violet-400 dark:ring-violet-600 bg-muted" : isBoosted ? "ring-2 ring-amber-300 dark:ring-amber-600 bg-muted" : "bg-muted"
                       }`}>
-                        {ref.company.logo ? (
-                          <Image src={ref.company.logo} alt={ref.company.name} width={48} height={48} className="object-contain" />
-                        ) : (
-                          <Building2 className="h-6 w-6 text-muted-foreground" />
-                        )}
+                        <Building2 className="h-6 w-6 text-muted-foreground" />
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         {hasApplied && <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 text-[10px]">Applied</Badge>}

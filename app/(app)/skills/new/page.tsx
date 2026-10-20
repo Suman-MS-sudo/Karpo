@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MapEmbed } from "@/components/ui/map-embed"
 import { cn } from "@/lib/utils"
+import { ListingDeclaration } from "@/components/shared/ListingDeclaration"
 
 const CATEGORIES = ["TECH","DATA","DESIGN","ENGINEERING","MARKETING","BUSINESS","FINANCE","LANGUAGE","COACHING","CREATIVE","WELLNESS","MUSIC","PHOTOGRAPHY"]
 const DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"]
@@ -59,6 +60,7 @@ export default function NewSkillPage() {
   const router = useRouter()
   const [step, setStep]     = useState(0)
   const [loading, setLoading] = useState(false)
+  const [declared, setDeclared] = useState(false)
   const [error, setError]   = useState("")
 
   // Step 0 — About
@@ -404,6 +406,8 @@ export default function NewSkillPage() {
           </section>
         )}
 
+        {step === 3 && <ListingDeclaration kind="skill" checked={declared} onChange={setDeclared} />}
+
         {/* Navigation */}
         <div className="flex gap-3 pt-2">
           {step > 0 && (
@@ -414,7 +418,7 @@ export default function NewSkillPage() {
               Continue →
             </Button>
           ) : (
-            <Button type="button" className="flex-1" disabled={loading} onClick={submit}>
+            <Button type="button" className="flex-1" disabled={loading || !declared} onClick={submit}>
               {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Publishing…</> : "Publish Listing"}
             </Button>
           )}

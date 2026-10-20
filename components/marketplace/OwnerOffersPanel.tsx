@@ -145,7 +145,7 @@ export function OwnerOffersPanel({ listingId, initialCount, isListingActive }: P
                 {/* Buyer info */}
                 <p className="text-xs text-muted-foreground">
                   <ProfileLink userId={offer.buyer.id}>
-                    {offer.buyer.name ?? offer.buyer.email?.split("@")[0] ?? "Anonymous"}
+                    {offer.buyer.name ?? "Anonymous"}
                   </ProfileLink>
                   {offer.buyer.jobTitle ? ` · ${offer.buyer.jobTitle}` : ""}
                   <span className="ml-2 opacity-60">· {formatRelativeTime(new Date(offer.createdAt))}</span>

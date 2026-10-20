@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { SERVICES } from "@/config/services"
 import { LegalModal } from "@/components/legal/LegalModal"
+import { CookieSettingsButton } from "@/components/legal/CookieConsentBanner"
 
 export function PublicFooter() {
   return (
@@ -58,6 +59,7 @@ export function PublicFooter() {
               <li><Link href="/cookies"             className="hover:text-white transition-colors">Cookie Policy</Link></li>
               <li><Link href="/prohibited-content"  className="hover:text-white transition-colors">Prohibited Content Policy</Link></li>
               <li><Link href="/grievance"           className="hover:text-white transition-colors">Grievance Redressal</Link></li>
+              <li><CookieSettingsButton className="hover:text-white transition-colors" /></li>
             </ul>
           </div>
         </div>

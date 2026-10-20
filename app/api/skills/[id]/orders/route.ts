@@ -90,7 +90,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     include: {
       buyer: {
         select: {
-          id: true, name: true, avatarUrl: true, image: true, email: true,
+          id: true, name: true, avatarUrl: true, image: true,
           jobTitle: true, department: true, isVerified: true,
           company: { select: { name: true } },
         },

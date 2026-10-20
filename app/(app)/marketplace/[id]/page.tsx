@@ -32,6 +32,7 @@ import { ListingEngagementPanel }  from "@/components/marketplace/ListingEngagem
 import { MessageSellerButton }     from "@/components/marketplace/MessageSellerButton"
 import { formatCurrency, formatRelativeTime, getInitials } from "@/lib/utils"
 import { LISTING_CONDITIONS, LISTING_CATEGORIES } from "@/config/services"
+import { VerificationNotice } from "@/components/shared/VerificationNotice"
 
 // Temporarily disabled — matching BOOST_ENABLED in marketplace/page.tsx and MarketplaceFilters.tsx.
 const BOOST_ENABLED = false
@@ -144,7 +145,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           include: {
             buyer: {
               select: {
-                id: true, name: true, email: true, phone: true,
+                id: true, name: true, phone: true,
                 avatarUrl: true, image: true, isVerified: true,
                 jobTitle: true, department: true,
               },
@@ -202,7 +203,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
           include: {
             user: {
               select: {
-                id: true, name: true, email: true, phone: true,
+                id: true, name: true, phone: true,
                 avatarUrl: true, image: true, isVerified: true,
                 jobTitle: true, department: true,
               },
@@ -803,6 +804,7 @@ export default async function ListingDetailPage({ params, searchParams }: { para
 
         </div>
       </div>
+      <VerificationNotice kind="listing" className="mt-6" />
     </div>
   )
 }

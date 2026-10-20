@@ -13,6 +13,7 @@ import { PageTitle } from "@/components/ui/page-title"
 import { ThemeToggle } from "@/components/shared/ThemeToggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
+import { CookieSettingsButton } from "@/components/legal/CookieConsentBanner"
 
 interface AccountData {
   email: string
@@ -216,13 +217,9 @@ export default function SettingsPage() {
             <div>
               <label className={LABEL}>Company</label>
               <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-input bg-muted/30">
-                {account.company.logo ? (
-                  <Image src={account.company.logo} alt={account.company.name} width={20} height={20} className="rounded" />
-                ) : (
-                  <div className="h-5 w-5 rounded bg-muted flex items-center justify-center">
-                    <Briefcase className="h-3 w-3 text-muted-foreground" />
-                  </div>
-                )}
+                <div className="h-5 w-5 rounded bg-muted flex items-center justify-center">
+                  <Briefcase className="h-3 w-3 text-muted-foreground" />
+                </div>
                 <span className="text-sm">{account.company.name}</span>
               </div>
             </div>
@@ -247,6 +244,31 @@ export default function SettingsPage() {
               <LogOut className="h-3.5 w-3.5" /> Sign out
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* ── Legal & privacy ───────────────────────────────────────────────── */}
+      <section className="bg-card border border-border rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="font-semibold text-sm">Legal &amp; privacy</h2>
+        </div>
+        <div className="p-6 space-y-3 text-sm">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {[
+              { href: "/terms",              label: "Terms and Conditions" },
+              { href: "/privacy",            label: "Privacy Policy" },
+              { href: "/cookies",            label: "Cookie Policy" },
+              { href: "/prohibited-content", label: "Prohibited Content Policy" },
+              { href: "/grievance",          label: "Grievance Redressal" },
+            ].map((l) => (
+              <Link key={l.href} href={l.href} className="text-primary hover:underline">{l.label}</Link>
+            ))}
+            <CookieSettingsButton className="text-primary hover:underline" />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            To delete your account or exercise your data rights, write to{" "}
+            <span className="font-medium text-foreground">support@korpo.in</span>.
+          </p>
         </div>
       </section>
 

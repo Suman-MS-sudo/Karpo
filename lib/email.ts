@@ -223,7 +223,7 @@ export function welcomeEmailHtml(name: string): string {
       </div>
       <div style="background:#fff;padding:32px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
         <p style="color:#1a202c;font-size:16px">Hi ${name},</p>
-        <p style="color:#64748b">You're now part of India's first verified corporate employee marketplace.</p>
+        <p style="color:#64748b">You're now part of Korpo, the corporate-email-verified marketplace.</p>
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard"
            style="display:inline-block;background:#1E3A5F;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;margin-top:16px;font-weight:600">
           Go to Dashboard →
