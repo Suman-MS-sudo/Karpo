@@ -272,6 +272,16 @@ export default async function ReferralsPage({ searchParams }: Props) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+      <Link
+        href="/referrals/openings"
+        className="mb-4 flex items-center justify-between gap-3 rounded-2xl border-2 border-sky-300/60 bg-sky-50 dark:bg-sky-500/10 px-4 py-3 hover:border-sky-400 transition-colors"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          <Briefcase className="h-4 w-4 text-sky-600" /> Job Openings — live roles from company career sites
+        </span>
+        <span className="text-xs font-medium text-sky-700 dark:text-sky-300">Browse →</span>
+      </Link>
+
       <SearchBarWrapper />
 
       {/* Filter summary */}
