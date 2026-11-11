@@ -137,6 +137,50 @@ async function fetchLever({ company, domain, board }) {
     }))
 }
 
+// Ashby public job-board API.
+async function fetchAshby({ company, domain, board }) {
+  const d = await getJson(`https://api.ashbyhq.com/posting-api/job-board/${board}`)
+  return d.jobs
+    .filter((j) => j.isListed !== false && (INDIA_RE.test(j.location ?? "") || j.address?.postalAddress?.addressCountry === "India"))
+    .map((j) => ({
+      id: `${domain}-${j.id}`,
+      company, companyDomain: domain, title: j.title,
+      department: mapDepartment(`${j.title} ${j.department ?? ""}`), team: j.team || j.department || null,
+      location: j.location || "India",
+      workMode: j.isRemote ? "REMOTE" : (WORK_MODE[(j.workplaceType ?? "").toLowerCase()] ?? null),
+      jobType: /intern/i.test(j.title) || /intern/i.test(j.employmentType ?? "") ? "INTERNSHIP" : /part/i.test(j.employmentType ?? "") ? "PART_TIME" : /contract/i.test(j.employmentType ?? "") ? "CONTRACT" : "FULL_TIME",
+      postedAt: j.publishedAt ? new Date(j.publishedAt).toISOString() : null,
+      applyUrl: j.jobUrl, source: "ashby",
+    }))
+}
+
+// SmartRecruiters public postings API, filtered server-side to India.
+async function fetchSmartRecruiters({ company, domain, board }) {
+  const jobs = []
+  for (let offset = 0; offset < 2000; offset += 100) {
+    const d = await getJson(`https://api.smartrecruiters.com/v1/companies/${board}/postings?limit=100&offset=${offset}&country=in`)
+    if (!d.content?.length) break
+    for (const j of d.content) {
+      const team = j.customField?.find((f) => f.fieldLabel === "Team")?.valueLabel ?? j.department?.label ?? j.function?.label ?? null
+      jobs.push({
+        id: `${domain}-${j.id}`,
+        company, companyDomain: domain, title: j.name,
+        department: mapDepartment(`${j.name} ${team ?? ""}`), team,
+        location: j.location?.fullLocation || j.location?.city || "India",
+        workMode: j.location?.remote ? "REMOTE" : j.location?.hybrid ? "HYBRID" : null,
+        jobType: /intern/i.test(j.name) || /intern/i.test(j.typeOfEmployment?.label ?? "") ? "INTERNSHIP" : /part/i.test(j.typeOfEmployment?.label ?? "") ? "PART_TIME" : /contract|temp/i.test(j.typeOfEmployment?.label ?? "") ? "CONTRACT" : "FULL_TIME",
+        experienceLevel: j.experienceLevel?.label ?? null,
+        postedAt: j.releasedDate ? new Date(j.releasedDate).toISOString() : null,
+        applyUrl: `https://jobs.smartrecruiters.com/${j.company?.identifier ?? board}/${j.id}`,
+        source: "smartrecruiters",
+      })
+    }
+    if (offset + 100 >= d.totalFound) break
+    await sleep(300)
+  }
+  return jobs
+}
+
 // Reads a company's public job sitemap and the schema.org JobPosting JSON-LD on
 // each job page (published for search engines). Samples evenly across the
 // sitemap up to `cap` pages, with a delay between requests.
@@ -239,14 +283,40 @@ const SOURCES = [
   ["Cisco", () => fetchWorkday({ company: "Cisco", domain: "cisco.com", host: "cisco.wd5.myworkdayjobs.com", tenant: "cisco", site: "Cisco_Careers" })],
   ["Procter & Gamble", () => fetchWorkday({ company: "Procter & Gamble", domain: "pg.com", host: "pg.wd5.myworkdayjobs.com", tenant: "pg", site: "1000" })],
   ["PayPal", () => fetchEightfold({ company: "PayPal", domain: "paypal.com", host: "paypal.eightfold.ai", baseUrl: "https://paypal.eightfold.ai" })],
+
+  // Indian-headquartered companies, via their own public ATS boards.
+  ["InMobi", () => fetchGreenhouse({ company: "InMobi", domain: "inmobi.com", board: "inmobi" })],
+  ["Slice", () => fetchGreenhouse({ company: "Slice", domain: "sliceit.com", board: "slice" })],
+  ["Druva", () => fetchGreenhouse({ company: "Druva", domain: "druva.com", board: "druva" })],
+  ["Zeta", () => fetchLever({ company: "Zeta", domain: "zeta.tech", board: "zeta" })],
+  ["Mindtickle", () => fetchLever({ company: "Mindtickle", domain: "mindtickle.com", board: "mindtickle" })],
+  ["FamPay", () => fetchLever({ company: "FamPay", domain: "fampay.in", board: "fampay" })],
+  ["Porter", () => fetchLever({ company: "Porter", domain: "porter.in", board: "porter" })],
+  ["Vogo", () => fetchLever({ company: "Vogo", domain: "vogo.in", board: "vogo" })],
+  ["Sarvam AI", () => fetchAshby({ company: "Sarvam AI", domain: "sarvam.ai", board: "sarvam" })],
+  ["Navi", () => fetchAshby({ company: "Navi", domain: "navi.com", board: "navi" })],
+  ["Bounce", () => fetchAshby({ company: "Bounce", domain: "bounceshare.com", board: "bounce" })],
+  ["Tekion", () => fetchAshby({ company: "Tekion", domain: "tekion.com", board: "tekion" })],
+  ["Swiggy", () => fetchSmartRecruiters({ company: "Swiggy", domain: "swiggy.com", board: "swiggy" })],
+  ["Freshworks", () => fetchSmartRecruiters({ company: "Freshworks", domain: "freshworks.com", board: "freshworks" })],
+  ["BlueStone", () => fetchSmartRecruiters({ company: "BlueStone", domain: "bluestone.com", board: "bluestone" })],
+  ["ixigo", () => fetchSmartRecruiters({ company: "ixigo", domain: "ixigo.com", board: "ixigo" })],
+  ["Unacademy", () => fetchSmartRecruiters({ company: "Unacademy", domain: "unacademy.com", board: "unacademy" })],
+  ["Cars24", () => fetchSmartRecruiters({ company: "Cars24", domain: "cars24.com", board: "cars24" })],
+  ["Whatfix", () => fetchSmartRecruiters({ company: "Whatfix", domain: "whatfix.com", board: "whatfix" })],
+  ["Lendingkart", () => fetchSmartRecruiters({ company: "Lendingkart", domain: "lendingkart.com", board: "lendingkart" })],
+  ["Upstox", () => fetchSmartRecruiters({ company: "Upstox", domain: "upstox.com", board: "upstox" })],
+  ["NoBroker", () => fetchSmartRecruiters({ company: "NoBroker", domain: "nobroker.in", board: "nobroker" })],
+  ["Turtlemint", () => fetchSmartRecruiters({ company: "Turtlemint", domain: "turtlemint.com", board: "turtlemint" })],
 ]
 
 // ONLY=Accenture,Foo re-fetches just those sources and merges into the existing file.
 const only = process.env.ONLY?.split(",").map((x) => x.trim())
 
-const prev = only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, "utf8")) : null
-const all = prev ? prev.jobs.filter((j) => !only.includes(j.company)) : []
+const prev = existsSync(OUT) ? JSON.parse(readFileSync(OUT, "utf8")) : null
+const all = prev ? prev.jobs.filter((j) => (only ? !only.includes(j.company) : false)) : []
 const summary = prev ? { ...prev.summary } : {}
+let failures = 0
 for (const [name, run] of SOURCES) {
   if (only && !only.includes(name)) continue
   try {
@@ -255,8 +325,12 @@ for (const [name, run] of SOURCES) {
     all.push(...jobs)
     console.log(`${name}: ${jobs.length}`)
   } catch (err) {
-    summary[name] = `failed: ${err.message}`
-    console.error(`${name} FAILED:`, err.message)
+    // Keep the last good data for a source that failed so a flaky run doesn't wipe it.
+    failures++
+    const kept = prev ? prev.jobs.filter((j) => j.company === name) : []
+    all.push(...kept)
+    summary[name] = `failed: ${err.message} (kept ${kept.length} previous)`
+    console.error(`${name} FAILED:`, err.message, `(kept ${kept.length} previous)`)
   }
 }
 

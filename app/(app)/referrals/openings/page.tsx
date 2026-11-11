@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DEPARTMENTS } from "@/config/services"
 import { formatRelativeTime } from "@/lib/utils"
+import { fuzzyIncludes } from "@/lib/fuzzy"
 import openingsData from "@/data/job-openings.json"
 
 export const metadata: Metadata = {
@@ -48,6 +49,12 @@ const CITY_ALIASES: Record<string, RegExp> = {
   "Kochi":         /kochi|cochin/i,
   "Indore":        /indore/i,
 }
+
+// Same city spellings the location filter groups, so "bangalore" finds
+// "Bengaluru" postings and vice versa.
+const normalize = (t: string) =>
+  t.toLowerCase().replace(/bangalore/g, "bengaluru").replace(/gurgaon/g, "gurugram").replace(/bombay/g, "mumbai").replace(/madras/g, "chennai")
+const searchText = (j: Opening) => normalize(`${j.title} ${j.company} ${j.department} ${j.team ?? ""} ${j.location}`)
 const matchesCity = (location: string, city: string) => CITY_ALIASES[city]?.test(location) ?? false
 
 interface Props {
@@ -71,12 +78,20 @@ export default function JobOpeningsPage({ searchParams }: Props) {
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1])
 
-  const filtered = all
+  const scoped = all
     .filter((j) => !company || j.company === company)
     .filter((j) => !cities.length || cities.some((c) => matchesCity(j.location, c)))
     .filter((j) => !dept || j.department === dept)
-    .filter((j) => !query || `${j.title} ${j.company} ${j.location} ${j.team ?? ""}`.toLowerCase().includes(query))
-    .sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""))
+
+  // Every word must appear (so "java pune" works); if that finds nothing,
+  // fall back to the typo-tolerant match the other sections use.
+  const q = query ? normalize(query) : ""
+  const words = q.split(/\s+/).filter(Boolean)
+  const exact = q ? scoped.filter((j) => { const t = searchText(j); return words.every((w) => t.includes(w)) }) : scoped
+  const matched = q && exact.length === 0 ? scoped.filter((j) => fuzzyIncludes(searchText(j), q)) : exact
+  // Title matches rank first, then newest.
+  const titleHit = (j: Opening) => (q && normalize(j.title).includes(q) ? 1 : 0)
+  const filtered = [...matched].sort((a, b) => titleHit(b) - titleHit(a) || (b.postedAt ?? "").localeCompare(a.postedAt ?? ""))
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
